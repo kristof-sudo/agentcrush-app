@@ -27,6 +27,8 @@ export async function POST(req) {
     const price = PRICE_BY_KEY[product_key];
     if (!price) return Response.json({ error: `Unknown product_key: ${product_key}` }, { status: 400 });
 
+const baseUrl = getBaseUrl(req);
+    
 const session = await stripe.checkout.sessions.create({
   mode: 'payment',
   customer_creation: 'always',
