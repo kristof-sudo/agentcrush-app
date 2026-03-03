@@ -27,17 +27,17 @@ export async function POST(req) {
     const price = PRICE_BY_KEY[product_key];
     if (!price) return Response.json({ error: `Unknown product_key: ${product_key}` }, { status: 400 });
 
-    const baseUrl = getBaseUrl(req);
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [{ price, quantity: 1 }],
-      success_url: `${baseUrl}/shop/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/shop`,
-      metadata: {
-        product_key,
-        ...(agent_id ? { agent_id: String(agent_id) } : {}),
-      },
-    });
+const session = await stripe.checkout.sessions.create({
+  mode: 'payment',
+  customer_creation: 'always',
+  line_items: [{ price, quantity: 1 }],
+  success_url: `${baseUrl}/shop/success?session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${baseUrl}/shop`,
+  metadata: {
+    product_key,
+    ...(agent_id ? { agent_id: String(agent_id) } : {}),
+  },
+});
 
     return Response.json({ url: session.url });
   } catch (e) {
