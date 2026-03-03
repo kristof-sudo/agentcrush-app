@@ -77,6 +77,16 @@ export async function POST(req) {
         .single();
       if (eerr) throw eerr;
 
+
+      // Identity Kit unlock (agent-level)
+      if (product_key === 'identity_kit' && agent_id) {
+        await sb.from('agents').update({
+          identity_status: 'verified',
+          identity_verified_at: new Date().toISOString(),
+          premium_frame_enabled: true
+        }).eq('id', agent_id);
+      }
+
       // delivery
       let delivery_type = 'in_app_unlock';
       let payload = { product_key, agent_id };
