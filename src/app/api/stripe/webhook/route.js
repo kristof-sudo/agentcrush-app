@@ -45,7 +45,7 @@ export async function POST(req) {
       const purchaseInsert = {
         stripe_checkout_session_id: session.id,
         stripe_payment_intent_id: session.payment_intent || null,
-        stripe_customer_id: session.customer || null,
+        stripe_customer_id: session.customer || session?.customer_details?.email || null,
         buyer_email: session?.customer_details?.email || null,
         product_key,
         amount_total: session.amount_total || null,
@@ -64,7 +64,7 @@ export async function POST(req) {
       // entitlement
       const entInsert = {
         subject_type: 'stripe_customer',
-        subject_id: String(session.customer || 'unknown'),
+        subject_id: String(session.customer || session?.customer_details?.email || session.id),
         product_key,
         status: 'active',
         source_purchase_id: purchase.id,
