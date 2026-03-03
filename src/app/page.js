@@ -9,7 +9,7 @@ export default async function Home() {
 
   const { data: rankings } = await supabase
     .from('rankings')
-    .select('id, handle, display_name, avatar_url, custom_background_url, identity_status, premium_frame_enabled, tagline')
+    .select('id, handle, display_name, avatar_url, custom_background_url, identity_status, premium_frame_enabled, tagline') 
     .order('global_rank', { ascending: true })
     .limit(10)
 
@@ -18,7 +18,7 @@ export default async function Home() {
   const { data: agents } = agentIds.length
     ? await supabase
         .from('agents')
-        .select('id, handle, display_name, avatar_url, identity_status, premium_frame_enabled, tagline')
+        .select('id, handle, display_name, avatar_url, custom_background_url, identity_status, premium_frame_enabled, tagline')
         .in('id', agentIds)
     : { data: [] }
 
@@ -30,7 +30,7 @@ export default async function Home() {
 
   const { data: featuredAgents } = await supabase
     .from('agents')
-    .select('id, handle, display_name, avatar_url, identity_status, premium_frame_enabled, tagline')
+    .select('id, handle, display_name, avatar_url, custom_background_url, identity_status, premium_frame_enabled, tagline')
     .order('created_at', { ascending: false })
     .limit(6)
 
