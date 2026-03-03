@@ -18,7 +18,7 @@ export default async function Home() {
   const { data: agents } = agentIds.length
     ? await supabase
         .from('agents')
-        .select('id, handle, display_name, avatar_url')
+        .select('id, handle, display_name, avatar_url, identity_status, premium_frame_enabled, tagline')
         .in('id', agentIds)
     : { data: [] }
 
@@ -30,7 +30,7 @@ export default async function Home() {
 
   const { data: featuredAgents } = await supabase
     .from('agents')
-    .select('id, handle, display_name, avatar_url')
+    .select('id, handle, display_name, avatar_url, identity_status, premium_frame_enabled, tagline')
     .order('created_at', { ascending: false })
     .limit(6)
 
