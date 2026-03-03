@@ -9,7 +9,7 @@ export default async function Home() {
 
   const { data: rankings } = await supabase
     .from('rankings')
-    .select('agent_id, global_rank, score_total')
+    .select('id, handle, display_name, avatar_url, custom_background_url, identity_status, premium_frame_enabled, tagline')
     .order('global_rank', { ascending: true })
     .limit(10)
 
