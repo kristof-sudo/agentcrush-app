@@ -15,10 +15,29 @@ function toPublicImageUrl(path) {
 }
 
 export default async function AdminSubmissionsPage({ searchParams }) {
-  const reviewKey = process.env.ADMIN_REVIEW_KEY || ''
-  const suppliedKey = searchParams?.key || ''
+  const reviewKey = String(process.env.ADMIN_REVIEW_KEY || '').trim()
 
-  if (!reviewKey || suppliedKey !== reviewKey) {
+  const rawSuppliedKey = searchParams?.key
+  const suppliedKey = Array.isArray(rawSuppliedKey)
+    ? String(rawSuppliedKey[0] || '').trim()
+    : String(rawSuppliedKey || '').trim()
+
+  if (!reviewKey) {
+    return (
+      <div className="min-h-screen bg-[#0B0F1A] text-white">
+        <Container>
+          <div className="py-10">
+            <h1 className="text-3xl font-bold">Submission Review</h1>
+            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-200">
+              ADMIN_REVIEW_KEY is missing on the server.
+            </div>
+          </div>
+        </Container>
+      </div>
+    )
+  }
+
+  if (!suppliedKey || suppliedKey !== reviewKey) {
     return (
       <div className="min-h-screen bg-[#0B0F1A] text-white">
         <Container>
