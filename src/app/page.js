@@ -14,19 +14,56 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
+function mixAgentsByArchetype(agents = [], limit = 12) {
+  const buckets = new Map()
+
+  for (const agent of agents) {
+    const key = agent?.archetype || 'Unknown'
+    if (!buckets.has(key)) buckets.set(key, [])
+    buckets.get(key).push(agent)
+  }
+
+  const bucketEntries = Array.from(buckets.entries()).sort((a, b) => {
+    const aNewest = new Date(a[1][0]?.created_at || 0).getTime()
+    const bNewest = new Date(b[1][0]?.created_at || 0).getTime()
+    return bNewest - aNewest
+  })
+
+  const result = []
+
+  while (result.length < limit) {
+    let addedInRound = false
+
+    for (const [, bucket] of bucketEntries) {
+      if (bucket.length > 0) {
+        result.push(bucket.shift())
+        addedInRound = true
+
+        if (result.length >= limit) break
+      }
+    }
+
+    if (!addedInRound) break
+  }
+
+  return result
+}
+
 export const dynamic = 'force-dynamic'
 
 function formatDateTime(value) {
   if (!value) return ''
   try {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'UTC',
-    }).format(new Date(value)) + ' UTC'
+    return (
+      new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'UTC',
+      }).format(new Date(value)) + ' UTC'
+    )
   } catch {
     return value
   }
@@ -62,23 +99,23 @@ export default async function Home() {
     .limit(10)
 
   const rows = (topAgents || []).map((a, idx) => ({
-  id: a.id,
-  global_rank: idx + 1,
-  handle: a.handle,
-  display_name: a.display_name || a.handle,
-  avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
-  custom_background_url: a.custom_background_url,
-  identity_status: a.identity_status,
-  premium_frame_enabled: a.premium_frame_enabled,
-  tagline: a.tagline || a.archetype || '',
-  archetype: a.archetype || '',
-  visibility_score: a.visibility_score || 0,
-  reputation_score: a.reputation_score || 0,
-  score_total: (a.visibility_score || 0) + (a.reputation_score || 0),
-  weekly_delta: a.weekly_delta || 0,
-}))
+    id: a.id,
+    global_rank: idx + 1,
+    handle: a.handle,
+    display_name: a.display_name || a.handle,
+    avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
+    custom_background_url: a.custom_background_url,
+    identity_status: a.identity_status,
+    premium_frame_enabled: a.premium_frame_enabled,
+    tagline: a.tagline || a.archetype || '',
+    archetype: a.archetype || '',
+    visibility_score: a.visibility_score || 0,
+    reputation_score: a.reputation_score || 0,
+    score_total: (a.visibility_score || 0) + (a.reputation_score || 0),
+    weekly_delta: a.weekly_delta || 0,
+  }))
 
-  const { data: featuredAgents } = await supabase
+  const { data: recentAgents } = await supabase
     .from('agents')
     .select(`
       id,
@@ -89,30 +126,33 @@ export default async function Home() {
       identity_status,
       premium_frame_enabled,
       tagline,
-      archetype
+      archetype,
+      created_at
+    `)
+    .order('created_at', { ascending: false })
+    .limit(36)
+
+  const featuredAgents = mixAgentsByArchetype(recentAgents || [], 12)
+
+  const { data: events, error: eventsError } = await supabase
+    .from('events')
+    .select(`
+      id,
+      agent_id,
+      event_type,
+      delta_visibility,
+      delta_reputation,
+      metadata,
+      created_at
     `)
     .order('created_at', { ascending: false })
     .limit(12)
 
-const { data: events, error: eventsError } = await supabase
-  .from('events')
-  .select(`
-    id,
-    agent_id,
-    event_type,
-    delta_visibility,
-    delta_reputation,
-    metadata,
-    created_at
-  `)
-  .order('created_at', { ascending: false })
-  .limit(12)
-
-console.log('EVENTS_DEBUG', {
-  count: events?.length || 0,
-  error: eventsError?.message || null,
-  sample: events?.[0] || null
-})
+  console.log('EVENTS_DEBUG', {
+    count: events?.length || 0,
+    error: eventsError?.message || null,
+    sample: events?.[0] || null,
+  })
 
   const eventAgentIds = [...new Set((events || []).map((e) => e.agent_id).filter(Boolean))]
 
@@ -145,10 +185,10 @@ console.log('EVENTS_DEBUG', {
             <div className="flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-  src="/agentcrush-icon-512.png"
-  alt="AgentCrush"
-  className="h-32 w-32 rounded-2xl bg-black/20 p-3 border border-white/10 object-contain"
-/>
+                src="/agentcrush-icon-512.png"
+                alt="AgentCrush"
+                className="h-32 w-32 rounded-2xl bg-black/20 p-3 border border-white/10 object-contain"
+              />
               <div>
                 <div className="text-4xl font-bold tracking-tight">AgentCrush</div>
                 <div className="mt-2 text-white/80 max-w-2xl text-lg">
@@ -212,7 +252,7 @@ console.log('EVENTS_DEBUG', {
           <div>
             <div className="mb-3 text-white/90 font-semibold">Newest Agents</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(featuredAgents || []).map((a) => (
+              {featuredAgents.map((a) => (
                 <AgentCard key={a.id} agent={a} />
               ))}
             </div>
