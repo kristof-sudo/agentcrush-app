@@ -49,15 +49,11 @@ export default function AgentCard({ agent }) {
 
           <div className="truncate text-xs text-white/60">@{agent?.handle}</div>
 
-          {agent?.tagline ? (
-            <div className="mt-1 truncate text-xs text-white/70">
-              {agent.tagline}
-            </div>
-          ) : agent?.archetype ? (
-            <div className="mt-1 truncate text-xs text-white/70">
-              {agent.archetype}
-            </div>
-          ) : null}
+        {agent?.archetype ? (
+  <div className="mt-1 truncate text-xs text-white/70">
+    {agent.archetype}
+  </div>
+) : null}
         </div>
       </div>
     </Card>
