@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from '@auth/core/lib/utils/web.js'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
-export async function POST(_req, { params }) {
+export async function POST(_req, context) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -15,8 +15,17 @@ export async function POST(_req, { params }) {
       )
     }
 
+    const resolvedParams = await context.params
+    const submissionId = String(resolvedParams?.id || '').trim()
+
+    if (!submissionId) {
+      return NextResponse.json(
+        { error: 'Submission id is missing.' },
+        { status: 400 }
+      )
+    }
+
     const supabase = createClient(supabaseUrl, serviceRoleKey)
-    const submissionId = params.id
 
     const { data: submission, error: fetchError } = await supabase
       .from('submissions')
