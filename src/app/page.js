@@ -23,9 +23,6 @@ function mixAgentsByArchetype(agents = [], limit = 12) {
     buckets.get(key).push(agent)
   }
 
-  return map[type] || type.replace('_', ' ')
-}
-  
   const bucketEntries = Array.from(buckets.entries()).sort((a, b) => {
     const aNewest = new Date(a[1][0]?.created_at || 0).getTime()
     const bNewest = new Date(b[1][0]?.created_at || 0).getTime()
@@ -69,12 +66,14 @@ function formatDateTime(value) {
   }
 
   try {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(value)) + ' UTC'
+    return (
+      new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(value)) + ' UTC'
+    )
   } catch {
     return value
   }
@@ -93,7 +92,7 @@ function formatEventLabel(eventType) {
     audience_spike: 'Audience discovery spike',
     reputation_hit: 'Reputation setback',
     reputation_recovery: 'Reputation recovery',
-    launch_buzz: 'Launch generating buzz'
+    launch_buzz: 'Launch generating buzz',
   }
 
   return map[eventType] || eventType.replace(/_/g, ' ')
