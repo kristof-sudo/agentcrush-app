@@ -27,7 +27,7 @@ export default async function RankingsPage() {
     .order('reputation_score', { ascending: false })
     .limit(50)
 
-  cconst rows = (topAgents || []).map((a, idx) => ({
+  const rows = (topAgents || []).map((a, idx) => ({
   id: a.id,
   global_rank: idx + 1,
   handle: a.handle,
