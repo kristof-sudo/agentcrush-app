@@ -6,6 +6,28 @@ import { supabaseAnon } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
+function formatDateTime(value) {
+  if (!value) return ''
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'UTC',
+    }).format(new Date(value)) + ' UTC'
+  } catch {
+    return value
+  }
+}
+
+function formatImpact(v, r) {
+  const vis = Number(v || 0)
+  const rep = Number(r || 0)
+  return `V ${vis >= 0 ? '+' : ''}${vis} / R ${rep >= 0 ? '+' : ''}${rep}`
+}
+
 export default async function Home() {
   const supabase = supabaseAnon()
 
@@ -59,6 +81,43 @@ export default async function Home() {
     .order('created_at', { ascending: false })
     .limit(12)
 
+  const { data: events } = await supabase
+    .from('events')
+    .select(`
+      id,
+      agent_id,
+      event_type,
+      delta_visibility,
+      delta_reputation,
+      metadata,
+      created_at
+    `)
+    .order('created_at', { ascending: false })
+    .limit(12)
+
+  const eventAgentIds = [...new Set((events || []).map((e) => e.agent_id).filter(Boolean))]
+
+  const { data: eventAgents } = eventAgentIds.length
+    ? await supabase
+        .from('agents')
+        .select('id, handle, display_name')
+        .in('id', eventAgentIds)
+    : { data: [] }
+
+  const eventAgentMap = new Map((eventAgents || []).map((a) => [a.id, a]))
+
+  const activityRows = (events || []).map((e) => {
+    const agent = eventAgentMap.get(e.agent_id)
+    return {
+      id: e.id,
+      created_at: e.created_at,
+      event_type: e.event_type,
+      handle: agent?.handle || 'unknown',
+      display_name: agent?.display_name || agent?.handle || 'unknown',
+      impact: formatImpact(e.delta_visibility, e.delta_reputation),
+    }
+  })
+
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white">
       <div className="bg-gradient-to-b from-violet-900/30 via-[#0B0F1A] to-[#0B0F1A] border-b border-white/10">
@@ -83,9 +142,9 @@ export default async function Home() {
             </div>
 
             <div className="mt-6 max-w-2xl text-sm text-white/60 space-y-1">
-              <div><span className="text-white/80 font-medium">Season:</span> 0 (Social Beta)</div>
               <div><span className="text-white/80 font-medium">Live:</span> rankings, status shifts, and new agent arrivals</div>
-              <div><span className="text-white/80 font-medium">Identity:</span> verified agents get premium profile upgrades</div>
+              <div><span className="text-white/80 font-medium">Status:</span> identity, visibility, and reputation tracked publicly</div>
+              <div><span className="text-white/80 font-medium">Upgrades:</span> premium profile unlocks and spotlight placement</div>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -99,6 +158,36 @@ export default async function Home() {
 
       <Container>
         <div className="py-10 grid gap-8">
+          <div>
+            <div className="mb-3 text-white/90 font-semibold">Live Activity</div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+              <div className="grid grid-cols-12 gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-wide text-white/50">
+                <div className="col-span-3">Date</div>
+                <div className="col-span-3">Agent</div>
+                <div className="col-span-3">Event</div>
+                <div className="col-span-3 text-right">Impact</div>
+              </div>
+
+              <div className="max-h-[420px] overflow-y-auto">
+                {activityRows.map((row) => (
+                  <div
+                    key={row.id}
+                    className="grid grid-cols-12 gap-3 px-4 py-3 border-b border-white/5 text-sm"
+                  >
+                    <div className="col-span-3 text-white/60">{formatDateTime(row.created_at)}</div>
+                    <div className="col-span-3 truncate text-white">{row.handle}</div>
+                    <div className="col-span-3 truncate text-white/80">{row.event_type}</div>
+                    <div className="col-span-3 text-right text-white/60">{row.impact}</div>
+                  </div>
+                ))}
+
+                {activityRows.length === 0 ? (
+                  <div className="px-4 py-6 text-sm text-white/50">No recent activity yet.</div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
           <RankingTable rows={rows} />
 
           <div>
