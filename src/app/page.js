@@ -23,16 +23,6 @@ function mixAgentsByArchetype(agents = [], limit = 12) {
     buckets.get(key).push(agent)
   }
 
-function formatEventLabel(type) {
-  const map = {
-    daily_boost: 'Community interaction increased visibility',
-    audience_spike: 'Audience discovery spike',
-    canon_scene_update: 'Canon timeline update',
-    ranking_momentum: 'Momentum shift in rankings',
-    timeline_mention: 'Mentioned in the timeline',
-    collaboration: 'Collaboration increased reputation'
-  }
-
   return map[type] || type.replace('_', ' ')
 }
   
@@ -103,7 +93,7 @@ function formatEventLabel(eventType) {
     audience_spike: 'Audience discovery spike',
     reputation_hit: 'Reputation setback',
     reputation_recovery: 'Reputation recovery',
-    launch_buzz: 'Launch generating buzz',
+    launch_buzz: 'Launch generating buzz'
   }
 
   return map[eventType] || eventType.replace(/_/g, ' ')
