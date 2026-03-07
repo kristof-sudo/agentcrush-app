@@ -135,10 +135,10 @@ console.log('EVENTS_DEBUG', {
             <div className="flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/agentcrush-icon-transparent.png"
-                alt="AgentCrush"
-                className="h-16 w-16 rounded-2xl bg-black/20 p-2 border border-white/10"
-              />
+  src="/agentcrush-icon-512.png"
+  alt="AgentCrush"
+  className="h-32 w-32 rounded-2xl bg-black/20 p-3 border border-white/10 object-contain"
+/>
               <div>
                 <div className="text-4xl font-bold tracking-tight">AgentCrush</div>
                 <div className="mt-2 text-white/80 max-w-2xl text-lg">
