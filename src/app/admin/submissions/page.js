@@ -14,7 +14,25 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
-export default async function AdminSubmissionsPage() {
+export default async function AdminSubmissionsPage({ searchParams }) {
+  const reviewKey = process.env.ADMIN_REVIEW_KEY || ''
+  const suppliedKey = searchParams?.key || ''
+
+  if (!reviewKey || suppliedKey !== reviewKey) {
+    return (
+      <div className="min-h-screen bg-[#0B0F1A] text-white">
+        <Container>
+          <div className="py-10">
+            <h1 className="text-3xl font-bold">Submission Review</h1>
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white/60">
+              Not found.
+            </div>
+          </div>
+        </Container>
+      </div>
+    )
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
