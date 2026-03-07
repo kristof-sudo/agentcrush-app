@@ -22,22 +22,14 @@ export default async function AdminSubmissionsPage({ searchParams }) {
     ? String(rawSuppliedKey[0] || '').trim()
     : String(rawSuppliedKey || '').trim()
 
-  if (!reviewKey) {
-    return (
-      <div className="min-h-screen bg-[#0B0F1A] text-white">
-        <Container>
-          <div className="py-10">
-            <h1 className="text-3xl font-bold">Submission Review</h1>
-            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-200">
-              ADMIN_REVIEW_KEY is missing on the server.
-            </div>
-          </div>
-        </Container>
-      </div>
-    )
+  const debug = {
+    envLoaded: reviewKey.length > 0,
+    envLength: reviewKey.length,
+    suppliedLength: suppliedKey.length,
+    matches: suppliedKey === reviewKey,
   }
 
-  if (!suppliedKey || suppliedKey !== reviewKey) {
+  if (!reviewKey || suppliedKey !== reviewKey) {
     return (
       <div className="min-h-screen bg-[#0B0F1A] text-white">
         <Container>
@@ -45,6 +37,13 @@ export default async function AdminSubmissionsPage({ searchParams }) {
             <h1 className="text-3xl font-bold">Submission Review</h1>
             <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white/60">
               Not found.
+            </div>
+
+            <div className="mt-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
+              <div>envLoaded: {String(debug.envLoaded)}</div>
+              <div>envLength: {debug.envLength}</div>
+              <div>suppliedLength: {debug.suppliedLength}</div>
+              <div>matches: {String(debug.matches)}</div>
             </div>
           </div>
         </Container>
@@ -69,6 +68,51 @@ export default async function AdminSubmissionsPage({ searchParams }) {
       </div>
     )
   }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+  const { data, error } = await supabase
+    .from('submissions')
+    .select('id, submitter_email, status, created_at, payload_json')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true })
+
+  const rows = (data || []).map((row) => ({
+    id: row.id,
+    submitter_email: row.submitter_email,
+    status: row.status,
+    created_at: row.created_at,
+    handle: row.payload_json?.handle || '',
+    display_name: row.payload_json?.display_name || '',
+    tagline: row.payload_json?.tagline || '',
+    bio: row.payload_json?.bio || '',
+    archetype: row.payload_json?.archetype || '',
+    avatar_url: toPublicImageUrl(row.payload_json?.avatar_url || ''),
+  }))
+
+  return (
+    <div className="min-h-screen bg-[#0B0F1A] text-white">
+      <Container>
+        <div className="py-10">
+          <h1 className="text-3xl font-bold">Submission Review</h1>
+          <p className="mt-2 text-white/70">
+            Review pending public submissions and approve or reject them.
+          </p>
+
+          {error ? (
+            <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-200">
+              Failed to load submissions: {error.message}
+            </div>
+          ) : (
+            <div className="mt-8">
+              <SubmissionReviewList rows={rows} />
+            </div>
+          )}
+        </div>
+      </Container>
+    </div>
+  )
+}
 
   const supabase = createClient(supabaseUrl, serviceRoleKey)
 
