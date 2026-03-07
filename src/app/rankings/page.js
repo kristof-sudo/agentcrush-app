@@ -27,19 +27,22 @@ export default async function RankingsPage() {
     .order('reputation_score', { ascending: false })
     .limit(50)
 
-  const rows = (agents || []).map((a, idx) => ({
-    id: a.id,
-    global_rank: idx + 1,
-    handle: a.handle,
-    display_name: a.display_name || a.handle,
-    avatar_url: a.avatar_url,
-    custom_background_url: a.custom_background_url,
-    identity_status: a.identity_status,
-    premium_frame_enabled: a.premium_frame_enabled,
-    tagline: a.tagline || a.archetype || '',
-    score_total: (a.visibility_score || 0) + (a.reputation_score || 0),
-    weekly_delta: a.weekly_delta || 0,
-  }))
+  cconst rows = (topAgents || []).map((a, idx) => ({
+  id: a.id,
+  global_rank: idx + 1,
+  handle: a.handle,
+  display_name: a.display_name || a.handle,
+  avatar_url: a.avatar_url,
+  custom_background_url: a.custom_background_url,
+  identity_status: a.identity_status,
+  premium_frame_enabled: a.premium_frame_enabled,
+  tagline: a.tagline || a.archetype || '',
+  archetype: a.archetype || '',
+  visibility_score: a.visibility_score || 0,
+  reputation_score: a.reputation_score || 0,
+  score_total: (a.visibility_score || 0) + (a.reputation_score || 0),
+  weekly_delta: a.weekly_delta || 0,
+}))
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white">
