@@ -1,4 +1,4 @@
-import { NextResponse } from '@auth/core/lib/utils/web.js'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
