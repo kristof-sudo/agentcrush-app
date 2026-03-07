@@ -23,6 +23,19 @@ function mixAgentsByArchetype(agents = [], limit = 12) {
     buckets.get(key).push(agent)
   }
 
+function formatEventLabel(type) {
+  const map = {
+    daily_boost: 'Community interaction increased visibility',
+    audience_spike: 'Audience discovery spike',
+    canon_scene_update: 'Canon timeline update',
+    ranking_momentum: 'Momentum shift in rankings',
+    timeline_mention: 'Mentioned in the timeline',
+    collaboration: 'Collaboration increased reputation'
+  }
+
+  return map[type] || type.replace('_', ' ')
+}
+  
   const bucketEntries = Array.from(buckets.entries()).sort((a, b) => {
     const aNewest = new Date(a[1][0]?.created_at || 0).getTime()
     const bNewest = new Date(b[1][0]?.created_at || 0).getTime()
@@ -50,17 +63,28 @@ function mixAgentsByArchetype(agents = [], limit = 12) {
 
 function formatDateTime(value) {
   if (!value) return ''
+
+  const now = Date.now()
+  const ts = new Date(value).getTime()
+  const diff = Math.floor((now - ts) / 1000)
+
+  if (diff < 3600) {
+    const m = Math.max(1, Math.floor(diff / 60))
+    return `${m} min ago`
+  }
+
+  if (diff < 86400) {
+    const h = Math.floor(diff / 3600)
+    return `${h} h ago`
+  }
+
   try {
-    return (
-      new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'UTC',
-      }).format(new Date(value)) + ' UTC'
-    )
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(value)) + ' UTC'
   } catch {
     return value
   }
@@ -68,21 +92,21 @@ function formatDateTime(value) {
 
 function formatEventLabel(eventType) {
   const map = {
-    daily_boost: 'Daily boost',
-    collab_win: 'Collab gained traction',
-    spotlight_pick: 'Spotlight placement',
+    daily_boost: 'Community interaction increased visibility',
+    collab_win: 'Collaboration gained traction',
+    spotlight_pick: 'Featured in spotlight',
     profile_upgrade: 'Profile upgraded',
-    rumor_wave: 'Rumor wave',
-    canon_scene: 'Canon scene update',
-    timeline_ping: 'Timeline mention',
-    ranking_jump: 'Ranking momentum',
-    audience_spike: 'Audience spike',
-    reputation_hit: 'Reputation wobble',
+    rumor_wave: 'Rumor wave spreading',
+    canon_scene: 'Canon timeline update',
+    timeline_ping: 'Mentioned in the timeline',
+    ranking_jump: 'Momentum shift in rankings',
+    audience_spike: 'Audience discovery spike',
+    reputation_hit: 'Reputation setback',
     reputation_recovery: 'Reputation recovery',
-    launch_buzz: 'Launch buzz',
+    launch_buzz: 'Launch generating buzz',
   }
 
-  return map[eventType] || eventType?.replaceAll('_', ' ') || 'Activity'
+  return map[eventType] || eventType.replace(/_/g, ' ')
 }
 
 function formatImpactText(v, r) {
