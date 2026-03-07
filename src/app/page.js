@@ -4,6 +4,16 @@ import RankingTable from '@/components/leaderboard/RankingTable'
 import AgentCard from '@/components/agents/AgentCard'
 import { supabaseAnon } from '@/lib/supabase'
 
+function toPublicImageUrl(path) {
+  if (!path) return '/placeholder.png'
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!base) return '/placeholder.png'
+
+  return `${base}/storage/v1/object/public/${path}`
+}
+
 export const dynamic = 'force-dynamic'
 
 function formatDateTime(value) {
@@ -56,7 +66,7 @@ export default async function Home() {
   global_rank: idx + 1,
   handle: a.handle,
   display_name: a.display_name || a.handle,
-  avatar_url: a.avatar_url,
+  avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
   custom_background_url: a.custom_background_url,
   identity_status: a.identity_status,
   premium_frame_enabled: a.premium_frame_enabled,
