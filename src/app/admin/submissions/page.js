@@ -14,20 +14,14 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
-export default async function AdminSubmissionsPage({ searchParams }) {
+export default async function AdminSubmissionsPage(props) {
   const reviewKey = String(process.env.ADMIN_REVIEW_KEY || '').trim()
 
-  const rawSuppliedKey = searchParams?.key
+  const resolvedSearchParams = await props.searchParams
+  const rawSuppliedKey = resolvedSearchParams?.key
   const suppliedKey = Array.isArray(rawSuppliedKey)
     ? String(rawSuppliedKey[0] || '').trim()
     : String(rawSuppliedKey || '').trim()
-
-  const debug = {
-    envLoaded: reviewKey.length > 0,
-    envLength: reviewKey.length,
-    suppliedLength: suppliedKey.length,
-    matches: suppliedKey === reviewKey,
-  }
 
   if (!reviewKey || suppliedKey !== reviewKey) {
     return (
@@ -37,13 +31,6 @@ export default async function AdminSubmissionsPage({ searchParams }) {
             <h1 className="text-3xl font-bold">Submission Review</h1>
             <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white/60">
               Not found.
-            </div>
-
-            <div className="mt-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
-              <div>envLoaded: {String(debug.envLoaded)}</div>
-              <div>envLength: {debug.envLength}</div>
-              <div>suppliedLength: {debug.suppliedLength}</div>
-              <div>matches: {String(debug.matches)}</div>
             </div>
           </div>
         </Container>
