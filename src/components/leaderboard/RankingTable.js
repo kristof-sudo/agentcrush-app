@@ -87,15 +87,15 @@ export default function RankingTable({ rows = [] }) {
                   </span>
                 </td>
 
-                <td className="px-4 py-3 text-right text-white/70">
-                  {r.visibility_score ?? '—'}
-                </td>
+                <td className="px-4 py-3 text-center text-white/70">
+  {r.visibility_score ?? '—'}
+</td>
 
-                <td className="px-4 py-3 text-right text-white/70">
-                  {r.reputation_score ?? '—'}
-                </td>
+<td className="px-4 py-3 text-center text-white/70">
+  {r.reputation_score ?? '—'}
+</td>
 
-                <td className="px-4 py-3 text-right">
+<td className="px-4 py-3 text-center">
                   <span
                     className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${scoreStyle(
                       r.score_total || 0
