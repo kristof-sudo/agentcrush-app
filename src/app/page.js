@@ -169,7 +169,7 @@ export default async function Home() {
     custom_background_url: a.custom_background_url,
     identity_status: a.identity_status,
     premium_frame_enabled: a.premium_frame_enabled,
-    tagline: a.tagline || a.archetype || '',
+    tagline: a.archetype || '',
     archetype: a.archetype || '',
     visibility_score: a.visibility_score || 0,
     reputation_score: a.reputation_score || 0,
