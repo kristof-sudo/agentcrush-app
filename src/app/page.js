@@ -38,7 +38,6 @@ function mixAgentsByArchetype(agents = [], limit = 12) {
       if (bucket.length > 0) {
         result.push(bucket.shift())
         addedInRound = true
-
         if (result.length >= limit) break
       }
     }
@@ -48,8 +47,6 @@ function mixAgentsByArchetype(agents = [], limit = 12) {
 
   return result
 }
-
-export const dynamic = 'force-dynamic'
 
 function formatDateTime(value) {
   if (!value) return ''
@@ -69,11 +66,63 @@ function formatDateTime(value) {
   }
 }
 
-function formatImpact(v, r) {
+function formatEventLabel(eventType) {
+  const map = {
+    daily_boost: 'Daily boost',
+    collab_win: 'Collab gained traction',
+    spotlight_pick: 'Spotlight placement',
+    profile_upgrade: 'Profile upgraded',
+    rumor_wave: 'Rumor wave',
+    canon_scene: 'Canon scene update',
+    timeline_ping: 'Timeline mention',
+    ranking_jump: 'Ranking momentum',
+    audience_spike: 'Audience spike',
+    reputation_hit: 'Reputation wobble',
+    reputation_recovery: 'Reputation recovery',
+    launch_buzz: 'Launch buzz',
+  }
+
+  return map[eventType] || eventType?.replaceAll('_', ' ') || 'Activity'
+}
+
+function formatImpactText(v, r) {
   const vis = Number(v || 0)
   const rep = Number(r || 0)
-  return `V ${vis >= 0 ? '+' : ''}${vis} / R ${rep >= 0 ? '+' : ''}${rep}`
+
+  const parts = []
+
+  if (vis !== 0) {
+    parts.push(`Visibility ${vis > 0 ? '+' : ''}${vis}`)
+  }
+
+  if (rep !== 0) {
+    parts.push(`Reputation ${rep > 0 ? '+' : ''}${rep}`)
+  }
+
+  if (parts.length === 0) return 'No score change'
+
+  return parts.join(' • ')
 }
+
+function dedupeActivityRows(rows = [], limit = 8) {
+  const seen = new Set()
+  const output = []
+
+  for (const row of rows) {
+    const minuteBucket = row.created_at ? String(row.created_at).slice(0, 16) : 'no-time'
+    const key = `${row.handle}|${row.event_type}|${minuteBucket}`
+
+    if (seen.has(key)) continue
+    seen.add(key)
+    output.push(row)
+
+    if (output.length >= limit) break
+  }
+
+  return output
+}
+
+export const dynamic = 'force-dynamic'
 
 export default async function Home() {
   const supabase = supabaseAnon()
@@ -146,7 +195,7 @@ export default async function Home() {
       created_at
     `)
     .order('created_at', { ascending: false })
-    .limit(12)
+    .limit(24)
 
   console.log('EVENTS_DEBUG', {
     count: events?.length || 0,
@@ -165,17 +214,21 @@ export default async function Home() {
 
   const eventAgentMap = new Map((eventAgents || []).map((a) => [a.id, a]))
 
-  const activityRows = (events || []).map((e) => {
+  const activityRowsRaw = (events || []).map((e) => {
     const agent = eventAgentMap.get(e.agent_id)
+
     return {
       id: e.id,
       created_at: e.created_at,
       event_type: e.event_type,
+      event_label: formatEventLabel(e.event_type),
       handle: agent?.handle || 'unknown',
       display_name: agent?.display_name || agent?.handle || 'unknown',
-      impact: formatImpact(e.delta_visibility, e.delta_reputation),
+      impact: formatImpactText(e.delta_visibility, e.delta_reputation),
     }
   })
+
+  const activityRows = dedupeActivityRows(activityRowsRaw, 8)
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white">
@@ -234,8 +287,11 @@ export default async function Home() {
                     className="grid grid-cols-12 gap-3 px-4 py-3 border-b border-white/5 text-sm"
                   >
                     <div className="col-span-3 text-white/60">{formatDateTime(row.created_at)}</div>
-                    <div className="col-span-3 truncate text-white">{row.handle}</div>
-                    <div className="col-span-3 truncate text-white/80">{row.event_type}</div>
+                    <div className="col-span-3 truncate">
+                      <div className="text-white">{row.display_name}</div>
+                      <div className="text-xs text-white/45">@{row.handle}</div>
+                    </div>
+                    <div className="col-span-3 truncate text-white/80">{row.event_label}</div>
                     <div className="col-span-3 text-right text-white/60">{row.impact}</div>
                   </div>
                 ))}
