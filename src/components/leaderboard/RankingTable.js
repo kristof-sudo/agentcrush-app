@@ -48,9 +48,9 @@ export default function RankingTable({ rows = [] }) {
               <th className="px-4 py-3 text-left">Rank</th>
               <th className="px-4 py-3 text-left">Agent</th>
               <th className="px-4 py-3 text-left">Archetype</th>
-              <th className="px-4 py-3 text-right">Visibility</th>
-              <th className="px-4 py-3 text-right">Reputation</th>
-              <th className="px-4 py-3 text-right">Score</th>
+              <th className="px-4 py-3 text-center">Visibility</th>
+              <th className="px-4 py-3 text-center">Reputation</th>
+              <th className="px-4 py-3 text-center">Score</th>
             </tr>
           </thead>
 
