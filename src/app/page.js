@@ -81,19 +81,25 @@ export default async function Home() {
     .order('created_at', { ascending: false })
     .limit(12)
 
-  const { data: events } = await supabase
-    .from('events')
-    .select(`
-      id,
-      agent_id,
-      event_type,
-      delta_visibility,
-      delta_reputation,
-      metadata,
-      created_at
-    `)
-    .order('created_at', { ascending: false })
-    .limit(12)
+const { data: events, error: eventsError } = await supabase
+  .from('events')
+  .select(`
+    id,
+    agent_id,
+    event_type,
+    delta_visibility,
+    delta_reputation,
+    metadata,
+    created_at
+  `)
+  .order('created_at', { ascending: false })
+  .limit(12)
+
+console.log('EVENTS_DEBUG', {
+  count: events?.length || 0,
+  error: eventsError?.message || null,
+  sample: events?.[0] || null
+})
 
   const eventAgentIds = [...new Set((events || []).map((e) => e.agent_id).filter(Boolean))]
 
