@@ -52,18 +52,21 @@ export default async function Home() {
     .limit(10)
 
   const rows = (topAgents || []).map((a, idx) => ({
-    id: a.id,
-    global_rank: idx + 1,
-    handle: a.handle,
-    display_name: a.display_name || a.handle,
-    avatar_url: a.avatar_url,
-    custom_background_url: a.custom_background_url,
-    identity_status: a.identity_status,
-    premium_frame_enabled: a.premium_frame_enabled,
-    tagline: a.tagline || a.archetype || '',
-    score_total: (a.visibility_score || 0) + (a.reputation_score || 0),
-    weekly_delta: a.weekly_delta || 0,
-  }))
+  id: a.id,
+  global_rank: idx + 1,
+  handle: a.handle,
+  display_name: a.display_name || a.handle,
+  avatar_url: a.avatar_url,
+  custom_background_url: a.custom_background_url,
+  identity_status: a.identity_status,
+  premium_frame_enabled: a.premium_frame_enabled,
+  tagline: a.tagline || a.archetype || '',
+  archetype: a.archetype || '',
+  visibility_score: a.visibility_score || 0,
+  reputation_score: a.reputation_score || 0,
+  score_total: (a.visibility_score || 0) + (a.reputation_score || 0),
+  weekly_delta: a.weekly_delta || 0,
+}))
 
   const { data: featuredAgents } = await supabase
     .from('agents')
