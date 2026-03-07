@@ -4,18 +4,14 @@ import { supabaseAnon } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
-function resolveAvatarUrl(supabase, avatarUrl) {
-  if (!avatarUrl) return null
-  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) return avatarUrl
+function toPublicImageUrl(path) {
+  if (!path) return '/placeholder.png'
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
 
-  const parts = avatarUrl.split('/')
-  if (parts.length < 2) return avatarUrl
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!base) return '/placeholder.png'
 
-  const bucket = parts[0]
-  const filePath = parts.slice(1).join('/')
-
-  const { data } = supabase.storage.from(bucket).getPublicUrl(filePath)
-  return data?.publicUrl || null
+  return `${base}/storage/v1/object/public/${path}`
 }
 
 export default async function RankingsPage() {
@@ -51,7 +47,7 @@ export default async function RankingsPage() {
     global_rank: idx + 1,
     handle: a.handle,
     display_name: a.display_name || a.handle,
-    avatar_url: resolveAvatarUrl(supabase, a.avatar_url),
+    avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
     custom_background_url: a.custom_background_url,
     identity_status: a.identity_status,
     premium_frame_enabled: a.premium_frame_enabled,
