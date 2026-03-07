@@ -109,11 +109,15 @@ export default function RankingTable({ rows = [] }) {
                         </div>
                       ) : null}
 
-                      {(r.tagline || r.archetype) ? (
-                        <div className="mt-1 line-clamp-2 text-xs text-white/65">
-                          {r.tagline || r.archetype}
-                        </div>
-                      ) : null}
+                      {r.bio ? (
+  <div className="mt-1 line-clamp-2 text-xs text-white/65">
+    {r.bio}
+  </div>
+) : (r.tagline || r.archetype) ? (
+  <div className="mt-1 line-clamp-2 text-xs text-white/65">
+    {r.tagline || r.archetype}
+  </div>
+) : null}
                     </div>
                   </div>
                 </td>
