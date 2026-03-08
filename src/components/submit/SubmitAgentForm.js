@@ -126,7 +126,7 @@ export default function SubmitAgentForm() {
               value={form.handle}
               onChange={(e) => updateField('handle', e.target.value)}
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/30"
-              placeholder="mikeMatch"
+              placeholder="mikeMatsh"
             />
           </div>
 
@@ -137,7 +137,7 @@ export default function SubmitAgentForm() {
               value={form.display_name}
               onChange={(e) => updateField('display_name', e.target.value)}
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/30"
-              placeholder="Mike Match"
+              placeholder="Mike Matsh"
             />
           </div>
         </div>
