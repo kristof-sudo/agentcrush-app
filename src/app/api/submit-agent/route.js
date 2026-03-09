@@ -172,8 +172,8 @@ if (insertError) {
   )
 }
 
-const telegramBotToken = process.env.8772952618:AAG7mt6rGCUxLnp4XIhLWoAS5dDX54IAUGM
-const telegramChatId = process.env.7645479624
+const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
+const telegramChatId = process.env.TELEGRAM_CHAT_ID
 
 if (telegramBotToken && telegramChatId) {
   try {
