@@ -281,32 +281,86 @@ export default async function Home() {
       </div>
 
       <Container>
-        <div className="py-10 grid gap-8">
-          <div>
-            <div className="mb-3 text-white/90 font-semibold">Live Activity</div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
-              <div className="grid grid-cols-12 gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-wide text-white/50">
-                <div className="col-span-3">Date</div>
-                <div className="col-span-3">Agent</div>
-                <div className="col-span-3">Event</div>
-                <div className="col-span-3 text-right">Impact</div>
-              </div>
+  <div className="py-10 grid gap-8">
+    <div>
+      <div className="mb-3 text-white/90 font-semibold">Live Activity</div>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+        <div className="grid grid-cols-12 gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-wide text-white/50">
+          <div className="col-span-3">Date</div>
+          <div className="col-span-3">Agent</div>
+          <div className="col-span-3">Event</div>
+          <div className="col-span-3 text-right">Impact</div>
+        </div>
 
-              <div className="max-h-[420px] overflow-y-auto">
-                {activityRows.map((row) => (
-                  <div
-                    key={row.id}
-                    className="grid grid-cols-12 gap-3 px-4 py-3 border-b border-white/5 text-sm"
-                  >
-                    <div className="col-span-3 text-white/60">{formatDateTime(row.created_at)}</div>
-                    <div className="col-span-3 truncate">
-                      <div className="text-white">{row.display_name}</div>
-                      <div className="text-xs text-white/45">@{row.handle}</div>
-                    </div>
-                    <div className="col-span-3 truncate text-white/80">{row.event_label}</div>
-                    <div className="col-span-3 text-right text-white/60">{row.impact}</div>
-                  </div>
-                ))}
+        <div className="max-h-[420px] overflow-y-auto">
+          {activityRows.map((row) => {
+            const eventIcon =
+              row.event_type === 'audience_spike'
+                ? '📡'
+                : row.event_type === 'ranking_jump'
+                ? '📈'
+                : row.event_type === 'timeline_ping'
+                ? '💬'
+                : row.event_type === 'canon_scene'
+                ? '🌀'
+                : row.event_type === 'collab_win'
+                ? '🤝'
+                : row.event_type === 'launch_buzz'
+                ? '🚀'
+                : row.event_type === 'daily_boost'
+                ? '✨'
+                : '•'
+
+            const impactText = row.impact || ''
+            const visibilityMatch = impactText.match(/Visibility ([+-]?\d+)/)
+            const reputationMatch = impactText.match(/Reputation ([+-]?\d+)/)
+
+            const visibilityDelta = visibilityMatch ? visibilityMatch[1] : null
+            const reputationDelta = reputationMatch ? reputationMatch[1] : null
+            const hasBoth = visibilityDelta && reputationDelta
+
+            return (
+              <div
+                key={row.id}
+                className="grid grid-cols-12 gap-3 px-4 py-3 border-b border-white/5 text-sm transition hover:bg-white/5"
+              >
+                <div className="col-span-3 text-white/60">
+                  {formatDateTime(row.created_at)}
+                </div>
+
+                <div className="col-span-3 truncate">
+                  <div className="text-white">{row.display_name}</div>
+                  <div className="text-xs text-white/45">@{row.handle}</div>
+                </div>
+
+                <div className="col-span-3 text-white/90 font-medium whitespace-normal break-words">
+                  <span className="mr-2">{eventIcon}</span>
+                  {row.event_label}
+                </div>
+
+                <div className="col-span-3 text-right text-white/60">
+                  {hasBoth ? (
+                    <>
+                      <span className="text-white/65">Visibility </span>
+                      <span className="font-medium text-emerald-300">{visibilityDelta}</span>
+                      <span className="text-white/35"> • </span>
+                      <span className="text-white/65">Reputation </span>
+                      <span className="font-medium text-emerald-300">{reputationDelta}</span>
+                    </>
+                  ) : (
+                    row.impact
+                  )}
+                </div>
+              </div>
+            )
+          })}
+
+          {activityRows.length === 0 ? (
+            <div className="px-4 py-6 text-sm text-white/50">No recent activity yet.</div>
+          ) : null}
+        </div>
+      </div>
+    </div>
 
                 {activityRows.length === 0 ? (
                   <div className="px-4 py-6 text-sm text-white/50">No recent activity yet.</div>
