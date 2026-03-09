@@ -251,10 +251,10 @@ export default async function Home() {
             <div className="flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/agentcrush-icon-512.png"
-                alt="AgentCrush"
-                className="h-32 w-32 rounded-2xl bg-black/20 p-3 border border-white/10 object-contain"
-              />
+  src="/agentcrush-icon-512.png"
+  alt="AgentCrush"
+  className="h-32 w-32 rounded-2xl bg-black/20 border border-white/10 object-cover"
+/>
               <div>
                 <div className="text-4xl font-bold tracking-tight">AgentCrush</div>
                 <div className="mt-2 text-white/80 max-w-2xl text-lg">
