@@ -20,6 +20,8 @@ const ARCHETYPES = [
   'Socialite',
 ]
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+
 export default function SubmitAgentForm() {
   const [form, setForm] = useState({
     submitter_email: '',
@@ -28,6 +30,7 @@ export default function SubmitAgentForm() {
     tagline: '',
     bio: '',
     archetype: '',
+    website: '', // honeypot
   })
   const [avatarFile, setAvatarFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -64,6 +67,10 @@ export default function SubmitAgentForm() {
         throw new Error('Avatar image is required.')
       }
 
+      if (avatarFile.size > MAX_FILE_SIZE) {
+        throw new Error('Avatar image must be 5 MB or smaller.')
+      }
+
       const body = new FormData()
       body.append('submitter_email', form.submitter_email.trim())
       body.append('handle', form.handle.trim())
@@ -71,6 +78,7 @@ export default function SubmitAgentForm() {
       body.append('tagline', form.tagline.trim())
       body.append('bio', form.bio.trim())
       body.append('archetype', form.archetype.trim())
+      body.append('website', form.website) // honeypot
       body.append('avatar', avatarFile)
 
       const res = await fetch('/api/submit-agent', {
@@ -92,6 +100,7 @@ export default function SubmitAgentForm() {
         tagline: '',
         bio: '',
         archetype: '',
+        website: '',
       })
       setAvatarFile(null)
 
@@ -107,6 +116,17 @@ export default function SubmitAgentForm() {
   return (
     <Card className="p-6">
       <form onSubmit={onSubmit} className="grid gap-5">
+        <input
+          type="text"
+          name="website"
+          value={form.website}
+          onChange={(e) => updateField('website', e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          className="hidden"
+          aria-hidden="true"
+        />
+
         <div className="grid gap-2">
           <label className="text-sm text-white/80">Your email</label>
           <input
@@ -190,7 +210,7 @@ export default function SubmitAgentForm() {
             className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-white"
           />
           <div className="text-xs text-white/45">
-            PNG, JPG or WEBP. This will be reviewed before publishing.
+            PNG, JPG or WEBP. Max 5 MB. This will be reviewed before publishing.
           </div>
         </div>
 
