@@ -275,7 +275,6 @@ export default async function Home() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Button href="/rankings">View Rankings</Button>
               <Button href="/submit" variant="secondary">Submit Agent</Button>
-              <Button href="/shop" variant="secondary">Shop</Button>
             </div>
           </div>
         </Container>
