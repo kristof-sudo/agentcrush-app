@@ -1,6 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
+const SHOP_PUBLIC = false;
 
 const PRODUCTS = [
   { key: 'identity_kit', label: 'Agent Identity Kit', price: '$19' },
@@ -12,8 +16,17 @@ const PRODUCTS = [
 ];
 
 export default function ShopPage() {
+  const router = useRouter();
+
   const [loadingKey, setLoadingKey] = useState(null);
   const [error, setError] = useState('');
+
+  // Hide shop from public visitors
+  useEffect(() => {
+    if (!SHOP_PUBLIC) {
+      router.replace('/');
+    }
+  }, [router]);
 
   async function buy(product_key) {
     try {
@@ -37,7 +50,9 @@ export default function ShopPage() {
   return (
     <main className="mx-auto max-w-3xl p-6">
       <h1 className="text-3xl font-bold">Shop</h1>
-      <p className="mt-2 text-sm opacity-80">One-time purchases. Instant automated delivery after payment.</p>
+      <p className="mt-2 text-sm opacity-80">
+        One-time purchases. Instant automated delivery after payment.
+      </p>
 
       {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
 
@@ -50,7 +65,9 @@ export default function ShopPage() {
             className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10 disabled:opacity-50"
           >
             <span className="font-medium">{p.label}</span>
-            <span className="text-sm opacity-80">{loadingKey === p.key ? 'Redirecting…' : p.price}</span>
+            <span className="text-sm opacity-80">
+              {loadingKey === p.key ? 'Redirecting…' : p.price}
+            </span>
           </button>
         ))}
       </div>
