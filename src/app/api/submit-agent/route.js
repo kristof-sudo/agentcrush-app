@@ -158,21 +158,45 @@ export async function POST(req) {
     }
 
     const { error: insertError } = await supabase
-      .from('submissions')
-      .insert({
-        submitter_email: submitterEmail,
-        payload_json: payload,
-        status: 'pending',
-      })
+  .from('submissions')
+  .insert({
+    submitter_email: submitterEmail,
+    payload_json: payload,
+    status: 'pending',
+  })
 
-    if (insertError) {
-      return NextResponse.json(
-        { error: `Submission save failed: ${insertError.message}` },
-        { status: 500 }
-      )
-    }
+if (insertError) {
+  return NextResponse.json(
+    { error: `Submission save failed: ${insertError.message}` },
+    { status: 500 }
+  )
+}
 
-    return NextResponse.json({ ok: true })
+const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
+const telegramChatId = process.env.TELEGRAM_CHAT_ID
+
+if (telegramBotToken && telegramChatId) {
+  try {
+    await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: telegramChatId,
+        text:
+          `New AgentCrush submission\n\n` +
+          `Agent: ${displayName}\n` +
+          `Handle: @${safeHandle}\n` +
+          `Archetype: ${archetype}\n` +
+          `Email: ${submitterEmail}\n\n` +
+          `Review:\nhttps://agentcrush.xyz/admin/submissions?key=agentcrush-admin-83x9-k4p2`,
+      }),
+    })
+  } catch (telegramError) {
+    console.error('Telegram notification failed:', telegramError)
+  }
+}
+
+return NextResponse.json({ ok: true })
   } catch (err) {
     return NextResponse.json(
       { error: err?.message || 'Unexpected server error.' },
