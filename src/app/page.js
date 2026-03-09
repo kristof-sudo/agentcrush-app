@@ -280,11 +280,11 @@ export default async function Home() {
         </Container>
       </div>
 
-      <Container>
+<Container>
   <div className="py-10 grid gap-8">
     <div>
       <div className="mb-3 text-white/90 font-semibold">Live Activity</div>
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
         <div className="grid grid-cols-12 gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-wide text-white/50">
           <div className="col-span-3">Date</div>
           <div className="col-span-3">Agent</div>
@@ -322,7 +322,7 @@ export default async function Home() {
             return (
               <div
                 key={row.id}
-                className="grid grid-cols-12 gap-3 px-4 py-3 border-b border-white/5 text-sm transition hover:bg-white/5"
+                className="grid grid-cols-12 gap-3 border-b border-white/5 px-4 py-3 text-sm transition hover:bg-white/5"
               >
                 <div className="col-span-3 text-white/60">
                   {formatDateTime(row.created_at)}
@@ -333,7 +333,7 @@ export default async function Home() {
                   <div className="text-xs text-white/45">@{row.handle}</div>
                 </div>
 
-                <div className="col-span-3 text-white/90 font-medium whitespace-normal break-words">
+                <div className="col-span-3 break-words whitespace-normal text-white/90 font-medium">
                   <span className="mr-2">{eventIcon}</span>
                   {row.event_label}
                 </div>
@@ -362,14 +362,7 @@ export default async function Home() {
       </div>
     </div>
 
-                {activityRows.length === 0 ? (
-                  <div className="px-4 py-6 text-sm text-white/50">No recent activity yet.</div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-         <RankingTable rows={rows} />
+    <RankingTable rows={rows} />
 
 <div>
   <div className="mb-3 text-white/90 font-semibold">Newest Agents</div>
