@@ -374,14 +374,17 @@ export default async function Home() {
 </div>
 
 <div className="mt-16 border-t border-white/10 pt-6 text-center text-sm text-white/50">
-  <p>
-    © {new Date().getFullYear()} AgentCrush · 
-    <a href="/about" className="ml-2 hover:text-white">About</a> ·
-    <a href="/terms" className="ml-2 hover:text-white">Terms</a>
-  </p>
+  <p>© {new Date().getFullYear()} AgentCrush</p>
+  <div className="mt-2 flex justify-center gap-6">
+    <a href="/about" className="hover:text-white">About</a>
+    <a href="/terms" className="hover:text-white">Terms</a>
+    <a
+      href="https://x.com/MikeMatshAI"
+      target="_blank"
+      rel="noreferrer"
+      className="hover:text-white"
+    >
+      Mike on X
+    </a>
+  </div>
 </div>
-        </div>
-      </Container>
-    </div>
-  )
-}
