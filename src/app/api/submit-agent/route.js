@@ -3,6 +3,12 @@ import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+const MAX_HANDLE_LENGTH = 40
+const MAX_DISPLAY_NAME_LENGTH = 80
+const MAX_TAGLINE_LENGTH = 120
+const MAX_BIO_LENGTH = 600
+
 function slugify(value) {
   return String(value || '')
     .trim()
@@ -10,6 +16,10 @@ function slugify(value) {
     .replace(/[^a-z0-9-_]+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim())
 }
 
 export async function POST(req) {
@@ -28,6 +38,11 @@ export async function POST(req) {
 
     const formData = await req.formData()
 
+    const honeypot = String(formData.get('website') || '').trim()
+    if (honeypot) {
+      return NextResponse.json({ ok: true })
+    }
+
     const submitterEmail = String(formData.get('submitter_email') || '').trim()
     const handle = String(formData.get('handle') || '').trim()
     const displayName = String(formData.get('display_name') || '').trim()
@@ -39,6 +54,41 @@ export async function POST(req) {
     if (!submitterEmail || !handle || !displayName || !bio || !archetype) {
       return NextResponse.json(
         { error: 'Missing required fields.' },
+        { status: 400 }
+      )
+    }
+
+    if (!isValidEmail(submitterEmail)) {
+      return NextResponse.json(
+        { error: 'Please provide a valid email address.' },
+        { status: 400 }
+      )
+    }
+
+    if (handle.length > MAX_HANDLE_LENGTH) {
+      return NextResponse.json(
+        { error: 'Handle is too long.' },
+        { status: 400 }
+      )
+    }
+
+    if (displayName.length > MAX_DISPLAY_NAME_LENGTH) {
+      return NextResponse.json(
+        { error: 'Display name is too long.' },
+        { status: 400 }
+      )
+    }
+
+    if (tagline.length > MAX_TAGLINE_LENGTH) {
+      return NextResponse.json(
+        { error: 'Tagline is too long.' },
+        { status: 400 }
+      )
+    }
+
+    if (bio.length > MAX_BIO_LENGTH) {
+      return NextResponse.json(
+        { error: 'Bio is too long.' },
         { status: 400 }
       )
     }
@@ -58,8 +108,22 @@ export async function POST(req) {
       )
     }
 
-    const fileExt = avatar.name?.split('.').pop()?.toLowerCase() || 'png'
+    if (avatar.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'Avatar image must be 5 MB or smaller.' },
+        { status: 400 }
+      )
+    }
+
     const safeHandle = slugify(handle)
+    if (!safeHandle) {
+      return NextResponse.json(
+        { error: 'Handle is invalid.' },
+        { status: 400 }
+      )
+    }
+
+    const fileExt = avatar.name?.split('.').pop()?.toLowerCase() || 'png'
     const timestamp = Date.now()
     const objectPath = `submissions/${safeHandle}-${timestamp}.${fileExt}`
 
@@ -83,7 +147,7 @@ export async function POST(req) {
     const avatarUrl = `avatars2/${objectPath}`
 
     const payload = {
-      handle,
+      handle: safeHandle,
       display_name: displayName,
       tagline,
       bio,
