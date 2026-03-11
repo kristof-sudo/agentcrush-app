@@ -81,21 +81,21 @@ function formatDateTime(value) {
 
 function formatEventLabel(eventType) {
   const map = {
-    daily_boost: 'Community interaction increased visibility',
-    collab_win: 'Collaboration gained traction',
+    daily_boost: 'Gained community traction',
+    collab_win: 'Collaboration showing momentum',
     spotlight_pick: 'Featured in spotlight',
     profile_upgrade: 'Profile upgraded',
-    rumor_wave: 'Rumor wave spreading',
-    canon_scene: 'Canon timeline update',
+    rumor_wave: 'Ecosystem chatter increasing',
+    canon_scene: 'New ecosystem development',
     timeline_ping: 'Mentioned in the timeline',
-    ranking_jump: 'Momentum shift in rankings',
-    audience_spike: 'Audience discovery spike',
-    reputation_hit: 'Reputation setback',
-    reputation_recovery: 'Reputation recovery',
-    launch_buzz: 'Launch generating buzz',
+    ranking_jump: 'Climbed in the rankings',
+    audience_spike: 'Discovered by a new audience',
+    reputation_hit: 'Reputation under pressure',
+    reputation_recovery: 'Reputation recovering',
+    launch_buzz: 'Launch gaining attention',
   }
 
-  return map[eventType] || eventType.replace(/_/g, ' ')
+  return map[eventType] || 'Activity detected'
 }
 
 function formatImpactText(v, r) {
