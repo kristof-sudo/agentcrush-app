@@ -171,84 +171,88 @@ export default function RankingTable({ rows = [] }) {
 
       <div className="md:hidden divide-y divide-white/10">
         {rows.map((r) => (
-          <div key={r.id || r.agent_id || r.handle} className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                {r.avatar_url ? (
-                  <img
-                    src={r.avatar_url}
-                    alt={r.display_name || r.handle || 'Agent avatar'}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs text-white/40">
-                    N/A
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="truncate text-sm font-semibold text-white">
-                    {r.display_name || r.handle}
-                  </div>
-                  <span
-                    className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${rankStyle(
-                      r.global_rank
-                    )}`}
-                  >
-                    #{r.global_rank}
-                  </span>
-                </div>
-
-                {r.handle ? (
-                  <div className="truncate text-xs text-white/50">@{r.handle}</div>
-                ) : null}
-
-                {r.bio ? (
-  <div className="mt-1 line-clamp-2 text-xs text-white/65">
-    {r.bio}
-  </div>
-) : (r.tagline || r.archetype) ? (
-  <div className="mt-1 line-clamp-2 text-xs text-white/65">
-    {r.tagline || r.archetype}
-  </div>
-) : null}
-
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span
-                    className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${archetypeStyle(
-                      r.archetype
-                    )}`}
-                  >
-                    {r.archetype || '—'}
-                  </span>
-
-                  <span className={`text-xs font-medium ${deltaStyle(r.weekly_delta || 0)}`}>
-                    Weekly {formatDelta(r.weekly_delta || 0)}
-                  </span>
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
-                    <div className="text-[11px] text-white/50">Visibility</div>
-                    <div className="mt-1 text-sm text-white/80">{r.visibility_score ?? '—'}</div>
-                  </div>
-
-                  <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
-                    <div className="text-[11px] text-white/50">Reputation</div>
-                    <div className="mt-1 text-sm text-white/80">{r.reputation_score ?? '—'}</div>
-                  </div>
-
-                  <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
-                    <div className="text-[11px] text-white/50">Score</div>
-                    <div className="mt-1 text-sm text-white">{r.score_total || 0}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <Link
+    key={r.id || r.agent_id || r.handle}
+    href={`/agent/${encodeURIComponent(r.handle)}`}
+    className="block p-4 hover:bg-white/5 transition"
+  >
+    <div className="flex items-start gap-3">
+      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+        {r.avatar_url ? (
+          <img
+            src={r.avatar_url}
+            alt={r.display_name || r.handle || 'Agent avatar'}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-xs text-white/40">
+            N/A
           </div>
-        ))}
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="truncate text-sm font-semibold text-white">
+            {r.display_name || r.handle}
+          </div>
+          <span
+            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${rankStyle(
+              r.global_rank
+            )}`}
+          >
+            #{r.global_rank}
+          </span>
+        </div>
+
+        {r.handle ? (
+          <div className="truncate text-xs text-white/50">@{r.handle}</div>
+        ) : null}
+
+        {r.bio ? (
+          <div className="mt-1 line-clamp-2 text-xs text-white/65">
+            {r.bio}
+          </div>
+        ) : (r.tagline || r.archetype) ? (
+          <div className="mt-1 line-clamp-2 text-xs text-white/65">
+            {r.tagline || r.archetype}
+          </div>
+        ) : null}
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${archetypeStyle(
+              r.archetype
+            )}`}
+          >
+            {r.archetype || '—'}
+          </span>
+
+          <span className={`text-xs font-medium ${deltaStyle(r.weekly_delta || 0)}`}>
+            Weekly {formatDelta(r.weekly_delta || 0)}
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
+            <div className="text-[11px] text-white/50">Visibility</div>
+            <div className="mt-1 text-sm text-white/80">{r.visibility_score ?? '—'}</div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
+            <div className="text-[11px] text-white/50">Reputation</div>
+            <div className="mt-1 text-sm text-white/80">{r.reputation_score ?? '—'}</div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
+            <div className="text-[11px] text-white/50">Score</div>
+            <div className="mt-1 text-sm text-white">{r.score_total || 0}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Link>
+))}
 
         {rows.length === 0 ? (
           <div className="px-4 py-8 text-center text-white/40">
