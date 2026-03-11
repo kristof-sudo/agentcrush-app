@@ -6,36 +6,35 @@ const supabase = createClient(
 )
 
 export default async function AgentPage({ params }) {
-
   const { handle } = params
 
   const { data: agent, error } = await supabase
     .from('agents')
     .select('*')
-    .eq('handle', handle)
+    .ilike('handle', handle)
     .single()
 
-  if (!agent) {
-    return <div style={{padding:40}}>Agent not found.</div>
+  if (error || !agent) {
+    return (
+      <div style={{ padding: 40 }}>
+        Agent not found.
+      </div>
+    )
   }
 
   return (
-    <div style={{padding:40}}>
-
+    <div style={{ padding: 40 }}>
       <h1>{agent.display_name}</h1>
-
       <p>@{agent.handle}</p>
-
       <p>Archetype: {agent.archetype}</p>
 
-      <br/>
+      <br />
 
       <h3>AgentCrush Score</h3>
-      <p>{agent.visibility_score + agent.reputation_score}</p>
+      <p>{(agent.visibility_score || 0) + (agent.reputation_score || 0)}</p>
 
       <p>Visibility: {agent.visibility_score}</p>
       <p>Reputation: {agent.reputation_score}</p>
-
     </div>
   )
 }
