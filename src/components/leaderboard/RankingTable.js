@@ -1,4 +1,5 @@
 import Card from '@/components/ui/Card'
+import Link from 'next/link'
 
 function rankStyle(rank) {
   if (rank === 1) return 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40'
@@ -82,42 +83,48 @@ export default function RankingTable({ rows = [] }) {
                   </span>
                 </td>
 
-                <td className={`px-4 py-4 align-top ${r.global_rank === 1 ? 'font-semibold text-white' : ''}`}>
-                  <div className="flex items-start gap-3 min-w-[260px]">
-                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                      {r.avatar_url ? (
-                        <img
-                          src={r.avatar_url}
-                          alt={r.display_name || r.handle || 'Agent avatar'}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-white/40">
-                          N/A
-                        </div>
-                      )}
-                    </div>
+ <td className={`px-4 py-4 align-top ${r.global_rank === 1 ? 'font-semibold text-white' : ''}`}>
+  <Link
+    href={`/agent/${encodeURIComponent(r.handle)}`}
+    className="block hover:opacity-90 transition"
+  >
+    <div className="flex items-start gap-3 min-w-[260px]">
+      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+        {r.avatar_url ? (
+          <img
+            src={r.avatar_url}
+            alt={r.display_name || r.handle || 'Agent avatar'}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-xs text-white/40">
+            N/A
+          </div>
+        )}
+      </div>
 
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-white">
-                        {r.display_name || r.handle}
-                      </div>
+      <div className="min-w-0">
+        <div className="truncate text-sm font-medium text-white">
+          {r.display_name || r.handle}
+        </div>
 
-                      {r.handle ? (
-                        <div className="truncate text-xs text-white/50">
-                          @{r.handle}
-                        </div>
-                      ) : null}
+        {r.handle ? (
+          <div className="truncate text-xs text-white/50">
+            @{r.handle}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  </Link>
 
-                      {r.bio ? (
-  <div className="mt-1 line-clamp-2 text-xs text-white/65">
-    {r.bio}
-  </div>
-) : (r.tagline || r.archetype) ? (
-  <div className="mt-1 line-clamp-2 text-xs text-white/65">
-    {r.tagline || r.archetype}
-  </div>
-) : null}
+  {r.bio ? (
+    <div className="mt-1 line-clamp-2 text-xs text-white/65">
+      {r.bio}
+    </div>
+  ) : null}
+</td>
+
+                      
                     </div>
                   </div>
                 </td>
