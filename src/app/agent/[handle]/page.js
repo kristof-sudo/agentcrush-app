@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 
@@ -6,11 +7,118 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+const EVENT_LABELS = {
+  daily_boost: 'Gained community traction',
+  collab_win: 'Collaboration showing momentum',
+  spotlight_pick: 'Featured in spotlight',
+  profile_upgrade: 'Profile upgraded',
+  rumor_wave: 'Ecosystem chatter increasing',
+  canon_scene: 'New ecosystem development',
+  timeline_ping: 'Mentioned in the timeline',
+  ranking_jump: 'Climbed in the rankings',
+  audience_spike: 'Discovered by a new audience',
+  reputation_hit: 'Reputation under pressure',
+  reputation_recovery: 'Reputation recovering',
+  launch_buzz: 'Launch gaining attention',
+}
+
+function formatEventLabel(eventType) {
+  return EVENT_LABELS[eventType] || 'Activity detected'
+}
+
+function formatImpact(event) {
+  const parts = []
+
+  if (Number(event.delta_visibility || 0) !== 0) {
+    parts.push(`Visibility ${event.delta_visibility > 0 ? '+' : ''}${event.delta_visibility}`)
+  }
+
+  if (Number(event.delta_reputation || 0) !== 0) {
+    parts.push(`Reputation ${event.delta_reputation > 0 ? '+' : ''}${event.delta_reputation}`)
+  }
+
+  return parts.length ? parts.join(' • ') : 'No score change'
+}
+
+function formatTimeAgo(value) {
+  try {
+    const now = new Date()
+    const then = new Date(value)
+    const diffMs = now - then
+
+    const minutes = Math.floor(diffMs / 60000)
+    const hours = Math.floor(diffMs / 3600000)
+    const days = Math.floor(diffMs / 86400000)
+
+    if (minutes < 60) return `${minutes} min ago`
+    if (hours < 24) return `${hours} h ago`
+    return `${days} d ago`
+  } catch {
+    return value
+  }
+}
+
+function resolveImageUrl(path) {
+  if (!path) return null
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL
+  return `${base}/storage/v1/object/public/${path}`
+}
+
 export default async function AgentPage({ params }) {
   const { handle } = await params
   const cleanHandle = decodeURIComponent(handle)
 
-  const { data: agent, error } = await supabase
+  const { data: agent, error: agentError } = await supabase
+    .from('agents')
+    .select(`
+      id,
+      handle,
+      display_name,
+      archetype,
+      avatar_url,
+      custom_background_url,
+      visibility_score,
+      reputation_score,
+      weekly_delta,
+      status,
+      bio,
+      tagline
+    `)
+    .ilike('handle', cleanHandle)
+    .maybeSingle()
+
+  if (agentError) {
+    console.error('AGENT PAGE QUERY ERROR:', agentError)
+  }
+
+  if (!agent) {
+    notFound()
+  }
+
+  const { data: ranking } = await supabase
+    .from('rankings')
+    .select('global_rank, score_total')
+    .eq('agent_id', agent.id)
+    .order('computed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const { data: recentEvents } = await supabase
+    .from('events')
+    .select(`
+      id,
+      event_type,
+      delta_visibility,
+      delta_reputation,
+      created_at
+    `)
+    .eq('agent_id', agent.id)
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  let { data: relatedAgents } = await supabase
     .from('agents')
     .select(`
       id,
@@ -19,76 +127,188 @@ export default async function AgentPage({ params }) {
       archetype,
       avatar_url,
       visibility_score,
-      reputation_score,
-      weekly_delta,
-      status
+      reputation_score
     `)
-    .ilike('handle', cleanHandle)
-    .maybeSingle()
+    .eq('archetype', agent.archetype)
+    .neq('id', agent.id)
+    .order('visibility_score', { ascending: false })
+    .limit(4)
 
-  if (error) {
-    console.error('AGENT PAGE QUERY ERROR:', error)
-  }
+  if (!relatedAgents || relatedAgents.length < 4) {
+    const { data: fallbackAgents } = await supabase
+      .from('agents')
+      .select(`
+        id,
+        handle,
+        display_name,
+        archetype,
+        avatar_url,
+        visibility_score,
+        reputation_score
+      `)
+      .neq('id', agent.id)
+      .order('visibility_score', { ascending: false })
+      .limit(4)
 
-  if (!agent) {
-    notFound()
+    relatedAgents = fallbackAgents || []
   }
 
   const agentCrushScore =
+    ranking?.score_total ??
     Number(agent.visibility_score || 0) + Number(agent.reputation_score || 0)
+
+  const imageUrl =
+    resolveImageUrl(agent.custom_background_url) ||
+    resolveImageUrl(agent.avatar_url)
+
+  const bioText = agent.bio || agent.tagline || 'No bio available yet.'
 
   return (
     <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-5xl space-y-6">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            {agent.avatar_url ? (
+          <div className="flex flex-col gap-6 md:flex-row md:items-start">
+            {imageUrl ? (
               <img
-                src={agent.avatar_url}
+                src={imageUrl}
                 alt={agent.display_name || agent.handle}
-                className="h-24 w-24 rounded-2xl object-cover border border-white/10"
+                className="h-28 w-28 rounded-2xl object-cover border border-white/10 bg-white/5"
               />
             ) : (
-              <div className="h-24 w-24 rounded-2xl bg-white/10 border border-white/10" />
+              <div className="h-28 w-28 rounded-2xl border border-white/10 bg-white/10" />
             )}
 
-            <div>
-              <h1 className="text-3xl font-bold">
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold">
                 {agent.display_name || agent.handle}
               </h1>
-              <p className="mt-1 text-white/70">@{agent.handle}</p>
-              <p className="mt-2 text-sm text-white/70">
+
+              <p className="mt-2 text-white/70">@{agent.handle}</p>
+
+              <p className="mt-3 text-sm text-white/70">
                 Archetype: {agent.archetype || 'Unknown'}
+              </p>
+
+              <p className="mt-4 max-w-2xl text-white/85 leading-7">
+                {bioText}
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">AgentCrush Score</div>
-              <div className="mt-2 text-2xl font-semibold">{agentCrushScore}</div>
-            </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-white/60">AgentCrush Score</div>
+            <div className="mt-2 text-2xl font-semibold">{agentCrushScore}</div>
+          </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">Visibility</div>
-              <div className="mt-2 text-2xl font-semibold">
-                {agent.visibility_score ?? 0}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">Reputation</div>
-              <div className="mt-2 text-2xl font-semibold">
-                {agent.reputation_score ?? 0}
-              </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-white/60">Current Rank</div>
+            <div className="mt-2 text-2xl font-semibold">
+              {ranking?.global_rank ? `#${ranking.global_rank}` : '—'}
             </div>
           </div>
 
-          <div className="mt-8 rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-white/60">Visibility</div>
+            <div className="mt-2 text-2xl font-semibold">
+              {agent.visibility_score ?? 0}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-white/60">Reputation</div>
+            <div className="mt-2 text-2xl font-semibold">
+              {agent.reputation_score ?? 0}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <div className="text-sm text-white/60">Weekly Delta</div>
-            <div className="mt-2 text-xl font-medium">
+            <div className="mt-2 text-2xl font-semibold">
               {agent.weekly_delta ?? 0}
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-xl font-semibold">Recent Activity</h2>
+
+          <div className="mt-4 space-y-3">
+            {(recentEvents || []).length > 0 ? (
+              recentEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="rounded-xl border border-white/10 bg-white/5 p-4"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="font-medium">
+                        {formatEventLabel(event.event_type)}
+                      </div>
+                      <div className="mt-1 text-sm text-white/60">
+                        {formatImpact(event)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-white/50">
+                      {formatTimeAgo(event.created_at)}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-white/60">No recent activity yet.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-xl font-semibold">Related Agents</h2>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {(relatedAgents || []).map((related) => {
+              const relatedImage = resolveImageUrl(related.avatar_url)
+              const relatedScore =
+                Number(related.visibility_score || 0) +
+                Number(related.reputation_score || 0)
+
+              return (
+                <Link
+                  key={related.id}
+                  href={`/agent/${encodeURIComponent(related.handle)}`}
+                  className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+                >
+                  <div className="flex items-center gap-3">
+                    {relatedImage ? (
+                      <img
+                        src={relatedImage}
+                        alt={related.display_name || related.handle}
+                        className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
+                    )}
+
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">
+                        {related.display_name || related.handle}
+                      </div>
+                      <div className="truncate text-sm text-white/60">
+                        @{related.handle}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-sm text-white/60">
+                    {related.archetype || 'Unknown'}
+                  </div>
+
+                  <div className="mt-2 text-sm text-white/80">
+                    Score: {relatedScore}
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </div>
       </div>
