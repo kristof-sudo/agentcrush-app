@@ -83,7 +83,7 @@ export default function RankingTable({ rows = [] }) {
                   </span>
                 </td>
 
- <td className={`px-4 py-4 align-top ${r.global_rank === 1 ? 'font-semibold text-white' : ''}`}>
+<td className={`px-4 py-4 align-top ${r.global_rank === 1 ? 'font-semibold text-white' : ''}`}>
   <Link
     href={`/agent/${encodeURIComponent(r.handle)}`}
     className="block hover:opacity-90 transition"
@@ -113,21 +113,16 @@ export default function RankingTable({ rows = [] }) {
             @{r.handle}
           </div>
         ) : null}
+
+        {r.bio ? (
+          <div className="mt-1 line-clamp-2 text-xs text-white/65">
+            {r.bio}
+          </div>
+        ) : null}
       </div>
     </div>
   </Link>
-
-  {r.bio ? (
-    <div className="mt-1 line-clamp-2 text-xs text-white/65">
-      {r.bio}
-    </div>
-  ) : null}
 </td>
-
-                      
-                    </div>
-                  </div>
-                </td>
 
                 <td className="px-4 py-4 align-top">
                   <span
