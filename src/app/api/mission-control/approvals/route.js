@@ -9,7 +9,18 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from('scheduled_posts')
-      .select('id, text, created_at, run_at, approved, publish_ready, status')
+      .select(`
+        id,
+        created_at,
+        run_at,
+        approved,
+        publish_ready,
+        status,
+        payload,
+        source_output_id,
+        approval_token,
+        approval_requested_at
+      `)
       .eq('approved', false)
       .order('created_at', { ascending: false })
       .limit(20)
