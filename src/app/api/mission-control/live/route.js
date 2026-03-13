@@ -23,8 +23,8 @@ export async function GET() {
     const [observedRes, publishedRes] = await Promise.all([
       supabase
         .from('x_observed_posts')
-        .select('id, created_at, author_handle, text_content')
-        .order('created_at', { ascending: false })
+        .select('id, observed_at, posted_at, author_handle, text_content')
+        .order('observed_at', { ascending: false })
         .limit(8),
 
       supabase
@@ -41,7 +41,7 @@ export async function GET() {
     const observedItems = (observedRes.data || []).map((row) => ({
       id: `observed_${row.id}`,
       type: 'observed',
-      created_at: row.created_at,
+      created_at: row.observed_at || row.posted_at,
       title: row.author_handle ? `Observed on X · @${row.author_handle}` : 'Observed on X',
       text: row.text_content || 'No text available',
     }))
@@ -55,6 +55,7 @@ export async function GET() {
     }))
 
     const items = [...observedItems, ...publishedItems]
+      .filter((item) => item.created_at)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .slice(0, 12)
 
