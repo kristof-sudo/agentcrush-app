@@ -5,6 +5,7 @@ import LiveFeed from '@/components/mission-control/LiveFeed'
 import ApprovalsPanel from '@/components/mission-control/ApprovalsPanel'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
+import PipelineHealth from "@/components/mission-control/PipelineHealth"
 
 export default function MissionControl() {
   return (
