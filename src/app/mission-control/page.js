@@ -1,3 +1,4 @@
+import WorkerBoard from '@/components/mission-control/WorkerBoard'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 
