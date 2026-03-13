@@ -97,21 +97,36 @@ export default function MissionControl() {
             </Card>
           </div>
 
-         <PipelineHealth /> 
-    
-          <div className="col-span-6">
-            <Card className="p-4">
-              <h2 className="mb-4 text-lg font-semibold">Detailed Pipeline</h2>
-              <p className="mb-4 text-sm text-white/70">
-                This section shows queue depth across scanner, selector,
-                generation, and publishing.
-              </p>
+        <PipelineHealth />
 
-              <QueueBoard />
-            </Card>
-          </div>
-        </div>
-      </div>
-    </Container>
-  )
-}
+<div className="grid grid-cols-12 gap-6">
+  <div className="col-span-6 space-y-6">
+    <Card className="p-4">
+      <h2 className="mb-1 text-lg font-semibold">Live Ecosystem Feed</h2>
+      <p className="mb-4 text-xs text-white/60">
+        Latest external observations and Mike’s newest published posts.
+      </p>
+      <LiveFeed />
+    </Card>
+
+    <Card className="p-4">
+      <h2 className="mb-1 text-lg font-semibold">Scheduled Posts</h2>
+      <p className="mb-4 text-xs text-white/60">
+        Approved posts waiting for their publishing slot.
+      </p>
+      <ApprovalsPanel />
+    </Card>
+  </div>
+
+  <div className="col-span-6">
+    <Card className="p-4">
+      <h2 className="mb-4 text-lg font-semibold">Detailed Pipeline</h2>
+      <p className="mb-4 text-sm text-white/70">
+        This section shows queue depth across scanner, selector,
+        generation, and publishing.
+      </p>
+
+      <QueueBoard />
+    </Card>
+  </div>
+</div>
