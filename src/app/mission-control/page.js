@@ -3,6 +3,7 @@ import PipelineFlow from '@/components/mission-control/PipelineFlow'
 import QueueBoard from '@/components/mission-control/QueueBoard'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
+import ApprovalsPanel from '@/components/mission-control/ApprovalsPanel'
 
 export default function MissionControl() {
   return (
@@ -77,14 +78,11 @@ export default function MissionControl() {
 
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-6">
-            <Card className="p-4">
-              <h2 className="mb-4 text-lg font-semibold">Detailed Live Feed</h2>
-              <p className="text-sm text-white/70">
-                This section will show recent observed X posts, generated content,
-                approvals, rejections, and publishes.
-              </p>
-            </Card>
-          </div>
+  <Card className="p-4">
+    <h2 className="mb-4 text-lg font-semibold">Pending Approvals</h2>
+    <ApprovalsPanel />
+  </Card>
+</div>
 
           <div className="col-span-6">
             <Card className="p-4">
