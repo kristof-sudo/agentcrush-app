@@ -2,6 +2,24 @@
 
 import { useEffect, useState } from 'react'
 
+function extractApprovalText(row) {
+  const payload = row?.payload || {}
+
+  if (typeof payload === 'string') return payload
+  if (payload.text) return payload.text
+  if (payload.x_text) return payload.x_text
+  if (payload.body) return payload.body
+  if (payload.caption) return payload.caption
+  if (payload.content) return payload.content
+
+  return 'No preview text found in payload.'
+}
+
+function formatDate(value) {
+  if (!value) return '—'
+  return new Date(value).toLocaleString()
+}
+
 export default function ApprovalsPanel() {
   const [items, setItems] = useState(null)
   const [error, setError] = useState(null)
@@ -10,7 +28,7 @@ export default function ApprovalsPanel() {
     fetch('/api/mission-control/approvals')
       .then(async (res) => {
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed')
+        if (!res.ok) throw new Error(data.error || 'Failed to load approvals')
         setItems(data.items || [])
       })
       .catch((err) => setError(err.message))
@@ -18,7 +36,7 @@ export default function ApprovalsPanel() {
 
   if (error) {
     return (
-      <div className="text-red-300 text-sm">
+      <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
         Failed to load approvals: {error}
       </div>
     )
@@ -26,7 +44,7 @@ export default function ApprovalsPanel() {
 
   if (!items) {
     return (
-      <div className="text-white/60 text-sm">
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
         Loading approvals...
       </div>
     )
@@ -34,7 +52,7 @@ export default function ApprovalsPanel() {
 
   if (items.length === 0) {
     return (
-      <div className="text-white/60 text-sm">
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
         No pending approvals.
       </div>
     )
@@ -45,14 +63,22 @@ export default function ApprovalsPanel() {
       {items.map((row) => (
         <div
           key={row.id}
-          className="rounded-lg border border-white/10 bg-white/[0.03] p-3"
+          className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
         >
-          <div className="text-xs text-white/50 mb-1">
-            scheduled: {row.run_at || '—'}
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45">
+            <span className="rounded-full border border-white/10 px-2 py-1">
+              {row.status || '—'}
+            </span>
+            <span>requested: {formatDate(row.approval_requested_at)}</span>
+            <span>run at: {formatDate(row.run_at)}</span>
           </div>
 
-          <div className="text-sm text-white/90">
-            {row.text}
+          <div className="text-sm leading-6 text-white/90">
+            {extractApprovalText(row)}
+          </div>
+
+          <div className="mt-3 text-[11px] text-white/35">
+            token: {row.approval_token || '—'}
           </div>
         </div>
       ))}
