@@ -97,6 +97,8 @@ export default function MissionControl() {
             </Card>
           </div>
 
+         <PipelineHealth /> 
+    
           <div className="col-span-6">
             <Card className="p-4">
               <h2 className="mb-4 text-lg font-semibold">Detailed Pipeline</h2>
