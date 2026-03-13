@@ -6,7 +6,7 @@ const supabase = createClient(
 )
 
 const WORKERS = [
-  { label: 'Iris', runner: 'x_scanner' },
+  { label: 'Iris', runner: 'canon_enqueuer' },
   { label: 'Caspian', runner: 'x_selector' },
   { label: 'Zhao', runner: 'copydesk' },
   { label: 'Mateo', runner: 'x_publisher' },
