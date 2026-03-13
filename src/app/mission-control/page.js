@@ -1,10 +1,10 @@
 import WorkerBoard from '@/components/mission-control/WorkerBoard'
 import PipelineFlow from '@/components/mission-control/PipelineFlow'
 import QueueBoard from '@/components/mission-control/QueueBoard'
+import LiveFeed from '@/components/mission-control/LiveFeed'
+import ApprovalsPanel from '@/components/mission-control/ApprovalsPanel'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
-import ApprovalsPanel from '@/components/mission-control/ApprovalsPanel'
-import LiveFeed from '@/components/mission-control/LiveFeed'
 
 export default function MissionControl() {
   return (
@@ -77,23 +77,24 @@ export default function MissionControl() {
           <WorkerBoard />
         </Card>
 
-        <div className="col-span-6 space-y-6">
-  <Card className="p-4">
-    <h2 className="mb-1 text-lg font-semibold">Live Ecosystem Feed</h2>
-    <p className="mb-4 text-xs text-white/60">
-      Latest external observations and Mike’s newest published posts.
-    </p>
-    <LiveFeed />
-  </Card>
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-6 space-y-6">
+            <Card className="p-4">
+              <h2 className="mb-1 text-lg font-semibold">Live Ecosystem Feed</h2>
+              <p className="mb-4 text-xs text-white/60">
+                Latest external observations and Mike’s newest published posts.
+              </p>
+              <LiveFeed />
+            </Card>
 
-  <Card className="p-4">
-    <h2 className="mb-1 text-lg font-semibold">Scheduled Posts</h2>
-    <p className="mb-4 text-xs text-white/60">
-      Approved posts waiting for their publishing slot.
-    </p>
-    <ApprovalsPanel />
-  </Card>
-</div>
+            <Card className="p-4">
+              <h2 className="mb-1 text-lg font-semibold">Scheduled Posts</h2>
+              <p className="mb-4 text-xs text-white/60">
+                Approved posts waiting for their publishing slot.
+              </p>
+              <ApprovalsPanel />
+            </Card>
+          </div>
 
           <div className="col-span-6">
             <Card className="p-4">
