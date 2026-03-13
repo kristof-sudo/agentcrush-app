@@ -20,7 +20,8 @@ export async function GET() {
         .from('runs')
         .select('id, runner, status, created_at')
         .gte('created_at', since)
-        .in('status', ['failed', 'error']),
+        .order('created_at', { ascending: false })
+        .limit(200),
 
       supabase
         .from('copydesk_jobs')
@@ -39,7 +40,12 @@ export async function GET() {
     if (copydeskRes.error) throw copydeskRes.error
     if (alertsRes.error) throw alertsRes.error
 
-    const runFailures = runsRes.data || []
+    const allRuns = runsRes.data || []
+    const runFailures = allRuns.filter((row) => {
+      const status = String(row.status || '').toLowerCase()
+      return status === 'failed' || status === 'error'
+    })
+
     const copydeskFailures = copydeskRes.data || []
     const openAlerts = alertsRes.data || []
 
