@@ -172,7 +172,38 @@ function getHealth(worker, run) {
   return {
     label: 'OK',
     tone: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20',
-    }
+  }
+}
+
+function getLayerTone(layer) {
+  if (layer === 'Identity Layer') {
+    return 'border-l-blue-400 bg-blue-500/[0.03]'
+  }
+  if (layer === 'Perception Layer') {
+    return 'border-l-cyan-400 bg-cyan-500/[0.03]'
+  }
+  if (layer === 'Judgment Layer') {
+    return 'border-l-violet-400 bg-violet-500/[0.03]'
+  }
+  if (layer === 'Brain / Voice Layer') {
+    return 'border-l-teal-400 bg-teal-500/[0.03]'
+  }
+  if (layer === 'Canon Engine') {
+    return 'border-l-fuchsia-400 bg-fuchsia-500/[0.03]'
+  }
+  if (layer === 'Timing Layer') {
+    return 'border-l-amber-400 bg-amber-500/[0.03]'
+  }
+  if (layer === 'Operator Layer') {
+    return 'border-l-orange-400 bg-orange-500/[0.03]'
+  }
+  if (layer === 'Action Layer') {
+    return 'border-l-emerald-400 bg-emerald-500/[0.03]'
+  }
+  if (layer === 'Output Layer') {
+    return 'border-l-slate-400 bg-slate-500/[0.03]'
+  }
+  return 'border-l-white/10 bg-white/[0.03]'
 }
 
 export default function WorkerBoard() {
@@ -214,11 +245,12 @@ export default function WorkerBoard() {
       {WORKERS.map((worker) => {
         const liveRun = worker.runnerMatch ? latestRunByWorker[worker.runnerMatch] : null
         const health = getHealth(worker, liveRun)
+        const layerTone = getLayerTone(worker.layer)
 
         return (
           <div
             key={worker.key}
-            className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
+            className={`rounded-xl border border-white/10 border-l-4 p-4 ${layerTone}`}
           >
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
@@ -231,9 +263,7 @@ export default function WorkerBoard() {
                 </div>
               </div>
 
-              <div
-                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${health.tone}`}
-              >
+              <div className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${health.tone}`}>
                 {health.label}
               </div>
             </div>
