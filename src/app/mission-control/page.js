@@ -78,10 +78,13 @@ export default function MissionControl() {
 
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-6">
-  <Card className="p-4">
-    <h2 className="mb-4 text-lg font-semibold">Pending Approvals</h2>
-    <ApprovalsPanel />
-  </Card>
+<Card className="p-4">
+  <h2 className="mb-1 text-lg font-semibold">Scheduled Posts</h2>
+  <p className="text-xs text-white/60 mb-4">
+    Approved posts waiting for their publishing slot.
+  </p>
+  <ApprovalsPanel />
+</Card>
 </div>
 
           <div className="col-span-6">
