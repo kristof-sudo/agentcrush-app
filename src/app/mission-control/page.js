@@ -6,6 +6,7 @@ import ApprovalsPanel from '@/components/mission-control/ApprovalsPanel'
 import PipelineHealth from '@/components/mission-control/PipelineHealth'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
+import LastWorkerActivity from '@/components/mission-control/LastWorkerActivity'
 
 export default function MissionControl() {
   return (
@@ -79,6 +80,7 @@ export default function MissionControl() {
         </Card>
 
         <PipelineHealth />
+        <LastWorkerActivity />
 
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-6 space-y-6">
