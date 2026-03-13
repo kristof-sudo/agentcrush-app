@@ -1,4 +1,5 @@
 import WorkerBoard from '@/components/mission-control/WorkerBoard'
+import PipelineFlow from '@/components/mission-control/PipelineFlow'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 
@@ -8,7 +9,6 @@ export default function MissionControl() {
       <h1 className="mb-6 text-3xl font-semibold">Mission Control</h1>
 
       <div className="space-y-6">
-        {/* Top summary row */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-4">
             <Card className="p-4">
@@ -38,7 +38,8 @@ export default function MissionControl() {
           </div>
         </div>
 
-        {/* Full-width multi-agent system */}
+        <PipelineFlow />
+
         <Card className="p-4">
           <h2 className="mb-4 text-lg font-semibold">Multi-Agent System</h2>
 
@@ -53,19 +54,19 @@ export default function MissionControl() {
             </div>
             <div className="grid grid-cols-1 gap-2 text-xs text-white/70 md:grid-cols-2 xl:grid-cols-5">
               <div>
-                <span className="text-white font-medium">STRUCTURAL</span> = concept/layer, not a heartbeat process
+                <span className="font-medium text-white">STRUCTURAL</span> = concept/layer, not a heartbeat process
               </div>
               <div>
-                <span className="text-white font-medium">OK</span> = healthy recent worker run
+                <span className="font-medium text-white">OK</span> = healthy recent worker run
               </div>
               <div>
-                <span className="text-white font-medium">STALE</span> = not seen recently
+                <span className="font-medium text-white">STALE</span> = not seen recently
               </div>
               <div>
-                <span className="text-white font-medium">ERROR</span> = failed
+                <span className="font-medium text-white">ERROR</span> = failed
               </div>
               <div>
-                <span className="text-white font-medium">NO DATA</span> = no telemetry match yet
+                <span className="font-medium text-white">NO DATA</span> = no telemetry match yet
               </div>
             </div>
           </div>
@@ -73,7 +74,6 @@ export default function MissionControl() {
           <WorkerBoard />
         </Card>
 
-        {/* Lower row for future detailed modules */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-6">
             <Card className="p-4">
