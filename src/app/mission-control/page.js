@@ -12,30 +12,34 @@ export default function MissionControl() {
         {/* Live Feed */}
         <div className="col-span-6">
           <Card className="p-4">
-            <h2 className="text-lg font-semibold mb-2">Live Feed</h2>
+            <h2 className="text-lg font-semibold mb-4">Live Feed</h2>
+
             <p className="text-sm opacity-70">
               Ecosystem events, posts, approvals, publishes.
             </p>
+
           </Card>
         </div>
 
         {/* Pipeline */}
         <div className="col-span-4">
           <Card className="p-4">
-            <h2 className="text-lg font-semibold mb-2">Pipeline Board</h2>
-            <p className="text-sm opacity-70">
-              Worker status and queues.
-            </p>
+            <h2 className="text-lg font-semibold mb-4">Worker Status</h2>
+
+            <WorkerBoard />
+
           </Card>
         </div>
 
         {/* Operator Actions */}
         <div className="col-span-2">
           <Card className="p-4">
-            <h2 className="text-lg font-semibold mb-2">Operator Actions</h2>
+            <h2 className="text-lg font-semibold mb-4">Operator Actions</h2>
+
             <p className="text-sm opacity-70">
               Manual controls.
             </p>
+
           </Card>
         </div>
 
