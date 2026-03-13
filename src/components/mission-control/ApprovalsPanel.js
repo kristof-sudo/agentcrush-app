@@ -82,22 +82,23 @@ export default function ApprovalsPanel() {
               key={row.id}
               className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
             >
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45">
-                <span className="rounded-full border border-white/10 px-2 py-1">
-                  {row.status || '—'}
-                </span>
+              <<div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45">
+  <span className="rounded-full border border-white/10 px-2 py-1">
+    {row.status || '—'}
+  </span>
 
-                <span>
-                  requested: {formatDate(row.approval_requested_at)}
-                </span>
+  <span>
+    requested: {formatDate(row.approval_requested_at)}
+  </span>
 
-                <span>
-                  run at: {formatDate(row.run_at)}
-                </span>
+  <span>
+    run at: {formatDate(row.run_at)}
+  </span>
 
-    <span className="text-cyan-400">
-  {'⏳ '}{timeUntil(row.run_at)}
-</span>
+  <span className="text-cyan-400">
+    {'⏳ '}{timeUntil(row.run_at)}
+  </span>
+</div>
                   
               <div className="text-sm leading-6 text-white/90">
                 {extractApprovalText(row)}
