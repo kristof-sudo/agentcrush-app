@@ -5,18 +5,21 @@ import { useEffect, useState } from 'react'
 const WORKERS = [
   {
     key: 'mike_anchor',
-    name: 'Mike',
-    layer: 'Chief / Anchor',
-    analogy: 'identity',
+    agentName: 'Mike',
+    systemName: 'Chief / Anchor',
+    layer: 'Identity Layer',
+    analogy: 'anchor',
     role: 'System narrator and operator persona.',
     purpose:
       'Mike does not execute code. He is the public identity layer representing the combined behavior of the workers.',
     output: 'Narrative identity only',
     runnerMatch: null,
+    isStructural: true,
   },
   {
     key: 'x_scanner',
-    name: 'X Scanner',
+    agentName: 'Iris',
+    systemName: 'X Scanner',
     layer: 'Perception Layer',
     analogy: 'eyes',
     role: 'Collects AI-agent related posts from X.',
@@ -26,7 +29,8 @@ const WORKERS = [
   },
   {
     key: 'x_selector',
-    name: 'X Selector',
+    agentName: 'Caspian',
+    systemName: 'X Selector',
     layer: 'Judgment Layer',
     analogy: 'judgment',
     role: 'Evaluates discovered posts and decides what deserves interaction.',
@@ -36,7 +40,8 @@ const WORKERS = [
   },
   {
     key: 'copydesk',
-    name: 'CopyDesk',
+    agentName: 'Zhao',
+    systemName: 'CopyDesk',
     layer: 'Brain / Voice Layer',
     analogy: 'voice',
     role: 'Generates text content using the model.',
@@ -46,7 +51,8 @@ const WORKERS = [
   },
   {
     key: 'canon_enqueuer',
-    name: 'Canon Enqueuer',
+    agentName: 'Demis',
+    systemName: 'Canon Enqueuer',
     layer: 'Canon Engine',
     analogy: 'imagination',
     role: 'Creates internal AgentCrush narrative prompts.',
@@ -56,7 +62,8 @@ const WORKERS = [
   },
   {
     key: 'scheduler_prep',
-    name: 'Scheduler Prep',
+    agentName: 'Lucia',
+    systemName: 'Scheduler Prep',
     layer: 'Timing Layer',
     analogy: 'timing',
     role: 'Moves generated content into the posting queue.',
@@ -66,7 +73,8 @@ const WORKERS = [
   },
   {
     key: 'approval_notifier',
-    name: 'Approval Notifier',
+    agentName: 'Ines',
+    systemName: 'Approval Notifier',
     layer: 'Operator Layer',
     analogy: 'asks permission',
     role: 'Sends Telegram approval requests.',
@@ -76,7 +84,8 @@ const WORKERS = [
   },
   {
     key: 'approval_listener',
-    name: 'Approval Listener',
+    agentName: 'Rafi',
+    systemName: 'Approval Listener',
     layer: 'Operator Layer',
     analogy: 'receives decision',
     role: 'Receives APPROVE / REJECT commands and updates database state.',
@@ -86,7 +95,8 @@ const WORKERS = [
   },
   {
     key: 'x_publisher',
-    name: 'X Publisher',
+    agentName: 'Mateo',
+    systemName: 'X Publisher',
     layer: 'Action Layer',
     analogy: 'hands',
     role: 'Publishes approved posts to X.',
@@ -96,18 +106,21 @@ const WORKERS = [
   },
   {
     key: 'x_output',
-    name: 'X',
+    agentName: 'Aarav',
+    systemName: 'X',
     layer: 'Output Layer',
     analogy: 'public speech',
     role: 'Final public destination.',
     purpose: 'Mike becomes visible to the outside world.',
     output: 'Published timeline activity',
     runnerMatch: null,
+    isStructural: true,
   },
 ]
 
 function timeAgo(dateString) {
-  if (!dateString) return 'No data'
+  if (!dateString) return 'No recent run'
+
   const then = new Date(dateString).getTime()
   const now = Date.now()
   const diffMs = now - then
@@ -124,7 +137,7 @@ function timeAgo(dateString) {
 }
 
 function getHealth(worker, run) {
-  if (!worker.runnerMatch) {
+  if (worker.isStructural) {
     return {
       label: 'STRUCTURAL',
       tone: 'bg-blue-500/15 text-blue-300 border-blue-500/20',
@@ -159,7 +172,7 @@ function getHealth(worker, run) {
   return {
     label: 'OK',
     tone: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20',
-  }
+    }
 }
 
 export default function WorkerBoard() {
@@ -197,7 +210,7 @@ export default function WorkerBoard() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 2xl:grid-cols-3">
       {WORKERS.map((worker) => {
         const liveRun = worker.runnerMatch ? latestRunByWorker[worker.runnerMatch] : null
         const health = getHealth(worker, liveRun)
@@ -207,10 +220,13 @@ export default function WorkerBoard() {
             key={worker.key}
             className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
           >
-            <div className="mb-2 flex items-start justify-between gap-3">
+            <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-white">{worker.name}</div>
-                <div className="text-xs text-white/50">
+                <div className="text-sm font-semibold text-white">
+                  {worker.agentName}{' '}
+                  <span className="text-white/55">({worker.systemName})</span>
+                </div>
+                <div className="text-xs text-white/45">
                   {worker.layer} · {worker.analogy}
                 </div>
               </div>
@@ -233,16 +249,10 @@ export default function WorkerBoard() {
                 <span className="text-white/45">Output:</span> {worker.output}
               </div>
               <div>
-                <span className="text-white/45">Runner:</span>{' '}
-                {worker.runnerMatch || 'No direct code runner'}
+                <span className="text-white/45">Last run:</span> {timeAgo(liveRun?.created_at)}
               </div>
               <div>
-                <span className="text-white/45">Last run:</span>{' '}
-                {liveRun?.created_at ? timeAgo(liveRun.created_at) : 'No recent run'}
-              </div>
-              <div>
-                <span className="text-white/45">Last status:</span>{' '}
-                {liveRun?.status || '—'}
+                <span className="text-white/45">Last status:</span> {liveRun?.status || '—'}
               </div>
             </div>
           </div>
