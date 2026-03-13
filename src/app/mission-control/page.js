@@ -9,6 +9,7 @@ import Card from '@/components/ui/Card'
 import LastWorkerActivity from '@/components/mission-control/LastWorkerActivity'
 import PipelineHelperBox from '@/components/mission-control/PipelineHelperBox'
 import OperatorActionsPanel from '@/components/mission-control/OperatorActionsPanel'
+import FailureSpikeBanner from '@/components/mission-control/FailureSpikeBanner'
 
 export default function MissionControl() {
   return (
@@ -76,6 +77,7 @@ export default function MissionControl() {
           <WorkerBoard />
         </Card>
 
+        <FailureSpikeBanner />
         <PipelineHealth />
         <LastWorkerActivity />
 
