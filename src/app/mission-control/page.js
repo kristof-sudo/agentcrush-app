@@ -8,6 +8,7 @@ import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 import LastWorkerActivity from '@/components/mission-control/LastWorkerActivity'
 import PipelineHelperBox from '@/components/mission-control/PipelineHelperBox'
+import OperatorActionsPanel from '@/components/mission-control/OperatorActionsPanel'
 
 export default function MissionControl() {
   return (
@@ -35,13 +36,8 @@ export default function MissionControl() {
           </div>
 
           <div className="col-span-4">
-            <Card className="p-4">
-              <h2 className="mb-2 text-lg font-semibold">Operator Actions</h2>
-              <p className="text-sm text-white/70">
-                Manual controls and intervention tools.
-              </p>
-            </Card>
-          </div>
+  <OperatorActionsPanel />
+</div>
         </div>
 
         <PipelineFlow />
