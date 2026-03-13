@@ -1,5 +1,6 @@
 import WorkerBoard from '@/components/mission-control/WorkerBoard'
 import PipelineFlow from '@/components/mission-control/PipelineFlow'
+import QueueBoard from '@/components/mission-control/QueueBoard'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 
@@ -77,7 +78,7 @@ export default function MissionControl() {
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-6">
             <Card className="p-4">
-              <h2 className="mb-2 text-lg font-semibold">Detailed Live Feed</h2>
+              <h2 className="mb-4 text-lg font-semibold">Detailed Live Feed</h2>
               <p className="text-sm text-white/70">
                 This section will show recent observed X posts, generated content,
                 approvals, rejections, and publishes.
@@ -87,10 +88,13 @@ export default function MissionControl() {
 
           <div className="col-span-6">
             <Card className="p-4">
-              <h2 className="mb-2 text-lg font-semibold">Detailed Pipeline</h2>
-              <p className="text-sm text-white/70">
-                This section will show queues, scheduled posts, bottlenecks, and stuck items.
+              <h2 className="mb-4 text-lg font-semibold">Detailed Pipeline</h2>
+              <p className="mb-4 text-sm text-white/70">
+                This section shows queue depth across scanner, selector,
+                generation, and publishing.
               </p>
+
+              <QueueBoard />
             </Card>
           </div>
         </div>
