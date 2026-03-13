@@ -20,6 +20,26 @@ function formatDate(value) {
   return new Date(value).toLocaleString()
 }
 
+function timeUntil(dateString) {
+  if (!dateString) return '—'
+
+  const now = new Date()
+  const target = new Date(dateString)
+
+  const diff = target - now
+
+  if (diff <= 0) return 'publishing now'
+
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+  if (hours > 0) {
+    return `publishes in ${hours}h ${minutes}m`
+  }
+
+  return `publishes in ${minutes}m`
+}
+
 export default function ApprovalsPanel() {
   const [items, setItems] = useState(null)
   const [error, setError] = useState(null)
@@ -34,54 +54,70 @@ export default function ApprovalsPanel() {
       .catch((err) => setError(err.message))
   }, [])
 
-  if (error) {
-    return (
-      <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
-        Failed to load approvals: {error}
-      </div>
-    )
-  }
-
-  if (!items) {
-    return (
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
-        Loading approvals...
-      </div>
-    )
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
-        No pending approvals.
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-3">
-      {items.map((row) => (
-        <div
-          key={row.id}
-          className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
-        >
-          <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45">
-            <span className="rounded-full border border-white/10 px-2 py-1">
-              {row.status || '—'}
-            </span>
-            <span>requested: {formatDate(row.approval_requested_at)}</span>
-            <span>run at: {formatDate(row.run_at)}</span>
-          </div>
+    <div className="space-y-4">
 
-          <div className="text-sm leading-6 text-white/90">
-            {extractApprovalText(row)}
-          </div>
+      <div>
+        <h2 className="text-lg font-semibold">Scheduled Posts</h2>
+        <p className="text-xs text-white/60">
+          Approved posts waiting for their publishing slot.
+        </p>
+      </div>
 
-          <div className="mt-3 text-[11px] text-white/35">
-            token: {row.approval_token || '—'}
-          </div>
+      {error && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
+          Failed to load posts: {error}
         </div>
-      ))}
+      )}
+
+      {!items && !error && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
+          Loading scheduled posts...
+        </div>
+      )}
+
+      {items && items.length === 0 && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
+          No scheduled posts.
+        </div>
+      )}
+
+      {items && items.length > 0 && (
+        <div className="space-y-3">
+          {items.map((row) => (
+            <div
+              key={row.id}
+              className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
+            >
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45">
+                <span className="rounded-full border border-white/10 px-2 py-1">
+                  {row.status || '—'}
+                </span>
+
+                <span>
+                  requested: {formatDate(row.approval_requested_at)}
+                </span>
+
+                <span>
+                  run at: {formatDate(row.run_at)}
+                </span>
+
+                <span className="text-cyan-400">
+                  {timeUntil(row.run_at)}
+                </span>
+              </div>
+
+              <div className="text-sm leading-6 text-white/90">
+                {extractApprovalText(row)}
+              </div>
+
+              <div className="mt-3 text-[11px] text-white/35">
+                token: {row.approval_token || '—'}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
