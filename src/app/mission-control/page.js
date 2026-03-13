@@ -7,6 +7,7 @@ import PipelineHealth from '@/components/mission-control/PipelineHealth'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 import LastWorkerActivity from '@/components/mission-control/LastWorkerActivity'
+import PipelineHelperBox from '@/components/mission-control/PipelineHelperBox'
 
 export default function MissionControl() {
   return (
@@ -102,15 +103,19 @@ export default function MissionControl() {
           </div>
 
           <div className="col-span-6">
-            <Card className="p-4">
-              <h2 className="mb-4 text-lg font-semibold">Detailed Pipeline</h2>
-              <p className="mb-4 text-sm text-white/70">
-                This section shows queue depth across scanner, selector,
-                generation, and publishing.
-              </p>
-              <QueueBoard />
-            </Card>
-          </div>
+  <Card className="p-4">
+    <h2 className="mb-4 text-lg font-semibold">Detailed Pipeline</h2>
+    <p className="mb-4 text-sm text-white/70">
+      This section shows queue depth across scanner, selector,
+      generation, and publishing.
+    </p>
+
+    <div className="space-y-4">
+      <QueueBoard />
+      <PipelineHelperBox />
+    </div>
+  </Card>
+</div>
         </div>
       </div>
     </Container>
