@@ -57,13 +57,6 @@ export default function ApprovalsPanel() {
   return (
     <div className="space-y-4">
 
-      <div>
-        <h2 className="text-lg font-semibold">Scheduled Posts</h2>
-        <p className="text-xs text-white/60">
-          Approved posts waiting for their publishing slot.
-        </p>
-      </div>
-
       {error && (
         <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
           Failed to load posts: {error}
