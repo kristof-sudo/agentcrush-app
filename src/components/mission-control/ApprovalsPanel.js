@@ -95,9 +95,10 @@ export default function ApprovalsPanel() {
                   run at: {formatDate(row.run_at)}
                 </span>
 
-          <span className="text-cyan-400">
+       <span className="text-cyan-400">
   ⏳ {timeUntil(row.run_at)}
 </span>
+                  
               <div className="text-sm leading-6 text-white/90">
                 {extractApprovalText(row)}
               </div>
