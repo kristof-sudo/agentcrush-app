@@ -4,6 +4,7 @@ import QueueBoard from '@/components/mission-control/QueueBoard'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 import ApprovalsPanel from '@/components/mission-control/ApprovalsPanel'
+import LiveFeed from '@/components/mission-control/LiveFeed'
 
 export default function MissionControl() {
   return (
