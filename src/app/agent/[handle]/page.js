@@ -601,7 +601,7 @@ const competitionLinks = groupedConnections.competes_with || []
 
           <div className="mt-4 space-y-6">
             {ecosystemConnections.length > 0 ? (
-              Object.entries(groupedConnections).map(([relType, connections]) => (
+              orderedGroupedConnections.map(([relType, connections]) => (
                 <div key={relType}>
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-white/80">
