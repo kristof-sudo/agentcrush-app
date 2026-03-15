@@ -463,8 +463,10 @@ const pageIntro = isFrameworkPage
             <div>
               <h2 className="text-xl font-semibold">Ecosystem Map</h2>
               <p className="mt-1 text-sm text-white/60">
-                Projects and frameworks connected to this agent inside the wider ecosystem.
-              </p>
+  {isFrameworkPage
+    ? 'Projects, tooling, and ecosystem links connected to this framework.'
+    : 'Projects and frameworks connected to this profile inside the wider ecosystem.'}
+</p>
             </div>
           </div>
 
