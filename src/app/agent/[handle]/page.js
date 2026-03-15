@@ -293,14 +293,14 @@ export default async function AgentPage({ params }) {
     .slice(0, 3)
 
  const bioText = agent.bio || agent.tagline || 'No bio available yet.'
-  
+
 const isFrameworkPage = agent.ecosystem_layer === 'framework'
 
-  const pageIntro = isFrameworkPage
-    ? 'Framework hub inside the AgentCrush ecosystem.'
-    : 'Project profile inside the wider AgentCrush ecosystem.'
-  
-  const groupedConnections = groupConnectionsByType(ecosystemConnections)
+const pageIntro = isFrameworkPage
+  ? 'Framework hub inside the AgentCrush ecosystem.'
+  : 'Project profile inside the wider AgentCrush ecosystem.'
+
+const groupedConnections = groupConnectionsByType(ecosystemConnections)
 
 const frameworkSectionOrder = [
   'framework_of',
