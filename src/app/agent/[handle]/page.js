@@ -333,6 +333,11 @@ export default async function AgentPage({ params }) {
     ? 'Framework hub inside the AgentCrush ecosystem.'
     : 'Project profile inside the wider AgentCrush ecosystem.'
 
+  const frameworkChildren = groupedConnections.framework_of || []
+const ecosystemMembership = groupedConnections.part_of_ecosystem || []
+const integrationLinks = groupedConnections.integrates_with || []
+const competitionLinks = groupedConnections.competes_with || []
+
   return (
     <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
       <div className="mx-auto max-w-5xl space-y-6">
