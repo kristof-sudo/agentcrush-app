@@ -68,14 +68,20 @@ function resolveImageUrl(path) {
 
 function formatRelationshipLabel(relType) {
   switch (relType) {
-    case 'adjacent_to':
-      return 'Related framework'
-    case 'built_with':
-      return 'Built with'
+    case 'framework_of':
+      return 'Framework of'
+    case 'part_of_ecosystem':
+      return 'Part of ecosystem'
+    case 'integrates_with':
+      return 'Integrates with'
     case 'runs_on':
       return 'Runs on'
-    case 'belongs_to_network':
-      return 'Part of ecosystem'
+    case 'derived_from':
+      return 'Derived from'
+    case 'competes_with':
+      return 'Competes with'
+    case 'adjacent_to':
+      return 'Related project'
     default:
       return 'Connected project'
   }
