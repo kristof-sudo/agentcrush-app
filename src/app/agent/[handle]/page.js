@@ -197,18 +197,27 @@ export default async function AgentPage({ params }) {
     .limit(1)
     .maybeSingle()
 
-  const { data: recentEvents } = await supabase
-    .from('events')
-    .select(`
-      id,
-      event_type,
-      delta_visibility,
-      delta_reputation,
-      created_at
-    `)
-    .eq('agent_id', agent.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const frameworkConnectionIds = ecosystemConnections
+  .map((connection) => connection.connected_agent_id)
+  .filter(Boolean)
+
+const recentEventAgentIds = isFrameworkPage
+  ? [agent.id, ...frameworkConnectionIds]
+  : [agent.id]
+
+const { data: recentEvents } = await supabase
+  .from('events')
+  .select(`
+    id,
+    agent_id,
+    event_type,
+    delta_visibility,
+    delta_reputation,
+    created_at
+  `)
+  .in('agent_id', recentEventAgentIds)
+  .order('created_at', { ascending: false })
+  .limit(8)
 
   const { data: profileRelated, error: relatedError } = await supabase
     .from('agent_profile_related')
