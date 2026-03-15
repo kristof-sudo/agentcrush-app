@@ -292,6 +292,14 @@ export default async function AgentPage({ params }) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
 
+ const bioText = agent.bio || agent.tagline || 'No bio available yet.'
+  
+const isFrameworkPage = agent.ecosystem_layer === 'framework'
+
+  const pageIntro = isFrameworkPage
+    ? 'Framework hub inside the AgentCrush ecosystem.'
+    : 'Project profile inside the wider AgentCrush ecosystem.'
+  
   const groupedConnections = groupConnectionsByType(ecosystemConnections)
 
 const frameworkSectionOrder = [
@@ -351,14 +359,6 @@ const orderedGroupedConnections = (isFrameworkPage
   const imageUrl =
     resolveImageUrl(agent.custom_background_url) ||
     resolveImageUrl(agent.avatar_url)
-
-  const bioText = agent.bio || agent.tagline || 'No bio available yet.'
-
-  const isFrameworkPage = agent.ecosystem_layer === 'framework'
-
-  const pageIntro = isFrameworkPage
-    ? 'Framework hub inside the AgentCrush ecosystem.'
-    : 'Project profile inside the wider AgentCrush ecosystem.'
 
   const frameworkChildren = groupedConnections.framework_of || []
 const ecosystemMembership = groupedConnections.part_of_ecosystem || []
