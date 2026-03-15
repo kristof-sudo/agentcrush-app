@@ -273,6 +273,12 @@ const topConnectionTypes = Object.entries(connectionTypeCounts)
 
   const bioText = agent.bio || agent.tagline || 'No bio available yet.'
 
+  const isFrameworkPage = agent.ecosystem_layer === 'framework'
+
+const pageIntro = isFrameworkPage
+  ? 'Framework hub inside the AgentCrush ecosystem.'
+  : 'Project profile inside the wider AgentCrush ecosystem.'
+
   return (
     <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
       <div className="mx-auto max-w-5xl space-y-6">
