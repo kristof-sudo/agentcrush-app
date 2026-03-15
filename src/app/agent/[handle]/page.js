@@ -565,10 +565,10 @@ const competitionLinks = groupedConnections.competes_with || []
             <div>
               <h2 className="text-xl font-semibold">Ecosystem Map</h2>
               <p className="mt-1 text-sm text-white/60">
-                {isFrameworkPage
-                  ? 'Projects, tooling, and ecosystem links connected to this framework.'
-                  : 'Projects and frameworks connected to this profile inside the wider ecosystem.'}
-              </p>
+  {isFrameworkPage
+    ? 'Framework ecosystem graph. Projects, integrations, and competitive frameworks connected to this hub.'
+    : 'Structured ecosystem graph showing how this project connects to other agents and frameworks.'}
+</p>
             </div>
           </div>
 
