@@ -387,6 +387,67 @@ const topConnectionTypes = Object.entries(connectionTypeCounts)
           </div>
         </div>
 
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+  <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
+    <div>
+      <h2 className="text-xl font-semibold">Ecosystem Summary</h2>
+      <p className="mt-1 text-sm text-white/60">
+        Structured overview of this project's ecosystem position.
+      </p>
+    </div>
+  </div>
+
+  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="text-sm text-white/60">Connections</div>
+      <div className="mt-2 text-2xl font-semibold">
+        {ecosystemStats.totalConnections}
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="text-sm text-white/60">Agent Links</div>
+      <div className="mt-2 text-2xl font-semibold">
+        {ecosystemStats.agents}
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="text-sm text-white/60">Framework Links</div>
+      <div className="mt-2 text-2xl font-semibold">
+        {ecosystemStats.frameworks}
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="text-sm text-white/60">Infrastructure Links</div>
+      <div className="mt-2 text-2xl font-semibold">
+        {ecosystemStats.infrastructure}
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="text-sm text-white/60">Network Links</div>
+      <div className="mt-2 text-2xl font-semibold">
+        {ecosystemStats.networks}
+      </div>
+    </div>
+  </div>
+
+  {topConnectionTypes.length > 0 ? (
+    <div className="mt-4 flex flex-wrap gap-2 text-xs">
+      {topConnectionTypes.map(([type, count]) => (
+        <span
+          key={type}
+          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70"
+        >
+          {formatRelationshipLabel(type)}: {count}
+        </span>
+      ))}
+    </div>
+  ) : null}
+</div>
+              
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
