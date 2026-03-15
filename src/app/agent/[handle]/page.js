@@ -30,12 +30,6 @@ function formatEventLabel(eventType) {
   return EVENT_LABELS[eventType] || 'Activity detected'
 }
 
-{isFrameworkPage && event.agent_id !== agent.id ? (
-  <div className="mt-1 text-xs text-white/50">
-    from {eventAgentMap.get(event.agent_id)?.display_name || eventAgentMap.get(event.agent_id)?.handle || 'connected project'}
-  </div>
-) : null}
-
 function formatImpact(event) {
   const parts = []
 
@@ -203,28 +197,6 @@ export default async function AgentPage({ params }) {
     .limit(1)
     .maybeSingle()
 
-  const frameworkConnectionIds = ecosystemConnections
-  .map((connection) => connection.connected_agent_id)
-  .filter(Boolean)
-
-const recentEventAgentIds = isFrameworkPage
-  ? [agent.id, ...frameworkConnectionIds]
-  : [agent.id]
-
-const { data: recentEvents } = await supabase
-  .from('events')
-  .select(`
-    id,
-    agent_id,
-    event_type,
-    delta_visibility,
-    delta_reputation,
-    created_at
-  `)
-  .in('agent_id', recentEventAgentIds)
-  .order('created_at', { ascending: false })
-  .limit(8)
-
   const { data: profileRelated, error: relatedError } = await supabase
     .from('agent_profile_related')
     .select(`
@@ -242,7 +214,9 @@ const { data: recentEvents } = await supabase
     console.error('AGENT PROFILE RELATED QUERY ERROR:', relatedError)
   }
 
-  const connectedIds = [...new Set((profileRelated || []).map(r => r.connected_agent_id).filter(Boolean))]
+  const connectedIds = [
+    ...new Set((profileRelated || []).map((r) => r.connected_agent_id).filter(Boolean)),
+  ]
 
   const { data: connectedAgents, error: connectedAgentsError } = connectedIds.length
     ? await supabase
@@ -268,15 +242,15 @@ const { data: recentEvents } = await supabase
     console.error('CONNECTED AGENTS QUERY ERROR:', connectedAgentsError)
   }
 
-  const connectedMap = new Map((connectedAgents || []).map(a => [a.id, a]))
+  const connectedMap = new Map((connectedAgents || []).map((a) => [a.id, a]))
 
-const eventAgentMap = new Map([
-  [agent.id, agent],
-  ...((connectedAgents || []).map((a) => [a.id, a])),
-])
-  
+  const eventAgentMap = new Map([
+    [agent.id, agent],
+    ...((connectedAgents || []).map((a) => [a.id, a])),
+  ])
+
   const ecosystemConnections = sortConnections(
-    (profileRelated || []).map(rel => {
+    (profileRelated || []).map((rel) => {
       const connected = connectedMap.get(rel.connected_agent_id)
 
       return {
@@ -288,18 +262,10 @@ const eventAgentMap = new Map([
 
   const ecosystemStats = {
     totalConnections: ecosystemConnections.length,
-    frameworks: ecosystemConnections.filter(
-      c => c.connected_layer === 'framework'
-    ).length,
-    infrastructure: ecosystemConnections.filter(
-      c => c.connected_layer === 'infrastructure'
-    ).length,
-    networks: ecosystemConnections.filter(
-      c => c.connected_layer === 'network'
-    ).length,
-    agents: ecosystemConnections.filter(
-      c => c.connected_layer === 'agent'
-    ).length,
+    frameworks: ecosystemConnections.filter((c) => c.connected_layer === 'framework').length,
+    infrastructure: ecosystemConnections.filter((c) => c.connected_layer === 'infrastructure').length,
+    networks: ecosystemConnections.filter((c) => c.connected_layer === 'network').length,
+    agents: ecosystemConnections.filter((c) => c.connected_layer === 'agent').length,
   }
 
   const connectionTypeCounts = ecosystemConnections.reduce((acc, connection) => {
@@ -312,42 +278,69 @@ const eventAgentMap = new Map([
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
 
- const bioText = agent.bio || agent.tagline || 'No bio available yet.'
+  const bioText = agent.bio || agent.tagline || 'No bio available yet.'
 
-const isFrameworkPage = agent.ecosystem_layer === 'framework'
+  const isFrameworkPage = agent.ecosystem_layer === 'framework'
 
-const pageIntro = isFrameworkPage
-  ? 'Framework hub inside the AgentCrush ecosystem.'
-  : 'Project profile inside the wider AgentCrush ecosystem.'
+  const pageIntro = isFrameworkPage
+    ? 'Framework hub inside the AgentCrush ecosystem.'
+    : 'Project profile inside the wider AgentCrush ecosystem.'
 
-const groupedConnections = groupConnectionsByType(ecosystemConnections)
+  const groupedConnections = groupConnectionsByType(ecosystemConnections)
 
-const frameworkSectionOrder = [
-  'framework_of',
-  'part_of_ecosystem',
-  'runs_on',
-  'integrates_with',
-  'competes_with',
-  'derived_from',
-  'adjacent_to',
-]
+  const frameworkSectionOrder = [
+    'framework_of',
+    'part_of_ecosystem',
+    'runs_on',
+    'integrates_with',
+    'competes_with',
+    'derived_from',
+    'adjacent_to',
+  ]
 
-const defaultSectionOrder = [
-  'part_of_ecosystem',
-  'integrates_with',
-  'runs_on',
-  'derived_from',
-  'competes_with',
-  'framework_of',
-  'adjacent_to',
-]
+  const defaultSectionOrder = [
+    'part_of_ecosystem',
+    'integrates_with',
+    'runs_on',
+    'derived_from',
+    'competes_with',
+    'framework_of',
+    'adjacent_to',
+  ]
 
-const orderedGroupedConnections = (isFrameworkPage
-  ? frameworkSectionOrder
-  : defaultSectionOrder
-)
-  .filter((relType) => groupedConnections[relType]?.length)
-  .map((relType) => [relType, groupedConnections[relType]])
+  const orderedGroupedConnections = (isFrameworkPage
+    ? frameworkSectionOrder
+    : defaultSectionOrder
+  )
+    .filter((relType) => groupedConnections[relType]?.length)
+    .map((relType) => [relType, groupedConnections[relType]])
+
+  const frameworkChildren = groupedConnections.framework_of || []
+  const ecosystemMembership = groupedConnections.part_of_ecosystem || []
+  const integrationLinks = groupedConnections.integrates_with || []
+  const competitionLinks = groupedConnections.competes_with || []
+
+  const frameworkConnectionIds = ecosystemConnections
+    .map((connection) => connection.connected_agent_id)
+    .filter(Boolean)
+
+  const recentEventAgentIds = isFrameworkPage
+    ? [agent.id, ...frameworkConnectionIds]
+    : [agent.id]
+
+  const { data: recentEvents } = await supabase
+    .from('events')
+    .select(`
+      id,
+      agent_id,
+      event_type,
+      delta_visibility,
+      delta_reputation,
+      created_at
+    `)
+    .in('agent_id', recentEventAgentIds)
+    .order('created_at', { ascending: false })
+    .limit(8)
 
   let fallbackAgents = []
 
@@ -380,11 +373,6 @@ const orderedGroupedConnections = (isFrameworkPage
     resolveImageUrl(agent.custom_background_url) ||
     resolveImageUrl(agent.avatar_url)
 
-  const frameworkChildren = groupedConnections.framework_of || []
-const ecosystemMembership = groupedConnections.part_of_ecosystem || []
-const integrationLinks = groupedConnections.integrates_with || []
-const competitionLinks = groupedConnections.competes_with || []
-
   return (
     <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -407,9 +395,7 @@ const competitionLinks = groupedConnections.competes_with || []
 
               <p className="mt-2 text-white/70">@{agent.handle}</p>
 
-              <p className="mt-2 text-sm text-white/60">
-                {pageIntro}
-              </p>
+              <p className="mt-2 text-sm text-white/60">{pageIntro}</p>
 
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
@@ -472,49 +458,49 @@ const competitionLinks = groupedConnections.competes_with || []
           </div>
         </div>
 
-              {isFrameworkPage ? (
-  <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-    <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
-      <div>
-        <h2 className="text-xl font-semibold">Framework Position</h2>
-        <p className="mt-1 text-sm text-white/60">
-          Snapshot of this framework's role inside the AgentCrush ecosystem.
-        </p>
-      </div>
-    </div>
+        {isFrameworkPage ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
+              <div>
+                <h2 className="text-xl font-semibold">Framework Position</h2>
+                <p className="mt-1 text-sm text-white/60">
+                  Snapshot of this framework&apos;s role inside the AgentCrush ecosystem.
+                </p>
+              </div>
+            </div>
 
-    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-        <div className="text-sm text-white/60">Child Projects</div>
-        <div className="mt-2 text-2xl font-semibold">
-          {frameworkChildren.length}
-        </div>
-      </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm text-white/60">Child Projects</div>
+                <div className="mt-2 text-2xl font-semibold">
+                  {frameworkChildren.length}
+                </div>
+              </div>
 
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-        <div className="text-sm text-white/60">Ecosystem Links</div>
-        <div className="mt-2 text-2xl font-semibold">
-          {ecosystemMembership.length}
-        </div>
-      </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm text-white/60">Ecosystem Links</div>
+                <div className="mt-2 text-2xl font-semibold">
+                  {ecosystemMembership.length}
+                </div>
+              </div>
 
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-        <div className="text-sm text-white/60">Integration Links</div>
-        <div className="mt-2 text-2xl font-semibold">
-          {integrationLinks.length}
-        </div>
-      </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm text-white/60">Integration Links</div>
+                <div className="mt-2 text-2xl font-semibold">
+                  {integrationLinks.length}
+                </div>
+              </div>
 
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-        <div className="text-sm text-white/60">Competitive Links</div>
-        <div className="mt-2 text-2xl font-semibold">
-          {competitionLinks.length}
-        </div>
-      </div>
-    </div>
-  </div>
-) : null}
-              
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm text-white/60">Competitive Links</div>
+                <div className="mt-2 text-2xl font-semibold">
+                  {competitionLinks.length}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-xl font-semibold">Recent Activity</h2>
 
@@ -530,6 +516,11 @@ const competitionLinks = groupedConnections.competes_with || []
                       <div className="font-medium">
                         {formatEventLabel(event.event_type)}
                       </div>
+                      {isFrameworkPage && event.agent_id !== agent.id ? (
+                        <div className="mt-1 text-xs text-white/50">
+                          from {eventAgentMap.get(event.agent_id)?.display_name || eventAgentMap.get(event.agent_id)?.handle || 'connected project'}
+                        </div>
+                      ) : null}
                       <div className="mt-1 text-sm text-white/60">
                         {formatImpact(event)}
                       </div>
@@ -551,7 +542,7 @@ const competitionLinks = groupedConnections.competes_with || []
             <div>
               <h2 className="text-xl font-semibold">Ecosystem Summary</h2>
               <p className="mt-1 text-sm text-white/60">
-                Structured overview of this project's ecosystem position.
+                Structured overview of this project&apos;s ecosystem position.
               </p>
             </div>
           </div>
@@ -612,10 +603,10 @@ const competitionLinks = groupedConnections.competes_with || []
             <div>
               <h2 className="text-xl font-semibold">Ecosystem Map</h2>
               <p className="mt-1 text-sm text-white/60">
-  {isFrameworkPage
-    ? 'Framework ecosystem graph. Projects, integrations, and competitive frameworks connected to this hub.'
-    : 'Structured ecosystem graph showing how this project connects to other agents and frameworks.'}
-</p>
+                {isFrameworkPage
+                  ? 'Framework ecosystem graph. Projects, integrations, and competitive frameworks connected to this hub.'
+                  : 'Structured ecosystem graph showing how this project connects to other agents and frameworks.'}
+              </p>
             </div>
           </div>
 
@@ -625,8 +616,8 @@ const competitionLinks = groupedConnections.competes_with || []
                 <div key={relType}>
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-white/80">
-  {formatRelationshipLabel(relType)}
-</h3>
+                      {formatRelationshipLabel(relType)}
+                    </h3>
                     <span className="text-xs text-white/45">
                       {connections.length}
                     </span>
