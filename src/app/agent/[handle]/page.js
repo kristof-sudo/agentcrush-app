@@ -20,6 +20,10 @@ const EVENT_LABELS = {
   reputation_hit: 'Reputation under pressure',
   reputation_recovery: 'Reputation recovering',
   launch_buzz: 'Launch gaining attention',
+  repo_star_growth: 'Repository gaining traction',
+  repo_release: 'New release detected',
+  dev_activity: 'Development activity detected',
+  ecosystem_integration: 'New ecosystem integration',
 }
 
 function formatEventLabel(eventType) {
@@ -50,6 +54,7 @@ function formatTimeAgo(value) {
     const hours = Math.floor(diffMs / 3600000)
     const days = Math.floor(diffMs / 86400000)
 
+    if (minutes < 1) return 'just now'
     if (minutes < 60) return `${minutes} min ago`
     if (hours < 24) return `${hours} h ago`
     return `${days} d ago`
@@ -102,6 +107,51 @@ function formatLayerLabel(layer) {
     default:
       return 'Project'
   }
+}
+
+function relationPriority(relType) {
+  switch (relType) {
+    case 'framework_of':
+      return 1
+    case 'part_of_ecosystem':
+      return 2
+    case 'runs_on':
+      return 3
+    case 'integrates_with':
+      return 4
+    case 'derived_from':
+      return 5
+    case 'competes_with':
+      return 6
+    case 'adjacent_to':
+      return 7
+    default:
+      return 99
+  }
+}
+
+function sortConnections(connections) {
+  return [...connections].sort((a, b) => {
+    const relDiff = relationPriority(a.rel_type) - relationPriority(b.rel_type)
+    if (relDiff !== 0) return relDiff
+
+    const intensityA = Number(a.intensity || 0)
+    const intensityB = Number(b.intensity || 0)
+    if (intensityA !== intensityB) return intensityB - intensityA
+
+    return String(a.connected_name || a.connected_handle || '').localeCompare(
+      String(b.connected_name || b.connected_handle || '')
+    )
+  })
+}
+
+function groupConnectionsByType(connections) {
+  return connections.reduce((acc, connection) => {
+    const key = connection.rel_type || 'unknown'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(connection)
+    return acc
+  }, {})
 }
 
 export default async function AgentPage({ params }) {
@@ -171,7 +221,7 @@ export default async function AgentPage({ params }) {
       intensity
     `)
     .eq('agent_handle', cleanHandle)
-    .limit(6)
+    .limit(12)
 
   if (relatedError) {
     console.error('AGENT PROFILE RELATED QUERY ERROR:', relatedError)
@@ -205,41 +255,45 @@ export default async function AgentPage({ params }) {
 
   const connectedMap = new Map((connectedAgents || []).map(a => [a.id, a]))
 
-  const ecosystemConnections = (profileRelated || []).map(rel => {
-    const connected = connectedMap.get(rel.connected_agent_id)
+  const ecosystemConnections = sortConnections(
+    (profileRelated || []).map(rel => {
+      const connected = connectedMap.get(rel.connected_agent_id)
 
-    return {
-      ...rel,
-      agent: connected || null,
-    }
-  })
+      return {
+        ...rel,
+        agent: connected || null,
+      }
+    })
+  )
 
-const ecosystemStats = {
-  totalConnections: ecosystemConnections.length,
-  frameworks: ecosystemConnections.filter(
-    c => c.connected_layer === 'framework'
-  ).length,
-  infrastructure: ecosystemConnections.filter(
-    c => c.connected_layer === 'infrastructure'
-  ).length,
-  networks: ecosystemConnections.filter(
-    c => c.connected_layer === 'network'
-  ).length,
-  agents: ecosystemConnections.filter(
-    c => c.connected_layer === 'agent'
-  ).length,
-}
+  const ecosystemStats = {
+    totalConnections: ecosystemConnections.length,
+    frameworks: ecosystemConnections.filter(
+      c => c.connected_layer === 'framework'
+    ).length,
+    infrastructure: ecosystemConnections.filter(
+      c => c.connected_layer === 'infrastructure'
+    ).length,
+    networks: ecosystemConnections.filter(
+      c => c.connected_layer === 'network'
+    ).length,
+    agents: ecosystemConnections.filter(
+      c => c.connected_layer === 'agent'
+    ).length,
+  }
 
-const connectionTypeCounts = ecosystemConnections.reduce((acc, connection) => {
-  const key = connection.rel_type || 'unknown'
-  acc[key] = (acc[key] || 0) + 1
-  return acc
-}, {})
+  const connectionTypeCounts = ecosystemConnections.reduce((acc, connection) => {
+    const key = connection.rel_type || 'unknown'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
 
-const topConnectionTypes = Object.entries(connectionTypeCounts)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 3)
-  
+  const topConnectionTypes = Object.entries(connectionTypeCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+
+  const groupedConnections = groupConnectionsByType(ecosystemConnections)
+
   let fallbackAgents = []
 
   if (!ecosystemConnections.length) {
@@ -275,9 +329,9 @@ const topConnectionTypes = Object.entries(connectionTypeCounts)
 
   const isFrameworkPage = agent.ecosystem_layer === 'framework'
 
-const pageIntro = isFrameworkPage
-  ? 'Framework hub inside the AgentCrush ecosystem.'
-  : 'Project profile inside the wider AgentCrush ecosystem.'
+  const pageIntro = isFrameworkPage
+    ? 'Framework hub inside the AgentCrush ecosystem.'
+    : 'Project profile inside the wider AgentCrush ecosystem.'
 
   return (
     <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
@@ -301,9 +355,9 @@ const pageIntro = isFrameworkPage
 
               <p className="mt-2 text-white/70">@{agent.handle}</p>
 
-                <p className="mt-2 text-sm text-white/60">
-  {pageIntro}
-</p>
+              <p className="mt-2 text-sm text-white/60">
+                {pageIntro}
+              </p>
 
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
@@ -397,179 +451,215 @@ const pageIntro = isFrameworkPage
           </div>
         </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-  <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
-    <div>
-      <h2 className="text-xl font-semibold">Ecosystem Summary</h2>
-      <p className="mt-1 text-sm text-white/60">
-        Structured overview of this project's ecosystem position.
-      </p>
-    </div>
-  </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
+            <div>
+              <h2 className="text-xl font-semibold">Ecosystem Summary</h2>
+              <p className="mt-1 text-sm text-white/60">
+                Structured overview of this project's ecosystem position.
+              </p>
+            </div>
+          </div>
 
-  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-      <div className="text-sm text-white/60">Connections</div>
-      <div className="mt-2 text-2xl font-semibold">
-        {ecosystemStats.totalConnections}
-      </div>
-    </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm text-white/60">Connections</div>
+              <div className="mt-2 text-2xl font-semibold">
+                {ecosystemStats.totalConnections}
+              </div>
+            </div>
 
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-      <div className="text-sm text-white/60">Agent Links</div>
-      <div className="mt-2 text-2xl font-semibold">
-        {ecosystemStats.agents}
-      </div>
-    </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm text-white/60">Agent Links</div>
+              <div className="mt-2 text-2xl font-semibold">
+                {ecosystemStats.agents}
+              </div>
+            </div>
 
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-      <div className="text-sm text-white/60">Framework Links</div>
-      <div className="mt-2 text-2xl font-semibold">
-        {ecosystemStats.frameworks}
-      </div>
-    </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm text-white/60">Framework Links</div>
+              <div className="mt-2 text-2xl font-semibold">
+                {ecosystemStats.frameworks}
+              </div>
+            </div>
 
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-      <div className="text-sm text-white/60">Infrastructure Links</div>
-      <div className="mt-2 text-2xl font-semibold">
-        {ecosystemStats.infrastructure}
-      </div>
-    </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm text-white/60">Infrastructure Links</div>
+              <div className="mt-2 text-2xl font-semibold">
+                {ecosystemStats.infrastructure}
+              </div>
+            </div>
 
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-      <div className="text-sm text-white/60">Network Links</div>
-      <div className="mt-2 text-2xl font-semibold">
-        {ecosystemStats.networks}
-      </div>
-    </div>
-  </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm text-white/60">Network Links</div>
+              <div className="mt-2 text-2xl font-semibold">
+                {ecosystemStats.networks}
+              </div>
+            </div>
+          </div>
 
-  {topConnectionTypes.length > 0 ? (
-    <div className="mt-4 flex flex-wrap gap-2 text-xs">
-      {topConnectionTypes.map(([type, count]) => (
-        <span
-          key={type}
-          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70"
-        >
-          {formatRelationshipLabel(type)}: {count}
-        </span>
-      ))}
-    </div>
-  ) : null}
-</div>
-              
+          {topConnectionTypes.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              {topConnectionTypes.map(([type, count]) => (
+                <span
+                  key={type}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70"
+                >
+                  {formatRelationshipLabel(type)}: {count}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold">Ecosystem Map</h2>
               <p className="mt-1 text-sm text-white/60">
-  {isFrameworkPage
-    ? 'Projects, tooling, and ecosystem links connected to this framework.'
-    : 'Projects and frameworks connected to this profile inside the wider ecosystem.'}
-</p>
+                {isFrameworkPage
+                  ? 'Projects, tooling, and ecosystem links connected to this framework.'
+                  : 'Projects and frameworks connected to this profile inside the wider ecosystem.'}
+              </p>
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 space-y-6">
             {ecosystemConnections.length > 0 ? (
-              ecosystemConnections.map((connection, index) => {
-                const related = connection.agent
-                const relatedImage =
-                  resolveImageUrl(related?.custom_background_url) ||
-                  resolveImageUrl(related?.avatar_url)
+              Object.entries(groupedConnections).map(([relType, connections]) => (
+                <div key={relType}>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/70">
+                      {formatRelationshipLabel(relType)}
+                    </h3>
+                    <span className="text-xs text-white/45">
+                      {connections.length}
+                    </span>
+                  </div>
 
-                return (
-                  <Link
-                    key={`${connection.connected_agent_id}-${index}`}
-                    href={`/agent/${encodeURIComponent(connection.connected_handle)}`}
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                  >
-                    <div className="flex items-center gap-3">
-                      {relatedImage ? (
-                        <img
-                          src={relatedImage}
-                          alt={connection.connected_name || connection.connected_handle}
-                          className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
-                        />
-                      ) : (
-                        <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
-                      )}
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {connections.map((connection, index) => {
+                      const related = connection.agent
+                      const relatedImage =
+                        resolveImageUrl(related?.custom_background_url) ||
+                        resolveImageUrl(related?.avatar_url)
 
-                      <div className="min-w-0">
-                        <div className="truncate font-medium">
-                          {connection.connected_name || connection.connected_handle}
-                        </div>
-                        <div className="truncate text-sm text-white/60">
-                          @{connection.connected_handle}
-                        </div>
-                      </div>
-                    </div>
+                      return (
+                        <Link
+                          key={`${connection.connected_agent_id}-${index}`}
+                          href={`/agent/${encodeURIComponent(connection.connected_handle)}`}
+                          className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+                        >
+                          <div className="flex items-center gap-3">
+                            {relatedImage ? (
+                              <img
+                                src={relatedImage}
+                                alt={connection.connected_name || connection.connected_handle}
+                                className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
+                              />
+                            ) : (
+                              <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
+                            )}
 
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
-                        {formatRelationshipLabel(connection.rel_type)}
-                      </span>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
-                        {formatLayerLabel(connection.connected_layer)}
-                      </span>
-                    </div>
+                            <div className="min-w-0">
+                              <div className="truncate font-medium">
+                                {connection.connected_name || connection.connected_handle}
+                              </div>
+                              <div className="truncate text-sm text-white/60">
+                                @{connection.connected_handle}
+                              </div>
+                            </div>
+                          </div>
 
-                    {related?.archetype ? (
-                      <div className="mt-3 text-sm text-white/60">
-                        Archetype: {related.archetype}
-                      </div>
-                    ) : null}
+                          <div className="mt-3 text-sm text-white/80 font-medium">
+                            {formatRelationshipLabel(connection.rel_type)}
+                          </div>
 
-                    <div className="mt-2 text-sm text-white/80">
-                      Connection strength: {connection.intensity ?? 1}
-                    </div>
-                  </Link>
-                )
-              })
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
+                              {formatLayerLabel(connection.connected_layer)}
+                            </span>
+
+                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
+                              Strength {connection.intensity ?? 1}
+                            </span>
+                          </div>
+
+                          {related?.archetype ? (
+                            <div className="mt-3 text-sm text-white/60">
+                              Archetype: {related.archetype}
+                            </div>
+                          ) : null}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))
             ) : fallbackAgents.length > 0 ? (
-              fallbackAgents.map((related) => {
-                const relatedImage = resolveImageUrl(related.avatar_url)
-                const relatedScore =
-                  Number(related.visibility_score || 0) +
-                  Number(related.reputation_score || 0)
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-white/70">
+                    Related by similarity
+                  </h3>
+                </div>
 
-                return (
-                  <Link
-                    key={related.id}
-                    href={`/agent/${encodeURIComponent(related.handle)}`}
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                  >
-                    <div className="flex items-center gap-3">
-                      {relatedImage ? (
-                        <img
-                          src={relatedImage}
-                          alt={related.display_name || related.handle}
-                          className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
-                        />
-                      ) : (
-                        <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
-                      )}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {fallbackAgents.map((related) => {
+                    const relatedImage = resolveImageUrl(related.avatar_url)
+                    const relatedScore =
+                      Number(related.visibility_score || 0) +
+                      Number(related.reputation_score || 0)
 
-                      <div className="min-w-0">
-                        <div className="truncate font-medium">
-                          {related.display_name || related.handle}
+                    return (
+                      <Link
+                        key={related.id}
+                        href={`/agent/${encodeURIComponent(related.handle)}`}
+                        className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+                      >
+                        <div className="flex items-center gap-3">
+                          {relatedImage ? (
+                            <img
+                              src={relatedImage}
+                              alt={related.display_name || related.handle}
+                              className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
+                            />
+                          ) : (
+                            <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
+                          )}
+
+                          <div className="min-w-0">
+                            <div className="truncate font-medium">
+                              {related.display_name || related.handle}
+                            </div>
+                            <div className="truncate text-sm text-white/60">
+                              @{related.handle}
+                            </div>
+                          </div>
                         </div>
-                        <div className="truncate text-sm text-white/60">
-                          @{related.handle}
+
+                        <div className="mt-3 text-sm text-white/80 font-medium">
+                          Related project
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="mt-3 text-sm text-white/60">
-                      Fallback similarity • {related.archetype || 'Unknown'}
-                    </div>
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
+                            {formatLayerLabel(related.ecosystem_layer)}
+                          </span>
+                        </div>
 
-                    <div className="mt-2 text-sm text-white/80">
-                      Score: {relatedScore}
-                    </div>
-                  </Link>
-                )
-              })
+                        <div className="mt-3 text-sm text-white/60">
+                          Fallback similarity • {related.archetype || 'Unknown'}
+                        </div>
+
+                        <div className="mt-2 text-sm text-white/80">
+                          Score: {relatedScore}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
             ) : (
               <div className="text-white/60">No ecosystem connections mapped yet.</div>
             )}
