@@ -294,6 +294,33 @@ export default async function AgentPage({ params }) {
 
   const groupedConnections = groupConnectionsByType(ecosystemConnections)
 
+const frameworkSectionOrder = [
+  'framework_of',
+  'part_of_ecosystem',
+  'runs_on',
+  'integrates_with',
+  'competes_with',
+  'derived_from',
+  'adjacent_to',
+]
+
+const defaultSectionOrder = [
+  'part_of_ecosystem',
+  'integrates_with',
+  'runs_on',
+  'derived_from',
+  'competes_with',
+  'framework_of',
+  'adjacent_to',
+]
+
+const orderedGroupedConnections = (isFrameworkPage
+  ? frameworkSectionOrder
+  : defaultSectionOrder
+)
+  .filter((relType) => groupedConnections[relType]?.length)
+  .map((relType) => [relType, groupedConnections[relType]])
+
   let fallbackAgents = []
 
   if (!ecosystemConnections.length) {
