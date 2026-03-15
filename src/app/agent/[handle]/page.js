@@ -214,6 +214,32 @@ export default async function AgentPage({ params }) {
     }
   })
 
+const ecosystemStats = {
+  totalConnections: ecosystemConnections.length,
+  frameworks: ecosystemConnections.filter(
+    c => c.connected_layer === 'framework'
+  ).length,
+  infrastructure: ecosystemConnections.filter(
+    c => c.connected_layer === 'infrastructure'
+  ).length,
+  networks: ecosystemConnections.filter(
+    c => c.connected_layer === 'network'
+  ).length,
+  agents: ecosystemConnections.filter(
+    c => c.connected_layer === 'agent'
+  ).length,
+}
+
+const connectionTypeCounts = ecosystemConnections.reduce((acc, connection) => {
+  const key = connection.rel_type || 'unknown'
+  acc[key] = (acc[key] || 0) + 1
+  return acc
+}, {})
+
+const topConnectionTypes = Object.entries(connectionTypeCounts)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 3)
+  
   let fallbackAgents = []
 
   if (!ecosystemConnections.length) {
