@@ -577,9 +577,9 @@ const competitionLinks = groupedConnections.competes_with || []
               Object.entries(groupedConnections).map(([relType, connections]) => (
                 <div key={relType}>
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/70">
-                      {formatRelationshipLabel(relType)}
-                    </h3>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/80">
+  {formatRelationshipLabel(relType)}
+</h3>
                     <span className="text-xs text-white/45">
                       {connections.length}
                     </span>
