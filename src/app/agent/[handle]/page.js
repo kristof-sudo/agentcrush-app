@@ -30,6 +30,12 @@ function formatEventLabel(eventType) {
   return EVENT_LABELS[eventType] || 'Activity detected'
 }
 
+{isFrameworkPage && event.agent_id !== agent.id ? (
+  <div className="mt-1 text-xs text-white/50">
+    from {eventAgentMap.get(event.agent_id)?.display_name || eventAgentMap.get(event.agent_id)?.handle || 'connected project'}
+  </div>
+) : null}
+
 function formatImpact(event) {
   const parts = []
 
