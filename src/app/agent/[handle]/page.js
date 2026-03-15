@@ -66,6 +66,38 @@ function resolveImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
+function formatRelationshipLabel(relType) {
+  switch (relType) {
+    case 'adjacent_to':
+      return 'Related framework'
+    case 'built_with':
+      return 'Built with'
+    case 'runs_on':
+      return 'Runs on'
+    case 'belongs_to_network':
+      return 'Part of ecosystem'
+    default:
+      return 'Connected project'
+  }
+}
+
+function formatLayerLabel(layer) {
+  switch (layer) {
+    case 'framework':
+      return 'Framework'
+    case 'infrastructure':
+      return 'Infrastructure'
+    case 'network':
+      return 'Network'
+    case 'observer':
+      return 'Observer'
+    case 'agent':
+      return 'Agent'
+    default:
+      return 'Project'
+  }
+}
+
 export default async function AgentPage({ params }) {
   const { handle } = await params
   const cleanHandle = decodeURIComponent(handle)
@@ -84,7 +116,11 @@ export default async function AgentPage({ params }) {
       weekly_delta,
       status,
       bio,
-      tagline
+      tagline,
+      ecosystem_layer,
+      framework_name,
+      network_name,
+      activity_status
     `)
     .ilike('handle', cleanHandle)
     .maybeSingle()
@@ -118,24 +154,64 @@ export default async function AgentPage({ params }) {
     .order('created_at', { ascending: false })
     .limit(5)
 
-  let { data: relatedAgents } = await supabase
-    .from('agents')
+  const { data: profileRelated, error: relatedError } = await supabase
+    .from('agent_profile_related')
     .select(`
-      id,
-      handle,
-      display_name,
-      archetype,
-      avatar_url,
-      visibility_score,
-      reputation_score
+      connected_agent_id,
+      connected_handle,
+      connected_name,
+      connected_layer,
+      rel_type,
+      intensity
     `)
-    .eq('archetype', agent.archetype)
-    .neq('id', agent.id)
-    .order('visibility_score', { ascending: false })
-    .limit(4)
+    .eq('agent_handle', cleanHandle)
+    .limit(6)
 
-  if (!relatedAgents || relatedAgents.length < 4) {
-    const { data: fallbackAgents } = await supabase
+  if (relatedError) {
+    console.error('AGENT PROFILE RELATED QUERY ERROR:', relatedError)
+  }
+
+  const connectedIds = [...new Set((profileRelated || []).map(r => r.connected_agent_id).filter(Boolean))]
+
+  const { data: connectedAgents, error: connectedAgentsError } = connectedIds.length
+    ? await supabase
+        .from('agents')
+        .select(`
+          id,
+          handle,
+          display_name,
+          archetype,
+          avatar_url,
+          custom_background_url,
+          ecosystem_layer,
+          visibility_score,
+          reputation_score,
+          network_name,
+          framework_name,
+          activity_status
+        `)
+        .in('id', connectedIds)
+    : { data: [] }
+
+  if (connectedAgentsError) {
+    console.error('CONNECTED AGENTS QUERY ERROR:', connectedAgentsError)
+  }
+
+  const connectedMap = new Map((connectedAgents || []).map(a => [a.id, a]))
+
+  const ecosystemConnections = (profileRelated || []).map(rel => {
+    const connected = connectedMap.get(rel.connected_agent_id)
+
+    return {
+      ...rel,
+      agent: connected || null,
+    }
+  })
+
+  let fallbackAgents = []
+
+  if (!ecosystemConnections.length) {
+    const { data } = await supabase
       .from('agents')
       .select(`
         id,
@@ -144,13 +220,15 @@ export default async function AgentPage({ params }) {
         archetype,
         avatar_url,
         visibility_score,
-        reputation_score
+        reputation_score,
+        ecosystem_layer
       `)
+      .eq('archetype', agent.archetype)
       .neq('id', agent.id)
       .order('visibility_score', { ascending: false })
       .limit(4)
 
-    relatedAgents = fallbackAgents || []
+    fallbackAgents = data || []
   }
 
   const agentCrushScore =
@@ -185,9 +263,24 @@ export default async function AgentPage({ params }) {
 
               <p className="mt-2 text-white/70">@{agent.handle}</p>
 
-              <p className="mt-3 text-sm text-white/70">
-                Archetype: {agent.archetype || 'Unknown'}
-              </p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
+                  Archetype: {agent.archetype || 'Unknown'}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
+                  Layer: {formatLayerLabel(agent.ecosystem_layer)}
+                </span>
+                {agent.network_name ? (
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
+                    Network: {agent.network_name}
+                  </span>
+                ) : null}
+                {agent.activity_status ? (
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
+                    Activity: {agent.activity_status}
+                  </span>
+                ) : null}
+              </div>
 
               <p className="mt-4 max-w-2xl text-white/85 leading-7">
                 {bioText}
@@ -263,52 +356,118 @@ export default async function AgentPage({ params }) {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-xl font-semibold">Related Agents</h2>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Ecosystem Map</h2>
+              <p className="mt-1 text-sm text-white/60">
+                Projects and frameworks connected to this agent inside the wider ecosystem.
+              </p>
+            </div>
+          </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {(relatedAgents || []).map((related) => {
-              const relatedImage = resolveImageUrl(related.avatar_url)
-              const relatedScore =
-                Number(related.visibility_score || 0) +
-                Number(related.reputation_score || 0)
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ecosystemConnections.length > 0 ? (
+              ecosystemConnections.map((connection, index) => {
+                const related = connection.agent
+                const relatedImage =
+                  resolveImageUrl(related?.custom_background_url) ||
+                  resolveImageUrl(related?.avatar_url)
 
-              return (
-                <Link
-                  key={related.id}
-                  href={`/agent/${encodeURIComponent(related.handle)}`}
-                  className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                >
-                  <div className="flex items-center gap-3">
-                    {relatedImage ? (
-                      <img
-                        src={relatedImage}
-                        alt={related.display_name || related.handle}
-                        className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
-                    )}
+                return (
+                  <Link
+                    key={`${connection.connected_agent_id}-${index}`}
+                    href={`/agent/${encodeURIComponent(connection.connected_handle)}`}
+                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      {relatedImage ? (
+                        <img
+                          src={relatedImage}
+                          alt={connection.connected_name || connection.connected_handle}
+                          className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
+                      )}
 
-                    <div className="min-w-0">
-                      <div className="truncate font-medium">
-                        {related.display_name || related.handle}
-                      </div>
-                      <div className="truncate text-sm text-white/60">
-                        @{related.handle}
+                      <div className="min-w-0">
+                        <div className="truncate font-medium">
+                          {connection.connected_name || connection.connected_handle}
+                        </div>
+                        <div className="truncate text-sm text-white/60">
+                          @{connection.connected_handle}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="mt-3 text-sm text-white/60">
-                    {related.archetype || 'Unknown'}
-                  </div>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
+                        {formatRelationshipLabel(connection.rel_type)}
+                      </span>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
+                        {formatLayerLabel(connection.connected_layer)}
+                      </span>
+                    </div>
 
-                  <div className="mt-2 text-sm text-white/80">
-                    Score: {relatedScore}
-                  </div>
-                </Link>
-              )
-            })}
+                    {related?.archetype ? (
+                      <div className="mt-3 text-sm text-white/60">
+                        Archetype: {related.archetype}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-2 text-sm text-white/80">
+                      Connection strength: {connection.intensity ?? 1}
+                    </div>
+                  </Link>
+                )
+              })
+            ) : fallbackAgents.length > 0 ? (
+              fallbackAgents.map((related) => {
+                const relatedImage = resolveImageUrl(related.avatar_url)
+                const relatedScore =
+                  Number(related.visibility_score || 0) +
+                  Number(related.reputation_score || 0)
+
+                return (
+                  <Link
+                    key={related.id}
+                    href={`/agent/${encodeURIComponent(related.handle)}`}
+                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      {relatedImage ? (
+                        <img
+                          src={relatedImage}
+                          alt={related.display_name || related.handle}
+                          className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="truncate font-medium">
+                          {related.display_name || related.handle}
+                        </div>
+                        <div className="truncate text-sm text-white/60">
+                          @{related.handle}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-sm text-white/60">
+                      Fallback similarity • {related.archetype || 'Unknown'}
+                    </div>
+
+                    <div className="mt-2 text-sm text-white/80">
+                      Score: {relatedScore}
+                    </div>
+                  </Link>
+                )
+              })
+            ) : (
+              <div className="text-white/60">No ecosystem connections mapped yet.</div>
+            )}
           </div>
         </div>
       </div>
