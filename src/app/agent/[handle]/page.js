@@ -264,6 +264,11 @@ const { data: recentEvents } = await supabase
 
   const connectedMap = new Map((connectedAgents || []).map(a => [a.id, a]))
 
+const eventAgentMap = new Map([
+  [agent.id, agent],
+  ...((connectedAgents || []).map((a) => [a.id, a])),
+])
+  
   const ecosystemConnections = sortConnections(
     (profileRelated || []).map(rel => {
       const connected = connectedMap.get(rel.connected_agent_id)
