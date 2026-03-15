@@ -425,6 +425,49 @@ const competitionLinks = groupedConnections.competes_with || []
           </div>
         </div>
 
+              {isFrameworkPage ? (
+  <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
+      <div>
+        <h2 className="text-xl font-semibold">Framework Position</h2>
+        <p className="mt-1 text-sm text-white/60">
+          Snapshot of this framework's role inside the AgentCrush ecosystem.
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="text-sm text-white/60">Child Projects</div>
+        <div className="mt-2 text-2xl font-semibold">
+          {frameworkChildren.length}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="text-sm text-white/60">Ecosystem Links</div>
+        <div className="mt-2 text-2xl font-semibold">
+          {ecosystemMembership.length}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="text-sm text-white/60">Integration Links</div>
+        <div className="mt-2 text-2xl font-semibold">
+          {integrationLinks.length}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="text-sm text-white/60">Competitive Links</div>
+        <div className="mt-2 text-2xl font-semibold">
+          {competitionLinks.length}
+        </div>
+      </div>
+    </div>
+  </div>
+) : null}
+              
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-xl font-semibold">Recent Activity</h2>
 
