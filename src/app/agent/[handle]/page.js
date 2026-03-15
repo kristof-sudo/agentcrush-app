@@ -301,6 +301,10 @@ const pageIntro = isFrameworkPage
 
               <p className="mt-2 text-white/70">@{agent.handle}</p>
 
+                <p className="mt-2 text-sm text-white/60">
+  {pageIntro}
+</p>
+
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
                   Archetype: {agent.archetype || 'Unknown'}
