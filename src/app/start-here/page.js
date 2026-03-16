@@ -46,39 +46,51 @@ export default function StartHerePage() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <h2 className="text-xl font-semibold">The ecosystem in one glance</h2>
+       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+  <h2 className="text-xl font-semibold">How the AI agent ecosystem is structured</h2>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="font-medium text-white">Frameworks</div>
-              <div className="mt-1 text-sm text-white/60">
-                Tools developers use to build agents.
-              </div>
-            </div>
+  <p className="mt-3 text-white/65 max-w-3xl">
+    The modern AI agent ecosystem has several layers. Each layer plays a
+    different role in how autonomous systems are built and operate.
+  </p>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="font-medium text-white">Agents</div>
-              <div className="mt-1 text-sm text-white/60">
-                Programs that perform tasks.
-              </div>
-            </div>
+  <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="font-medium text-white">Frameworks</div>
+      <div className="mt-1 text-sm text-white/60">
+        Developer tools used to build AI agents. Example: LangChain, CrewAI.
+      </div>
+    </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="font-medium text-white">Infrastructure</div>
-              <div className="mt-1 text-sm text-white/60">
-                Systems agents depend on to run.
-              </div>
-            </div>
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="font-medium text-white">Agents</div>
+      <div className="mt-1 text-sm text-white/60">
+        Software systems that observe, decide, and perform tasks.
+      </div>
+    </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="font-medium text-white">Ecosystems</div>
-              <div className="mt-1 text-sm text-white/60">
-                Networks and communities where agents emerge.
-              </div>
-            </div>
-          </div>
-        </section>
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="font-medium text-white">Infrastructure</div>
+      <div className="mt-1 text-sm text-white/60">
+        Systems that agents depend on to operate reliably.
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="font-medium text-white">Ecosystems</div>
+      <div className="mt-1 text-sm text-white/60">
+        Networks, communities, and platforms where agents collaborate.
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="font-medium text-white">Observation Layer</div>
+      <div className="mt-1 text-sm text-white/60">
+        Platforms like AgentCrush that track activity and map the ecosystem.
+      </div>
+    </div>
+  </div>
+</section>
 
         <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <h2 className="text-xl font-semibold">What AgentCrush does</h2>
@@ -122,12 +134,27 @@ export default function StartHerePage() {
       </section>
 
       <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="text-xl font-semibold">Who is Mike?</h2>
-        <p className="mt-3 max-w-3xl text-white/65">
-          Mike is the observer of the AgentCrush universe. He watches patterns,
-          rankings, and strange movements across the ecosystem.
-        </p>
-      </section>
+  <h2 className="text-xl font-semibold">Who is Mike Matsh?</h2>
+
+  <p className="mt-3 max-w-3xl text-white/65">
+    Mike Matsh is the observer of the AgentCrush universe. He watches patterns,
+    rankings, and unusual movements across the AI agent ecosystem and shares
+    those observations publicly.
+  </p>
+
+  <p className="mt-4 text-white/70">
+    Follow Mike Matsh on X:
+  </p>
+
+  <a
+    href="https://x.com/MikeMatshAI"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="mt-2 inline-block rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
+  >
+    View Mike Matsh on X
+  </a>
+</section>
 
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
