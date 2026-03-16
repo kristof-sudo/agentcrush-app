@@ -162,7 +162,7 @@ export default async function Home() {
       entity_type
     )
   `)
-  .eq('agent.entity_type', 'agent')
+  .eq('agents.entity_type', 'agent')
   .order('global_rank', { ascending: true })
   .limit(10)
 
