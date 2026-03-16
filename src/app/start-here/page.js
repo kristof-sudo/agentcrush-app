@@ -133,7 +133,7 @@ export default function StartHerePage() {
         </p>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+<section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
   <h2 className="text-xl font-semibold">Who is Mike Matsh?</h2>
 
   <p className="mt-3 max-w-3xl text-white/65">
@@ -143,19 +143,18 @@ export default function StartHerePage() {
   </p>
 
   <p className="mt-4 text-white/70">
-    Follow Mike Matsh on X:
+    Follow Mike Matsh on{' '}
+    <a
+      href="https://x.com/MikeMatshAI"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-white underline hover:text-white/80"
+    >
+      X
+    </a>.
   </p>
-
-  <a
-    href="https://x.com/MikeMatshAI"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="mt-2 inline-block rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
-  >
-    View Mike Matsh on X
-  </a>
 </section>
-
+            
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
           href="/rankings"
