@@ -1,0 +1,156 @@
+import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
+
+export default function StartHerePage() {
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-10 md:px-6 text-white">
+      <div className="max-w-3xl">
+        <div className="text-sm uppercase tracking-[0.18em] text-white/45">
+          Start here
+        </div>
+
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+          New to AI agents?
+        </h1>
+
+        <p className="mt-4 text-lg leading-8 text-white/70">
+          AI agents are software systems that can notice things, decide what to
+          do, and act automatically. AgentCrush helps you understand who is who
+          in that ecosystem.
+        </p>
+      </div>
+
+      <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <h2 className="text-xl font-semibold">What is an AI agent?</h2>
+          <p className="mt-3 text-white/65">
+            An AI agent is software that can observe, decide, and act.
+          </p>
+
+          <div className="mt-5 space-y-3 text-sm text-white/70">
+            <div>Coding agents write or fix code.</div>
+            <div>Research agents gather and analyze information.</div>
+            <div>Social agents watch conversations and reply.</div>
+            <div>Crypto agents operate inside onchain systems.</div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <h2 className="text-xl font-semibold">Why is everyone talking about them now?</h2>
+          <p className="mt-3 text-white/65">
+            Better AI models can now understand tasks, use tools, and act more
+            independently. That is why agent projects are suddenly appearing
+            across GitHub, research labs, developer communities, and crypto
+            networks.
+          </p>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <h2 className="text-xl font-semibold">The ecosystem in one glance</h2>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="font-medium text-white">Frameworks</div>
+              <div className="mt-1 text-sm text-white/60">
+                Tools developers use to build agents.
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="font-medium text-white">Agents</div>
+              <div className="mt-1 text-sm text-white/60">
+                Programs that perform tasks.
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="font-medium text-white">Infrastructure</div>
+              <div className="mt-1 text-sm text-white/60">
+                Systems agents depend on to run.
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="font-medium text-white">Ecosystems</div>
+              <div className="mt-1 text-sm text-white/60">
+                Networks and communities where agents emerge.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <h2 className="text-xl font-semibold">What AgentCrush does</h2>
+          <p className="mt-3 text-white/65">
+            AgentCrush is not where agents run. It is where people understand
+            the agent ecosystem.
+          </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="font-medium text-white">Identity</div>
+              <div className="mt-1 text-sm text-white/60">
+                Who and what the project is.
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="font-medium text-white">Reputation</div>
+              <div className="mt-1 text-sm text-white/60">
+                Standing inside the ecosystem.
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="font-medium text-white">Activity</div>
+              <div className="mt-1 text-sm text-white/60">
+                Signals, movement, and momentum.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <h2 className="text-xl font-semibold">How scores work</h2>
+        <p className="mt-3 max-w-3xl text-white/65">
+          AgentCrush scores reflect visibility, reputation, and momentum. The
+          exact formula is not public, but rankings respond to ecosystem
+          attention, reputation signals, and recent activity.
+        </p>
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <h2 className="text-xl font-semibold">Who is Mike?</h2>
+        <p className="mt-3 max-w-3xl text-white/65">
+          Mike is the observer of the AgentCrush universe. He watches patterns,
+          rankings, and strange movements across the ecosystem.
+        </p>
+      </section>
+
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Link
+          href="/rankings"
+          className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90"
+        >
+          Explore rankings
+        </Link>
+
+        <Link
+          href="/categories"
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+        >
+          Browse categories
+        </Link>
+
+        <Link
+          href="/submit"
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+        >
+          Submit agent
+        </Link>
+      </div>
+    </main>
+  )
+}
