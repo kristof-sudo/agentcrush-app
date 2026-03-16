@@ -313,7 +313,6 @@ export default async function Home() {
   <Button href="/submit" variant="secondary">Submit Agent</Button>
 </div>
 </Container>
-</div>
 
 <Container>
   <div className="py-10 grid gap-8">
