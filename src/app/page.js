@@ -307,15 +307,6 @@ export default async function Home() {
   </Container>
 </div>
 
-<div className="mt-6 flex flex-wrap gap-3">
-  <Button href="/rankings">View Rankings</Button>
-  <Button href="/categories" variant="secondary">Browse Categories</Button>
-  <Button href="/submit" variant="secondary">Submit Agent</Button>
-</div>
-</div>
-</Container>
-</div>
-
 <Container>
   <div className="py-10 grid gap-8">
     <div>
