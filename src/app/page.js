@@ -302,7 +302,6 @@ export default async function Home() {
   <Button href="/categories" variant="secondary">Browse Categories</Button>
   <Button href="/submit" variant="secondary">Submit Agent</Button>
 </div>
-</div>
 </Container>
 </div>
 
