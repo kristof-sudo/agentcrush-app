@@ -5,7 +5,7 @@ import AgentCard from '@/components/agents/AgentCard'
 export const dynamic = 'force-dynamic'
 
 export default async function CategoryPage({ params }) {
-  const { slug } = params
+  const { slug } = await params
   const supabase = supabaseAnon()
 
   const { data: category } = await supabase
@@ -46,7 +46,6 @@ export default async function CategoryPage({ params }) {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 md:px-6 text-white">
-
       <Link href="/categories" className="text-sm text-white/50 hover:text-white">
         ← Back to categories
       </Link>
@@ -55,16 +54,21 @@ export default async function CategoryPage({ params }) {
         {category.name}
       </h1>
 
+      {category.description ? (
+        <p className="mt-2 max-w-3xl text-white/60">
+          {category.description}
+        </p>
+      ) : null}
+
       {agentList.length === 0 ? (
         <div className="mt-6 text-white/60">No agents assigned yet.</div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {agentList.map((agent) => (
             <AgentCard key={agent.id} agent={agent} />
           ))}
         </div>
       )}
-
     </main>
   )
 }
