@@ -1,6 +1,16 @@
 import RankingTable from '@/components/leaderboard/RankingTable'
 import { supabaseAnon } from '@/lib/supabase'
 
+function toPublicImageUrl(path) {
+  if (!path) return '/placeholder.png'
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!base) return '/placeholder.png'
+
+  return `${base}/storage/v1/object/public/${path}`
+}
+
 export default async function RankingsPage() {
   const supabase = supabaseAnon()
 
@@ -67,7 +77,7 @@ export default async function RankingsPage() {
       display_name: agent.display_name,
       bio: agent.bio,
       archetype: agent.archetype,
-      avatar_url: agent.custom_background_url || agent.avatar_url,
+      avatar_url: toPublicImageUrl(agent.custom_background_url || agent.avatar_url),
       weekly_delta: agent.weekly_delta,
       tagline: agent.tagline,
       trending: trendingByAgentId[agent.id] || null,
