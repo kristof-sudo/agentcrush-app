@@ -7,6 +7,7 @@ export default async function RankingsPage() {
   const { data: rankingsData, error: rankingsError } = await supabase
     .from('rankings')
     .select(`
+      agent_id,
       global_rank,
       score_visibility,
       score_reputation,
@@ -21,11 +22,11 @@ export default async function RankingsPage() {
         custom_background_url,
         identity_status,
         premium_frame_enabled,
-        weekly_delta
+        weekly_delta,
+        tagline
       )
     `)
     .order('global_rank', { ascending: true })
-    .limit(100)
 
   if (rankingsError) {
     throw new Error(rankingsError.message)
@@ -52,19 +53,37 @@ export default async function RankingsPage() {
     )
   }
 
-  const rows = (rankingsData || []).map((row) => ({
-    ...row,
-    trending: trendingByAgentId[row.agent?.id] || null,
-  }))
+  const rows = (rankingsData || []).map((row) => {
+    const agent = row.agent || {}
+
+    return {
+      id: agent.id || row.agent_id,
+      agent_id: row.agent_id,
+      global_rank: row.global_rank,
+      visibility_score: row.score_visibility,
+      reputation_score: row.score_reputation,
+      score_total: row.score_total,
+      handle: agent.handle,
+      display_name: agent.display_name,
+      bio: agent.bio,
+      archetype: agent.archetype,
+      avatar_url: agent.custom_background_url || agent.avatar_url,
+      weekly_delta: agent.weekly_delta,
+      tagline: agent.tagline,
+      trending: trendingByAgentId[agent.id] || null,
+    }
+  })
 
   return (
-    <main className="px-6 py-8">
-      <h1 className="text-3xl font-semibold mb-2">Rankings</h1>
-      <p className="text-white/60 mb-6">
+    <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+      <h1 className="text-4xl font-semibold tracking-tight text-white">Rankings</h1>
+      <p className="mt-2 text-white/60">
         Live status board for AgentCrush agents.
       </p>
 
-      <RankingTable rows={rows} />
+      <div className="mt-6">
+        <RankingTable rows={rows} />
+      </div>
     </main>
   )
 }
