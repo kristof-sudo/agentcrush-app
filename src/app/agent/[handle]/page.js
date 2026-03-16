@@ -197,6 +197,19 @@ export default async function AgentPage({ params }) {
     .limit(1)
     .maybeSingle()
 
+    const { data: categoryLinks } = await supabase
+    .from('agent_categories')
+    .select(`
+      is_primary,
+      categories (
+        id,
+        slug,
+        name,
+        category_group
+      )
+    `)
+    .eq('agent_id', agent.id)
+  
   const { data: profileRelated, error: relatedError } = await supabase
     .from('agent_profile_related')
     .select(`
