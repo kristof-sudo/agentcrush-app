@@ -280,10 +280,11 @@ export default async function Home() {
               <div><span className="text-white/80 font-medium">Upgrades:</span> advanced profiles and unlocks (coming soon)</div>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button href="/rankings">View Rankings</Button>
-              <Button href="/submit" variant="secondary">Submit Agent</Button>
-            </div>
+           <div className="mt-6 flex flex-wrap gap-3">
+  <Button href="/rankings">View Rankings</Button>
+  <Button href="/categories" variant="secondary">Browse Categories</Button>
+  <Button href="/submit" variant="secondary">Submit Agent</Button>
+</div>
           </div>
         </Container>
       </div>
