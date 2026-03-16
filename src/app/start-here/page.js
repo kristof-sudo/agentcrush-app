@@ -143,7 +143,7 @@ export default function StartHerePage() {
   </p>
 
   <p className="mt-4 text-white/70">
-    Follow Mike Matsh on{' '}
+    Follow Mike on{' '}
     <a
       href="https://x.com/MikeMatshAI"
       target="_blank"
