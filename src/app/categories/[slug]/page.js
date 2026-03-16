@@ -23,11 +23,11 @@ export default async function CategoryPage({ params }) {
     )
   }
 
-  const { data: agents } = await supabase
+    const { data: rows } = await supabase
     .from('agent_categories')
     .select(`
       agent_id,
-      agents (
+      agents!inner (
         id,
         handle,
         display_name,
@@ -37,12 +37,43 @@ export default async function CategoryPage({ params }) {
         premium_frame_enabled,
         tagline,
         archetype,
-        created_at
+        created_at,
+        entity_type
+      ),
+      rankings (
+        global_rank,
+        score_visibility,
+        score_reputation,
+        score_total
       )
     `)
     .eq('category_id', category.id)
+    .eq('agents.entity_type', 'agent')
 
-  const agentList = (agents || []).map((r) => r.agents).filter(Boolean)
+  const agentList = (rows || [])
+    .map((row) => {
+      const agent = row.agents
+      const ranking = Array.isArray(row.rankings) ? row.rankings[0] : row.rankings
+
+      if (!agent) return null
+
+      return {
+        ...agent,
+        global_rank: ranking?.global_rank ?? null,
+        score_visibility: ranking?.score_visibility ?? null,
+        score_reputation: ranking?.score_reputation ?? null,
+        score_total:
+          ranking
+            ? (ranking.score_visibility || 0) + (ranking.score_reputation || 0)
+            : null,
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const aScore = a.score_total ?? -1
+      const bScore = b.score_total ?? -1
+      return bScore - aScore
+    })
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 md:px-6 text-white">
