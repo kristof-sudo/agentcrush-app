@@ -483,6 +483,87 @@ export default async function AgentPage({ params }) {
           </div>
         </div>
 
+               <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-xl font-semibold">Classification</h2>
+          <p className="mt-1 text-sm text-white/60">
+            How this project is positioned inside the AgentCrush ecosystem.
+          </p>
+
+          <div className="mt-4 space-y-4">
+            {primaryCategories.length > 0 ? (
+              <div>
+                <div className="mb-2 text-sm font-medium text-white/70">Primary Type</div>
+                <div className="flex flex-wrap gap-2">
+                  {primaryCategories.map((item) => (
+                    <Link
+                      key={`${item.category_group}-${item.slug}`}
+                      href={`/categories/${item.slug}`}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {frameworkCategories.length > 0 ? (
+              <div>
+                <div className="mb-2 text-sm font-medium text-white/70">Framework</div>
+                <div className="flex flex-wrap gap-2">
+                  {frameworkCategories.map((item) => (
+                    <Link
+                      key={`${item.category_group}-${item.slug}`}
+                      href={`/categories/${item.slug}`}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {ecosystemCategories.length > 0 ? (
+              <div>
+                <div className="mb-2 text-sm font-medium text-white/70">Ecosystem</div>
+                <div className="flex flex-wrap gap-2">
+                  {ecosystemCategories.map((item) => (
+                    <Link
+                      key={`${item.category_group}-${item.slug}`}
+                      href={`/categories/${item.slug}`}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {infrastructureCategories.length > 0 ? (
+              <div>
+                <div className="mb-2 text-sm font-medium text-white/70">Infrastructure</div>
+                <div className="flex flex-wrap gap-2">
+                  {infrastructureCategories.map((item) => (
+                    <Link
+                      key={`${item.category_group}-${item.slug}`}
+                      href={`/categories/${item.slug}`}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {categoryItems.length === 0 ? (
+              <div className="text-white/60">No classification mapped yet.</div>
+            ) : null}
+          </div>
+        </div>
+
         {isFrameworkPage ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
             <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
