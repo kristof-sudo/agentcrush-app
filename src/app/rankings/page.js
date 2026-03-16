@@ -74,7 +74,7 @@ export default async function RankingsPage() {
       global_rank: row.global_rank,
       visibility_score: row.score_visibility,
       reputation_score: row.score_reputation,
-      score_total: row.score_total,
+      score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
       handle: agent.handle,
       display_name: agent.display_name,
       bio: agent.bio,
