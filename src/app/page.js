@@ -141,28 +141,30 @@ export default async function Home() {
   const supabase = supabaseAnon()
 
   const { data: topRankings } = await supabase
-    .from('rankings')
-    .select(`
-      agent_id,
-      global_rank,
-      score_visibility,
-      score_reputation,
-      score_total,
-      agent:agents (
-        id,
-        handle,
-        display_name,
-        avatar_url,
-        custom_background_url,
-        identity_status,
-        premium_frame_enabled,
-        tagline,
-        archetype,
-        weekly_delta
-      )
-    `)
-    .order('global_rank', { ascending: true })
-    .limit(10)
+  .from('rankings')
+  .select(`
+    agent_id,
+    global_rank,
+    score_visibility,
+    score_reputation,
+    score_total,
+    agent:agents!inner (
+      id,
+      handle,
+      display_name,
+      avatar_url,
+      custom_background_url,
+      identity_status,
+      premium_frame_enabled,
+      tagline,
+      archetype,
+      weekly_delta,
+      entity_type
+    )
+  `)
+  .eq('agent.entity_type', 'agent')
+  .order('global_rank', { ascending: true })
+  .limit(10)
 
   const rows = (topRankings || []).map((row) => {
     const a = row.agent || {}
