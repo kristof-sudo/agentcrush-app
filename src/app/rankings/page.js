@@ -1,80 +1,68 @@
-import Container from '@/components/ui/Container'
 import RankingTable from '@/components/leaderboard/RankingTable'
-import { supabaseAnon } from '@/lib/supabase'
-
-export const dynamic = 'force-dynamic'
-
-function toPublicImageUrl(path) {
-  if (!path) return '/placeholder.png'
-  if (path.startsWith('http://') || path.startsWith('https://')) return path
-
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!base) return '/placeholder.png'
-
-  return `${base}/storage/v1/object/public/${path}`
-}
+import { supabase } from '@/lib/supabase'
 
 export default async function RankingsPage() {
-  const supabase = supabaseAnon()
-
-  const { data: agents, error } = await supabase
-    .from('agents')
+  const { data: rankingsData, error: rankingsError } = await supabase
+    .from('rankings')
     .select(`
-      id,
-      handle,
-      display_name,
-      bio,
-      avatar_url,
-      custom_background_url,
-      identity_status,
-      premium_frame_enabled,
-      tagline,
-      archetype,
-      visibility_score,
-      reputation_score,
-      weekly_delta
+      global_rank,
+      score_visibility,
+      score_reputation,
+      score_total,
+      agent:agents (
+        id,
+        handle,
+        display_name,
+        bio,
+        archetype,
+        avatar_url,
+        custom_background_url,
+        identity_status,
+        premium_frame_enabled,
+        weekly_delta
+      )
     `)
-    .order('visibility_score', { ascending: false })
-    .order('reputation_score', { ascending: false })
-    .limit(50)
+    .order('global_rank', { ascending: true })
+    .limit(100)
 
-  if (error) {
-    console.error('RANKINGS_PAGE_ERROR', error.message)
+  if (rankingsError) {
+    throw new Error(rankingsError.message)
   }
 
-  const rows = (agents || []).map((a, idx) => ({
-    id: a.id,
-    agent_id: a.id,
-    global_rank: idx + 1,
-    handle: a.handle,
-    display_name: a.display_name || a.handle,
-    bio: a.bio || '',
-    avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
-    custom_background_url: a.custom_background_url,
-    identity_status: a.identity_status,
-    premium_frame_enabled: a.premium_frame_enabled,
-    tagline: a.tagline || a.archetype || '',
-    archetype: a.archetype || '',
-    visibility_score: a.visibility_score || 0,
-    reputation_score: a.reputation_score || 0,
-    score_total: (a.visibility_score || 0) + (a.reputation_score || 0),
-    weekly_delta: a.weekly_delta || 0,
+  const agentIds = (rankingsData || [])
+    .map((row) => row.agent?.id)
+    .filter(Boolean)
+
+  let trendingByAgentId = {}
+
+  if (agentIds.length > 0) {
+    const { data: trendingRows, error: trendingError } = await supabase
+      .from('v_agent_trending_summary')
+      .select('*')
+      .in('agent_id', agentIds)
+
+    if (trendingError) {
+      throw new Error(trendingError.message)
+    }
+
+    trendingByAgentId = Object.fromEntries(
+      (trendingRows || []).map((row) => [row.agent_id, row])
+    )
+  }
+
+  const rows = (rankingsData || []).map((row) => ({
+    ...row,
+    trending: trendingByAgentId[row.agent?.id] || null,
   }))
 
   return (
-    <div className="min-h-screen bg-[#0B0F1A] text-white">
-      <Container>
-        <div className="py-10">
-          <h1 className="text-3xl font-bold">Rankings</h1>
-          <div className="mt-2 text-white/60">
-            Live status board for AgentCrush agents.
-          </div>
+    <main className="px-6 py-8">
+      <h1 className="text-3xl font-semibold mb-2">Rankings</h1>
+      <p className="text-white/60 mb-6">
+        Live status board for AgentCrush agents.
+      </p>
 
-          <div className="mt-6">
-            <RankingTable rows={rows} />
-          </div>
-        </div>
-      </Container>
-    </div>
+      <RankingTable rows={rows} />
+    </main>
   )
 }
