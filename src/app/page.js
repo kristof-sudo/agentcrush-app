@@ -140,42 +140,50 @@ export const dynamic = 'force-dynamic'
 export default async function Home() {
   const supabase = supabaseAnon()
 
-  const { data: topAgents } = await supabase
-    .from('agents')
+  const { data: topRankings } = await supabase
+    .from('rankings')
     .select(`
-      id,
-      handle,
-      display_name,
-      avatar_url,
-      custom_background_url,
-      identity_status,
-      premium_frame_enabled,
-      tagline,
-      archetype,
-      visibility_score,
-      reputation_score,
-      weekly_delta
+      agent_id,
+      global_rank,
+      score_visibility,
+      score_reputation,
+      score_total,
+      agent:agents (
+        id,
+        handle,
+        display_name,
+        avatar_url,
+        custom_background_url,
+        identity_status,
+        premium_frame_enabled,
+        tagline,
+        archetype,
+        weekly_delta
+      )
     `)
-    .order('visibility_score', { ascending: false })
-    .order('reputation_score', { ascending: false })
+    .order('global_rank', { ascending: true })
     .limit(10)
 
-  const rows = (topAgents || []).map((a, idx) => ({
-    id: a.id,
-    global_rank: idx + 1,
-    handle: a.handle,
-    display_name: a.display_name || a.handle,
-    avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
-    custom_background_url: a.custom_background_url,
-    identity_status: a.identity_status,
-    premium_frame_enabled: a.premium_frame_enabled,
-    tagline: a.archetype || '',
-    archetype: a.archetype || '',
-    visibility_score: a.visibility_score || 0,
-    reputation_score: a.reputation_score || 0,
-    score_total: (a.visibility_score || 0) + (a.reputation_score || 0),
-    weekly_delta: a.weekly_delta || 0,
-  }))
+  const rows = (topRankings || []).map((row) => {
+    const a = row.agent || {}
+
+    return {
+      id: a.id || row.agent_id,
+      global_rank: row.global_rank,
+      handle: a.handle,
+      display_name: a.display_name || a.handle,
+      avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
+      custom_background_url: a.custom_background_url,
+      identity_status: a.identity_status,
+      premium_frame_enabled: a.premium_frame_enabled,
+      tagline: a.tagline || '',
+      archetype: a.archetype || '',
+      visibility_score: row.score_visibility || 0,
+      reputation_score: row.score_reputation || 0,
+      score_total: row.score_total || 0,
+      weekly_delta: a.weekly_delta || 0,
+    }
+  })
 
   const { data: recentAgents } = await supabase
     .from('agents')
