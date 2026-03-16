@@ -293,6 +293,18 @@ export default async function AgentPage({ params }) {
 
   const bioText = agent.bio || agent.tagline || 'No bio available yet.'
 
+    const categoryItems = (categoryLinks || [])
+    .map((row) => ({
+      is_primary: row.is_primary,
+      ...(Array.isArray(row.categories) ? row.categories[0] : row.categories),
+    }))
+    .filter(Boolean)
+
+  const primaryCategories = categoryItems.filter((item) => item.is_primary)
+  const frameworkCategories = categoryItems.filter((item) => item.category_group === 'framework')
+  const ecosystemCategories = categoryItems.filter((item) => item.category_group === 'ecosystem')
+  const infrastructureCategories = categoryItems.filter((item) => item.category_group === 'infrastructure')
+  
   const isFrameworkPage = agent.ecosystem_layer === 'framework'
 
   const pageIntro = isFrameworkPage
