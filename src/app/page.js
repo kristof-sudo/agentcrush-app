@@ -180,7 +180,7 @@ export default async function Home() {
       archetype: a.archetype || '',
       visibility_score: row.score_visibility || 0,
       reputation_score: row.score_reputation || 0,
-      score_total: row.score_total || 0,
+      score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
       weekly_delta: a.weekly_delta || 0,
     }
   })
