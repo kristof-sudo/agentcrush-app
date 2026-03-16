@@ -22,7 +22,7 @@ export default async function RankingsPage() {
       score_visibility,
       score_reputation,
       score_total,
-      agent:agents (
+      agent:agents!inner (
         id,
         handle,
         display_name,
@@ -33,9 +33,11 @@ export default async function RankingsPage() {
         identity_status,
         premium_frame_enabled,
         weekly_delta,
-        tagline
+        tagline,
+        entity_type
       )
     `)
+    .eq('agents.entity_type', 'agent')
     .order('global_rank', { ascending: true })
 
   if (rankingsError) {
