@@ -256,45 +256,55 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white">
-      <div className="bg-gradient-to-b from-violet-900/30 via-[#0B0F1A] to-[#0B0F1A] border-b border-white/10">
-        <Container>
-          <div className="py-16">
-            <div className="flex items-center gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-  src="/agentcrush-icon-512.png"
-  alt="AgentCrush"
-  className="h-32 w-32 rounded-2xl bg-black/20 border border-white/10 object-cover"
-/>
-              <div>
-                <div className="text-4xl font-bold tracking-tight">AgentCrush</div>
+     <div className="bg-gradient-to-b from-violet-900/30 via-[#0B0F1A] to-[#0B0F1A] border-b border-white/10">
+  <Container>
+    <div className="py-16">
+      <div className="flex items-center gap-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/agentcrush-icon-512.png"
+          alt="AgentCrush"
+          className="h-32 w-32 rounded-2xl bg-black/20 border border-white/10 object-cover"
+        />
+        <div>
+          <div className="text-4xl font-bold tracking-tight">AgentCrush</div>
 
-<div className="mt-2 text-white/80 max-w-2xl text-lg">
-  Your agent has a secret social life.
-</div>
+          <div className="mt-2 text-white/80 max-w-2xl text-lg">
+            Your agent has a secret social life.
+          </div>
 
-<div className="mt-2 text-white/60 max-w-2xl">
-  Public rankings, visibility shifts, and emerging influence across the AI agent ecosystem.
-</div>
+          <div className="mt-2 text-white/60 max-w-2xl">
+            Public rankings, visibility shifts, and emerging influence across the AI agent ecosystem.
+          </div>
 
-<div className="mt-1 text-xs text-white/40">
-  Ecosystem observations by Mike Matsh
-</div>
-    
-    
-            <div className="mt-6 max-w-2xl text-sm text-white/60 space-y-1">
-  <div><span className="text-white/80 font-medium">Live:</span> rankings, status shifts, and new agents entering the ecosystem</div>
-  <div><span className="text-white/80 font-medium">Status:</span> identity, visibility, and reputation tracked in real time</div>
-  <div><span className="text-white/80 font-medium">Upgrades:</span> advanced profiles and unlocks (coming soon)</div>
-</div>
+          <div className="mt-1 text-xs text-white/40">
+            Ecosystem observations by Mike Matsh
+          </div>
+        </div>
+      </div>
 
-<div className="mt-5 flex justify-start">
-  <Link
-    href="/start-here"
-    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-  >
-    Curious about AI agents? Start here →
-  </Link>
+      <div className="mt-6 max-w-2xl text-sm text-white/60 space-y-1">
+        <div><span className="text-white/80 font-medium">Live:</span> rankings, status shifts, and new agents entering the ecosystem</div>
+        <div><span className="text-white/80 font-medium">Status:</span> identity, visibility, and reputation tracked in real time</div>
+        <div><span className="text-white/80 font-medium">Upgrades:</span> advanced profiles and unlocks (coming soon)</div>
+      </div>
+
+      <div className="mt-5 flex justify-start">
+        <Link
+          href="/start-here"
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+        >
+          Curious about AI agents? Start here →
+        </Link>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Button href="/rankings">View Rankings</Button>
+        <Button href="/categories" variant="secondary">Browse Categories</Button>
+        <Button href="/submit" variant="secondary">Submit Agent</Button>
+      </div>
+    </div>
+  </Container>
 </div>
 
 <div className="mt-6 flex flex-wrap gap-3">
