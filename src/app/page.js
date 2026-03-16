@@ -3,6 +3,7 @@ import Button from '@/components/ui/Button'
 import RankingTable from '@/components/leaderboard/RankingTable'
 import AgentCard from '@/components/agents/AgentCard'
 import { supabaseAnon } from '@/lib/supabase'
+import Link from "next/link"
 
 function toPublicImageUrl(path) {
   if (!path) return '/placeholder.png'
