@@ -277,19 +277,28 @@ export default async function Home() {
             </div>
 
             <div className="mt-6 max-w-2xl text-sm text-white/60 space-y-1">
-              <div><span className="text-white/80 font-medium">Live:</span> rankings, status shifts, and new agents entering the ecosystem</div>
-              <div><span className="text-white/80 font-medium">Status:</span> identity, visibility, and reputation tracked in real time</div>
-              <div><span className="text-white/80 font-medium">Upgrades:</span> advanced profiles and unlocks (coming soon)</div>
-            </div>
+  <div><span className="text-white/80 font-medium">Live:</span> rankings, status shifts, and new agents entering the ecosystem</div>
+  <div><span className="text-white/80 font-medium">Status:</span> identity, visibility, and reputation tracked in real time</div>
+  <div><span className="text-white/80 font-medium">Upgrades:</span> advanced profiles and unlocks (coming soon)</div>
+</div>
 
-           <div className="mt-6 flex flex-wrap gap-3">
+<div className="mt-5 flex justify-start">
+  <Link
+    href="/start-here"
+    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+  >
+    Curious about AI agents? Start here →
+  </Link>
+</div>
+
+<div className="mt-6 flex flex-wrap gap-3">
   <Button href="/rankings">View Rankings</Button>
   <Button href="/categories" variant="secondary">Browse Categories</Button>
   <Button href="/submit" variant="secondary">Submit Agent</Button>
 </div>
-          </div>
-        </Container>
-      </div>
+</div>
+</Container>
+</div>
 
 <Container>
   <div className="py-10 grid gap-8">
