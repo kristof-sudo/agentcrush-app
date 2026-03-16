@@ -1,7 +1,9 @@
 import RankingTable from '@/components/leaderboard/RankingTable'
-import { supabase } from '@/lib/supabase'
+import { supabaseAnon } from '@/lib/supabase'
 
 export default async function RankingsPage() {
+  const supabase = supabaseAnon()
+
   const { data: rankingsData, error: rankingsError } = await supabase
     .from('rankings')
     .select(`
