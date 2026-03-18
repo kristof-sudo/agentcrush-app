@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AgentCrush runtime local state
+runtime/**/.env
+runtime/**/node_modules/
+runtime/**/approval_listener_offset.json
+runtime/**/telegram_offset.txt
+runtime/**/watchlist-user-cache.json
+runtime/state/
