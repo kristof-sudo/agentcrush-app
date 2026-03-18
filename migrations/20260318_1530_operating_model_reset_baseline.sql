@@ -1,0 +1,4 @@
+-- AgentCrush Operating Model Reset baseline marker
+-- Date: 2026-03-18
+-- Purpose: establish migration discipline starting point
+-- Note: this file is a baseline marker only and does not apply schema changes.
