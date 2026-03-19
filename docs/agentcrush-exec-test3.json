@@ -1,8 +1,0 @@
-{
-  "actions": [
-    { "action": "summary" },
-    { "action": "supabase_read", "supabase_action": "scheduled_posts_summary" },
-    { "action": "supabase_read", "supabase_action": "runs_recent" },
-    { "action": "smoke_check" }
-  ]
-}
