@@ -124,3 +124,69 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+import sys
+
+cmd = sys.argv[1] if len(sys.argv) > 1 else None
+
+if cmd == "cancel_stale":
+    hours = int(sys.argv[2]) if len(sys.argv) > 2 else 6
+    limit = int(sys.argv[3]) if len(sys.argv) > 3 else 5
+    print(cancel_stale_queued_posts(supabase, hours, limit))
+
+elif cmd == "reschedule":
+    post_id = sys.argv[2]
+    new_time = sys.argv[3]
+    print(reschedule_post_by_id(supabase, post_id, new_time))
+
+import datetime
+
+def cancel_stale_queued_posts(supabase, hours=6, limit=5):
+    cutoff = (datetime.datetime.utcnow() - datetime.timedelta(hours=hours)).isoformat()
+
+    res = supabase.table("scheduled_posts") \
+        .select("id, scheduled_at, status") \
+        .eq("status", "queued") \
+        .lt("scheduled_at", cutoff) \
+        .limit(limit) \
+        .execute()
+
+    rows = res.data or []
+
+    if not rows:
+        return {"ok": True, "message": "no stale posts found", "affected": 0}
+
+    ids = [r["id"] for r in rows]
+
+    supabase.table("scheduled_posts") \
+        .update({"status": "cancelled"}) \
+        .in_("id", ids) \
+        .execute()
+
+    return {
+        "ok": True,
+        "action": "cancel_stale_queued_posts",
+        "affected": len(ids),
+        "ids": ids
+    }
+
+
+def reschedule_post_by_id(supabase, post_id, new_time_iso):
+    # safety: do not allow past scheduling
+    new_time = datetime.datetime.fromisoformat(new_time_iso)
+    if new_time < datetime.datetime.utcnow():
+        return {"ok": False, "error": "cannot schedule in the past"}
+
+    res = supabase.table("scheduled_posts") \
+        .update({"scheduled_at": new_time_iso}) \
+        .eq("id", post_id) \
+        .execute()
+
+    return {
+        "ok": True,
+        "action": "reschedule_post_by_id",
+        "post_id": post_id,
+        "new_time": new_time_iso
+    }
+
+
