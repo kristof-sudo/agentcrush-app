@@ -2,11 +2,11 @@
 import json
 import os
 import sys
-import urllib.parse
-import urllib.request
+import datetime
 from pathlib import Path
-
-ENV_PATH = Path("/opt/agentcrush/copydesk/.env")
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 
 ALLOWED_ACTIONS = {
     "scheduled_posts_summary",
@@ -15,60 +15,111 @@ ALLOWED_ACTIONS = {
     "x_observed_posts_summary",
     "runs_recent",
     "alerts_open",
+    "cancel_stale_queued_posts",
+    "reschedule_post_by_id",
 }
 
-def fail(msg):
-    print(json.dumps({"ok": False, "error": msg}, indent=2))
+
+def fail(message):
+    print(json.dumps({"ok": False, "error": message}, indent=2))
     sys.exit(1)
 
+
 def load_env():
-    env = {}
-    if not ENV_PATH.exists():
-        fail(f"env file not found: {ENV_PATH}")
-    for line in ENV_PATH.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
+    env = dict(os.environ)
+    repo_root = Path(__file__).resolve().parent.parent
+
+    candidate_files = [
+        repo_root / ".env",
+        repo_root / ".env.local",
+        Path("/opt/agentcrush/copydesk/.env"),
+        Path("/opt/agentcrush/selector/.env"),
+    ]
+
+    for env_file in candidate_files:
+        if not env_file.exists():
             continue
-        k, v = line.split("=", 1)
-        env[k.strip()] = v.strip().strip('"').strip("'")
+        for line in env_file.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            k = k.strip()
+            v = v.strip().strip('"').strip("'")
+            env.setdefault(k, v)
+
     return env
 
-def api_get(base, key, table, query):
-    url = f"{base}/rest/v1/{table}?{urllib.parse.urlencode(query, doseq=True)}"
-    req = urllib.request.Request(url)
+def api_get(base, key, table, params=None):
+    params = params or {}
+    qs = urlencode(params)
+    url = f"{base.rstrip('/')}/rest/v1/{table}"
+    if qs:
+        url += f"?{qs}"
+
+    req = Request(url)
     req.add_header("apikey", key)
     req.add_header("Authorization", f"Bearer {key}")
     req.add_header("Accept", "application/json")
-    with urllib.request.urlopen(req, timeout=20) as res:
-        return json.loads(res.read().decode("utf-8"))
+
+    try:
+        with urlopen(req) as resp:
+            body = resp.read().decode("utf-8")
+            return json.loads(body) if body else []
+    except HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        fail(f"GET {table} failed: {e.code} {body}")
+
+def api_patch(base, key, table, params=None, payload=None):
+    params = params or {}
+    payload = payload or {}
+    qs = urlencode(params)
+    url = f"{base.rstrip('/')}/rest/v1/{table}"
+    if qs:
+        url += f"?{qs}"
+
+    data = json.dumps(payload).encode("utf-8")
+    req = Request(url, data=data, method="PATCH")
+    req.add_header("apikey", key)
+    req.add_header("Authorization", f"Bearer {key}")
+    req.add_header("Accept", "application/json")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("Prefer", "return=representation")
+
+    try:
+        with urlopen(req) as resp:
+            body = resp.read().decode("utf-8")
+            return json.loads(body) if body else []
+    except HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        fail(f"PATCH {table} failed: {e.code} {body}")
 
 def scheduled_posts_summary(base, key):
     rows = api_get(base, key, "scheduled_posts", {
-        "select": "id,status,channel,run_at,approved,publish_ready,created_at",
-        "order": "created_at.desc",
-        "limit": "10",
+        "select": "id,platform,status,scheduled_at,created_at,approved,approval_token",
+        "order": "scheduled_at.asc",
+        "limit": "20",
     })
-    queued = [r for r in rows if r.get("status") == "queued"]
-    return {
-        "recent_rows": rows,
-        "queued_count_in_sample": len(queued),
-    }
+    return {"recent_rows": rows}
+
 
 def copydesk_jobs_summary(base, key):
     rows = api_get(base, key, "copydesk_jobs", {
-        "select": "id,job_type,status,priority,created_at,updated_at",
+        "select": "id,status,created_at,completed_at,error",
         "order": "created_at.desc",
-        "limit": "15",
+        "limit": "20",
     })
     return {"recent_rows": rows}
+
 
 def interaction_jobs_summary(base, key):
     rows = api_get(base, key, "interaction_jobs", {
         "select": "id,action_type,status,created_at,target_author_handle",
         "order": "created_at.desc",
-        "limit": "15",
+        "limit": "20",
     })
     return {"recent_rows": rows}
+
 
 def x_observed_posts_summary(base, key):
     rows = api_get(base, key, "x_observed_posts", {
@@ -78,6 +129,7 @@ def x_observed_posts_summary(base, key):
     })
     return {"recent_rows": rows}
 
+
 def runs_recent(base, key):
     rows = api_get(base, key, "runs", {
         "select": "id,runner,job,status,created_at,error,meta",
@@ -85,6 +137,7 @@ def runs_recent(base, key):
         "limit": "20",
     })
     return {"recent_rows": rows}
+
 
 def alerts_open(base, key):
     rows = api_get(base, key, "alerts", {
@@ -95,6 +148,77 @@ def alerts_open(base, key):
     })
     return {"open_alerts": rows}
 
+
+def cancel_stale_queued_posts(base, key):
+    hours = int(os.environ.get("AC_SUPABASE_HOURS", "6"))
+    limit = int(os.environ.get("AC_SUPABASE_LIMIT", "5"))
+    cutoff = (
+        datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=hours)
+    ).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+    rows = api_get(base, key, "scheduled_posts", {
+        "select": "id,run_at,status,approved",
+        "status": "eq.queued",
+        "run_at": f"lt.{cutoff}",
+       "order": "run_at.asc",
+        "limit": str(limit),
+    })
+
+    ids = [r["id"] for r in (rows or []) if r.get("id") is not None]
+
+    if not ids:
+        return {
+            "affected": 0,
+            "cutoff": cutoff,
+            "message": "no stale queued posts found",
+        }
+
+    updated = api_patch(
+        base,
+        key,
+        "scheduled_posts",
+        {"id": f"in.({','.join(str(x) for x in ids)})"},
+        {"status": "cancelled"},
+    )
+
+    return {
+        "affected": len(updated or []),
+        "ids": ids,
+        "cutoff": cutoff,
+    }
+
+def reschedule_post_by_id(base, key):
+    post_id = os.environ.get("AC_SUPABASE_POST_ID")
+    new_time_iso = os.environ.get("AC_SUPABASE_NEW_TIME")
+
+    if not post_id:
+        fail("missing AC_SUPABASE_POST_ID")
+    if not new_time_iso:
+        fail("missing AC_SUPABASE_NEW_TIME")
+
+    try:
+        new_time = datetime.datetime.fromisoformat(new_time_iso)
+    except ValueError:
+        fail("AC_SUPABASE_NEW_TIME must be ISO format, example 2026-03-20T10:00:00")
+
+    if new_time < datetime.datetime.utcnow():
+        fail("cannot schedule in the past")
+
+    updated = api_patch(
+        base,
+        key,
+        "scheduled_posts",
+        {"id": f"eq.{post_id}"},
+        {"run_at": new_time_iso},
+    )
+
+    return {
+        "affected": len(updated or []),
+        "post_id": post_id,
+        "new_time": new_time_iso,
+    }
+
+
 DISPATCH = {
     "scheduled_posts_summary": scheduled_posts_summary,
     "copydesk_jobs_summary": copydesk_jobs_summary,
@@ -102,7 +226,10 @@ DISPATCH = {
     "x_observed_posts_summary": x_observed_posts_summary,
     "runs_recent": runs_recent,
     "alerts_open": alerts_open,
+    "cancel_stale_queued_posts": cancel_stale_queued_posts,
+    "reschedule_post_by_id": reschedule_post_by_id,
 }
+
 
 def main():
     if len(sys.argv) != 2:
@@ -122,71 +249,6 @@ def main():
     result = DISPATCH[action](base, key)
     print(json.dumps({"ok": True, "action": action, "result": result}, indent=2))
 
+
 if __name__ == "__main__":
     main()
-
-import sys
-
-cmd = sys.argv[1] if len(sys.argv) > 1 else None
-
-if cmd == "cancel_stale":
-    hours = int(sys.argv[2]) if len(sys.argv) > 2 else 6
-    limit = int(sys.argv[3]) if len(sys.argv) > 3 else 5
-    print(cancel_stale_queued_posts(supabase, hours, limit))
-
-elif cmd == "reschedule":
-    post_id = sys.argv[2]
-    new_time = sys.argv[3]
-    print(reschedule_post_by_id(supabase, post_id, new_time))
-
-import datetime
-
-def cancel_stale_queued_posts(supabase, hours=6, limit=5):
-    cutoff = (datetime.datetime.utcnow() - datetime.timedelta(hours=hours)).isoformat()
-
-    res = supabase.table("scheduled_posts") \
-        .select("id, scheduled_at, status") \
-        .eq("status", "queued") \
-        .lt("scheduled_at", cutoff) \
-        .limit(limit) \
-        .execute()
-
-    rows = res.data or []
-
-    if not rows:
-        return {"ok": True, "message": "no stale posts found", "affected": 0}
-
-    ids = [r["id"] for r in rows]
-
-    supabase.table("scheduled_posts") \
-        .update({"status": "cancelled"}) \
-        .in_("id", ids) \
-        .execute()
-
-    return {
-        "ok": True,
-        "action": "cancel_stale_queued_posts",
-        "affected": len(ids),
-        "ids": ids
-    }
-
-
-def reschedule_post_by_id(supabase, post_id, new_time_iso):
-    # safety: do not allow past scheduling
-    new_time = datetime.datetime.fromisoformat(new_time_iso)
-    if new_time < datetime.datetime.utcnow():
-        return {"ok": False, "error": "cannot schedule in the past"}
-
-    res = supabase.table("scheduled_posts") \
-        .update({"scheduled_at": new_time_iso}) \
-        .eq("id", post_id) \
-        .execute()
-
-    return {
-        "ok": True,
-        "action": "reschedule_post_by_id",
-        "post_id": post_id,
-        "new_time": new_time_iso
-    }
-
-
