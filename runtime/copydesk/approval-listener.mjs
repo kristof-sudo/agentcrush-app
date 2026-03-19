@@ -1,6 +1,10 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { createClient } from '@supabase/supabase-js'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+
+const execFileAsync = promisify(execFile)
 
 const {
   SUPABASE_URL,
@@ -23,9 +27,16 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 const OFFSET_FILE = '/opt/agentcrush/copydesk/approval_listener_offset.json'
 const TG_BASE = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
+const REPO_DIR = '/root/agentcrush-app'
 
 function normalizeToken(token) {
   return String(token || '').trim().toUpperCase()
+}
+
+function clip(text, max = 3500) {
+  const s = String(text || '')
+  if (s.length <= max) return s
+  return s.slice(0, max - 20) + '\n...[truncated]'
 }
 
 async function readOffset() {
@@ -47,7 +58,7 @@ async function writeOffset(offset) {
 async function sendTelegramMessage(text) {
   const body = {
     chat_id: TELEGRAM_CHAT_ID,
-    text,
+    text: clip(text),
   }
 
   const res = await fetch(`${TG_BASE}/sendMessage`, {
@@ -113,12 +124,103 @@ async function emitAlert({ severity = 'warning', code, message, meta = null }) {
 
 function parseCommand(text) {
   const trimmed = String(text || '').trim()
-  const match = trimmed.match(/^(APPROVE|REJECT)\s+([A-Za-z0-9_-]+)$/i)
-  if (!match) return null
 
-  return {
-    action: match[1].toUpperCase(),
-    token: normalizeToken(match[2]),
+  let match = trimmed.match(/^(APPROVE|REJECT)\s+([A-Za-z0-9_-]+)$/i)
+  if (match) {
+    return {
+      kind: 'approval',
+      action: match[1].toUpperCase(),
+      token: normalizeToken(match[2]),
+    }
+  }
+
+  if (/^SUMMARY$/i.test(trimmed)) {
+    return { kind: 'operator', action: 'SUMMARY' }
+  }
+
+  if (/^HEALTH$/i.test(trimmed)) {
+    return { kind: 'operator', action: 'HEALTH' }
+  }
+
+  if (/^QUEUE$/i.test(trimmed)) {
+    return { kind: 'operator', action: 'QUEUE' }
+  }
+
+  if (/^ALERTS$/i.test(trimmed)) {
+    return { kind: 'operator', action: 'ALERTS' }
+  }
+
+  if (/^CANCEL_STALE$/i.test(trimmed)) {
+    return { kind: 'operator', action: 'CANCEL_STALE' }
+  }
+
+  match = trimmed.match(/^RESOLVE_ALERT\s+([A-Za-z0-9-]+)$/i)
+  if (match) {
+    return {
+      kind: 'operator',
+      action: 'RESOLVE_ALERT',
+      alertId: match[1],
+    }
+  }
+
+  match = trimmed.match(/^RESCHEDULE\s+([A-Za-z0-9-]+)\s+(.+)$/i)
+  if (match) {
+    return {
+      kind: 'operator',
+      action: 'RESCHEDULE',
+      postId: match[1],
+      newTime: match[2].trim(),
+    }
+  }
+
+  return null
+}
+
+async function runRepoCommand(file, args = [], extraEnv = {}) {
+  const { stdout, stderr } = await execFileAsync(file, args, {
+    cwd: REPO_DIR,
+    env: { ...process.env, ...extraEnv },
+    maxBuffer: 1024 * 1024,
+  })
+  return (stdout || stderr || '').trim()
+}
+
+async function handleOperatorCommand(command) {
+  switch (command.action) {
+    case 'SUMMARY':
+      return runRepoCommand('bash', ['ops/founder-summary.sh'])
+
+    case 'HEALTH':
+      return runRepoCommand('bash', ['ops/health-check.sh'])
+
+    case 'QUEUE':
+      return runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'scheduled_posts_summary'])
+
+    case 'ALERTS':
+      return runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'alerts_open'])
+
+    case 'CANCEL_STALE':
+      return runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'cancel_stale_queued_posts'])
+
+    case 'RESOLVE_ALERT':
+      return runRepoCommand(
+        'python3',
+        ['tools/agentcrush-supabase.py', 'resolve_alert_by_id'],
+        { AC_SUPABASE_ALERT_ID: command.alertId }
+      )
+
+    case 'RESCHEDULE':
+      return runRepoCommand(
+        'python3',
+        ['tools/agentcrush-supabase.py', 'reschedule_post_by_id'],
+        {
+          AC_SUPABASE_POST_ID: command.postId,
+          AC_SUPABASE_NEW_TIME: command.newTime,
+        }
+      )
+
+    default:
+      return 'Unsupported operator command.'
   }
 }
 
@@ -198,7 +300,7 @@ async function rejectPost(row, token) {
   return `Rejection recorded.\nToken: ${token}\nPost ID: ${row.id}\nStatus: cancelled`
 }
 
-async function handleCommand(command, rawText) {
+async function handleApprovalCommand(command, rawText) {
   const { action, token } = command
 
   const row = await findScheduledPostByToken(token)
@@ -236,6 +338,27 @@ async function handleCommand(command, rawText) {
   }
 
   return `Unsupported command for token ${token}.`
+}
+
+async function handleAnyCommand(command, rawText) {
+  if (command.kind === 'approval') {
+    return handleApprovalCommand(command, rawText)
+  }
+
+  if (command.kind === 'operator') {
+    const reply = await handleOperatorCommand(command)
+    await logRun({
+      job: 'operator_command',
+      status: 'ok',
+      meta: {
+        action: command.action,
+        rawText,
+      },
+    })
+    return reply || 'OK'
+  }
+
+  return 'Unsupported command.'
 }
 
 async function main() {
@@ -276,7 +399,7 @@ async function main() {
     if (!command) continue
 
     try {
-      const reply = await handleCommand(command, text)
+      const reply = await handleAnyCommand(command, text)
       await sendTelegramMessage(reply)
     } catch (err) {
       const errorMessage = err.message || 'Unknown approval-listener failure'
@@ -286,8 +409,7 @@ async function main() {
         status: 'error',
         meta: {
           text,
-          token: command.token,
-          action: command.action,
+          command,
         },
         error: errorMessage,
       })
@@ -295,18 +417,17 @@ async function main() {
       await emitAlert({
         severity: 'error',
         code: 'approval_listener_update_failed',
-        message: 'Approval listener failed to update scheduled_posts',
+        message: 'Approval listener failed to execute Telegram command',
         meta: {
           text,
-          token: command.token,
-          action: command.action,
+          command,
           error: errorMessage,
         },
       })
 
       try {
         await sendTelegramMessage(
-          `Approval listener error for token ${command.token}:\n${errorMessage}`
+          `Approval listener error:\n${errorMessage}`
         )
       } catch (sendErr) {
         console.error('Telegram error reply failed:', sendErr.message)
