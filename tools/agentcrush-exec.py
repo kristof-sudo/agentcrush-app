@@ -45,6 +45,17 @@ ALLOWED_ACTIONS = {
     "summary",
     "deploy",
     "apply_change",
+    "supabase_read",
+    "smoke_check",
+}
+
+ALLOWED_SUPABASE_READS = {
+    "scheduled_posts_summary",
+    "copydesk_jobs_summary",
+    "interaction_jobs_summary",
+    "x_observed_posts_summary",
+    "runs_recent",
+    "alerts_open",
 }
 
 def fail(msg):
@@ -71,7 +82,7 @@ def do_read_file(op):
 
 def do_grep_repo(op):
     pattern = op["pattern"]
-    res = run(["grep", "-RniE", pattern, str(REPO)], cwd=REPO, check=False)
+    res = run(["grep", "-RniE", pattern, str(REPO)], check=False)
     return {"matches": res["stdout"]}
 
 def do_git_status(op):
@@ -97,32 +108,47 @@ def do_journal_tail(op):
     lines = str(int(op.get("lines", 40)))
     if unit not in ALLOWED_SERVICES:
         fail(f"service not allowlisted: {unit}")
-    return run(["journalctl", "-u", unit, "-n", lines, "--no-pager"], cwd=REPO)
+    return run(["journalctl", "-u", unit, "-n", lines, "--no-pager"])
 
 def do_service_status(op):
     unit = op["unit"]
     if unit not in ALLOWED_SERVICES:
         fail(f"service not allowlisted: {unit}")
-    return run(["systemctl", "status", unit, "--no-pager"], cwd=REPO, check=False)
+    return run(["systemctl", "status", unit, "--no-pager"], check=False)
 
 def do_timer_status(op):
     unit = op["unit"]
     if unit not in ALLOWED_TIMERS:
         fail(f"timer not allowlisted: {unit}")
-    return run(["systemctl", "status", unit, "--no-pager"], cwd=REPO, check=False)
+    return run(["systemctl", "status", unit, "--no-pager"], check=False)
 
 def do_health(op):
-    return run(["/usr/local/bin/agentcrush-health"], cwd=REPO)
+    return run(["/usr/local/bin/agentcrush-health"])
 
 def do_summary(op):
-    return run(["/usr/local/bin/agentcrush-summary"], cwd=REPO)
+    return run(["/usr/local/bin/agentcrush-summary"])
 
 def do_deploy(op):
-    return run(["/usr/local/bin/agentcrush-deploy"], cwd=REPO)
+    return run(["/usr/local/bin/agentcrush-deploy"])
 
 def do_apply_change(op):
     change_file = safe_repo_path(op["change_file"])
-    return run(["/usr/local/bin/agentcrush-apply-change", str(change_file)], cwd=REPO)
+    return run(["/usr/local/bin/agentcrush-apply-change", str(change_file)])
+
+def do_supabase_read(op):
+    action = op["supabase_action"]
+    if action not in ALLOWED_SUPABASE_READS:
+        fail(f"supabase action not allowlisted: {action}")
+    return run(["/root/agentcrush-app/tools/agentcrush-supabase.py", action])
+
+def do_smoke_check(op):
+    results = {
+        "git_status": do_git_status({}),
+        "summary": do_summary({}),
+        "scheduled_posts": do_supabase_read({"supabase_action": "scheduled_posts_summary"}),
+        "runs_recent": do_supabase_read({"supabase_action": "runs_recent"}),
+    }
+    return results
 
 DISPATCH = {
     "read_file": do_read_file,
@@ -138,6 +164,8 @@ DISPATCH = {
     "summary": do_summary,
     "deploy": do_deploy,
     "apply_change": do_apply_change,
+    "supabase_read": do_supabase_read,
+    "smoke_check": do_smoke_check,
 }
 
 def main():
