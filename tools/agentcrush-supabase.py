@@ -17,6 +17,7 @@ ALLOWED_ACTIONS = {
     "alerts_open",
     "cancel_stale_queued_posts",
     "reschedule_post_by_id",
+    "resolve_alert_by_id",
 }
 
 
@@ -102,6 +103,26 @@ def scheduled_posts_summary(base, key):
     })
     return {"recent_rows": rows}
 
+def resolve_alert_by_id(base, key):
+    alert_id = os.environ.get("AC_SUPABASE_ALERT_ID")
+    if not alert_id:
+        fail("missing AC_SUPABASE_ALERT_ID")
+
+    now_iso = datetime.datetime.now(datetime.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+    updated = api_patch(
+        base,
+        key,
+        "alerts",
+        {"id": f"eq.{alert_id}"},
+        {"resolved_at": now_iso},
+    )
+
+    return {
+        "affected": len(updated or []),
+        "alert_id": alert_id,
+        "resolved_at": now_iso,
+    }
 
 def copydesk_jobs_summary(base, key):
     rows = api_get(base, key, "copydesk_jobs", {
@@ -230,6 +251,7 @@ DISPATCH = {
     "alerts_open": alerts_open,
     "cancel_stale_queued_posts": cancel_stale_queued_posts,
     "reschedule_post_by_id": reschedule_post_by_id,
+    "resolve_alert_by_id": resolve_alert_by_id,
 }
 
 
