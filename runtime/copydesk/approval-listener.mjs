@@ -117,6 +117,18 @@ async function emitAlert({ severity = 'warning', code, message, meta = null }) {
       message,
       meta,
     })
+
+    const text = [
+      'ALERT',
+      `severity: ${severity}`,
+      `code: ${code}`,
+      `message: ${message}`,
+      meta ? `meta: ${JSON.stringify(meta).slice(0, 500)}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    await sendTelegramMessage(text)
   } catch (err) {
     console.error('alerts insert failed:', err.message)
   }
@@ -185,6 +197,64 @@ async function runRepoCommand(file, args = [], extraEnv = {}) {
   return (stdout || stderr || '').trim()
 }
 
+function formatAlertsSummary(raw) {
+  let parsed
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return raw
+  }
+
+  const alerts = parsed?.result?.open_alerts || []
+  if (!alerts.length) return 'Open alerts: 0'
+
+  const lines = [`Open alerts: ${alerts.length}`]
+  for (const a of alerts.slice(0, 5)) {
+    lines.push(`- ${a.code} | ${a.severity} | ${a.created_at}`)
+  }
+  if (alerts.length > 5) {
+    lines.push(`- ...and ${alerts.length - 5} more`)
+  }
+  return lines.join('\n')
+}
+
+function formatQueueSummary(raw) {
+  let parsed
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return raw
+  }
+
+  const rows = parsed?.result?.recent_rows || []
+  if (!rows.length) return 'Queue rows: 0'
+
+  const queued = rows.filter(r => r.status === 'queued').length
+  const waitingApproval = rows.filter(r => r.approved === false && r.status !== 'cancelled').length
+  const sent = rows.filter(r => r.status === 'sent').length
+  const cancelled = rows.filter(r => r.status === 'cancelled').length
+
+  const lines = [
+    `Queue snapshot`,
+    `- queued: ${queued}`,
+    `- waiting approval: ${waitingApproval}`,
+    `- sent in window: ${sent}`,
+    `- cancelled in window: ${cancelled}`,
+    '',
+    'Next rows:',
+  ]
+
+  for (const r of rows.slice(0, 5)) {
+    lines.push(`- ${r.id} | ${r.status} | ${r.run_at}`)
+  }
+
+  if (rows.length > 5) {
+    lines.push(`- ...and ${rows.length - 5} more`)
+  }
+
+  return lines.join('\n')
+}
+
 async function handleOperatorCommand(command) {
   switch (command.action) {
     case 'SUMMARY':
@@ -193,11 +263,15 @@ async function handleOperatorCommand(command) {
     case 'HEALTH':
       return runRepoCommand('bash', ['ops/health-check.sh'])
 
-    case 'QUEUE':
-      return runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'scheduled_posts_summary'])
+case 'QUEUE': {
+  const raw = await runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'scheduled_posts_summary'])
+  return formatQueueSummary(raw)
+}
 
-    case 'ALERTS':
-      return runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'alerts_open'])
+case 'ALERTS': {
+  const raw = await runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'alerts_open'])
+  return formatAlertsSummary(raw)
+}
 
     case 'CANCEL_STALE':
       return runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'cancel_stale_queued_posts'])
