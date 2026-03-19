@@ -96,8 +96,8 @@ def api_patch(base, key, table, params=None, payload=None):
 
 def scheduled_posts_summary(base, key):
     rows = api_get(base, key, "scheduled_posts", {
-        "select": "id,platform,status,scheduled_at,created_at,approved,approval_token",
-        "order": "scheduled_at.asc",
+"select": "id,status,run_at,approved,publish_ready,approval_token,approval_requested_at,approved_at,approved_by",
+"order": "run_at.asc",
         "limit": "20",
     })
     return {"recent_rows": rows}
@@ -197,11 +197,14 @@ def reschedule_post_by_id(base, key):
         fail("missing AC_SUPABASE_NEW_TIME")
 
     try:
-        new_time = datetime.datetime.fromisoformat(new_time_iso)
+        new_time = datetime.datetime.fromisoformat(
+            new_time_iso.replace("Z", "+00:00")
+        )
     except ValueError:
-        fail("AC_SUPABASE_NEW_TIME must be ISO format, example 2026-03-20T10:00:00")
+        fail("AC_SUPABASE_NEW_TIME must be ISO format, example 2026-03-20T10:00:00+00:00")
 
-    if new_time < datetime.datetime.utcnow():
+    now = datetime.datetime.now(datetime.UTC)
+    if new_time < now:
         fail("cannot schedule in the past")
 
     updated = api_patch(
@@ -217,7 +220,6 @@ def reschedule_post_by_id(base, key):
         "post_id": post_id,
         "new_time": new_time_iso,
     }
-
 
 DISPATCH = {
     "scheduled_posts_summary": scheduled_posts_summary,

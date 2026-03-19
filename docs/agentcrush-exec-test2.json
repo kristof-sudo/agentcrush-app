@@ -1,0 +1,8 @@
+{
+  "actions": [
+    { "action": "git_status" },
+    { "action": "summary" },
+    { "action": "timer_status", "unit": "x-scanner.timer" },
+    { "action": "service_status", "unit": "x-publisher.service" }
+  ]
+}
