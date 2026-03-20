@@ -18,6 +18,7 @@ ALLOWED_ACTIONS = {
     "cancel_stale_queued_posts",
     "reschedule_post_by_id",
     "resolve_alert_by_id",
+   "interaction_jobs_summary",
 }
 
 
@@ -141,6 +142,13 @@ def interaction_jobs_summary(base, key):
     })
     return {"recent_rows": rows}
 
+def interaction_jobs_summary(base, key):
+    rows = api_get(base, key, "interaction_jobs", {
+        "select": "id,action_type,status,created_at,target_author_handle",
+        "order": "created_at.desc",
+        "limit": "20",
+    })
+    return {"recent_rows": rows}
 
 def x_observed_posts_summary(base, key):
     rows = api_get(base, key, "x_observed_posts", {
@@ -252,6 +260,7 @@ DISPATCH = {
     "cancel_stale_queued_posts": cancel_stale_queued_posts,
     "reschedule_post_by_id": reschedule_post_by_id,
     "resolve_alert_by_id": resolve_alert_by_id,
+   "interaction_jobs_summary": interaction_jobs_summary,
 }
 
 

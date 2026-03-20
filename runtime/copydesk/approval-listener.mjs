@@ -218,39 +218,47 @@ function formatAlertsSummary(raw) {
   return lines.join('\n')
 }
 
-function formatQueueSummary(raw) {
-  let parsed
+function formatQueueSummary(queueRaw, interactionRaw = null) {
+  let queueParsed
+  let interactionParsed
+
   try {
-    parsed = JSON.parse(raw)
+    queueParsed = JSON.parse(queueRaw)
   } catch {
-    return raw
+    return queueRaw
   }
 
-  const rows = parsed?.result?.recent_rows || []
-  if (!rows.length) return 'Queue rows: 0'
+  try {
+    interactionParsed = interactionRaw ? JSON.parse(interactionRaw) : null
+  } catch {
+    interactionParsed = null
+  }
 
+  const rows = queueParsed?.result?.recent_rows || []
   const queued = rows.filter(r => r.status === 'queued').length
   const waitingApproval = rows.filter(r => r.approved === false && r.status !== 'cancelled').length
   const sent = rows.filter(r => r.status === 'sent').length
   const cancelled = rows.filter(r => r.status === 'cancelled').length
 
+  const interactionRows = interactionParsed?.result?.recent_rows || []
+  const replyCount = interactionRows.filter(r => r.action_type === 'x_reply').length
+  const quoteCount = interactionRows.filter(r => r.action_type === 'x_quote').length
+  const repostCount = interactionRows.filter(r => r.action_type === 'x_repost').length
+  const roundupCount = interactionRows.filter(r => r.action_type === 'roundup_candidate').length
+
   const lines = [
-    `Queue snapshot`,
+    'Queue snapshot',
     `- queued: ${queued}`,
     `- waiting approval: ${waitingApproval}`,
     `- sent in window: ${sent}`,
     `- cancelled in window: ${cancelled}`,
     '',
-    'Next rows:',
+    'Recent interaction mix',
+    `- replies: ${replyCount}`,
+    `- quotes: ${quoteCount}`,
+    `- reposts: ${repostCount}`,
+    `- roundups: ${roundupCount}`,
   ]
-
-  for (const r of rows.slice(0, 5)) {
-    lines.push(`- ${r.id} | ${r.status} | ${r.run_at}`)
-  }
-
-  if (rows.length > 5) {
-    lines.push(`- ...and ${rows.length - 5} more`)
-  }
 
   return lines.join('\n')
 }
@@ -264,8 +272,9 @@ async function handleOperatorCommand(command) {
       return runRepoCommand('bash', ['ops/health-check.sh'])
 
 case 'QUEUE': {
-  const raw = await runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'scheduled_posts_summary'])
-  return formatQueueSummary(raw)
+  const queueRaw = await runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'scheduled_posts_summary'])
+  const interactionRaw = await runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'interaction_jobs_summary'])
+  return `[OPS QUEUE]\n${formatQueueSummary(queueRaw, interactionRaw)}`
 }
 
 case 'ALERTS': {
@@ -415,12 +424,9 @@ async function handleApprovalCommand(command, rawText) {
 }
 
 async function handleAnyCommand(command, rawText) {
-  if (command.kind === 'approval') {
-    return handleApprovalCommand(command, rawText)
-  }
-
   if (command.kind === 'operator') {
     const reply = await handleOperatorCommand(command)
+
     await logRun({
       job: 'operator_command',
       status: 'ok',
@@ -429,7 +435,13 @@ async function handleAnyCommand(command, rawText) {
         rawText,
       },
     })
-    return reply || 'OK'
+
+    // HARD RETURN: no narrative, no Mike, no wrapping
+    return reply || '[OPS] OK'
+  }
+
+  if (command.kind === 'approval') {
+    return handleApprovalCommand(command, rawText)
   }
 
   return 'Unsupported command.'
