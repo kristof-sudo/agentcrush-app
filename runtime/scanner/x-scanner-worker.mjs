@@ -126,83 +126,6 @@ async function storeTweet(tweet, sourceType, source) {
   stats.tweets_stored += 1;
 }
 
-async function ensureIncomingReplyCandidate(eventRow) {
-  const metadata = eventRow?.metadata || {};
-  const sourceTweetId = metadata.tweet_id || null;
-  const parentTweetId = metadata.parent_tweet_id || null;
-  const authorHandle = metadata.author_handle || null;
-  const text = metadata.text || "";
-
-  if (!sourceTweetId) return;
-
-  const { data: existingJobs, error: existingJobsError } = await supabase
-    .from("interaction_jobs")
-    .select("id")
-    .eq("action_type", "x_reply")
-    .eq("target_tweet_id", sourceTweetId)
-    .limit(1);
-
-  if (existingJobsError) {
-    stats.insert_errors += 1;
-    console.error("scanner reply candidate lookup error", existingJobsError.message || existingJobsError);
-    return;
-  }
-
-  if (existingJobs?.length) return;
-
-  const contextSummary = "incoming question reply to Mike";
-
-  const interactionPayload = {
-    action_type: "x_reply",
-    status: "queued",
-    source_observed_post_id: null,
-    target_tweet_id: sourceTweetId,
-    target_author_handle: authorHandle,
-    target_author_name: null,
-    target_text: text,
-    context_summary: contextSummary,
-  };
-
-  const { error: interactionError } = await supabase
-    .from("interaction_jobs")
-    .insert([interactionPayload]);
-
-  if (interactionError) {
-    stats.insert_errors += 1;
-    console.error("scanner reply candidate interaction insert error", interactionError.message || interactionError);
-    return;
-  }
-
-  const copydeskPayload = {
-    job_type: "x_reply",
-    status: "queued",
-    priority: 50,
-    subject_type: "reply_incoming_event",
-    subject_id: eventRow.id || null,
-    context: {
-      target_author: authorHandle,
-      author_handle: authorHandle,
-      target_text: text,
-      text,
-      context_summary: contextSummary,
-      source_tweet_id: sourceTweetId,
-      parent_tweet_id: parentTweetId,
-      source_type: "reply_incoming",
-    },
-    max_chars: 220,
-    schema_version: 1,
-  };
-
-  const { error: copydeskError } = await supabase
-    .from("copydesk_jobs")
-    .insert([copydeskPayload]);
-
-  if (copydeskError) {
-    stats.insert_errors += 1;
-    console.error("scanner reply candidate copydesk insert error", copydeskError.message || copydeskError);
-  }
-}
-
 async function storeIncomingReply(tweet, authorMap = new Map()) {
   const author = authorMap.get(tweet.author_id) || {};
   const text = tweet.text || "";
@@ -216,7 +139,7 @@ async function storeIncomingReply(tweet, authorMap = new Map()) {
 
   const { data: existing, error: existingError } = await supabase
     .from("events")
-    .select("id,metadata")
+    .select("id")
     .eq("event_type", "reply_incoming")
     .contains("metadata", { tweet_id: tweet.id })
     .limit(1);
@@ -227,31 +150,23 @@ async function storeIncomingReply(tweet, authorMap = new Map()) {
     return;
   }
 
-  let eventRow = existing?.[0] || null;
+  if (existing?.length) return;
 
-  if (!eventRow?.id) {
-    const { data: inserted, error } = await supabase
+  const { error } = await supabase
     .from("events")
-    .select("id,metadata")
     .insert([{
       event_type: "reply_incoming",
       metadata,
       created_at: tweet.created_at || new Date().toISOString(),
     }]);
 
-    if (error) {
-      stats.insert_errors += 1;
-      console.error("scanner reply insert error", error.message || error);
-      return;
-    }
-
-    eventRow = inserted?.[0] || null;
-    stats.replies_stored += 1;
+  if (error) {
+    stats.insert_errors += 1;
+    console.error("scanner reply insert error", error.message || error);
+    return;
   }
 
-  if (metadata.is_question) {
-    await ensureIncomingReplyCandidate(eventRow || { metadata });
-  }
+  stats.replies_stored += 1;
 }
 
 function loadUserCache() {
