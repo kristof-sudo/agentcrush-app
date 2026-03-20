@@ -146,27 +146,27 @@ function parseCommand(text) {
     }
   }
 
-  if (/^SUMMARY$/i.test(trimmed)) {
-    return { kind: 'operator', action: 'SUMMARY' }
-  }
+if (/^OPS SUMMARY$/i.test(trimmed)) {
+  return { kind: 'operator', action: 'SUMMARY' }
+}
 
-  if (/^HEALTH$/i.test(trimmed)) {
-    return { kind: 'operator', action: 'HEALTH' }
-  }
+if (/^OPS HEALTH$/i.test(trimmed)) {
+  return { kind: 'operator', action: 'HEALTH' }
+}
 
-  if (/^QUEUE$/i.test(trimmed)) {
-    return { kind: 'operator', action: 'QUEUE' }
-  }
+if (/^OPS QUEUE$/i.test(trimmed)) {
+  return { kind: 'operator', action: 'QUEUE' }
+}
 
-  if (/^ALERTS$/i.test(trimmed)) {
-    return { kind: 'operator', action: 'ALERTS' }
-  }
+if (/^OPS ALERTS$/i.test(trimmed)) {
+  return { kind: 'operator', action: 'ALERTS' }
+}
 
-  if (/^CANCEL_STALE$/i.test(trimmed)) {
-    return { kind: 'operator', action: 'CANCEL_STALE' }
-  }
+if (/^OPS CANCEL_STALE$/i.test(trimmed)) {
+  return { kind: 'operator', action: 'CANCEL_STALE' }
+}
 
-  match = trimmed.match(/^RESOLVE_ALERT\s+([A-Za-z0-9-]+)$/i)
+match = trimmed.match(/^OPS RESOLVE_ALERT\s+([A-Za-z0-9-]+)$/i)
   if (match) {
     return {
       kind: 'operator',
@@ -175,7 +175,7 @@ function parseCommand(text) {
     }
   }
 
-  match = trimmed.match(/^RESCHEDULE\s+([A-Za-z0-9-]+)\s+(.+)$/i)
+match = trimmed.match(/^OPS RESCHEDULE\s+([A-Za-z0-9-]+)\s+(.+)$/i)
   if (match) {
     return {
       kind: 'operator',
