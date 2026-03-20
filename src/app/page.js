@@ -292,7 +292,7 @@ export default async function Home() {
       <div className="mt-5 flex justify-start">
         <Link
           href="/start-here"
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+          className="rounded-xl border border-white/10 bg-gradient-to-b from-[#5B6CFF] via-[#3B2FA8] to-[#211A68] px-6 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-950/40 ring-1 ring-white/10 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.18),0_10px_24px_rgba(15,23,42,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-indigo-950/50 active:translate-y-0"
         >
           Curious about AI agents? Start here →
         </Link>
