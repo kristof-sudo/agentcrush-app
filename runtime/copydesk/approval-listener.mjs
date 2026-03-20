@@ -1,10 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { createClient } from '@supabase/supabase-js'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
-
-const execFileAsync = promisify(execFile)
 
 const {
   SUPABASE_URL,
@@ -27,7 +23,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 const OFFSET_FILE = '/opt/agentcrush/copydesk/approval_listener_offset.json'
 const TG_BASE = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
-const REPO_DIR = '/root/agentcrush-app'
+const EXEC_QUEUE_DIR = '/root/agentcrush-app/ops/exec-queue'
 
 function normalizeToken(token) {
   return String(token || '').trim().toUpperCase()
@@ -146,36 +142,17 @@ function parseCommand(text) {
     }
   }
 
-if (/^OPS SUMMARY$/i.test(trimmed)) {
-  return { kind: 'operator', action: 'SUMMARY' }
-}
+  if (/^OPS SUMMARY$/i.test(trimmed)) return { kind: 'operator', action: 'SUMMARY' }
+  if (/^OPS ALERTS$/i.test(trimmed)) return { kind: 'operator', action: 'ALERTS' }
+  if (/^OPS QUEUE$/i.test(trimmed)) return { kind: 'operator', action: 'QUEUE' }
+  if (/^OPS CANCEL_STALE$/i.test(trimmed)) return { kind: 'operator', action: 'CANCEL_STALE' }
 
-if (/^OPS HEALTH$/i.test(trimmed)) {
-  return { kind: 'operator', action: 'HEALTH' }
-}
-
-if (/^OPS QUEUE$/i.test(trimmed)) {
-  return { kind: 'operator', action: 'QUEUE' }
-}
-
-if (/^OPS ALERTS$/i.test(trimmed)) {
-  return { kind: 'operator', action: 'ALERTS' }
-}
-
-if (/^OPS CANCEL_STALE$/i.test(trimmed)) {
-  return { kind: 'operator', action: 'CANCEL_STALE' }
-}
-
-match = trimmed.match(/^OPS RESOLVE_ALERT\s+([A-Za-z0-9-]+)$/i)
+  match = trimmed.match(/^OPS RESOLVE_ALERT\s+([A-Za-z0-9-]+)$/i)
   if (match) {
-    return {
-      kind: 'operator',
-      action: 'RESOLVE_ALERT',
-      alertId: match[1],
-    }
+    return { kind: 'operator', action: 'RESOLVE_ALERT', alertId: match[1] }
   }
 
-match = trimmed.match(/^OPS RESCHEDULE\s+([A-Za-z0-9-]+)\s+(.+)$/i)
+  match = trimmed.match(/^OPS RESCHEDULE\s+([A-Za-z0-9-]+)\s+(.+)$/i)
   if (match) {
     return {
       kind: 'operator',
@@ -188,123 +165,30 @@ match = trimmed.match(/^OPS RESCHEDULE\s+([A-Za-z0-9-]+)\s+(.+)$/i)
   return null
 }
 
-async function runRepoCommand(file, args = [], extraEnv = {}) {
-  const { stdout, stderr } = await execFileAsync(file, args, {
-    cwd: REPO_DIR,
-    env: { ...process.env, ...extraEnv },
-    maxBuffer: 1024 * 1024,
-  })
-  return (stdout || stderr || '').trim()
-}
+async function runExecCommand(command, payload = {}) {
+  const requestId = `tg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  const requestPath = path.join(EXEC_QUEUE_DIR, `request_${requestId}.json`)
+  const resultPath = path.join(EXEC_QUEUE_DIR, `result_${requestId}.json`)
 
-function formatAlertsSummary(raw) {
-  let parsed
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return raw
+  await fs.mkdir(EXEC_QUEUE_DIR, { recursive: true })
+  await fs.writeFile(
+    requestPath,
+    JSON.stringify({ command, ...payload }, null, 2),
+    'utf8'
+  )
+
+  for (let i = 0; i < 20; i++) {
+    try {
+      const raw = await fs.readFile(resultPath, 'utf8')
+      const parsed = JSON.parse(raw)
+      await fs.rm(resultPath, { force: true })
+      return String(parsed.output || '').trim() || '[OPS] OK'
+    } catch {
+      await new Promise(r => setTimeout(r, 1000))
+    }
   }
 
-  const alerts = parsed?.result?.open_alerts || []
-  if (!alerts.length) return 'Open alerts: 0'
-
-  const lines = [`Open alerts: ${alerts.length}`]
-  for (const a of alerts.slice(0, 5)) {
-    lines.push(`- ${a.code} | ${a.severity} | ${a.created_at}`)
-  }
-  if (alerts.length > 5) {
-    lines.push(`- ...and ${alerts.length - 5} more`)
-  }
-  return lines.join('\n')
-}
-
-function formatQueueSummary(queueRaw, interactionRaw = null) {
-  let queueParsed
-  let interactionParsed
-
-  try {
-    queueParsed = JSON.parse(queueRaw)
-  } catch {
-    return queueRaw
-  }
-
-  try {
-    interactionParsed = interactionRaw ? JSON.parse(interactionRaw) : null
-  } catch {
-    interactionParsed = null
-  }
-
-  const rows = queueParsed?.result?.recent_rows || []
-  const queued = rows.filter(r => r.status === 'queued').length
-  const waitingApproval = rows.filter(r => r.approved === false && r.status !== 'cancelled').length
-  const sent = rows.filter(r => r.status === 'sent').length
-  const cancelled = rows.filter(r => r.status === 'cancelled').length
-
-  const interactionRows = interactionParsed?.result?.recent_rows || []
-  const replyCount = interactionRows.filter(r => r.action_type === 'x_reply').length
-  const quoteCount = interactionRows.filter(r => r.action_type === 'x_quote').length
-  const repostCount = interactionRows.filter(r => r.action_type === 'x_repost').length
-  const roundupCount = interactionRows.filter(r => r.action_type === 'roundup_candidate').length
-
-  const lines = [
-    'Queue snapshot',
-    `- queued: ${queued}`,
-    `- waiting approval: ${waitingApproval}`,
-    `- sent in window: ${sent}`,
-    `- cancelled in window: ${cancelled}`,
-    '',
-    'Recent interaction mix',
-    `- replies: ${replyCount}`,
-    `- quotes: ${quoteCount}`,
-    `- reposts: ${repostCount}`,
-    `- roundups: ${roundupCount}`,
-  ]
-
-  return lines.join('\n')
-}
-
-async function handleOperatorCommand(command) {
-  switch (command.action) {
-    case 'SUMMARY':
-      return runRepoCommand('bash', ['ops/founder-summary.sh'])
-
-    case 'HEALTH':
-      return runRepoCommand('bash', ['ops/health-check.sh'])
-
-case 'QUEUE': {
-  const queueRaw = await runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'scheduled_posts_summary'])
-  const interactionRaw = await runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'interaction_jobs_summary'])
-  return `[OPS QUEUE]\n${formatQueueSummary(queueRaw, interactionRaw)}`
-}
-
-case 'ALERTS': {
-  const raw = await runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'alerts_open'])
-  return formatAlertsSummary(raw)
-}
-
-    case 'CANCEL_STALE':
-      return runRepoCommand('python3', ['tools/agentcrush-supabase.py', 'cancel_stale_queued_posts'])
-
-    case 'RESOLVE_ALERT':
-      return runRepoCommand(
-        'python3',
-        ['tools/agentcrush-supabase.py', 'resolve_alert_by_id'],
-        { AC_SUPABASE_ALERT_ID: command.alertId }
-      )
-
-    case 'RESCHEDULE':
-      return runRepoCommand(
-        'python3',
-        ['tools/agentcrush-supabase.py', 'reschedule_post_by_id'],
-        {
-          AC_SUPABASE_POST_ID: command.postId,
-          AC_SUPABASE_NEW_TIME: command.newTime,
-        }
-      )
-
-    default:
-      return 'Unsupported operator command.'
-  }
+  throw new Error(`Exec command timed out: ${command}`)
 }
 
 async function findScheduledPostByToken(token) {
@@ -385,7 +269,6 @@ async function rejectPost(row, token) {
 
 async function handleApprovalCommand(command, rawText) {
   const { action, token } = command
-
   const row = await findScheduledPostByToken(token)
 
   if (!row) {
@@ -423,6 +306,28 @@ async function handleApprovalCommand(command, rawText) {
   return `Unsupported command for token ${token}.`
 }
 
+async function handleOperatorCommand(command) {
+  switch (command.action) {
+    case 'SUMMARY':
+      return `[OPS SUMMARY]\n${await runExecCommand('founder_summary')}`
+    case 'ALERTS':
+      return `[OPS ALERTS]\n${await runExecCommand('alerts_summary')}`
+    case 'QUEUE':
+      return `[OPS QUEUE]\n${await runExecCommand('queue_summary')}`
+    case 'CANCEL_STALE':
+      return `[OPS CANCEL_STALE]\n${await runExecCommand('cancel_stale_queued_posts')}`
+    case 'RESOLVE_ALERT':
+      return `[OPS RESOLVE_ALERT]\n${await runExecCommand('resolve_alert_by_id', { alert_id: command.alertId })}`
+    case 'RESCHEDULE':
+      return `[OPS RESCHEDULE]\n${await runExecCommand('reschedule_post_by_id', {
+        post_id: command.postId,
+        new_time: command.newTime,
+      })}`
+    default:
+      return '[OPS] Unsupported operator command.'
+  }
+}
+
 async function handleAnyCommand(command, rawText) {
   if (command.kind === 'operator') {
     const reply = await handleOperatorCommand(command)
@@ -436,7 +341,6 @@ async function handleAnyCommand(command, rawText) {
       },
     })
 
-    // HARD RETURN: no narrative, no Mike, no wrapping
     return reply || '[OPS] OK'
   }
 
@@ -476,10 +380,7 @@ async function main() {
     const text = String(message?.text || '').trim()
 
     if (!text) continue
-
-    if (TELEGRAM_CHAT_ID && chatId !== String(TELEGRAM_CHAT_ID)) {
-      continue
-    }
+    if (TELEGRAM_CHAT_ID && chatId !== String(TELEGRAM_CHAT_ID)) continue
 
     const command = parseCommand(text)
     if (!command) continue
@@ -512,9 +413,7 @@ async function main() {
       })
 
       try {
-        await sendTelegramMessage(
-          `Approval listener error:\n${errorMessage}`
-        )
+        await sendTelegramMessage(`Approval listener error:\n${errorMessage}`)
       } catch (sendErr) {
         console.error('Telegram error reply failed:', sendErr.message)
       }
