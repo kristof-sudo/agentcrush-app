@@ -41,8 +41,8 @@ cancelled_count="$(printf '%s' "$scheduled_json" | grep -c '"status": "cancelled
 approved_waiting_count="$(printf '%s' "$scheduled_json" | grep -c '"approved": false' || true)"
 open_alerts_count="$(printf '%s' "$alerts_json" | grep -c '"id":' || true)"
 failed_runs_count="$(printf '%s' "$runs_json" | grep -c '"status": "failed"' || true)"
-
-scanner_402=$(journalctl -u x-scanner.service --since "24 hours ago" --no-pager 2>/dev/null | grep -c 'CreditsDepleted\|X API 402' || true)
+scanner_402="$(journalctl -u x-scanner.service --since "24 hours ago" --no-pager 2>/dev/null | grep -c 'CreditsDepleted\|X API 402' || true)"
+scanner_runs="$(journalctl -u x-scanner.service --since "24 hours ago" --no-pager 2>/dev/null | grep -c "Starting" || true)"
 
 if [ "$open_alerts_count" -gt 0 ]; then
   add_issue "open alerts present ($open_alerts_count)"
@@ -60,19 +60,27 @@ if [ "$scanner_402" -gt 0 ]; then
   add_issue "scanner hit X API credit/rate issue in last 24h ($scanner_402)"
 fi
 
-OUTPUT=$(cat <<EOT
-=== AgentCrush Founder Summary ===
+if [ "$scanner_runs" -gt 48 ]; then
+  add_issue "scanner running too frequently ($scanner_runs runs/24h)"
+fi
+
+PIPELINE_BLOCK="$(cat <<EOT
+$(check_unit "x-scanner.timer" "Scanner")
+$(check_unit "x-selector.timer" "Selector")
+$(check_unit "copydesk.timer" "CopyDesk")
+$(check_unit "approval-listener.timer" "Approval listener")
+$(check_unit "x-publisher.timer" "Publisher")
+EOT
+)"
+
+OUTPUT="=== AgentCrush Founder Summary ===
 Generated: $STAMP
 
 [1] Overall status
 - STATUS: $STATUS
 
 [2] Core pipeline
-$(check_unit "x-scanner.timer" "Scanner")
-$(check_unit "x-selector.timer" "Selector")
-$(check_unit "copydesk.timer" "CopyDesk")
-$(check_unit "approval-listener.timer" "Approval listener")
-$(check_unit "x-publisher.timer" "Publisher")
+$PIPELINE_BLOCK
 
 [3] Queue snapshot
 - queued posts: $queued_count
@@ -84,27 +92,31 @@ $(check_unit "x-publisher.timer" "Publisher")
 - open alerts: $open_alerts_count
 - recent failed runs: $failed_runs_count
 - scanner 402/rate issues (24h): $scanner_402
+- scanner runs (24h): $scanner_runs
 
-[5] Issues
-EOT
-)
+[5] Issues"
 
 if [ "${#ISSUES[@]}" -eq 0 ]; then
-  OUTPUT="$OUTPUT\n- none"
+  OUTPUT="$OUTPUT
+- none"
 else
   for issue in "${ISSUES[@]}"; do
-    OUTPUT="$OUTPUT\n- $issue"
+    OUTPUT="$OUTPUT
+- $issue"
   done
 fi
 
 if [ "$STATUS" = "OK" ]; then
   RECOMMENDATION="No action needed."
 elif [ "$STATUS" = "WARNING" ]; then
-  RECOMMENDATION="Review queue, alerts, and failed runs."
+  RECOMMENDATION="Review queue, alerts, failed runs, and X scan frequency."
 else
   RECOMMENDATION="Immediate review needed before assuming pipeline is healthy."
 fi
 
-OUTPUT="$OUTPUT\n\n[6] Recommendation\n- $RECOMMENDATION"
+OUTPUT="$OUTPUT
 
-echo -e "$OUTPUT"
+[6] Recommendation
+- $RECOMMENDATION"
+
+printf '%s\n' "$OUTPUT"
