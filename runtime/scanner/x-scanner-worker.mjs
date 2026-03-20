@@ -23,6 +23,7 @@ const supabase = createClient(
 
 const X_API = "https://api.twitter.com/2";
 const USER_CACHE_PATH = "/opt/agentcrush/scanner/watchlist-user-cache.json";
+const MIKE_HANDLE = "MikeMatshAI";
 
 const WATCHLIST = [
   "bankrbot",
@@ -49,7 +50,11 @@ const stats = {
   query_ok: 0,
   query_transient: 0,
   query_hard: 0,
+  reply_scan_ok: 0,
+  reply_scan_transient: 0,
+  reply_scan_hard: 0,
   tweets_stored: 0,
+  replies_stored: 0,
   insert_errors: 0
 };
 
@@ -69,6 +74,13 @@ function isTransientXError(err) {
 
 function shortBody(text) {
   return String(text || "").replace(/\s+/g, " ").slice(0, 180);
+}
+
+function isQuestionText(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return false;
+  if (raw.includes("?")) return true;
+  return /^(how|what|why|when|can|is|should)\b/i.test(raw);
 }
 
 async function fetchJSON(url) {
@@ -112,6 +124,134 @@ async function storeTweet(tweet, sourceType, source) {
   }
 
   stats.tweets_stored += 1;
+}
+
+async function ensureIncomingReplyCandidate(eventRow) {
+  const metadata = eventRow?.metadata || {};
+  const sourceTweetId = metadata.tweet_id || null;
+  const parentTweetId = metadata.parent_tweet_id || null;
+  const authorHandle = metadata.author_handle || null;
+  const text = metadata.text || "";
+
+  if (!sourceTweetId) return;
+
+  const { data: existingJobs, error: existingJobsError } = await supabase
+    .from("interaction_jobs")
+    .select("id")
+    .eq("action_type", "x_reply")
+    .eq("target_tweet_id", sourceTweetId)
+    .limit(1);
+
+  if (existingJobsError) {
+    stats.insert_errors += 1;
+    console.error("scanner reply candidate lookup error", existingJobsError.message || existingJobsError);
+    return;
+  }
+
+  if (existingJobs?.length) return;
+
+  const contextSummary = "incoming question reply to Mike";
+
+  const interactionPayload = {
+    action_type: "x_reply",
+    status: "queued",
+    source_observed_post_id: null,
+    target_tweet_id: sourceTweetId,
+    target_author_handle: authorHandle,
+    target_author_name: null,
+    target_text: text,
+    context_summary: contextSummary,
+  };
+
+  const { error: interactionError } = await supabase
+    .from("interaction_jobs")
+    .insert([interactionPayload]);
+
+  if (interactionError) {
+    stats.insert_errors += 1;
+    console.error("scanner reply candidate interaction insert error", interactionError.message || interactionError);
+    return;
+  }
+
+  const copydeskPayload = {
+    job_type: "x_reply",
+    status: "queued",
+    priority: 50,
+    subject_type: "reply_incoming_event",
+    subject_id: eventRow.id || null,
+    context: {
+      target_author: authorHandle,
+      author_handle: authorHandle,
+      target_text: text,
+      text,
+      context_summary: contextSummary,
+      source_tweet_id: sourceTweetId,
+      parent_tweet_id: parentTweetId,
+      source_type: "reply_incoming",
+    },
+    max_chars: 220,
+    schema_version: 1,
+  };
+
+  const { error: copydeskError } = await supabase
+    .from("copydesk_jobs")
+    .insert([copydeskPayload]);
+
+  if (copydeskError) {
+    stats.insert_errors += 1;
+    console.error("scanner reply candidate copydesk insert error", copydeskError.message || copydeskError);
+  }
+}
+
+async function storeIncomingReply(tweet, authorMap = new Map()) {
+  const author = authorMap.get(tweet.author_id) || {};
+  const text = tweet.text || "";
+  const metadata = {
+    tweet_id: tweet.id,
+    parent_tweet_id: tweet.referenced_tweets?.find(ref => ref.type === "replied_to")?.id || null,
+    text,
+    author_handle: author.username || null,
+    is_question: isQuestionText(text),
+  };
+
+  const { data: existing, error: existingError } = await supabase
+    .from("events")
+    .select("id,metadata")
+    .eq("event_type", "reply_incoming")
+    .contains("metadata", { tweet_id: tweet.id })
+    .limit(1);
+
+  if (existingError) {
+    stats.insert_errors += 1;
+    console.error("scanner reply lookup error", existingError.message || existingError);
+    return;
+  }
+
+  let eventRow = existing?.[0] || null;
+
+  if (!eventRow?.id) {
+    const { data: inserted, error } = await supabase
+    .from("events")
+    .select("id,metadata")
+    .insert([{
+      event_type: "reply_incoming",
+      metadata,
+      created_at: tweet.created_at || new Date().toISOString(),
+    }]);
+
+    if (error) {
+      stats.insert_errors += 1;
+      console.error("scanner reply insert error", error.message || error);
+      return;
+    }
+
+    eventRow = inserted?.[0] || null;
+    stats.replies_stored += 1;
+  }
+
+  if (metadata.is_question) {
+    await ensureIncomingReplyCandidate(eventRow || { metadata });
+  }
 }
 
 function loadUserCache() {
@@ -223,11 +363,66 @@ async function scanSearch() {
   }
 }
 
+async function scanIncomingReplies() {
+  const cache = loadUserCache();
+
+  try {
+    const mikeUserId = await resolveUserId(MIKE_HANDLE, cache);
+    if (!mikeUserId) {
+      console.warn(`scanner incoming replies skipped (${MIKE_HANDLE}) no user id`);
+      return;
+    }
+
+    const mikeTweets = await fetchJSON(
+      `${X_API}/users/${mikeUserId}/tweets?max_results=10&exclude=replies,retweets&tweet.fields=created_at`
+    );
+
+    const mikeTweetIds = (mikeTweets.data || []).map(tweet => tweet.id).filter(Boolean);
+
+    if (mikeTweetIds.length === 0) {
+      console.log(`scanner: incoming replies ${MIKE_HANDLE} ok (0 source tweets)`);
+      stats.reply_scan_ok += 1;
+      return;
+    }
+
+    for (const tweetId of mikeTweetIds) {
+      const query = `conversation_id:${tweetId} is:reply -from:${MIKE_HANDLE}`;
+      const url =
+        `${X_API}/tweets/search/recent?query=${encodeURIComponent(query)}` +
+        `&max_results=25` +
+        `&tweet.fields=created_at,author_id,conversation_id,referenced_tweets` +
+        `&expansions=author_id` +
+        `&user.fields=username,name`;
+      const res = await fetchJSON(url);
+      const authorMap = new Map((res.includes?.users || []).map(user => [user.id, user]));
+
+      for (const tweet of res.data || []) {
+        await storeIncomingReply(tweet, authorMap);
+      }
+    }
+
+    stats.reply_scan_ok += 1;
+    console.log(`scanner: incoming replies ${MIKE_HANDLE} ok`);
+  } catch (err) {
+    if (isTransientXError(err)) {
+      stats.reply_scan_transient += 1;
+      console.warn(
+        `scanner incoming replies transient (${MIKE_HANDLE}) status=${err.status} body="${shortBody(err.bodyText)}"`
+      );
+      return;
+    }
+
+    stats.reply_scan_hard += 1;
+    console.error(`scanner incoming replies hard error (${MIKE_HANDLE})`, err.message || err);
+  }
+}
+
 async function main() {
   console.log("scanner start");
 
   await scanWatchlist();
   await scanSearch();
+  await scanIncomingReplies();
 
   console.log(
     "scanner summary",
@@ -238,7 +433,11 @@ async function main() {
       query_ok: stats.query_ok,
       query_transient: stats.query_transient,
       query_hard: stats.query_hard,
+      reply_scan_ok: stats.reply_scan_ok,
+      reply_scan_transient: stats.reply_scan_transient,
+      reply_scan_hard: stats.reply_scan_hard,
       tweets_stored: stats.tweets_stored,
+      replies_stored: stats.replies_stored,
       insert_errors: stats.insert_errors
     })
   );
