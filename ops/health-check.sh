@@ -1,53 +1,45 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== AgentCrush Health Check ==="
-echo "Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-echo
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG_FILE="${AGENTCRUSH_DEPLOY_CONFIG:-$ROOT_DIR/ops/deploy/prod.env}"
 
-echo "[1] Timers"
-systemctl list-timers --all | egrep 'x-scanner|x-selector|copydesk|canon-enqueuer|scheduler-prep|approval-notifier|approval-listener|x-publisher|canonkeeper' || true
-echo
+if [[ -f "$CONFIG_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG_FILE"
+fi
 
-echo "[2] Service states"
-for svc in \
-  x-scanner.service \
-  x-selector.service \
-  copydesk.service \
-  canon-enqueuer.service \
-  scheduler-prep.service \
-  approval-notifier.service \
-  approval-listener.service \
-  x-publisher.service \
-  canonkeeper.service
-do
-  printf "%-28s" "$svc"
-  systemctl is-enabled "$svc" 2>/dev/null | tr '\n' ' '
-  echo -n " / "
-  systemctl is-active "$svc" 2>/dev/null || true
-done
-echo
+: "${AGENTCRUSH_PROD_HOST:?Missing AGENTCRUSH_PROD_HOST. Configure ops/deploy/prod.env from the example file.}"
 
-echo "[3] Recent failures (targeted)"
-for svc in \
-  x-scanner.service \
-  x-selector.service \
-  copydesk.service \
-  canon-enqueuer.service \
-  scheduler-prep.service \
-  approval-notifier.service \
-  approval-listener.service \
-  x-publisher.service \
-  canonkeeper.service
-do
-  count=$(journalctl -u "$svc" --since "30 minutes ago" -p err --no-pager 2>/dev/null | grep -c . || true)
-  printf "%-28s %s errors in last 30m\n" "$svc" "$count"
-done
-echo
+REMOTE_USER="${AGENTCRUSH_PROD_USER:-root}"
+REMOTE_EXEC="${AGENTCRUSH_REMOTE_EXEC:-/root/agentcrush-app/tools/agentcrush-exec.py}"
 
-echo "[4] Disk / memory"
-df -h / | tail -n 1
-free -m
-echo
+echo "Post-check target: ${REMOTE_USER}@${AGENTCRUSH_PROD_HOST}"
+echo "Bounded executor: ${REMOTE_EXEC} health-request.json"
 
-echo "=== End Health Check ==="
+ssh \
+  -o BatchMode=yes \
+  -o StrictHostKeyChecking=accept-new \
+  "${REMOTE_USER}@${AGENTCRUSH_PROD_HOST}" \
+  /bin/sh -s -- "$REMOTE_EXEC" <<'EOF'
+set -eu
+
+remote_exec="$1"
+request_file="$(mktemp /tmp/health-request.XXXXXX.json)"
+
+cleanup() {
+  rm -f "$request_file"
+}
+
+trap cleanup EXIT
+
+cat >"$request_file" <<'JSON'
+{
+  "actions": [
+    { "action": "health" }
+  ]
+}
+JSON
+
+python3 "$remote_exec" "$request_file"
+EOF

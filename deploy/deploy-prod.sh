@@ -1,34 +1,45 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-echo "=== AgentCrush Deploy ==="
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG_FILE="${AGENTCRUSH_DEPLOY_CONFIG:-$ROOT_DIR/ops/deploy/prod.env}"
 
-APP_DIR="/root/agentcrush-app"
+if [[ -f "$CONFIG_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG_FILE"
+fi
 
-cd "$APP_DIR"
+: "${AGENTCRUSH_PROD_HOST:?Missing AGENTCRUSH_PROD_HOST. Configure ops/deploy/prod.env from the example file.}"
 
-echo "[1] Pull latest code"
-git pull origin main
+REMOTE_USER="${AGENTCRUSH_PROD_USER:-root}"
+REMOTE_EXEC="${AGENTCRUSH_REMOTE_EXEC:-/root/agentcrush-app/tools/agentcrush-exec.py}"
 
-echo "[2] Install website dependencies (if needed)"
-npm install --omit=dev
+echo "Deploy target: ${REMOTE_USER}@${AGENTCRUSH_PROD_HOST}"
+echo "Bounded executor: ${REMOTE_EXEC} deploy-request.json"
 
-echo "[3] Sync runtime from repo to VPS"
- /usr/local/bin/agentcrush-sync-runtime
+ssh \
+  -o BatchMode=yes \
+  -o StrictHostKeyChecking=accept-new \
+  "${REMOTE_USER}@${AGENTCRUSH_PROD_HOST}" \
+  /bin/sh -s -- "$REMOTE_EXEC" <<'EOF'
+set -eu
 
-echo "[4] Restart workers"
-sudo systemctl restart x-scanner.timer || true
-sudo systemctl restart x-selector.timer || true
-sudo systemctl restart copydesk.timer || true
-sudo systemctl restart scheduler-prep.timer || true
-sudo systemctl restart approval-notifier.timer || true
-sudo systemctl restart approval-listener.timer || true
-sudo systemctl restart x-publisher.timer || true
-sudo systemctl restart canon-enqueuer.timer || true
-sudo systemctl restart canonkeeper.timer || true
+remote_exec="$1"
+request_file="$(mktemp /tmp/deploy-request.XXXXXX.json)"
 
-echo "[5] Short health check"
-sleep 2
-./ops/health-check.sh
+cleanup() {
+  rm -f "$request_file"
+}
 
-echo "=== Deploy Complete ==="
+trap cleanup EXIT
+
+cat >"$request_file" <<'JSON'
+{
+  "actions": [
+    { "action": "deploy" }
+  ]
+}
+JSON
+
+python3 "$remote_exec" "$request_file"
+EOF
