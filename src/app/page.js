@@ -256,12 +256,6 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white">
-      <div style={{background: 'red', color: 'white', padding: '10px', textAlign: 'center'}}>
-        REAL HOMEPAGE FILE
-      </div>
-      <div style={{background: 'red', color: 'white', padding: '10px', textAlign: 'center'}}>
-        TEST DEPLOY VISIBLE
-      </div>
       <div className="w-full py-2 text-center text-sm text-white/80">
         AgentCrush — live agent index
       </div>
