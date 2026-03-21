@@ -395,74 +395,6 @@ async function fetchCandidates() {
   return [...replies, ...observed].sort((a, b) => new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime());
 }
 
-async function getRecentReplyCount() {
-  const { data, error } = await supabase
-    .from("interaction_jobs")
-    .select("action_type")
-    .eq("action_type", "x_reply")
-    .gte("created_at", isoHoursAgo(24));
-
-  if (error) throw error;
-  return (data || []).length;
-}
-
-async function hasExistingReplyJob(tweetId) {
-  const targetTweetId = safeString(tweetId);
-  if (!targetTweetId) return false;
-
-  const { data, error } = await supabase
-    .from("interaction_jobs")
-    .select("id")
-    .eq("action_type", "x_reply")
-    .eq("target_tweet_id", targetTweetId)
-    .limit(1);
-
-  if (error) throw error;
-  return Boolean(data?.length);
-}
-
-async function tryQueueReplyCandidate(post, contextSummary, score, selectedSamples, todayCounts) {
-  const replyEventType = safeString(post.event_type);
-  const isReplyIncoming = post.candidate_source === "reply_incoming" && replyEventType === "reply_incoming";
-  const isReplyQuestion = post.metadata?.is_question === true;
-  const isInDomainReply = post.domain_in_scope === true;
-
-  if (!isReplyIncoming || !isReplyQuestion || !isInDomainReply || looksSpammy(post.text_content)) {
-    return { queued: false, reason: "reply_requirements_not_met" };
-  }
-
-  if (await hasExistingReplyJob(post.tweet_id)) {
-    return { queued: false, reason: "reply_already_queued" };
-  }
-
-  const recentReplyCount = await getRecentReplyCount();
-  if (recentReplyCount >= DAILY_CAPS.reply) {
-    todayCounts.reply = recentReplyCount;
-    return { queued: false, reason: "daily_cap_blocked" };
-  }
-
-  await insertInteractionJob(post, "x_reply", contextSummary);
-  await insertCopydeskJob(post, "x_reply", contextSummary);
-  await finalizeCandidate(post, {
-    ignored: false,
-    used_for_job: true,
-    relevance_score: score,
-  });
-
-  todayCounts.reply = recentReplyCount + 1;
-
-  if (selectedSamples.length < 5) {
-    selectedSamples.push({
-      post_id: post.id,
-      handle: post.author_handle,
-      action: "x_reply",
-      score,
-    });
-  }
-
-  return { queued: true };
-}
-
 async function insertInteractionJob(post, actionType, contextSummary) {
   const payload = {
     action_type: actionType,
@@ -600,7 +532,6 @@ async function main() {
     below_action_threshold: 0,
     daily_cap_blocked: 0,
     reply_requirements_not_met: 0,
-    reply_already_queued: 0,
   };
 
   const selectedSamples = [];
@@ -621,12 +552,15 @@ async function main() {
       }
 
       const signals = detectSignals(post);
+      const replyEventType = safeString(post.event_type);
+      const isReplyQuestion = post.candidate_source === "reply_incoming" && post.metadata?.is_question === true;
+      const isInDomainReply = post.candidate_source === "reply_incoming" && post.domain_in_scope === true;
 
       if (post.candidate_source === "reply_incoming") {
         signals.roundup_worthy = false;
         signals.quote_worthy = false;
         signals.repost_worthy = false;
-        signals.reply_worthy = true;
+        signals.reply_worthy = replyEventType === "reply_incoming" && isReplyQuestion && isInDomainReply && !looksSpammy(text);
       }
       const score = computeScore(post, signals);
       const contextSummary = summarizeContext(post, signals, score);
@@ -708,8 +642,20 @@ async function main() {
         continue;
       }
 
-      if (post.candidate_source === "reply_incoming") {
-        const replyResult = await tryQueueReplyCandidate(post, contextSummary, score, selectedSamples, todayCounts);
+      if (
+        signals.reply_worthy &&
+        todayCounts.reply < DAILY_CAPS.reply
+      ) {
+        await insertInteractionJob(post, "x_reply", contextSummary);
+        await insertCopydeskJob(post, "x_reply", contextSummary);
+        await finalizeCandidate(post, {
+          ignored: false,
+          used_for_job: true,
+          relevance_score: score,
+        });
+        todayCounts.reply += 1;
+        queuedReply += 1;
+        processed += 1;
 
         if (replyResult.queued) {
           queuedReply += 1;
@@ -721,6 +667,9 @@ async function main() {
         ignoredReasons[replyResult.reason] += 1;
         continue;
       }
+
+      const replyRequirementsMissed =
+        post.candidate_source === "reply_incoming" && !signals.reply_worthy;
 
       const capBlocked =
         (signals.roundup_worthy && todayCounts.roundup_candidate >= DAILY_CAPS.roundup_candidate) ||
@@ -736,6 +685,8 @@ async function main() {
 
       if (capBlocked) {
         ignoredReasons.daily_cap_blocked += 1;
+      } else if (replyRequirementsMissed) {
+        ignoredReasons.reply_requirements_not_met += 1;
       } else {
         ignoredReasons.below_action_threshold += 1;
       }
