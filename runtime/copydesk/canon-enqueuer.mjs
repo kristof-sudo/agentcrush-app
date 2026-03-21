@@ -16,6 +16,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 const MAX_RECENT_POSTS = 12;
 const MAX_ROUNDUP_ITEMS = 4;
 const ROUNDUP_LOOKBACK_HOURS = 24;
+const MAX_RECENT_INTERNAL_POSTS = 1;
 
 function safeString(v) {
   return typeof v === "string" ? v.trim() : "";
@@ -88,6 +89,22 @@ async function getRecentCanonHandles() {
   }
 
   return seen;
+}
+
+async function getRecentCanonModes() {
+  const { data, error } = await supabase
+    .from("copydesk_jobs")
+    .select("context, created_at")
+    .eq("job_type", "x_post")
+    .order("created_at", { ascending: false })
+    .limit(6);
+
+  if (error) throw error;
+
+  return (data || []).map((row) => ({
+    mode: safeString(row.context?.mode),
+    category: safeString(row.context?.category),
+  }));
 }
 
 async function getActiveAgents() {
@@ -203,9 +220,18 @@ async function markRoundupCandidatesUsed(ids) {
   if (error) throw error;
 }
 
-function chooseMode({ roundupCandidates, activeAgents }) {
+function canUseInternalNarrative(recentModes) {
+  const recentInternalCount = (recentModes || []).filter((row) => {
+    return row.mode === "canon_internal" || row.category === "agentcrush_internal";
+  }).length;
+
+  return recentInternalCount < MAX_RECENT_INTERNAL_POSTS;
+}
+
+function chooseMode({ roundupCandidates, activeAgents, recentModes }) {
   if (roundupCandidates.length >= 3) return "ecosystem_roundup";
   if (roundupCandidates.length >= 1) return "canon_hybrid";
+  if (!canUseInternalNarrative(recentModes)) return "skip";
   if (activeAgents.length >= 1) return "canon_internal";
   return "canon_internal";
 }
@@ -231,6 +257,7 @@ async function buildInternalJob(activeAgents, recentHandles, recentPosts) {
     context: {
       mode: "canon_internal",
       post_type: pairMode ? "micro_scene" : "solo_observation",
+      style_preference: "light_narrative",
       event_key: pairMode ? "ranking_proximity" : "visibility_pattern",
       category: "agentcrush_internal",
       summary,
@@ -262,6 +289,7 @@ async function buildHybridJob(realAgents, roundupCandidates, recentPosts) {
     context: {
       mode: "canon_hybrid",
       post_type: "hybrid_observation",
+      style_preference: "observation",
       event_key: "external_ecosystem_overlap",
       category: "agentcrush_external_bridge",
       summary,
@@ -292,6 +320,7 @@ async function buildRoundupJob(roundupCandidates, recentPosts) {
     context: {
       mode: "ecosystem_roundup",
       post_type: "roundup",
+      style_preference: "signal_amplification",
       category: "external_ecosystem",
       summary: "Real ecosystem roundup from recent AI-agent activity on X.",
       roundup_items: items,
@@ -327,9 +356,10 @@ async function main() {
     return;
   }
 
-  const [recentPosts, recentHandles, activeAgents, realAgents, roundupCandidates] = await Promise.all([
+  const [recentPosts, recentHandles, recentModes, activeAgents, realAgents, roundupCandidates] = await Promise.all([
     getRecentScheduledTexts(),
     getRecentCanonHandles(),
+    getRecentCanonModes(),
     getActiveAgents(),
     getTopRealAgents(),
     getRoundupCandidates(),
@@ -340,7 +370,7 @@ async function main() {
     return;
   }
 
-  const mode = chooseMode({ roundupCandidates, activeAgents });
+  const mode = chooseMode({ roundupCandidates, activeAgents, recentModes });
 
   let job = null;
 
@@ -354,6 +384,9 @@ async function main() {
     if (!job) {
       job = await buildInternalJob(activeAgents, recentHandles, recentPosts);
     }
+  } else if (mode === "skip") {
+    await logRun("ok", { msg: "skip_internal_narrative_balance" });
+    return;
   } else {
     job = await buildInternalJob(activeAgents, recentHandles, recentPosts);
   }
