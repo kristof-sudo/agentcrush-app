@@ -16,11 +16,89 @@ const supabase = createClient(
 );
 
 const DAILY_CAPS = {
-  reply: 3,
+  reply: 2,
   quote: 3,
   repost: 2,
   roundup_candidate: 6,
 };
+
+const REPLY_DOMAIN_INCLUDE = [
+  "agent",
+  "agents",
+  "ai agent",
+  "agentic",
+  "automation",
+  "automate",
+  "workflow",
+  "workflows",
+  "orchestration",
+  "framework",
+  "frameworks",
+  "tooling",
+  "tool",
+  "tools",
+  "infra",
+  "infrastructure",
+  "runtime",
+  "sdk",
+  "api",
+  "apis",
+  "protocol",
+  "llm",
+  "model",
+  "models",
+  "memory",
+  "eval",
+  "evals",
+  "deployment",
+  "deploy",
+  "observability",
+  "langchain",
+  "langgraph",
+  "crewai",
+  "autogpt",
+  "openai",
+  "anthropic",
+  "cursor",
+  "claude code",
+  "mcp",
+  "multi-agent",
+  "rag",
+];
+
+const REPLY_DOMAIN_EXCLUDE = [
+  "job",
+  "jobs",
+  "hiring",
+  "visa",
+  "embassy",
+  "consulate",
+  "passport",
+  "interview",
+  "resume",
+  "cv",
+  "salary",
+  "tax",
+  "mortgage",
+  "loan",
+  "stocks",
+  "stock",
+  "etf",
+  "bitcoin",
+  "btc",
+  "ethereum",
+  "eth",
+  "bank",
+  "flight",
+  "hotel",
+  "shipping address",
+  "invoice",
+  "refund",
+  "customer support",
+  "admin",
+  "office",
+  "embassy appointment",
+];
 
 const WATCHLIST_PRIORITY = new Set([
   "bankrbot",
@@ -53,6 +131,10 @@ function lower(v) {
 function startOfDayUTC() {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString();
+}
+
+function isoHoursAgo(hours) {
+  return new Date(Date.now() - (hours * 60 * 60 * 1000)).toISOString();
 }
 
 function isTooShort(text) {
@@ -209,48 +291,115 @@ function computeScore(post, signals) {
 }
 
 async function getTodayCounts() {
-  const since = startOfDayUTC();
+  const startOfDay = startOfDayUTC();
+  const replyWindowStart = isoHoursAgo(24);
 
-  const { data, error } = await supabase
-    .from("interaction_jobs")
-    .select("action_type")
-    .gte("created_at", since);
+  const [dayRes, replyRes] = await Promise.all([
+    supabase
+      .from("interaction_jobs")
+      .select("action_type")
+      .gte("created_at", startOfDay)
+      .in("action_type", ["x_quote", "x_repost", "roundup_candidate"]),
+    supabase
+      .from("interaction_jobs")
+      .select("action_type")
+      .eq("action_type", "x_reply")
+      .gte("created_at", replyWindowStart),
+  ]);
 
-  if (error) throw error;
+  if (dayRes.error) throw dayRes.error;
+  if (replyRes.error) throw replyRes.error;
 
-  const counts = {
-    reply: 0,
-    quote: 0,
-    repost: 0,
-    roundup_candidate: 0,
+  return {
+    reply: (replyRes.data || []).length,
+    quote: (dayRes.data || []).filter((row) => safeString(row.action_type) === "x_quote").length,
+    repost: (dayRes.data || []).filter((row) => safeString(row.action_type) === "x_repost").length,
+    roundup_candidate: (dayRes.data || []).filter((row) => safeString(row.action_type) === "roundup_candidate").length,
   };
+}
 
-  for (const row of data || []) {
-    const k = safeString(row.action_type);
-    if (k in counts) counts[k] += 1;
-  }
+function normalizeObservedPost(post) {
+  return {
+    ...post,
+    candidate_source: "x_observed_post",
+  };
+}
 
-  return counts;
+function isInDomainReplyTopic(text) {
+  const body = lower(text);
+  if (!body) return false;
+
+  const hasInclude = REPLY_DOMAIN_INCLUDE.some((term) => body.includes(term));
+  if (!hasInclude) return false;
+
+  const hasExclude = REPLY_DOMAIN_EXCLUDE.some((term) => body.includes(term));
+  return !hasExclude;
+}
+
+function normalizeReplyEvent(event) {
+  const metadata = event.metadata || {};
+  const text = safeString(metadata.text);
+
+  return {
+    id: event.id,
+    tweet_id: safeString(metadata.tweet_id),
+    text_content: text,
+    author_handle: safeString(metadata.author_handle),
+    author_name: safeString(metadata.author_handle),
+    like_count: 0,
+    reply_count: 0,
+    repost_count: 0,
+    observed_at: event.created_at,
+    source_query: "reply_incoming",
+    candidate_source: "reply_incoming",
+    event_type: safeString(event.event_type),
+    metadata,
+    domain_in_scope: isInDomainReplyTopic(text),
+  };
 }
 
 async function fetchCandidates() {
-  const { data, error } = await supabase
-    .from("x_observed_posts")
-    .select("*")
-    .eq("is_processed", false)
-    .eq("ignored", false)
-    .order("observed_at", { ascending: false })
-    .limit(50);
+  const [observedRes, replyRes, existingReplyJobsRes] = await Promise.all([
+    supabase
+      .from("x_observed_posts")
+      .select("*")
+      .eq("is_processed", false)
+      .eq("ignored", false)
+      .order("observed_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("events")
+      .select("id, event_type, metadata, created_at")
+      .eq("event_type", "reply_incoming")
+      .gte("created_at", isoHoursAgo(72))
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("interaction_jobs")
+      .select("target_tweet_id")
+      .eq("action_type", "x_reply")
+      .gte("created_at", isoHoursAgo(72)),
+  ]);
 
-  if (error) throw error;
-  return data || [];
+  if (observedRes.error) throw observedRes.error;
+  if (replyRes.error) throw replyRes.error;
+  if (existingReplyJobsRes.error) throw existingReplyJobsRes.error;
+
+  const existingReplyTweetIds = new Set((existingReplyJobsRes.data || []).map((row) => safeString(row.target_tweet_id)).filter(Boolean));
+  const observed = (observedRes.data || []).map(normalizeObservedPost);
+  const replies = (replyRes.data || [])
+    .map(normalizeReplyEvent)
+    .filter((event) => !existingReplyTweetIds.has(event.tweet_id))
+    .filter((event) => event.metadata?.is_question === true)
+    .filter((event) => event.domain_in_scope === true);
+  return [...replies, ...observed].sort((a, b) => new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime());
 }
 
 async function insertInteractionJob(post, actionType, contextSummary) {
   const payload = {
     action_type: actionType,
     status: "queued",
-    source_observed_post_id: post.id,
+    source_observed_post_id: post.candidate_source === "x_observed_post" ? post.id : null,
     target_tweet_id: post.tweet_id,
     target_author_handle: post.author_handle,
     target_author_name: post.author_name,
@@ -275,7 +424,7 @@ async function insertCopydeskJob(post, jobType, contextSummary) {
     job_type: jobType,
     status: "queued",
     priority: 50,
-    subject_type: "x_observed_post",
+    subject_type: post.candidate_source === "reply_incoming" ? "event" : "x_observed_post",
     subject_id: post.id,
     context,
     max_chars: jobType === "x_quote" ? 260 : 220,
@@ -326,6 +475,11 @@ async function markPostProcessed(postId, patch = {}) {
   if (error) throw error;
 }
 
+async function finalizeCandidate(post, patch = {}) {
+  if (post.candidate_source !== "x_observed_post") return;
+  await markPostProcessed(post.id, patch);
+}
+
 async function logRun(status, meta = {}, error = null) {
   try {
     await supabase.from("runs").insert([{
@@ -350,6 +504,8 @@ function summarizeContext(post, signals, score) {
   if (signals.infrastructure) parts.push("infrastructure/framework angle");
   if (signals.strong_watchlist) parts.push("watchlist account");
   if (signals.repost_worthy) parts.push("repost candidate");
+  if (post.candidate_source === "reply_incoming") parts.push("incoming reply question");
+  if (post.candidate_source === "reply_incoming" && post.domain_in_scope) parts.push("in-domain reply topic");
   parts.push(`score=${score.toFixed(1)}`);
 
   return parts.join("; ");
@@ -375,6 +531,7 @@ async function main() {
     too_short_or_spam: 0,
     below_action_threshold: 0,
     daily_cap_blocked: 0,
+    reply_requirements_not_met: 0,
   };
 
   const selectedSamples = [];
@@ -384,7 +541,7 @@ async function main() {
       const text = safeString(post.text_content);
 
       if (!text || isTooShort(text) || looksSpammy(text)) {
-        await markPostProcessed(post.id, {
+        await finalizeCandidate(post, {
           ignored: true,
           used_for_job: false,
           relevance_score: 0,
@@ -395,6 +552,16 @@ async function main() {
       }
 
       const signals = detectSignals(post);
+      const replyEventType = safeString(post.event_type);
+      const isReplyQuestion = post.candidate_source === "reply_incoming" && post.metadata?.is_question === true;
+      const isInDomainReply = post.candidate_source === "reply_incoming" && post.domain_in_scope === true;
+
+      if (post.candidate_source === "reply_incoming") {
+        signals.roundup_worthy = false;
+        signals.quote_worthy = false;
+        signals.repost_worthy = false;
+        signals.reply_worthy = replyEventType === "reply_incoming" && isReplyQuestion && isInDomainReply && !looksSpammy(text);
+      }
       const score = computeScore(post, signals);
       const contextSummary = summarizeContext(post, signals, score);
 
@@ -403,7 +570,7 @@ async function main() {
         todayCounts.roundup_candidate < DAILY_CAPS.roundup_candidate
       ) {
         await insertInteractionJob(post, "roundup_candidate", contextSummary);
-        await markPostProcessed(post.id, {
+        await finalizeCandidate(post, {
           ignored: false,
           used_for_job: true,
           relevance_score: score,
@@ -429,7 +596,7 @@ async function main() {
       ) {
         await insertInteractionJob(post, "x_repost", contextSummary);
         await insertScheduledRepost(post, contextSummary);
-        await markPostProcessed(post.id, {
+        await finalizeCandidate(post, {
           ignored: false,
           used_for_job: true,
           relevance_score: score,
@@ -455,7 +622,7 @@ async function main() {
       ) {
         await insertInteractionJob(post, "x_quote", contextSummary);
         await insertCopydeskJob(post, "x_quote", contextSummary);
-        await markPostProcessed(post.id, {
+        await finalizeCandidate(post, {
           ignored: false,
           used_for_job: true,
           relevance_score: score,
@@ -481,7 +648,7 @@ async function main() {
       ) {
         await insertInteractionJob(post, "x_reply", contextSummary);
         await insertCopydeskJob(post, "x_reply", contextSummary);
-        await markPostProcessed(post.id, {
+        await finalizeCandidate(post, {
           ignored: false,
           used_for_job: true,
           relevance_score: score,
@@ -501,13 +668,16 @@ async function main() {
         continue;
       }
 
+      const replyRequirementsMissed =
+        post.candidate_source === "reply_incoming" && !signals.reply_worthy;
+
       const capBlocked =
         (signals.roundup_worthy && todayCounts.roundup_candidate >= DAILY_CAPS.roundup_candidate) ||
         (signals.repost_worthy && todayCounts.repost >= DAILY_CAPS.repost) ||
         (signals.quote_worthy && todayCounts.quote >= DAILY_CAPS.quote) ||
         (signals.reply_worthy && todayCounts.reply >= DAILY_CAPS.reply);
 
-      await markPostProcessed(post.id, {
+      await finalizeCandidate(post, {
         ignored: true,
         used_for_job: false,
         relevance_score: score,
@@ -516,6 +686,8 @@ async function main() {
 
       if (capBlocked) {
         ignoredReasons.daily_cap_blocked += 1;
+      } else if (replyRequirementsMissed) {
+        ignoredReasons.reply_requirements_not_met += 1;
       } else {
         ignoredReasons.below_action_threshold += 1;
       }
