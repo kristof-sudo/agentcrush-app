@@ -99,7 +99,6 @@ const REPLY_DOMAIN_EXCLUDE = [
   "office",
   "embassy appointment",
 ];
-
 const WATCHLIST_PRIORITY = new Set([
   "bankrbot",
   "fetch_ai",
@@ -133,8 +132,8 @@ function startOfDayUTC() {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString();
 }
 
-function isoHoursAgo(hours) {
-  return new Date(Date.now() - (hours * 60 * 60 * 1000)).toISOString();
+function rollingHoursAgoISO(hours) {
+  return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 }
 
 function isTooShort(text) {
@@ -156,6 +155,110 @@ function looksSpammy(text) {
   return bad.some((x) => t.includes(x));
 }
 
+function countMatches(text, words) {
+  return words.reduce((count, word) => count + (text.includes(word) ? 1 : 0), 0);
+}
+
+function parseMetadata(value) {
+  if (!value) return {};
+  if (typeof value === "object" && !Array.isArray(value)) return value;
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
+
+function metadataBool(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+  }
+  return false;
+}
+
+function isReplyQuestion(post) {
+  const metadata = parseMetadata(post.metadata);
+  return lower(post.event_type) === "reply_incoming" && metadataBool(metadata.is_question);
+}
+
+function isInDomainReply(post) {
+  const text = lower(post.text_content);
+  const topic = lower(post.topic);
+  const haystack = `${text} ${topic}`.trim();
+
+  if (!haystack) return false;
+
+  const strongTerms = [
+    "ai agent",
+    "ai agents",
+    "agent",
+    "agents",
+    "agentic",
+    "automation",
+    "automations",
+    "workflow",
+    "workflows",
+    "orchestration",
+    "framework",
+    "frameworks",
+    "tooling",
+    "infra",
+    "infrastructure",
+    "runtime",
+    "sdk",
+    "protocol",
+    "tool use",
+    "tool calling",
+    "memory",
+    "multi-agent",
+    "browser use",
+    "claude code",
+    "cursor",
+    "langchain",
+    "langgraph",
+    "crewai",
+    "autogpt",
+    "openclaw",
+    "manus",
+    "operator",
+    "operators",
+  ];
+
+  const offDomainTerms = [
+    "job",
+    "jobs",
+    "hiring",
+    "salary",
+    "visa",
+    "embassy",
+    "passport",
+    "invoice",
+    "tax",
+    "admin",
+    "bookkeeping",
+    "mortgage",
+    "stocks",
+    "crypto price",
+    "flight",
+    "restaurant",
+  ];
+
+  const hasStrongSignal = strongTerms.some((term) => haystack.includes(term));
+  const hasOffDomainSignal = offDomainTerms.some((term) => haystack.includes(term));
+
+  return hasStrongSignal && !hasOffDomainSignal;
+}
 function detectSignals(post) {
   const text = lower(post.text_content);
   const signals = {
@@ -166,6 +269,8 @@ function detectSignals(post) {
     infrastructure: false,
     agent_specific: false,
     strong_watchlist: false,
+    dense_signal: false,
+    external_embedding: false,
     roundup_worthy: false,
     reply_worthy: false,
     quote_worthy: false,
@@ -229,9 +334,15 @@ function detectSignals(post) {
     "openclaw",
     "crewai",
     "langgraph",
+    "langchain",
     "autogpt",
     "claude code",
     "cursor",
+    "browser use",
+    "manus",
+    "operators",
+    "tool calling",
+    "memory",
   ];
 
   signals.launch = launchWords.some((w) => text.includes(w));
@@ -241,6 +352,32 @@ function detectSignals(post) {
   signals.infrastructure = infraWords.some((w) => text.includes(w));
   signals.agent_specific = agentWords.some((w) => text.includes(w));
   signals.strong_watchlist = WATCHLIST_PRIORITY.has(lower(post.author_handle));
+  const matchedSignalCount = [
+    signals.launch,
+    signals.milestone,
+    signals.funding,
+    signals.acquisition,
+    signals.infrastructure,
+    signals.agent_specific,
+  ].filter(Boolean).length;
+  const namedEntityCount = countMatches(text, [
+    "openclaw",
+    "crewai",
+    "langgraph",
+    "langchain",
+    "autogpt",
+    "claude code",
+    "cursor",
+    "browser use",
+    "manus",
+  ]);
+
+  signals.dense_signal = matchedSignalCount >= 2 || namedEntityCount >= 2;
+  signals.external_embedding =
+    signals.infrastructure ||
+    signals.agent_specific ||
+    signals.strong_watchlist ||
+    namedEntityCount >= 1;
 
   signals.roundup_worthy =
     signals.launch ||
@@ -248,6 +385,7 @@ function detectSignals(post) {
     signals.funding ||
     signals.acquisition ||
     signals.infrastructure ||
+    signals.dense_signal ||
     (signals.agent_specific && (post.like_count || 0) >= 3) ||
     signals.strong_watchlist;
 
@@ -255,15 +393,18 @@ function detectSignals(post) {
     signals.strong_watchlist &&
     !signals.funding &&
     !signals.acquisition &&
+    signals.external_embedding &&
     (Number(post.like_count || 0) >= 8 || Number(post.repost_count || 0) >= 3);
 
   signals.quote_worthy =
+    signals.dense_signal ||
     signals.roundup_worthy ||
     (signals.strong_watchlist && (post.like_count || 0) >= 5);
 
   signals.reply_worthy =
     !signals.roundup_worthy &&
     signals.agent_specific &&
+    signals.external_embedding &&
     !looksSpammy(text);
 
   return signals;
@@ -279,6 +420,8 @@ function computeScore(post, signals) {
   if (signals.funding) score += 3;
   if (signals.infrastructure) score += 2;
   if (signals.agent_specific) score += 2;
+  if (signals.dense_signal) score += 3;
+  if (signals.external_embedding) score += 2;
 
   score += Math.min(Number(post.like_count || 0), 20) * 0.15;
   score += Math.min(Number(post.repost_count || 0), 20) * 0.2;
@@ -291,31 +434,48 @@ function computeScore(post, signals) {
 }
 
 async function getTodayCounts() {
-  const startOfDay = startOfDayUTC();
-  const replyWindowStart = isoHoursAgo(24);
+  const since = startOfDayUTC();
 
-  const [dayRes, replyRes] = await Promise.all([
-    supabase
-      .from("interaction_jobs")
-      .select("action_type")
-      .gte("created_at", startOfDay)
-      .in("action_type", ["x_quote", "x_repost", "roundup_candidate"]),
-    supabase
-      .from("interaction_jobs")
-      .select("action_type")
-      .eq("action_type", "x_reply")
-      .gte("created_at", replyWindowStart),
-  ]);
+  const { data, error } = await supabase
+    .from("interaction_jobs")
+    .select("action_type")
+    .gte("created_at", since);
 
-  if (dayRes.error) throw dayRes.error;
-  if (replyRes.error) throw replyRes.error;
+  if (error) throw error;
 
-  return {
-    reply: (replyRes.data || []).length,
-    quote: (dayRes.data || []).filter((row) => safeString(row.action_type) === "x_quote").length,
-    repost: (dayRes.data || []).filter((row) => safeString(row.action_type) === "x_repost").length,
-    roundup_candidate: (dayRes.data || []).filter((row) => safeString(row.action_type) === "roundup_candidate").length,
+  const counts = {
+    reply: 0,
+    quote: 0,
+    repost: 0,
+    roundup_candidate: 0,
   };
+
+  for (const row of data || []) {
+    const actionType = safeString(row.action_type);
+    const key =
+      actionType === "x_reply" ? "reply" :
+      actionType === "x_quote" ? "quote" :
+      actionType === "x_repost" ? "repost" :
+      actionType === "roundup_candidate" ? "roundup_candidate" :
+      null;
+
+    if (key) counts[key] += 1;
+  }
+
+  return counts;
+}
+
+async function getReplyCountLast24Hours() {
+  const since = rollingHoursAgoISO(24);
+
+  const { count, error } = await supabase
+    .from("interaction_jobs")
+    .select("*", { count: "exact", head: true })
+    .eq("action_type", "x_reply")
+    .gte("created_at", since);
+
+  if (error) throw error;
+  return Number(count || 0);
 }
 
 function normalizeObservedPost(post) {
@@ -337,7 +497,7 @@ function isInDomainReplyTopic(text) {
 }
 
 function normalizeReplyEvent(event) {
-  const metadata = event.metadata || {};
+  const metadata = parseMetadata(event.metadata);
   const text = safeString(metadata.text);
 
   return {
@@ -354,11 +514,14 @@ function normalizeReplyEvent(event) {
     candidate_source: "reply_incoming",
     event_type: safeString(event.event_type),
     metadata,
+    topic: "",
     domain_in_scope: isInDomainReplyTopic(text),
   };
 }
 
 async function fetchCandidates() {
+  const since = rollingHoursAgoISO(72);
+
   const [observedRes, replyRes, existingReplyJobsRes] = await Promise.all([
     supabase
       .from("x_observed_posts")
@@ -371,28 +534,57 @@ async function fetchCandidates() {
       .from("events")
       .select("id, event_type, metadata, created_at")
       .eq("event_type", "reply_incoming")
-      .gte("created_at", isoHoursAgo(72))
+      .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
       .from("interaction_jobs")
       .select("target_tweet_id")
       .eq("action_type", "x_reply")
-      .gte("created_at", isoHoursAgo(72)),
+      .gte("created_at", since),
   ]);
 
   if (observedRes.error) throw observedRes.error;
   if (replyRes.error) throw replyRes.error;
   if (existingReplyJobsRes.error) throw existingReplyJobsRes.error;
 
-  const existingReplyTweetIds = new Set((existingReplyJobsRes.data || []).map((row) => safeString(row.target_tweet_id)).filter(Boolean));
+  const existingReplyTweetIds = new Set(
+    (existingReplyJobsRes.data || [])
+      .map((row) => safeString(row.target_tweet_id))
+      .filter(Boolean)
+  );
   const observed = (observedRes.data || []).map(normalizeObservedPost);
   const replies = (replyRes.data || [])
     .map(normalizeReplyEvent)
     .filter((event) => !existingReplyTweetIds.has(event.tweet_id))
-    .filter((event) => event.metadata?.is_question === true)
-    .filter((event) => event.domain_in_scope === true);
-  return [...replies, ...observed].sort((a, b) => new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime());
+    .filter((event) => isReplyQuestion(event))
+    .filter((event) => isInDomainReply(event));
+
+  return [...replies, ...observed].sort(
+    (a, b) => new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime()
+  );
+}
+
+function stylePreferenceFor(post, signals, actionType) {
+  if (actionType === "x_reply" || actionType === "x_quote") {
+    return "reaction";
+  }
+
+  if (actionType === "roundup_candidate" || actionType === "x_repost") {
+    return "signal_amplification";
+  }
+
+  if (signals.dense_signal || signals.infrastructure) {
+    return "observation";
+  }
+
+  return "reaction";
+}
+
+function collectSignalTags(signals) {
+  return Object.entries(signals)
+    .filter(([, value]) => value === true)
+    .map(([key]) => key);
 }
 
 async function insertInteractionJob(post, actionType, contextSummary) {
@@ -411,13 +603,20 @@ async function insertInteractionJob(post, actionType, contextSummary) {
   if (error) throw error;
 }
 
-async function insertCopydeskJob(post, jobType, contextSummary) {
+async function insertCopydeskJob(post, jobType, contextSummary, signals) {
   const context = {
     target_author: post.author_handle,
     target_text: post.text_content,
     context_summary: contextSummary,
     source_tweet_id: post.tweet_id,
     source_type: post.source_query || "",
+    style_preference: stylePreferenceFor(post, signals, jobType),
+    signal_tags: collectSignalTags(signals),
+    source_metrics: {
+      likes: Number(post.like_count || 0),
+      reposts: Number(post.repost_count || 0),
+      replies: Number(post.reply_count || 0),
+    },
   };
 
   const payload = {
@@ -479,7 +678,6 @@ async function finalizeCandidate(post, patch = {}) {
   if (post.candidate_source !== "x_observed_post") return;
   await markPostProcessed(post.id, patch);
 }
-
 async function logRun(status, meta = {}, error = null) {
   try {
     await supabase.from("runs").insert([{
@@ -503,7 +701,13 @@ function summarizeContext(post, signals, score) {
   if (signals.funding) parts.push("funding signal");
   if (signals.infrastructure) parts.push("infrastructure/framework angle");
   if (signals.strong_watchlist) parts.push("watchlist account");
+  if (signals.dense_signal) parts.push("multiple ecosystem signals present");
+  if (signals.external_embedding) parts.push("strong external ecosystem relevance");
   if (signals.repost_worthy) parts.push("repost candidate");
+  parts.push(`source=${safeString(post.source_query || "watchlist")}`);
+  parts.push(
+    `engagement likes=${Number(post.like_count || 0)} reposts=${Number(post.repost_count || 0)} replies=${Number(post.reply_count || 0)}`
+  );
   if (post.candidate_source === "reply_incoming") parts.push("incoming reply question");
   if (post.candidate_source === "reply_incoming" && post.domain_in_scope) parts.push("in-domain reply topic");
   parts.push(`score=${score.toFixed(1)}`);
@@ -513,6 +717,7 @@ function summarizeContext(post, signals, score) {
 
 async function main() {
   const todayCounts = await getTodayCounts();
+  let replyCountLast24Hours = await getReplyCountLast24Hours();
   const candidates = await fetchCandidates();
 
   if (!candidates.length) {
@@ -552,15 +757,14 @@ async function main() {
       }
 
       const signals = detectSignals(post);
-      const replyEventType = safeString(post.event_type);
-      const isReplyQuestion = post.candidate_source === "reply_incoming" && post.metadata?.is_question === true;
-      const isInDomainReply = post.candidate_source === "reply_incoming" && post.domain_in_scope === true;
+      const replyQuestion = isReplyQuestion(post);
+      const inDomainReply = isInDomainReply(post);
 
       if (post.candidate_source === "reply_incoming") {
         signals.roundup_worthy = false;
         signals.quote_worthy = false;
         signals.repost_worthy = false;
-        signals.reply_worthy = replyEventType === "reply_incoming" && isReplyQuestion && isInDomainReply && !looksSpammy(text);
+        signals.reply_worthy = replyQuestion && inDomainReply && !looksSpammy(text);
       }
       const score = computeScore(post, signals);
       const contextSummary = summarizeContext(post, signals, score);
@@ -621,7 +825,7 @@ async function main() {
         todayCounts.quote < DAILY_CAPS.quote
       ) {
         await insertInteractionJob(post, "x_quote", contextSummary);
-        await insertCopydeskJob(post, "x_quote", contextSummary);
+        await insertCopydeskJob(post, "x_quote", contextSummary, signals);
         await finalizeCandidate(post, {
           ignored: false,
           used_for_job: true,
@@ -644,27 +848,30 @@ async function main() {
 
       if (
         signals.reply_worthy &&
-        todayCounts.reply < DAILY_CAPS.reply
+        replyQuestion &&
+        inDomainReply &&
+        replyCountLast24Hours < DAILY_CAPS.reply
       ) {
         await insertInteractionJob(post, "x_reply", contextSummary);
-        await insertCopydeskJob(post, "x_reply", contextSummary);
+        await insertCopydeskJob(post, "x_reply", contextSummary, signals);
         await finalizeCandidate(post, {
           ignored: false,
           used_for_job: true,
           relevance_score: score,
         });
         todayCounts.reply += 1;
+        replyCountLast24Hours += 1;
         queuedReply += 1;
         processed += 1;
 
-        if (replyResult.queued) {
-          queuedReply += 1;
-          processed += 1;
-          continue;
+        if (selectedSamples.length < 5) {
+          selectedSamples.push({
+            post_id: post.id,
+            handle: post.author_handle,
+            action: "x_reply",
+            score,
+          });
         }
-
-        ignored += 1;
-        ignoredReasons[replyResult.reason] += 1;
         continue;
       }
 
@@ -674,7 +881,8 @@ async function main() {
       const capBlocked =
         (signals.roundup_worthy && todayCounts.roundup_candidate >= DAILY_CAPS.roundup_candidate) ||
         (signals.repost_worthy && todayCounts.repost >= DAILY_CAPS.repost) ||
-        (signals.quote_worthy && todayCounts.quote >= DAILY_CAPS.quote);
+        (signals.quote_worthy && todayCounts.quote >= DAILY_CAPS.quote) ||
+        (signals.reply_worthy && replyQuestion && inDomainReply && replyCountLast24Hours >= DAILY_CAPS.reply);
 
       await finalizeCandidate(post, {
         ignored: true,
@@ -707,6 +915,7 @@ async function main() {
     selectedSamples,
     candidatesFetched: candidates.length,
     todayCounts,
+    replyCountLast24Hours,
   });
 }
 
