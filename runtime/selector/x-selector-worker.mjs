@@ -657,14 +657,14 @@ async function main() {
         queuedReply += 1;
         processed += 1;
 
-        if (selectedSamples.length < 5) {
-          selectedSamples.push({
-            post_id: post.id,
-            handle: post.author_handle,
-            action: "x_reply",
-            score,
-          });
+        if (replyResult.queued) {
+          queuedReply += 1;
+          processed += 1;
+          continue;
         }
+
+        ignored += 1;
+        ignoredReasons[replyResult.reason] += 1;
         continue;
       }
 
@@ -674,8 +674,7 @@ async function main() {
       const capBlocked =
         (signals.roundup_worthy && todayCounts.roundup_candidate >= DAILY_CAPS.roundup_candidate) ||
         (signals.repost_worthy && todayCounts.repost >= DAILY_CAPS.repost) ||
-        (signals.quote_worthy && todayCounts.quote >= DAILY_CAPS.quote) ||
-        (signals.reply_worthy && todayCounts.reply >= DAILY_CAPS.reply);
+        (signals.quote_worthy && todayCounts.quote >= DAILY_CAPS.quote);
 
       await finalizeCandidate(post, {
         ignored: true,
