@@ -43,4 +43,9 @@ while IFS= read -r file; do
   "$NODE_BIN" --check "$file"
 done < <(find runtime -type f -name '*.mjs' | sort)
 
+echo "Syntax-checking ops .mjs files..."
+while IFS= read -r file; do
+  "$NODE_BIN" --check "$file"
+done < <(find ops -type f -name '*.mjs' | sort)
+
 echo "Validation OK."
