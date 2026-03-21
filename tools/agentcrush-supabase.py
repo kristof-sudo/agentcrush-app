@@ -13,6 +13,7 @@ ALLOWED_ACTIONS = {
     "copydesk_jobs_summary",
     "interaction_jobs_summary",
     "x_observed_posts_summary",
+    "incoming_replies_summary",
     "runs_recent",
     "alerts_open",
     "cancel_stale_queued_posts",
@@ -158,6 +159,15 @@ def x_observed_posts_summary(base, key):
     })
     return {"recent_rows": rows}
 
+def incoming_replies_summary(base, key):
+    rows = api_get(base, key, "events", {
+        "select": "created_at,author_handle:metadata->>author_handle,text:metadata->>text,is_question:metadata->>is_question,tweet_id:metadata->>tweet_id,parent_tweet_id:metadata->>parent_tweet_id",
+        "event_type": "eq.reply_incoming",
+        "order": "created_at.desc",
+        "limit": "20",
+    })
+    return {"recent_rows": rows}
+
 
 def runs_recent(base, key):
     rows = api_get(base, key, "runs", {
@@ -255,6 +265,7 @@ DISPATCH = {
     "copydesk_jobs_summary": copydesk_jobs_summary,
     "interaction_jobs_summary": interaction_jobs_summary,
     "x_observed_posts_summary": x_observed_posts_summary,
+    "incoming_replies_summary": incoming_replies_summary,
     "runs_recent": runs_recent,
     "alerts_open": alerts_open,
     "cancel_stale_queued_posts": cancel_stale_queued_posts,

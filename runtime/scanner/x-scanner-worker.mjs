@@ -76,6 +76,13 @@ function shortBody(text) {
   return String(text || "").replace(/\s+/g, " ").slice(0, 180);
 }
 
+function isQuestionText(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return false;
+  if (raw.includes("?")) return true;
+  return /^(how|what|why|when|can|is|should)\b/i.test(raw);
+}
+
 async function fetchJSON(url) {
   const res = await fetch(url, {
     headers: {
@@ -121,11 +128,13 @@ async function storeTweet(tweet, sourceType, source) {
 
 async function storeIncomingReply(tweet, authorMap = new Map()) {
   const author = authorMap.get(tweet.author_id) || {};
+  const text = tweet.text || "";
   const metadata = {
     tweet_id: tweet.id,
     parent_tweet_id: tweet.referenced_tweets?.find(ref => ref.type === "replied_to")?.id || null,
-    text: tweet.text || "",
+    text,
     author_handle: author.username || null,
+    is_question: isQuestionText(text),
   };
 
   const { data: existing, error: existingError } = await supabase
