@@ -215,11 +215,6 @@ async function findScheduledPostByToken(token) {
 
 async function approvePost(row, token) {
   const now = new Date().toISOString()
-  const pr = row?.payload?.pr
-
-  if (!pr) {
-    throw new Error('Missing payload.pr for ship trigger')
-  }
 
   const { error } = await supabase
     .from('scheduled_posts')
@@ -232,6 +227,35 @@ async function approvePost(row, token) {
     .eq('id', row.id)
 
   if (error) throw error
+
+  const pr = row?.payload?.pr
+
+  if (!pr) {
+    await logRun({
+      job: 'approve',
+      status: 'error',
+      meta: {
+        scheduled_post_id: row.id,
+        token,
+        reason: 'missing_pr_in_payload',
+        payload: row.payload || null
+      },
+      error: 'Missing payload.pr for ship dispatch'
+    })
+
+    await emitAlert({
+      severity: 'warning',
+      code: 'approval_missing_pr',
+      message: 'Approved item had no payload.pr so ship was skipped',
+      meta: {
+        scheduled_post_id: row.id,
+        token,
+        payload: row.payload || null
+      }
+    })
+
+    return `Approval recorded.\nToken: ${token}\nPost ID: ${row.id}\nShip: skipped\nReason: missing payload.pr`
+  }
 
   const child = spawn(
     process.execPath,
