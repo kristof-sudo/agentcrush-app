@@ -104,7 +104,11 @@ export async function POST(request) {
         timestamp: new Date().toISOString()
       })
 
-      const shipRes = await fetch(new URL("/ship", request.url), {
+      if (!process.env.NEXT_SHIP_BASE_URL) {
+        throw new Error("Missing NEXT_SHIP_BASE_URL")
+      }
+
+      const shipRes = await fetch(new URL("/ship", process.env.NEXT_SHIP_BASE_URL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repo, pr, approved: true })
