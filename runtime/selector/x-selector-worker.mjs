@@ -604,13 +604,14 @@ async function insertInteractionJob(post, actionType, contextSummary) {
 }
 
 async function insertCopydeskJob(post, jobType, contextSummary, signals) {
+  const pr = post?.pr ?? post?.payload?.pr ?? null;
   const context = {
     target_author: post.author_handle,
     target_text: post.text_content,
     context_summary: contextSummary,
     source_tweet_id: post.tweet_id,
     source_type: post.source_query || "",
-    pr: 99999,
+    pr,
     style_preference: stylePreferenceFor(post, signals, jobType),
     signal_tags: collectSignalTags(signals),
     source_metrics: {
