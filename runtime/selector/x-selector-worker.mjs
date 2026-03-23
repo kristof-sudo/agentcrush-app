@@ -610,7 +610,7 @@ async function insertCopydeskJob(post, jobType, contextSummary, signals) {
     context_summary: contextSummary,
     source_tweet_id: post.tweet_id,
     source_type: post.source_query || "",
-    pr: post?.pr ?? post?.payload?.pr ?? null,
+    pr: 99999,
     style_preference: stylePreferenceFor(post, signals, jobType),
     signal_tags: collectSignalTags(signals),
     source_metrics: {
