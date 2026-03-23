@@ -133,7 +133,8 @@ async function main() {
 
   const payload = {
     type,
-    text
+    text,
+    pr: null
   };
 
   const { data: scheduled, error: insertError } = await supabase
