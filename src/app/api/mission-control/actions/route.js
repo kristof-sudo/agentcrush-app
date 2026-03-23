@@ -1,9 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !key) return null
+
+  return createClient(url, key)
+}
 
 export async function POST(request) {
   try {
@@ -19,6 +23,11 @@ export async function POST(request) {
     }
 
     if (action === 'cancel_scheduled_post') {
+      const supabase = getSupabaseAdmin()
+      if (!supabase) {
+        throw new Error('Missing Supabase admin env')
+      }
+
       const { error } = await supabase
         .from('scheduled_posts')
         .update({
@@ -35,6 +44,11 @@ export async function POST(request) {
     }
 
     if (action === 'retry_copydesk_job') {
+      const supabase = getSupabaseAdmin()
+      if (!supabase) {
+        throw new Error('Missing Supabase admin env')
+      }
+
       const { error } = await supabase
         .from('copydesk_jobs')
         .update({
@@ -54,9 +68,14 @@ export async function POST(request) {
 
     if (action === 'approve_scheduled_post') {
       const approvedAt = new Date().toISOString()
+      const supabase = getSupabaseAdmin()
       const missingSupabaseEnv =
         !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY
       const localTestMode = process.env.NODE_ENV !== "production" && missingSupabaseEnv
+
+      if (process.env.NODE_ENV === "production" && !supabase) {
+        throw new Error("Missing Supabase admin env")
+      }
 
       if (!localTestMode) {
         const { error } = await supabase
@@ -114,6 +133,11 @@ export async function POST(request) {
     }
 
     if (action === 'reject_scheduled_post') {
+      const supabase = getSupabaseAdmin()
+      if (!supabase) {
+        throw new Error('Missing Supabase admin env')
+      }
+
       const { error } = await supabase
         .from('scheduled_posts')
         .update({
