@@ -8,7 +8,7 @@ const supabase = createClient(
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { action, targetId } = body || {}
+    const { action, targetId, pr } = body || {}
 
     if (!action || !targetId) {
       return Response.json(
@@ -48,6 +48,61 @@ export async function POST(request) {
       return Response.json({
         success: true,
         message: 'CopyDesk job re-queued',
+      })
+    }
+
+    if (action === 'approve_scheduled_post') {
+      const approvedAt = new Date().toISOString()
+
+      const { error } = await supabase
+        .from('scheduled_posts')
+        .update({
+          approved: true,
+          publish_ready: true,
+          approved_at: approvedAt,
+          approved_by: 'mission_control',
+        })
+        .eq('id', targetId)
+
+      if (error) throw error
+
+      const repo = 'kristof-sudo/agentcrush-app'
+      const shipRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/ship`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo, pr, approved: true })
+      })
+
+      const shipData = await shipRes.json()
+
+      if (!shipRes.ok) {
+        throw new Error(shipData.error || 'Ship trigger failed')
+      }
+
+      return Response.json({
+        success: true,
+        message: 'Scheduled post approved and ship triggered',
+        ship: shipData,
+      })
+    }
+
+    if (action === 'reject_scheduled_post') {
+      const { error } = await supabase
+        .from('scheduled_posts')
+        .update({
+          approved: false,
+          publish_ready: false,
+          approved_at: new Date().toISOString(),
+          approved_by: 'mission_control',
+          status: 'cancelled',
+        })
+        .eq('id', targetId)
+
+      if (error) throw error
+
+      return Response.json({
+        success: true,
+        message: 'Scheduled post rejected',
       })
     }
 
