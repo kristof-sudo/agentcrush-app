@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { spawnSync } from "node:child_process";
 import { createClient } from '@supabase/supabase-js'
 
 const {
@@ -201,7 +202,8 @@ async function findScheduledPostByToken(token) {
       approved,
       publish_ready,
       approval_requested_at,
-      run_at
+      run_at,
+      payload
     `)
     .eq('approval_token', token)
     .limit(1)
@@ -213,6 +215,11 @@ async function findScheduledPostByToken(token) {
 
 async function approvePost(row, token) {
   const now = new Date().toISOString()
+  const pr = row?.payload?.pr
+
+  if (!pr) {
+    throw new Error('Missing payload.pr for ship trigger')
+  }
 
   const { error } = await supabase
     .from('scheduled_posts')
@@ -225,6 +232,22 @@ async function approvePost(row, token) {
     .eq('id', row.id)
 
   if (error) throw error
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      "/root/agentcrush-app/ops/ship-approved-task.mjs",
+      "--repo", "kristof-sudo/agentcrush-app",
+      "--pr", String(pr),
+      "--approved"
+    ],
+    {
+      env: process.env,
+      encoding: "utf8"
+    }
+  );
+
+  console.log("SHIP RESULT:", result.stdout);
 
   await logRun({
     job: 'approve',
