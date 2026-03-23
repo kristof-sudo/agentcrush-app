@@ -8,7 +8,8 @@ const supabase = createClient(
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { action, targetId, pr } = body || {}
+    const { action, targetId } = body || {}
+    const pr = body?.pr || body?.prNumber || body?.pullRequest
 
     if (!action || !targetId) {
       return Response.json(
@@ -67,7 +68,11 @@ export async function POST(request) {
       if (error) throw error
 
       const repo = 'kristof-sudo/agentcrush-app'
-      const shipRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/ship`, {
+      if (!pr) {
+        throw new Error("Missing PR number for ship trigger")
+      }
+
+      const shipRes = await fetch(new URL("/ship", request.url), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repo, pr, approved: true })
