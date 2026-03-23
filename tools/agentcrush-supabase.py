@@ -128,7 +128,7 @@ def resolve_alert_by_id(base, key):
 
 def copydesk_jobs_summary(base, key):
     rows = api_get(base, key, "copydesk_jobs", {
-        "select": "id,status,created_at,completed_at,error",
+        "select": "id,status,job_type,subject_type,created_at,updated_at,error",
         "order": "created_at.desc",
         "limit": "20",
     })
