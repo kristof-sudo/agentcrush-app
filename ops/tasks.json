@@ -1,0 +1,8 @@
+{
+  "test-task-1": {
+    "status": "approved",
+    "repo": "kristof-sudo/agentcrush-app",
+    "pr_number": 2,
+    "base_branch": "main"
+  }
+}
