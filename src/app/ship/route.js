@@ -39,6 +39,11 @@ export async function POST(request) {
       args.push("--approved");
     }
 
+    const childEnv = {
+      ...process.env,
+      GITHUB_TOKEN: process.env.GITHUB_TOKEN || process.env.AGENTCRUSH_GITHUB_TOKEN,
+    };
+
     console.log("SHIP TRIGGERED", {
       repo,
       pr,
@@ -48,7 +53,7 @@ export async function POST(request) {
 
     const result = spawnSync(process.execPath, args, {
       cwd: process.cwd(),
-      env: process.env,
+      env: childEnv,
       encoding: "utf8",
     });
 
