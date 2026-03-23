@@ -72,6 +72,14 @@ export async function POST(request) {
         throw new Error("Missing PR number for ship trigger")
       }
 
+      console.log("APPROVAL → SHIP", {
+        repo,
+        pr,
+        action,
+        targetId,
+        timestamp: new Date().toISOString()
+      })
+
       const shipRes = await fetch(new URL("/ship", request.url), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
