@@ -134,7 +134,7 @@ async function main() {
   const payload = {
     type,
     text,
-    pr: post?.pr ?? post?.output?.pr ?? null
+    pr: post?.output?.pr ?? null
   };
 
   const { data: scheduled, error: insertError } = await supabase

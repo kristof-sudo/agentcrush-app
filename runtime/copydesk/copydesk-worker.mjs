@@ -770,10 +770,13 @@ if (obj.type === "x_post" || obj.type === "x_reply" || obj.type === "x_quote") {
         errors.push({ code: "TYPE", msg: "unknown type" });
       }
 
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+        obj.pr = job?.context?.pr ?? null;
+      }
+
       const { error: outErr } = await supabase.from("copydesk_outputs").insert([
         {
           job_id: job.id,
-          pr: job?.context?.pr ?? null,
           output: obj,
           x_text,
           report_markdown,
