@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { spawnSync } from "node:child_process";
+import { spawn } from 'node:child_process'
 import { createClient } from '@supabase/supabase-js'
 
 const {
@@ -233,7 +233,7 @@ async function approvePost(row, token) {
 
   if (error) throw error
 
-  const result = spawnSync(
+  const child = spawn(
     process.execPath,
     [
       "/root/agentcrush-app/ops/ship-approved-task.mjs",
@@ -243,11 +243,13 @@ async function approvePost(row, token) {
     ],
     {
       env: process.env,
-      encoding: "utf8"
+      encoding: 'utf8',
+      detached: true,
+      stdio: 'ignore',
     }
-  );
+  )
 
-  console.log("SHIP RESULT:", result.stdout);
+  child.unref()
 
   await logRun({
     job: 'approve',
@@ -256,10 +258,12 @@ async function approvePost(row, token) {
       scheduled_post_id: row.id,
       token,
       run_at: row.run_at,
+      pr,
+      ship_dispatched: true,
     },
   })
 
-  return `Approval recorded.\nToken: ${token}\nPost ID: ${row.id}\nRun at: ${row.run_at || '—'}`
+  return `Approval recorded.\nToken: ${token}\nPost ID: ${row.id}\nPR: ${pr}\nShip: dispatched`
 }
 
 async function rejectPost(row, token) {
