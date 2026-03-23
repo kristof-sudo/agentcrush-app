@@ -481,6 +481,7 @@ async function getReplyCountLast24Hours() {
 function normalizeObservedPost(post) {
   return {
     ...post,
+    pr: post?.pr ?? null,
     candidate_source: "x_observed_post",
   };
 }
@@ -514,6 +515,7 @@ function normalizeReplyEvent(event) {
     candidate_source: "reply_incoming",
     event_type: safeString(event.event_type),
     metadata,
+    pr: event?.pr ?? metadata?.pr ?? null,
     topic: "",
     domain_in_scope: isInDomainReplyTopic(text),
   };
@@ -553,9 +555,24 @@ async function fetchCandidates() {
       .map((row) => safeString(row.target_tweet_id))
       .filter(Boolean)
   );
-  const observed = (observedRes.data || []).map(normalizeObservedPost);
+  const observed = (observedRes.data || []).map((post) =>
+    normalizeObservedPost({
+      ...post,
+      pr: post?.pr ?? null,
+    })
+  );
   const replies = (replyRes.data || [])
-    .map(normalizeReplyEvent)
+    .map((event) => {
+      const metadata = parseMetadata(event.metadata);
+      return normalizeReplyEvent({
+        ...event,
+        metadata: {
+          ...metadata,
+          pr: metadata?.pr ?? null,
+        },
+        pr: metadata?.pr ?? null,
+      });
+    })
     .filter((event) => !existingReplyTweetIds.has(event.tweet_id))
     .filter((event) => isReplyQuestion(event))
     .filter((event) => isInDomainReply(event));
@@ -604,14 +621,13 @@ async function insertInteractionJob(post, actionType, contextSummary) {
 }
 
 async function insertCopydeskJob(post, jobType, contextSummary, signals) {
-  const pr = post?.pr ?? post?.payload?.pr ?? null;
   const context = {
     target_author: post.author_handle,
     target_text: post.text_content,
     context_summary: contextSummary,
     source_tweet_id: post.tweet_id,
     source_type: post.source_query || "",
-    pr,
+    pr: post?.pr ?? null,
     style_preference: stylePreferenceFor(post, signals, jobType),
     signal_tags: collectSignalTags(signals),
     source_metrics: {
