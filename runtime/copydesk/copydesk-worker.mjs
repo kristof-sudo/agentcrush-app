@@ -774,6 +774,9 @@ if (obj.type === "x_post" || obj.type === "x_reply" || obj.type === "x_quote") {
         obj.pr = job?.context?.pr ?? null;
       }
 
+      const output = obj;
+      console.log("COPYDESK PR DEBUG", JSON.stringify({ jobId: job?.id, contextPr: job?.context?.pr ?? null, outputPr: output?.pr ?? null }));
+
       const { error: outErr } = await supabase.from("copydesk_outputs").insert([
         {
           job_id: job.id,

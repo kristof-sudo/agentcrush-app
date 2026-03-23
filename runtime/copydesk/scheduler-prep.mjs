@@ -137,6 +137,8 @@ async function main() {
     pr: post?.output?.pr ?? null
   };
 
+  console.log("SCHEDULER PR DEBUG", JSON.stringify({ sourceOutputId: post?.id, outputPr: post?.output?.pr ?? null, payloadPr: payload?.pr ?? null }));
+
   const { data: scheduled, error: insertError } = await supabase
     .from("scheduled_posts")
     .insert({

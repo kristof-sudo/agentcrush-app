@@ -631,6 +631,8 @@ async function insertCopydeskJob(post, jobType, contextSummary, signals) {
     schema_version: 1,
   };
 
+  console.log("SELECTOR PR DEBUG", JSON.stringify({ contextPr: context?.pr ?? null, context }));
+
   const { error } = await supabase.from("copydesk_jobs").insert([payload]);
   if (error) throw error;
 }
