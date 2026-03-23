@@ -54,18 +54,23 @@ export async function POST(request) {
 
     if (action === 'approve_scheduled_post') {
       const approvedAt = new Date().toISOString()
+      const missingSupabaseEnv =
+        !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY
+      const localTestMode = process.env.NODE_ENV !== "production" && missingSupabaseEnv
 
-      const { error } = await supabase
-        .from('scheduled_posts')
-        .update({
-          approved: true,
-          publish_ready: true,
-          approved_at: approvedAt,
-          approved_by: 'mission_control',
-        })
-        .eq('id', targetId)
+      if (!localTestMode) {
+        const { error } = await supabase
+          .from('scheduled_posts')
+          .update({
+            approved: true,
+            publish_ready: true,
+            approved_at: approvedAt,
+            approved_by: 'mission_control',
+          })
+          .eq('id', targetId)
 
-      if (error) throw error
+        if (error) throw error
+      }
 
       const repo = 'kristof-sudo/agentcrush-app'
       if (!pr) {
@@ -90,6 +95,15 @@ export async function POST(request) {
 
       if (!shipRes.ok) {
         throw new Error(shipData.error || 'Ship trigger failed')
+      }
+
+      if (localTestMode) {
+        return Response.json({
+          success: true,
+          local_test_mode: true,
+          supabase_skipped: true,
+          ship: shipData,
+        })
       }
 
       return Response.json({
