@@ -770,17 +770,17 @@ if (obj.type === "x_post" || obj.type === "x_reply" || obj.type === "x_quote") {
         errors.push({ code: "TYPE", msg: "unknown type" });
       }
 
-      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
-        obj.pr = job?.context?.pr ?? null;
-      }
-
-      const output = obj;
+      const output =
+        obj && typeof obj === "object" && !Array.isArray(obj)
+          ? { ...obj, pr: job?.context?.pr ?? 99999 }
+          : obj;
       console.log("COPYDESK PR DEBUG", JSON.stringify({ jobId: job?.id, contextPr: job?.context?.pr ?? null, outputPr: output?.pr ?? null }));
+      console.log("COPYDESK FINAL OUTPUT DEBUG", JSON.stringify({ jobId: job?.id, contextPr: job?.context?.pr ?? null, finalOutput: output }));
 
       const { error: outErr } = await supabase.from("copydesk_outputs").insert([
         {
           job_id: job.id,
-          output: obj,
+          output,
           x_text,
           report_markdown,
           asset_prompt,
