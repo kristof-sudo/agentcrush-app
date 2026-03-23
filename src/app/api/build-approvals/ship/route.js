@@ -1,6 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { spawnSync } from 'node:child_process'
-import path from 'node:path'
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -11,21 +9,51 @@ function getSupabaseAdmin() {
   return createClient(url, key)
 }
 
-function parseScriptResult(stdoutText) {
-  const lines = String(stdoutText || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
+async function mergePullRequest({ repo, pr }) {
+  const token = process.env.GITHUB_TOKEN || process.env.AGENTCRUSH_GITHUB_TOKEN
 
-  for (let index = lines.length - 1; index >= 0; index -= 1) {
-    try {
-      return JSON.parse(lines[index])
-    } catch {
-      continue
-    }
+  if (!token) {
+    throw new Error('Missing GITHUB_TOKEN.')
   }
 
-  return null
+  const [owner, name] = String(repo || '').split('/')
+
+  if (!owner || !name) {
+    throw new Error(`Invalid repo: ${repo}`)
+  }
+
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${name}/pulls/${pr}/merge`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'agentcrush-build-approval-ship',
+      },
+      body: JSON.stringify({ merge_method: 'squash' }),
+    }
+  )
+
+  let payload
+  try {
+    payload = await response.json()
+  } catch {
+    payload = null
+  }
+
+  if (!response.ok || !payload?.merged) {
+    throw new Error(payload?.message || `GitHub merge failed with status ${response.status}.`)
+  }
+
+  return {
+    merged: true,
+    deployed: false,
+    health: false,
+    failed_stage: null,
+    ...payload,
+  }
 }
 
 export async function POST(request) {
@@ -61,46 +89,60 @@ export async function POST(request) {
       )
     }
 
-    const scriptPath = path.join(process.cwd(), 'ops', 'ship-approved-task.mjs')
-    const args = [scriptPath, '--repo', row.repo, '--pr', String(row.pr_number), '--approved']
+    try {
+      const shipResult = await mergePullRequest({
+        repo: row.repo,
+        pr: row.pr_number,
+      })
 
-    const childEnv = {
-      ...process.env,
-      GITHUB_TOKEN: process.env.GITHUB_TOKEN || process.env.AGENTCRUSH_GITHUB_TOKEN,
-    }
+      const { error: queueError } = await supabase
+        .from('build_deploy_jobs')
+        .insert([{
+          status: 'queued',
+          build_approval_id: row.id,
+          repo: row.repo,
+          pr_number: row.pr_number,
+          commit_sha: row.commit_sha,
+        }])
 
-    const result = spawnSync(process.execPath, args, {
-      cwd: process.cwd(),
-      env: childEnv,
-      encoding: 'utf8',
-    })
+      if (queueError) throw queueError
 
-    const shipResult =
-      parseScriptResult(result.stdout) ||
-      parseScriptResult(result.stderr) ||
-      {
+      const { data, error } = await supabase
+        .from('build_approvals')
+        .update({
+          status: 'merged',
+          ship_result: shipResult,
+        })
+        .eq('id', row.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      return Response.json(data)
+    } catch (error) {
+      const shipResult = {
         merged: false,
         deployed: false,
         health: false,
-        failed_stage: 'ship',
-        error: result.error?.message || 'Ship wrapper failed.',
+        failed_stage: 'merge',
+        error: error.message || 'Merge failed.',
       }
 
-    const nextStatus = result.status === 0 ? 'shipped' : 'failed'
+      const { data, error: updateError } = await supabase
+        .from('build_approvals')
+        .update({
+          status: 'failed',
+          ship_result: shipResult,
+        })
+        .eq('id', row.id)
+        .select()
+        .single()
 
-    const { data, error } = await supabase
-      .from('build_approvals')
-      .update({
-        status: nextStatus,
-        ship_result: shipResult,
-      })
-      .eq('id', row.id)
-      .select()
-      .single()
+      if (updateError) throw updateError
 
-    if (error) throw error
-
-    return Response.json(data)
+      return Response.json(data, { status: 500 })
+    }
   } catch (err) {
     return Response.json(
       { error: err.message || 'Failed to ship build approval' },
