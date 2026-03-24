@@ -75,7 +75,7 @@ git push -u origin "$BRANCH" >/dev/null 2>&1 || {
 }
 
 PR_URL=""
-PR_NUMBER="null"
+PR_NUMBER="None"
 
 if command -v gh >/dev/null 2>&1; then
   PR_CREATE_OUTPUT="$(gh pr create --base main --head "$BRANCH" --title "codex: ${TASK:0:120}" --body "Automated Codex build submission." 2>/dev/null || true)"
