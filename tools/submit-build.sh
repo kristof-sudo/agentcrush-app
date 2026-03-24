@@ -35,6 +35,11 @@ if ! command -v git >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  json_error "working tree not clean"
+  exit 1
+fi
+
 TASK="$RAW_TASK"
 TASK="${TASK#SUBMIT_BUILD }"
 TASK="${TASK%\"}"
