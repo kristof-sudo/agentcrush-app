@@ -57,7 +57,7 @@ cleanup_no_changes() {
 
 codex exec --sandbox workspace-write "$TASK"
 
-if git diff --quiet; then
+if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
   cleanup_no_changes
   json_error "no changes produced"
   exit 1
