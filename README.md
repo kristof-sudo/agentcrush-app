@@ -1,3 +1,4 @@
+<!-- MCP build approval telegram test -->
 <!-- FULL LOOP TEST -->
 <!-- MCP approval final retry -->
 <!-- MCP approval final test -->
