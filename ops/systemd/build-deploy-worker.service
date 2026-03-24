@@ -1,0 +1,9 @@
+[Unit]
+Description=AgentCrush build deploy worker
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/agentcrush-app
+ExecStart=/usr/bin/node /root/agentcrush-app/tools/build-deploy-worker.mjs
+User=root
+
