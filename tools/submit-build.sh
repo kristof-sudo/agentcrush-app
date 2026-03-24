@@ -82,15 +82,34 @@ git push -u origin "$BRANCH" >/dev/null 2>&1 || {
 PR_URL=""
 PR_NUMBER="None"
 
-if command -v gh >/dev/null 2>&1; then
-  PR_CREATE_OUTPUT="$(gh pr create --base main --head "$BRANCH" --title "codex: ${TASK:0:120}" --body "Automated Codex build submission." 2>/dev/null || true)"
-  if [ -n "$PR_CREATE_OUTPUT" ]; then
-    PR_URL="$(printf '%s' "$PR_CREATE_OUTPUT" | tail -n 1)"
-    PR_NUMBER_RAW="$(gh pr view "$BRANCH" --json number -q '.number' 2>/dev/null || true)"
-    if [ -n "$PR_NUMBER_RAW" ]; then
-      PR_NUMBER="$PR_NUMBER_RAW"
-    fi
-  fi
+REMOTE_URL="$(git remote get-url origin)"
+REPO_SLUG="$(printf '%s' "$REMOTE_URL" | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##')"
+CODEX_SUMMARY="$(printf '%s' "$TASK" | cut -c1-160)"
+
+APPROVAL_API_BASE="${APPROVAL_API_BASE:-http://localhost:3000}"
+
+APPROVAL_PAYLOAD="$(python3 - <<PY
+import json
+print(json.dumps({
+  "repo": "$REPO_SLUG",
+  "branch": "$BRANCH",
+  "commit_sha": "$COMMIT_SHA",
+  "pr_number": None if "$PR_NUMBER" == "None" else int("$PR_NUMBER"),
+  "request_text": "$RAW_TASK".replace("\n", " "),
+  "codex_summary": "$CODEX_SUMMARY".replace("\n", " "),
+  "diff_summary": "$DIFF_SUMMARY".replace("\n", " ")
+}))
+PY
+)"
+
+APPROVAL_RESPONSE="$(curl -sS -X POST \
+  "$APPROVAL_API_BASE/api/build-approvals/create" \
+  -H "Content-Type: application/json" \
+  -d "$APPROVAL_PAYLOAD" || true)"
+
+if [ -z "$APPROVAL_RESPONSE" ]; then
+  json_error "approval create failed"
+  exit 1
 fi
 
 python3 - <<PY
