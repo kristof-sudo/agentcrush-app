@@ -63,8 +63,23 @@ if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; the
   exit 1
 fi
 
-CHANGED_FILES_JSON="$(git diff --name-only | python3 -c 'import sys,json; print(json.dumps([x.strip() for x in sys.stdin if x.strip()]))')"
-DIFF_SUMMARY="$(git diff --stat | tr '\n' '; ')"
+git add -N . >/dev/null 2>&1 || true
+
+CHANGED_FILES_JSON="$(
+  git diff --name-only --cached -- . 2>/dev/null | python3 -c 'import sys,json; print(json.dumps([x.strip() for x in sys.stdin if x.strip()]))'
+)"
+
+if [ "$CHANGED_FILES_JSON" = "[]" ]; then
+  CHANGED_FILES_JSON="$(
+    git diff --name-only -- . | python3 -c 'import sys,json; print(json.dumps([x.strip() for x in sys.stdin if x.strip()]))'
+  )"
+fi
+
+DIFF_SUMMARY="$(git diff --stat --cached -- . 2>/dev/null | tr '\n' '; ')"
+
+if [ -z "$DIFF_SUMMARY" ]; then
+  DIFF_SUMMARY="$(git diff --stat -- . | tr '\n' '; ')"
+fi
 
 git add -A
 git commit -m "codex: ${TASK:0:120}" >/dev/null 2>&1 || {
