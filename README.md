@@ -1,3 +1,4 @@
+<!-- MCP approval final retry -->
 <!-- MCP approval final test -->
 <!-- MCP approval test -->
 <!-- MCP canonical branch test -->
