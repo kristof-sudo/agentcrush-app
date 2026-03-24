@@ -82,67 +82,46 @@ export async function POST(request) {
       )
     }
 
-    if (!row?.repo || !row?.pr_number) {
-      return Response.json(
-        { error: 'Build approval is missing repo or pr_number' },
-        { status: 400 }
-      )
-    }
+if (!row?.repo) {
+  return Response.json(
+    { error: 'Build approval is missing repo' },
+    { status: 400 }
+  )
+}
 
-    try {
-      const shipResult = await mergePullRequest({
-        repo: row.repo,
-        pr: row.pr_number,
-      })
+if (!row?.pr_number) {
+  const { error: queueError } = await supabase
+    .from('build_deploy_jobs')
+    .insert([{
+      status: 'queued',
+      build_approval_id: row.id,
+      repo: row.repo,
+      pr_number: null,
+      commit_sha: row.commit_sha,
+    }])
 
-      const { error: queueError } = await supabase
-        .from('build_deploy_jobs')
-        .insert([{
-          status: 'queued',
-          build_approval_id: row.id,
-          repo: row.repo,
-          pr_number: row.pr_number,
-          commit_sha: row.commit_sha,
-        }])
+  if (queueError) throw queueError
 
-      if (queueError) throw queueError
-
-      const { data, error } = await supabase
-        .from('build_approvals')
-        .update({
-          status: 'merged',
-          ship_result: shipResult,
-        })
-        .eq('id', row.id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      return Response.json(data)
-    } catch (error) {
-      const shipResult = {
-        merged: false,
+  const { data, error } = await supabase
+    .from('build_approvals')
+    .update({
+      status: 'merged',
+      ship_result: {
+        merged: true,
         deployed: false,
         health: false,
-        failed_stage: 'merge',
-        error: error.message || 'Merge failed.',
-      }
+        failed_stage: null,
+        message: 'No PR number present; queued direct commit deploy.',
+      },
+    })
+    .eq('id', row.id)
+    .select()
+    .single()
 
-      const { data, error: updateError } = await supabase
-        .from('build_approvals')
-        .update({
-          status: 'failed',
-          ship_result: shipResult,
-        })
-        .eq('id', row.id)
-        .select()
-        .single()
+  if (error) throw error
 
-      if (updateError) throw updateError
-
-      return Response.json(data, { status: 500 })
-    }
+  return Response.json(data)
+}
   } catch (err) {
     return Response.json(
       { error: err.message || 'Failed to ship build approval' },
