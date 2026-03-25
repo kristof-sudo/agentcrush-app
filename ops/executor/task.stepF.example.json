@@ -1,0 +1,7 @@
+{
+  "task_id": "example-step-f-001",
+  "runs_dir": "/opt/agentcrush-executor/runs",
+  "output_json": "/opt/agentcrush-executor/reports/executor-summary.json",
+  "output_md": "/opt/agentcrush-executor/reports/executor-summary.md",
+  "limit": 20
+}
