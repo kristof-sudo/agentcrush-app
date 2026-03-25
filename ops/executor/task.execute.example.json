@@ -1,0 +1,13 @@
+{
+  "task_id": "selector-hotfix-001",
+  "target_repo_file": "runtime/selector/x-selector-worker.mjs",
+  "patch_file": "/opt/agentcrush-executor/example-selector.patch",
+  "release_lane": "direct_deploy_v1",
+  "push_branch": "main",
+  "target_runtime_file": "/opt/agentcrush/selector/x-selector-worker.mjs",
+  "expected_service": "x-selector.service",
+  "expected_timer": "x-selector.timer",
+  "expected_log_evidence": "selector",
+  "journal_lines": 100,
+  "commit_message": "executor: apply selector hotfix"
+}
