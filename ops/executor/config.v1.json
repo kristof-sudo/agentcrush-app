@@ -1,0 +1,9 @@
+{
+  "repo_source_path": "/root/agentcrush-app",
+  "allowed_branch": "main",
+  "allowed_release_lane": "direct_deploy_v1",
+  "runtime_target_file": "/opt/agentcrush/selector/x-selector-worker.mjs",
+  "deploy_script_path": "/root/agentcrush-app/deploy/deploy-prod.sh",
+  "deploy_propagation_command": "install -m 0644 /root/agentcrush-app/runtime/selector/x-selector-worker.mjs /opt/agentcrush/selector/x-selector-worker.mjs",
+  "executor_workspace_root": "/root/agentcrush-app/ops/executor/workspace"
+}
