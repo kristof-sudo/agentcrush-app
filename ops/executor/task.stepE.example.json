@@ -1,0 +1,10 @@
+{
+  "task_id": "example-step-e-001",
+  "workspace_task_id": "example-step-b-001",
+  "target_repo_file": "runtime/selector/x-selector-worker.mjs",
+  "target_runtime_file": "/opt/agentcrush/selector/x-selector-worker.mjs",
+  "release_lane": "direct_deploy_v1",
+  "expected_service": "x-selector.service",
+  "expected_log_evidence": "selector",
+  "journal_lines": 100
+}
