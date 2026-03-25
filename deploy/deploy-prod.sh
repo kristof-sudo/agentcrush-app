@@ -29,6 +29,8 @@ cd /root/agentcrush-app
 echo "[1] Pull latest code"
 git pull origin main
 
+install -m 0644 /root/agentcrush-app/runtime/selector/x-selector-worker.mjs /opt/agentcrush/selector/x-selector-worker.mjs
+
 echo "[2] Install dependencies"
 npm install
 
