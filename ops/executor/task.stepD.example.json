@@ -1,0 +1,9 @@
+{
+  "task_id": "example-step-d-001",
+  "workspace_task_id": "example-step-b-001",
+  "target_repo_file": "runtime/selector/x-selector-worker.mjs",
+  "release_lane": "direct_deploy_v1",
+  "push_branch": "main",
+  "expected_service": "x-selector.service",
+  "expected_log_evidence": "selector worker restarted"
+}
