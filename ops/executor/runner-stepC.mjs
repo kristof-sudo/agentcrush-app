@@ -44,9 +44,14 @@ if (!taskFile) {
 }
 
 const config = JSON.parse(
-  fs.readFileSync(path.resolve('ops/executor/config.v1.json'), 'utf-8')
+  fs.readFileSync(path.resolve('ops/executor/config.v1.json'), 'utf-8'),
 )
 const task = JSON.parse(fs.readFileSync(taskFile, 'utf-8'))
+
+if (!config.report_output_dir) {
+  console.error('Missing report_output_dir in config')
+  process.exit(1)
+}
 
 const reportPath = path.join(config.report_output_dir, `${task.task_id}.json`)
 
@@ -55,34 +60,36 @@ if (!task.commit_message) {
   fail('commit', 'Missing commit_message', reportPath)
 }
 
-// --- EXPECT WORKSPACE FROM STEP B ---
-const workspaceDir = path.join(config.executor_workspace_root, task.task_id)
+const workspaceTaskId = task.workspace_task_id || task.task_id
+const workspaceDir = path.join(config.executor_workspace_root, workspaceTaskId)
 
 if (!fs.existsSync(workspaceDir)) {
-  fail('commit', 'Workspace does not exist. Step B must run first.', reportPath)
+  fail('commit', 'Workspace does not exist. Step B must run first.', reportPath, {
+    workspace_task_id: workspaceTaskId,
+  })
 }
 
 // --- VERIFY CHANGES EXIST ---
 let changedFiles = []
 try {
   const changedRaw = run('git diff --name-only', workspaceDir)
-  changedFiles = changedRaw.split('\n').map(s => s.trim()).filter(Boolean)
+  changedFiles = changedRaw.split('\n').map((s) => s.trim()).filter(Boolean)
 
   if (changedFiles.length !== 1) {
     fail('commit', 'Unexpected changed file count before commit', reportPath, {
-      changed_files: changedFiles
+      changed_files: changedFiles,
     })
   }
 
   if (changedFiles[0] !== task.target_repo_file) {
     fail('commit', 'Changed file mismatch before commit', reportPath, {
       changed_file: changedFiles[0],
-      target_repo_file: task.target_repo_file
+      target_repo_file: task.target_repo_file,
     })
   }
 } catch (e) {
   fail('commit', 'Failed to inspect workspace changes', reportPath, {
-    error: String(e?.message || e)
+    error: String(e?.message || e),
   })
 }
 
@@ -90,13 +97,14 @@ try {
 let commitSha = null
 try {
   run(`git add ${task.target_repo_file}`, workspaceDir)
-
-  run(`git -c user.name="executor" -c user.email="executor@local" commit -m "${task.commit_message}"`, workspaceDir)
-
+  run(
+    `git -c user.name="executor" -c user.email="executor@local" commit -m "${task.commit_message}"`,
+    workspaceDir,
+  )
   commitSha = run('git rev-parse HEAD', workspaceDir)
 } catch (e) {
   fail('commit', 'Commit failed', reportPath, {
-    error: String(e?.message || e)
+    error: String(e?.message || e),
   })
 }
 
@@ -105,17 +113,18 @@ try {
   const status = run('git status --porcelain', workspaceDir)
   if (status.length > 0) {
     fail('commit', 'Workspace not clean after commit', reportPath, {
-      git_status: status
+      git_status: status,
     })
   }
 } catch (e) {
   fail('commit', 'Post-commit verification failed', reportPath, {
-    error: String(e?.message || e)
+    error: String(e?.message || e),
   })
 }
 
 ok(reportPath, {
   workspace: workspaceDir,
+  workspace_task_id: workspaceTaskId,
   commit_sha: commitSha,
-  committed_file: task.target_repo_file
+  committed_file: task.target_repo_file,
 })

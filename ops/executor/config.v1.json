@@ -5,5 +5,6 @@
   "runtime_target_file": "/opt/agentcrush/selector/x-selector-worker.mjs",
   "deploy_script_path": "/root/agentcrush-app/deploy/deploy-prod.sh",
   "deploy_propagation_command": "install -m 0644 /root/agentcrush-app/runtime/selector/x-selector-worker.mjs /opt/agentcrush/selector/x-selector-worker.mjs",
-  "executor_workspace_root": "/root/agentcrush-app/ops/executor/workspace"
+  "executor_workspace_root": "/opt/agentcrush-executor/workspace",
+  "report_output_dir": "/opt/agentcrush-executor/runs"
 }

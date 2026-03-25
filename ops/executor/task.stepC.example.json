@@ -1,5 +1,6 @@
 {
   "task_id": "example-step-c-001",
+  "workspace_task_id": "example-step-b-001",
   "target_repo_file": "runtime/selector/x-selector-worker.mjs",
   "patch_file": "/opt/agentcrush-executor/example-selector.patch",
   "release_lane": "direct_deploy_v1",
