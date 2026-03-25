@@ -943,3 +943,5 @@ main().catch(async (e) => {
   await logRun("error", { fatal: true }, String(e?.message || e));
   process.exit(1);
 });
+
+// step-b test marker
