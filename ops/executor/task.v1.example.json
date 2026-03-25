@@ -1,0 +1,8 @@
+{
+  "task_id": "example-001",
+  "target_repo_file": "runtime/selector/x-selector-worker.mjs",
+  "target_runtime_file": "/opt/agentcrush/selector/x-selector-worker.mjs",
+  "release_lane": "direct_deploy_v1",
+  "expected_service": "x-selector.service",
+  "expected_log_evidence": "selector worker restarted"
+}
