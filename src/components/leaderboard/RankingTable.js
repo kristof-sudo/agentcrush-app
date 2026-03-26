@@ -95,6 +95,12 @@ function getTrendingLabel(agent) {
   return labelByEventType[eventType] || 'Stable'
 }
 
+function getCredibilityLabel(agent) {
+  if (agent?.verified === true) return 'Verified'
+  if (agent?.is_demo === true) return 'Demo'
+  return 'Real'
+}
+
 export default function RankingTable({ rows = [] }) {
   return (
     <Card className="overflow-hidden">
@@ -164,9 +170,12 @@ export default function RankingTable({ rows = [] }) {
           {r.display_name || r.handle}
         </div>
 
-        <div className="mt-1">
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-white/70">
             {getTrendingLabel(r)}
+          </span>
+          <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] font-medium text-white/55">
+            {getCredibilityLabel(r)}
           </span>
         </div>
 
@@ -280,9 +289,12 @@ export default function RankingTable({ rows = [] }) {
           <div className="truncate text-xs text-white/50">@{r.handle}</div>
         ) : null}
 
-        <div className="mt-1">
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-white/70">
             {getTrendingLabel(r)}
+          </span>
+          <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] font-medium text-white/55">
+            {getCredibilityLabel(r)}
           </span>
         </div>
 
