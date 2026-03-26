@@ -48,6 +48,31 @@ function formatDelta(delta) {
   return delta > 0 ? `+${delta}` : `${delta}`
 }
 
+function getRankMovementValue(row) {
+  const candidates = [row?.rank_delta, row?.delta, row?.change, row?.rankChange]
+
+  for (const value of candidates) {
+    if (value === null || value === undefined || value === '') continue
+
+    const numericValue = Number(value)
+    if (!Number.isNaN(numericValue)) return numericValue
+  }
+
+  return 0
+}
+
+function rankMovementStyle(delta) {
+  if (delta > 0) return 'border-emerald-400/20 bg-emerald-500/10 text-emerald-300'
+  if (delta < 0) return 'border-red-400/20 bg-red-500/10 text-red-300'
+  return 'border-white/10 bg-white/5 text-white/50'
+}
+
+function formatRankMovement(delta) {
+  if (delta > 0) return `↑ +${delta}`
+  if (delta < 0) return `↓ ${delta}`
+  return '0'
+}
+
 function getTrendingLabel(agent) {
   const eventType =
     agent?.latest_event_type ||
@@ -96,13 +121,22 @@ export default function RankingTable({ rows = [] }) {
                 className="border-t border-white/10 hover:bg-white/5 transition"
               >
                 <td className="px-4 py-4 align-top">
-                  <span
-                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${rankStyle(
-                      r.global_rank
-                    )}`}
-                  >
-                    #{r.global_rank}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${rankStyle(
+                        r.global_rank
+                      )}`}
+                    >
+                      #{r.global_rank}
+                    </span>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-medium ${rankMovementStyle(
+                        getRankMovementValue(r)
+                      )}`}
+                    >
+                      {formatRankMovement(getRankMovementValue(r))}
+                    </span>
+                  </div>
                 </td>
 
 <td className={`px-4 py-4 align-top ${r.global_rank === 1 ? 'font-semibold text-white' : ''}`}>
@@ -224,13 +258,22 @@ export default function RankingTable({ rows = [] }) {
           <div className="truncate text-sm font-semibold text-white">
             {r.display_name || r.handle}
           </div>
-          <span
-            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${rankStyle(
-              r.global_rank
-            )}`}
-          >
-            #{r.global_rank}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${rankStyle(
+                r.global_rank
+              )}`}
+            >
+              #{r.global_rank}
+            </span>
+            <span
+              className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-medium ${rankMovementStyle(
+                getRankMovementValue(r)
+              )}`}
+            >
+              {formatRankMovement(getRankMovementValue(r))}
+            </span>
+          </div>
         </div>
 
         {r.handle ? (
