@@ -154,6 +154,60 @@ function groupConnectionsByType(connections) {
   }, {})
 }
 
+function buildAlternativeAgents(ecosystemConnections, fallbackAgents) {
+  const items = []
+  const seen = new Set()
+
+  for (const connection of ecosystemConnections || []) {
+    const relType = connection?.rel_type
+    const related = connection?.agent
+    const connectedHandle = connection?.connected_handle
+
+    if (!related?.id || !connectedHandle) continue
+    if (!['competes_with', 'adjacent_to', 'integrates_with'].includes(relType)) continue
+    if (seen.has(related.id)) continue
+
+    seen.add(related.id)
+    items.push({
+      id: related.id,
+      handle: connectedHandle,
+      display_name: connection.connected_name || related.display_name || connectedHandle,
+      archetype: related.archetype,
+      avatar_url: related.custom_background_url || related.avatar_url,
+      ecosystem_layer: related.ecosystem_layer,
+      label:
+        relType === 'competes_with'
+          ? 'Alternative option'
+          : relType === 'integrates_with'
+          ? 'Works alongside this agent'
+          : 'Related option',
+      score: Number(related.visibility_score || 0) + Number(related.reputation_score || 0),
+    })
+
+    if (items.length >= 4) return items
+  }
+
+  for (const related of fallbackAgents || []) {
+    if (!related?.id || seen.has(related.id)) continue
+
+    seen.add(related.id)
+    items.push({
+      id: related.id,
+      handle: related.handle,
+      display_name: related.display_name || related.handle,
+      archetype: related.archetype,
+      avatar_url: related.avatar_url,
+      ecosystem_layer: related.ecosystem_layer,
+      label: 'Similar profile',
+      score: Number(related.visibility_score || 0) + Number(related.reputation_score || 0),
+    })
+
+    if (items.length >= 4) break
+  }
+
+  return items
+}
+
 function sentenceCase(value) {
   if (!value) return ''
   return value.charAt(0).toUpperCase() + value.slice(1)
@@ -453,6 +507,7 @@ export default async function AgentPage({ params }) {
   const imageUrl =
     resolveImageUrl(agent.custom_background_url) ||
     resolveImageUrl(agent.avatar_url)
+  const alternativeAgents = buildAlternativeAgents(ecosystemConnections, fallbackAgents)
 
   return (
     <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
@@ -710,6 +765,68 @@ export default async function AgentPage({ params }) {
             )}
           </div>
         </div>
+
+        {alternativeAgents.length > 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h2 className="text-xl font-semibold">Related / alternative agents</h2>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {alternativeAgents.map((related) => {
+                const relatedImage = resolveImageUrl(related.avatar_url)
+
+                return (
+                  <Link
+                    key={related.id}
+                    href={`/agent/${encodeURIComponent(related.handle)}`}
+                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      {relatedImage ? (
+                        <img
+                          src={relatedImage}
+                          alt={related.display_name || related.handle}
+                          className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="truncate font-medium">
+                          {related.display_name || related.handle}
+                        </div>
+                        <div className="truncate text-sm text-white/60">
+                          @{related.handle}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-sm text-white/80 font-medium">
+                      {related.label}
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                      {related.ecosystem_layer ? (
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
+                          {formatLayerLabel(related.ecosystem_layer)}
+                        </span>
+                      ) : null}
+
+                      {related.archetype ? (
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
+                          {related.archetype}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-3 text-sm text-white/60">
+                      Score: {related.score}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
