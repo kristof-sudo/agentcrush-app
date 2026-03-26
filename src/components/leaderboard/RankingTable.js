@@ -73,6 +73,10 @@ function formatRankMovement(delta) {
   return '0'
 }
 
+function shouldShowRankMovement(delta) {
+  return delta !== 0
+}
+
 function getTrendingLabel(agent) {
   const eventType =
     agent?.latest_event_type ||
@@ -127,6 +131,10 @@ export default function RankingTable({ rows = [] }) {
                 className="border-t border-white/10 hover:bg-white/5 transition"
               >
                 <td className="px-4 py-4 align-top">
+                  {(() => {
+                    const rankMovement = getRankMovementValue(r)
+
+                    return (
                   <div className="flex items-center gap-2">
                     <span
                       className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${rankStyle(
@@ -135,14 +143,18 @@ export default function RankingTable({ rows = [] }) {
                     >
                       #{r.global_rank}
                     </span>
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-medium ${rankMovementStyle(
-                        getRankMovementValue(r)
-                      )}`}
-                    >
-                      {formatRankMovement(getRankMovementValue(r))}
-                    </span>
+                    {shouldShowRankMovement(rankMovement) ? (
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-medium ${rankMovementStyle(
+                          rankMovement
+                        )}`}
+                      >
+                        {formatRankMovement(rankMovement)}
+                      </span>
+                    ) : null}
                   </div>
+                    )
+                  })()}
                 </td>
 
 <td className={`px-4 py-4 align-top ${r.global_rank === 1 ? 'font-semibold text-white' : ''}`}>
@@ -267,22 +279,30 @@ export default function RankingTable({ rows = [] }) {
           <div className="truncate text-sm font-semibold text-white">
             {r.display_name || r.handle}
           </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${rankStyle(
-                r.global_rank
-              )}`}
-            >
-              #{r.global_rank}
-            </span>
-            <span
-              className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-medium ${rankMovementStyle(
-                getRankMovementValue(r)
-              )}`}
-            >
-              {formatRankMovement(getRankMovementValue(r))}
-            </span>
-          </div>
+          {(() => {
+            const rankMovement = getRankMovementValue(r)
+
+            return (
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${rankStyle(
+                    r.global_rank
+                  )}`}
+                >
+                  #{r.global_rank}
+                </span>
+                {shouldShowRankMovement(rankMovement) ? (
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-medium ${rankMovementStyle(
+                      rankMovement
+                    )}`}
+                  >
+                    {formatRankMovement(rankMovement)}
+                  </span>
+                ) : null}
+              </div>
+            )
+          })()}
         </div>
 
         {r.handle ? (
