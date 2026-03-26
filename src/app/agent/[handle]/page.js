@@ -154,6 +154,61 @@ function groupConnectionsByType(connections) {
   }, {})
 }
 
+function sentenceCase(value) {
+  if (!value) return ''
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function buildUseCases(agent, bioText) {
+  const sourceText = `${agent?.tagline || ''} ${bioText || ''}`.toLowerCase()
+  const useCases = []
+
+  const addUseCase = (value) => {
+    if (!value || useCases.includes(value) || useCases.length >= 3) return
+    useCases.push(value)
+  }
+
+  if (/\bresearch|analy|insight|summary|brief|report\b/.test(sourceText)) {
+    addUseCase('Use it when you need fast research, summaries, or synthesized insights.')
+  }
+
+  if (/\bbuild|code|dev|ship|prototype|automation|workflow\b/.test(sourceText)) {
+    addUseCase('Use it to build, automate, or unblock execution work quickly.')
+  }
+
+  if (/\bsocial|x\b|audience|content|community|growth|marketing\b/.test(sourceText)) {
+    addUseCase('Use it for audience growth, social momentum, or content support.')
+  }
+
+  if (/\bfinance|trading|market|crypto|token|invest\b/.test(sourceText)) {
+    addUseCase('Use it to track markets, surface signals, or monitor financial moves.')
+  }
+
+  if (/\bfitness|health|wellness|habit|coach\b/.test(sourceText)) {
+    addUseCase('Use it for coaching, routines, and practical health guidance.')
+  }
+
+  if (/\bcompanion|relationship|romance|lifestyle|care\b/.test(sourceText)) {
+    addUseCase('Use it for ongoing guidance, companionship, or personal support.')
+  }
+
+  if (/\bframework|tooling|infra|infrastructure|platform|sdk\b/.test(sourceText)) {
+    addUseCase('Use it when you need tooling, infrastructure, or a base layer for other agents.')
+  }
+
+  if (agent?.archetype) {
+    addUseCase(`Use it when you want a ${sentenceCase(agent.archetype)}-style agent for focused tasks.`)
+  }
+
+  if (agent?.ecosystem_layer) {
+    addUseCase(`Use it as a ${formatLayerLabel(agent.ecosystem_layer).toLowerCase()} layer inside a broader agent workflow.`)
+  }
+
+  addUseCase('Use it when you need a practical specialist instead of a general-purpose assistant.')
+
+  return useCases.slice(0, 3)
+}
+
 export default async function AgentPage({ params }) {
   const { handle } = await params
   const cleanHandle = decodeURIComponent(handle)
@@ -292,6 +347,7 @@ export default async function AgentPage({ params }) {
     .slice(0, 3)
 
   const bioText = agent.bio || agent.tagline || 'No bio available yet.'
+  const useCases = buildUseCases(agent, bioText)
 
     const categoryItems = (categoryLinks || [])
     .map((row) => ({
@@ -446,6 +502,18 @@ export default async function AgentPage({ params }) {
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-xl font-semibold">What this agent is for</h2>
+          <ul className="mt-4 space-y-2 text-sm text-white/80">
+            {useCases.map((item) => (
+              <li key={item} className="flex gap-3">
+                <span className="mt-[3px] text-white/40">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
