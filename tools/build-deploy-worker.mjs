@@ -106,16 +106,20 @@ async function handleSubmittedExecutorTask(supabase, task) {
   const runDir = `/opt/agentcrush-executor/tmp/${taskId}`
   await fs.mkdir(runDir, { recursive: true })
 
-  const taskFile = path.join(runDir, 'task.execute.json')
-  const taskPayload = {
-    task_id: task.task_id,
-    task_type: task.task_type,
-    target_file: task.target_file,
-    patch: task.patch,
-    expected_html_string: task.result?.expected_html_string || null,
-  }
+const taskFile = path.join(runDir, 'task.execute.json')
+const patchFile = path.join(runDir, 'task.patch')
 
-  await fs.writeFile(taskFile, JSON.stringify(taskPayload, null, 2), 'utf8')
+await fs.writeFile(patchFile, task.patch, 'utf8')
+
+const taskPayload = {
+  task_id: task.task_id,
+  task_type: task.task_type,
+  target_file: task.target_file,
+  patch_file: patchFile,
+  expected_html_string: task.result?.expected_html_string || null,
+}
+
+await fs.writeFile(taskFile, JSON.stringify(taskPayload, null, 2), 'utf8')
 
   try {
     runStage('node', [path.join(ROOT_DIR, 'ops/executor/runner-executor.mjs'), taskFile])
