@@ -540,6 +540,14 @@ export default async function AgentPage({ params }) {
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
                   Layer: {formatLayerLabel(agent.ecosystem_layer)}
                 </span>
+                {agent.framework_name ? (
+                  <Link
+                    href={`/framework/${encodeURIComponent(agent.framework_name)}`}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70 hover:bg-white/10"
+                  >
+                    Framework: {agent.framework_name}
+                  </Link>
+                ) : null}
                 {agent.network_name ? (
                   <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
                     Network: {agent.network_name}
