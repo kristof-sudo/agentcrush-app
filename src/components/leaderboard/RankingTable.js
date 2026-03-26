@@ -48,6 +48,28 @@ function formatDelta(delta) {
   return delta > 0 ? `+${delta}` : `${delta}`
 }
 
+function getTrendingLabel(agent) {
+  const eventType =
+    agent?.latest_event_type ||
+    agent?.event_type ||
+    agent?.latestEventType ||
+    agent?.trending?.latest_event_type ||
+    agent?.trending?.event_type ||
+    null
+
+  const labelByEventType = {
+    launch_buzz: 'Launch buzz',
+    repo_star_growth: 'GitHub spike',
+    audience_spike: 'X traction',
+    ranking_jump: 'Ranking momentum',
+    collab_win: 'Partnership signal',
+    daily_boost: 'Fresh activity',
+    timeline_ping: 'Ecosystem mention',
+  }
+
+  return labelByEventType[eventType] || 'Stable'
+}
+
 export default function RankingTable({ rows = [] }) {
   return (
     <Card className="overflow-hidden">
@@ -106,6 +128,12 @@ export default function RankingTable({ rows = [] }) {
       <div className="min-w-0">
         <div className="truncate text-sm font-medium text-white">
           {r.display_name || r.handle}
+        </div>
+
+        <div className="mt-1">
+          <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-white/70">
+            {getTrendingLabel(r)}
+          </span>
         </div>
 
         {r.handle ? (
@@ -208,6 +236,12 @@ export default function RankingTable({ rows = [] }) {
         {r.handle ? (
           <div className="truncate text-xs text-white/50">@{r.handle}</div>
         ) : null}
+
+        <div className="mt-1">
+          <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-white/70">
+            {getTrendingLabel(r)}
+          </span>
+        </div>
 
         {r.bio ? (
           <div className="mt-1 line-clamp-2 text-xs text-white/65">
