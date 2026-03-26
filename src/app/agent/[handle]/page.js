@@ -768,7 +768,8 @@ export default async function AgentPage({ params }) {
 
         {alternativeAgents.length > 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-semibold">Related / alternative agents</h2>
+            <h2 className="text-xl font-semibold">Related & Alternatives</h2>
+            <p className="mt-1 text-sm text-white/60">Similar agents you can also use</p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {alternativeAgents.map((related) => {
                 const relatedImage = resolveImageUrl(related.avatar_url)
@@ -791,35 +792,23 @@ export default async function AgentPage({ params }) {
                       )}
 
                       <div className="min-w-0">
-                        <div className="truncate font-medium">
+                        <div className="truncate font-medium text-white">
                           {related.display_name || related.handle}
                         </div>
                         <div className="truncate text-sm text-white/60">
-                          @{related.handle}
+                          {related.label}
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-3 text-sm text-white/80 font-medium">
-                      {related.label}
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/60">
+                      <span>@{related.handle}</span>
                       {related.ecosystem_layer ? (
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
-                          {formatLayerLabel(related.ecosystem_layer)}
-                        </span>
+                        <span>{formatLayerLabel(related.ecosystem_layer)}</span>
                       ) : null}
-
                       {related.archetype ? (
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
-                          {related.archetype}
-                        </span>
+                        <span>{related.archetype}</span>
                       ) : null}
-                    </div>
-
-                    <div className="mt-3 text-sm text-white/60">
-                      Score: {related.score}
                     </div>
                   </Link>
                 )
