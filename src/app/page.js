@@ -216,62 +216,34 @@ export default async function Home() {
     8
   )
 
-  const hasSignals = (signalsToday ?? 0) > 0
-
   return (
     <div className="min-h-screen">
+      <Container>
+        <div className="py-10 space-y-10">
 
-      {/* Hero — branded, gradient-backed */}
-      <div className="relative overflow-hidden border-b border-white/[0.07]">
-        {/* Background glow */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-violet-950/50 via-fuchsia-950/10 to-transparent" />
-        <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-64 w-[600px] rounded-full bg-violet-600/10 blur-3xl" />
-
-        <Container>
-          <div className="relative py-10 pt-8">
-
-            {/* Brand lockup */}
-            <div className="flex items-center gap-2.5 mb-4">
-              <Image
-                src="/agentcrush-icon-transparent.png"
-                alt="AgentCrush"
-                width={28}
-                height={28}
-                className="h-7 w-7 opacity-90"
-              />
-              <span className="text-sm font-semibold text-white/70 tracking-wide">AgentCrush</span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-4xl font-bold tracking-tight text-white leading-tight max-w-2xl">
+          {/* Hero */}
+          <div className="pt-4">
+            <h1 className="text-4xl font-bold tracking-tight text-white">
               The AI Agent Ecosystem Index
             </h1>
-            <p className="mt-2 text-lg text-white/55 max-w-xl">
+            <p className="mt-2 text-lg text-white/60">
               Who&apos;s rising, who&apos;s falling, and why.
             </p>
 
             {/* Live stats bar */}
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              <div className="flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.05] px-4 py-2">
-                <span className="text-base font-bold text-white">{agentCount ?? 0}</span>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+                <span className="text-lg font-bold text-white">{agentCount ?? 0}</span>
                 <span className="text-sm text-white/50">Agents Tracked</span>
               </div>
-
-              {hasSignals ? (
-                <div className="flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/10 px-4 py-2">
-                  <span className="text-base font-bold text-violet-200">{signalsToday}</span>
-                  <span className="text-sm text-white/50">Signals Today</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2">
-                  <span className="text-sm text-white/30">No fresh signals yet</span>
-                </div>
-              )}
-
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+                <span className="text-lg font-bold text-white">{signalsToday ?? 0}</span>
+                <span className="text-sm text-white/50">Signals Today</span>
+              </div>
               {topMover ? (
                 <Link
                   href={`/agent/${encodeURIComponent(topMover.handle)}`}
-                  className="flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-4 py-2 hover:bg-emerald-500/20 transition"
+                  className="flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 hover:bg-emerald-500/20 transition"
                 >
                   <span className="text-sm text-white/50">Top Mover</span>
                   <span className="text-sm font-semibold text-white">{topMover.display_name || topMover.handle}</span>
@@ -281,11 +253,6 @@ export default async function Home() {
             </div>
 
           </div>
-        </Container>
-      </div>
-
-      <Container>
-        <div className="py-8 space-y-10">
 
           {/* Today on AgentCrush */}
           <div>
@@ -315,7 +282,7 @@ export default async function Home() {
               ) : (
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Just Added</div>
-                  <div className="text-sm text-white/30">No data yet</div>
+                  <div className="text-sm text-white/40">No data yet</div>
                 </div>
               )}
 
@@ -365,7 +332,7 @@ export default async function Home() {
                     <div className="text-sm font-semibold text-white truncate">{r.display_name}</div>
                     {r.rank_move_reason ? (
                       <div className={`text-xs truncate mt-0.5 ${r.weekly_delta > 0 ? 'text-emerald-400' : r.weekly_delta < 0 ? 'text-red-400' : 'text-white/40'}`}>
-                        {r.weekly_delta > 0 ? '↑ ' : r.weekly_delta < 0 ? '↓ ' : ''}{r.rank_move_reason}
+                        {r.weekly_delta > 0 ? '↑' : r.weekly_delta < 0 ? '↓' : ''}{r.rank_move_reason}
                       </div>
                     ) : r.tagline ? (
                       <div className="text-xs text-white/40 truncate mt-0.5">{r.tagline}</div>
