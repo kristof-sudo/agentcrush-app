@@ -224,19 +224,17 @@ export default async function Home() {
 
           {/* Hero */}
           <div className="pt-4">
-            <div className="mb-4 flex items-center gap-4 md:gap-5">
-              <div className="shrink-0">
-                <Image
-                  src="/agentcrush-logo-transparent.png"
-                  alt="AgentCrush"
-                  width={54}
-                  height={54}
-                  className="h-12 w-12 object-contain md:h-[56px] md:w-[56px]"
-                  priority
-                />
-              </div>
+            <div className="mb-4 flex items-center gap-4">
+              <Image
+                src="/agentcrush-logo-transparent.png"
+                alt="AgentCrush"
+                width={48}
+                height={48}
+                className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12"
+                priority
+              />
 
-              <h1 className="text-[36px] font-semibold tracking-[0.01em] text-white md:text-[52px]">
+              <h1 className="text-[40px] font-semibold leading-none tracking-[0.005em] text-white md:text-[56px]">
                 AgentCrush
               </h1>
             </div>
