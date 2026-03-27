@@ -2,6 +2,7 @@ import Container from '@/components/ui/Container'
 import AgentCard from '@/components/agents/AgentCard'
 import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
+import Image from 'next/image'
 
 function toPublicImageUrl(path) {
   if (!path) return '/placeholder.png'
@@ -56,6 +57,34 @@ function formatEventSummary(event) {
   }
 }
 
+function getRankMoveReason(weeklyDelta, latestEventType) {
+  const delta = Number(weeklyDelta || 0)
+  const reasonByEvent = {
+    repo_star_growth: 'GitHub stars growing',
+    repo_release: 'new release shipped',
+    audience_spike: 'X audience spike',
+    ranking_jump: 'ranking momentum',
+    timeline_ping: 'ecosystem mentions',
+    launch_buzz: 'launch buzz',
+    collab_win: 'new collaboration',
+    daily_boost: 'fresh activity',
+    canon_scene: 'ecosystem milestone',
+    ecosystem_integration: 'new integration',
+    dev_activity: 'developer activity',
+  }
+  const movementPart =
+    delta > 0
+      ? `Rose ${delta} spot${delta !== 1 ? 's' : ''}`
+      : delta < 0
+      ? `Fell ${Math.abs(delta)} spot${Math.abs(delta) !== 1 ? 's' : ''}`
+      : null
+  const reasonPart = latestEventType ? (reasonByEvent[latestEventType] || null) : null
+  if (movementPart && reasonPart) return `${movementPart} — ${reasonPart}`
+  if (movementPart) return movementPart
+  if (reasonPart) return `Active — ${reasonPart}`
+  return null
+}
+
 function dedupeRows(rows = [], limit = 8) {
   const seen = new Set()
   const out = []
@@ -89,6 +118,7 @@ export default async function Home() {
     { data: topMover },
     { data: newestAgent },
     { count: signalsToday },
+    { count: agentCount },
   ] = await Promise.all([
     supabase
       .from('rankings')
@@ -130,10 +160,28 @@ export default async function Home() {
       .from('events')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', todayStart.toISOString()),
+
+    supabase
+      .from('agents')
+      .select('id', { count: 'exact', head: true }),
   ])
+
+  // Trending data for movement reasons on top 5
+  const rankingAgentIds = (topRankings || []).map((r) => r.agent?.id).filter(Boolean)
+  let trendingByAgentId = {}
+  if (rankingAgentIds.length > 0) {
+    const { data: trendingRows } = await supabase
+      .from('v_agent_trending_summary')
+      .select('agent_id, latest_event_type')
+      .in('agent_id', rankingAgentIds)
+    trendingByAgentId = Object.fromEntries(
+      (trendingRows || []).map((r) => [r.agent_id, r])
+    )
+  }
 
   const rankingRows = (topRankings || []).map((row) => {
     const a = row.agent || {}
+    const trending = trendingByAgentId[a.id] || null
     return {
       id: a.id || row.agent_id,
       global_rank: row.global_rank,
@@ -143,6 +191,7 @@ export default async function Home() {
       tagline: a.tagline || '',
       score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
       weekly_delta: a.weekly_delta || 0,
+      rank_move_reason: getRankMoveReason(a.weekly_delta, trending?.latest_event_type),
     }
   })
 
@@ -170,12 +219,45 @@ export default async function Home() {
   return (
     <div className="min-h-screen">
       <Container>
-        <div className="py-8 space-y-10">
+        <div className="py-10 space-y-10">
+
+          {/* Hero */}
+          <div className="pt-4">
+            <h1 className="text-4xl font-bold tracking-tight text-white">
+              The AI Agent Ecosystem Index
+            </h1>
+            <p className="mt-2 text-lg text-white/60">
+              Who&apos;s rising, who&apos;s falling, and why.
+            </p>
+
+            {/* Live stats bar */}
+            <div className="mt-5 flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+                <span className="text-lg font-bold text-white">{agentCount ?? 0}</span>
+                <span className="text-sm text-white/50">Agents Tracked</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+                <span className="text-lg font-bold text-white">{signalsToday ?? 0}</span>
+                <span className="text-sm text-white/50">Signals Today</span>
+              </div>
+              {topMover ? (
+                <Link
+                  href={`/agent/${encodeURIComponent(topMover.handle)}`}
+                  className="flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 hover:bg-emerald-500/20 transition"
+                >
+                  <span className="text-sm text-white/50">Top Mover</span>
+                  <span className="text-sm font-semibold text-white">{topMover.display_name || topMover.handle}</span>
+                  <span className="text-sm font-bold text-emerald-300">+{topMover.weekly_delta}</span>
+                </Link>
+              ) : null}
+            </div>
+
+          </div>
 
           {/* Today on AgentCrush */}
           <div>
-            <div className="mb-3 text-xs font-semibold text-white/40 uppercase tracking-widest">Today on AgentCrush</div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="mb-3 text-xs font-semibold text-white/35 uppercase tracking-widest">Today on AgentCrush</div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {topMover ? (
                 <Link href={`/agent/${encodeURIComponent(topMover.handle)}`}
                   className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-4 hover:bg-emerald-500/10 transition block">
@@ -186,7 +268,7 @@ export default async function Home() {
               ) : (
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
                   <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Mover</div>
-                  <div className="text-sm text-white/40">No data yet</div>
+                  <div className="text-sm text-white/30">No data yet</div>
                 </div>
               )}
 
@@ -197,17 +279,34 @@ export default async function Home() {
                   <div className="font-semibold text-white truncate text-sm">{newestAgent.display_name || newestAgent.handle}</div>
                   <div className="mt-1 text-sm text-white/50">{formatRelativeTime(newestAgent.created_at)}</div>
                 </Link>
-              ) : null}
+              ) : (
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Just Added</div>
+                  <div className="text-sm text-white/40">No data yet</div>
+                </div>
+              )}
+
+              <div className={`rounded-xl border p-4 ${hasSignals ? 'border-violet-400/15 bg-violet-500/5' : 'border-white/10 bg-white/[0.02]'}`}>
+                <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Signals Today</div>
+                {hasSignals ? (
+                  <>
+                    <div className="text-2xl font-bold text-white">{signalsToday}</div>
+                    <div className="mt-1 text-xs text-white/40">ecosystem events</div>
+                  </>
+                ) : (
+                  <div className="text-sm text-white/30 mt-1">Quiet so far</div>
+                )}
+              </div>
 
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Signals Today</div>
-                <div className="text-2xl font-bold text-white">{signalsToday ?? 0}</div>
-                <div className="mt-1 text-xs text-white/40">ecosystem events</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Agents Tracked</div>
+                <div className="text-2xl font-bold text-white">{agentCount ?? 0}</div>
+                <div className="mt-1 text-xs text-white/40">in the index</div>
               </div>
             </div>
           </div>
 
-          {/* Rising Now */}
+          {/* Rising Now — Top 5 */}
           <div>
             <div className="mb-3 flex items-center justify-between">
               <div className="text-white/90 font-semibold">Rising Now</div>
@@ -217,7 +316,7 @@ export default async function Home() {
               {rankingRows.map((r) => (
                 <Link key={r.id} href={`/agent/${encodeURIComponent(r.handle)}`}
                   className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05] last:border-0 hover:bg-white/[0.04] transition">
-                  <div className="w-6 text-center">
+                  <div className="w-6 text-center shrink-0">
                     <span className={`text-xs font-bold ${r.global_rank === 1 ? 'text-yellow-300' : r.global_rank === 2 ? 'text-gray-300' : r.global_rank === 3 ? 'text-amber-400' : 'text-white/40'}`}>
                       #{r.global_rank}
                     </span>
@@ -230,12 +329,14 @@ export default async function Home() {
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-white truncate">{r.display_name}</div>
-                    {r.tagline ? (
-                      <div className="text-xs text-white/45 truncate">{r.tagline}</div>
-                    ) : (
-                      <div className="text-xs text-white/30">@{r.handle}</div>
-                    )}
+                    <div className="text-sm font-semibold text-white truncate">{r.display_name}</div>
+                    {r.rank_move_reason ? (
+                      <div className={`text-xs truncate mt-0.5 ${r.weekly_delta > 0 ? 'text-emerald-400' : r.weekly_delta < 0 ? 'text-red-400' : 'text-white/40'}`}>
+                        {r.weekly_delta > 0 ? '↑' : r.weekly_delta < 0 ? '↓' : ''}{r.rank_move_reason}
+                      </div>
+                    ) : r.tagline ? (
+                      <div className="text-xs text-white/40 truncate mt-0.5">{r.tagline}</div>
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {r.weekly_delta > 0 ? (
