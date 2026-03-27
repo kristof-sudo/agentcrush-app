@@ -23,9 +23,9 @@ export default async function Header() {
   const trending = await getTrendingAgent()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#0B0F1A]/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-white/[0.10] bg-[#0B0F1A]/95 backdrop-blur-md shadow-[0_1px_0_0_rgba(139,92,246,0.08)]">
       <Container>
-        <div className="flex items-center justify-between py-3 gap-4">
+        <div className="flex items-center justify-between py-4 gap-4">
 
           {/* Logo */}
           <Link href="/" className="flex items-center shrink-0">
