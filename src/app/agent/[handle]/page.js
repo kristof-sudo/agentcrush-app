@@ -7,6 +7,7 @@ import {
   getAgentShortDescription,
   isDemoAgent,
 } from '@/lib/agent-quality'
+import WatchlistButton from '@/components/agents/WatchlistButton'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -668,6 +669,7 @@ export default async function AgentPage({ params }) {
                 <span className="text-white/60 text-sm">@{agent.handle}</span>
                 <a href={`https://x.com/${agent.handle}`} target="_blank" rel="noreferrer"
                   className="text-xs text-white/35 hover:text-white/60 transition-colors">X →</a>
+                <WatchlistButton handle={agent.handle} displayName={displayName} />
               </div>
 
               {whyMoving ? (
