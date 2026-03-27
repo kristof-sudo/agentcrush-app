@@ -218,31 +218,32 @@ export default async function Home() {
   const hasSignals = Number(signalsToday || 0) > 0
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(104,92,255,0.24),transparent_34%),radial-gradient(circle_at_18%_16%,rgba(167,139,250,0.18),transparent_26%),radial-gradient(circle_at_78%_12%,rgba(236,72,153,0.10),transparent_20%),linear-gradient(180deg,#0B1022_0%,#0B0E1B_40%,#090B14_100%)]">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_80%_40%_at_50%_0%,rgba(109,90,245,0.18),transparent),linear-gradient(180deg,#0D0E20_0%,#0B0D1C_35%,#090B15_100%)]">
       <Container>
         <div className="py-10 space-y-10">
 
           {/* Hero */}
-          <div className="pt-4">
-            <div className="mb-4 flex items-center gap-4">
+          <div className="pt-6">
+            {/* Brand lockup: icon + name as one unit */}
+            <div className="flex items-center gap-3 mb-5">
               <Image
-                src="/agentcrush-logo-transparent.png"
-                alt="AgentCrush"
-                width={48}
-                height={48}
-                className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12"
+                src="/agentcrush-icon-transparent.png"
+                alt=""
+                width={192}
+                height={192}
+                className="h-9 w-9 shrink-0"
                 priority
               />
-
-              <h1 className="text-[40px] font-semibold leading-none tracking-[0.005em] text-white md:text-[56px]">
+              <span className="text-[38px] font-bold tracking-tight text-white leading-none">
                 AgentCrush
-              </h1>
+              </span>
             </div>
 
-            <div className="max-w-3xl text-[18px] font-medium tracking-[0.01em] text-white/70 md:text-[22px]">
+            {/* Descriptor — clearly secondary */}
+            <h1 className="text-xl font-semibold tracking-tight text-white/60 md:text-[22px]">
               The AI Agent Ecosystem Index
-            </div>
-            <p className="mt-3 text-lg text-white/58">
+            </h1>
+            <p className="mt-2 text-[15px] text-white/38 md:text-base">
               Who&apos;s rising, who&apos;s falling, and why.
             </p>
 
