@@ -9,8 +9,8 @@ const FILTERS = [
   { key: 'top',      label: '🏆 Top 10' },
 ]
 
-export default function SearchableRankings({ rows = [] }) {
-  const [query, setQuery] = useState('')
+export default function SearchableRankings({ rows = [], initialQuery = '' }) {
+  const [query, setQuery] = useState(initialQuery)
   const [filter, setFilter] = useState('all')
 
   const filtered = useMemo(() => {
