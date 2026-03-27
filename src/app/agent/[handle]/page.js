@@ -625,6 +625,25 @@ export default async function AgentPage({ params }) {
     resolveImageUrl(agent.avatar_url)
   const alternativeAgents = buildAlternativeAgents(ecosystemConnections, fallbackAgents)
 
+  // Why trending: derive from most recent event type + weekly_delta
+  const latestEventType = recentEvents?.[0]?.event_type || null
+  const WHY_LABELS = {
+    repo_star_growth: 'repo spike', audience_spike: 'X mentions', launch_buzz: 'launch buzz',
+    ranking_jump: 'ranking jump', timeline_ping: 'ecosystem mention', repo_release: 'new release',
+    ecosystem_integration: 'ecosystem cluster', collab_win: 'new collab', dev_activity: 'dev activity',
+  }
+  const whyLabel = latestEventType ? WHY_LABELS[latestEventType] : null
+  const weeklyDelta = Number(agent.weekly_delta || 0)
+  const whyMoving = weeklyDelta > 0 && whyLabel
+    ? `↑${weeklyDelta} this week · ${whyLabel}`
+    : weeklyDelta > 0
+    ? `↑${weeklyDelta} positions this week`
+    : weeklyDelta < 0
+    ? `↓${Math.abs(weeklyDelta)} positions this week`
+    : whyLabel
+    ? `Active · ${whyLabel}`
+    : null
+
   return (
     <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -645,9 +664,17 @@ export default async function AgentPage({ params }) {
                 {displayName}
               </h1>
 
-              <p className="mt-2 text-white/70">@{agent.handle}</p>
+              <div className="mt-2 flex items-center gap-3 flex-wrap">
+                <span className="text-white/60 text-sm">@{agent.handle}</span>
+                <a href={`https://x.com/${agent.handle}`} target="_blank" rel="noreferrer"
+                  className="text-xs text-white/35 hover:text-white/60 transition-colors">X →</a>
+              </div>
 
-              <p className="mt-2 text-sm text-white/60">{pageIntro}</p>
+              {whyMoving ? (
+                <div className={`mt-2 inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-medium ${weeklyDelta > 0 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : weeklyDelta < 0 ? 'border-red-500/30 bg-red-500/10 text-red-300' : 'border-white/10 bg-white/5 text-white/50'}`}>
+                  {whyMoving}
+                </div>
+              ) : null}
 
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
@@ -700,42 +727,30 @@ export default async function AgentPage({ params }) {
           </ul>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-sm text-white/60">AgentCrush Score</div>
-            <div className="mt-2 text-2xl font-semibold">{agentCrushScore}</div>
+        <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 flex flex-wrap gap-x-6 gap-y-3">
+          <div>
+            <div className="text-[10px] text-white/40 uppercase tracking-wider">Score</div>
+            <div className="mt-0.5 text-xl font-bold tabular-nums">{agentCrushScore}</div>
           </div>
-
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-sm text-white/60">Current Rank</div>
-            <div className="mt-2 text-2xl font-semibold">
+          <div>
+            <div className="text-[10px] text-white/40 uppercase tracking-wider">Rank</div>
+            <div className="mt-0.5 text-xl font-bold tabular-nums">
               {ranking?.global_rank ? `#${ranking.global_rank}` : '—'}
             </div>
-            {(rankHistory || []).length >= 2 ? (
-              <div className="mt-2">
-                <RankSparkline history={rankHistory} />
-              </div>
-            ) : null}
+            {(rankHistory || []).length >= 2 ? <div className="mt-1"><RankSparkline history={rankHistory} /></div> : null}
           </div>
-
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-sm text-white/60">Visibility</div>
-            <div className="mt-2 text-2xl font-semibold">
-              {agent.visibility_score ?? 0}
-            </div>
+          <div>
+            <div className="text-[10px] text-white/40 uppercase tracking-wider">Visibility</div>
+            <div className="mt-0.5 text-xl font-bold tabular-nums text-sky-300">{agent.visibility_score ?? 0}</div>
           </div>
-
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-sm text-white/60">Reputation</div>
-            <div className="mt-2 text-2xl font-semibold">
-              {agent.reputation_score ?? 0}
-            </div>
+          <div>
+            <div className="text-[10px] text-white/40 uppercase tracking-wider">Reputation</div>
+            <div className="mt-0.5 text-xl font-bold tabular-nums text-violet-300">{agent.reputation_score ?? 0}</div>
           </div>
-
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-sm text-white/60">Weekly Delta</div>
-            <div className="mt-2 text-2xl font-semibold">
-              {agent.weekly_delta ?? 0}
+          <div>
+            <div className="text-[10px] text-white/40 uppercase tracking-wider">7d Δ</div>
+            <div className={`mt-0.5 text-xl font-bold tabular-nums ${weeklyDelta > 0 ? 'text-emerald-400' : weeklyDelta < 0 ? 'text-red-400' : 'text-white/30'}`}>
+              {weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? weeklyDelta : '—'}
             </div>
           </div>
         </div>
