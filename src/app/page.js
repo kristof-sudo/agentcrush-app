@@ -50,6 +50,7 @@ const EVENT_ICON = {
   audience_spike: '📡', ranking_jump: '📈', timeline_ping: '💬', canon_scene: '🌀',
   collab_win: '🤝', launch_buzz: '🚀', daily_boost: '✨', repo_star_growth: '⭐',
   repo_release: '🔖', ecosystem_integration: '🔗', dev_activity: '⚙️',
+  agent_joined: '✦',
 }
 
 const MOCK_ECOSYSTEM_LIVE = [
@@ -137,6 +138,48 @@ function dedupeRows(rows = [], limit = 20) {
   return out
 }
 
+/**
+ * Content engine: builds a mixed, always-populated feed.
+ * Priority: real signal events → new agent joins → ecosystem fallback.
+ * Interleaves "new agent" entries from recentAgents so the feed stays
+ * lively even when signal events are sparse.
+ */
+function buildContentFeed(signalRows = [], newAgents = [], maxItems = 24) {
+  // Start with real signal events
+  const feed = [...signalRows]
+
+  // Synthesize "joined the index" entries from newest agents
+  const toPublic = (path) => {
+    if (!path) return null
+    if (path.startsWith('http://') || path.startsWith('https://')) return path
+    const base = process.env.NEXT_PUBLIC_SUPABASE_URL
+    return base ? `${base}/storage/v1/object/public/${path}` : null
+  }
+  for (const a of newAgents) {
+    if (!a.created_at) continue
+    const agentInFeed = feed.some(
+      (r) => r.handle === a.handle &&
+        Math.abs(new Date(r.created_at) - new Date(a.created_at)) < 3600_000
+    )
+    if (!agentInFeed) {
+      feed.push({
+        id: `join-${a.id}`,
+        created_at: a.created_at,
+        event_type: 'agent_joined',
+        event_label: 'joined the index',
+        handle: a.handle,
+        display_name: a.display_name || a.handle,
+        avatar_url: toPublic(a.custom_background_url || a.avatar_url),
+        synthetic: true,
+      })
+    }
+  }
+
+  // Sort by recency, take maxItems
+  feed.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  return feed.slice(0, maxItems)
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
@@ -217,7 +260,7 @@ export default async function Home() {
     : { data: [] }
   const eventAgentMap = new Map((eventAgents || []).map((a) => [a.id, a]))
 
-  const allActivityRows = dedupeRows(
+  const deduped = dedupeRows(
     (events || []).map((e) => {
       const agent = eventAgentMap.get(e.agent_id)
       return {
@@ -229,8 +272,10 @@ export default async function Home() {
       }
     }), 24
   )
-  const activityRows = allActivityRows.slice(0, 10)
-  const ecosystemFeedRows = allActivityRows
+
+  // Content engine: always-populated mixed feed
+  const ecosystemFeedRows = buildContentFeed(deduped, recentAgents || [], 30)
+  const activityRows = deduped.slice(0, 10)
 
   // Archetype counts for sectors bar
   const archetypeCounts = {}
@@ -422,7 +467,7 @@ export default async function Home() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-[11px] font-medium text-white/75">{row.display_name}</span>
+                          <span className={`text-[11px] font-medium ${row.synthetic ? 'text-amber-300/70' : 'text-white/75'}`}>{row.display_name}</span>
                           <span className="text-[11px] text-white/30"> {row.event_label}</span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
