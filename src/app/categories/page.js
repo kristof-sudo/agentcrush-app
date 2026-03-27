@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
+import { isDemoAgent } from '@/lib/agent-quality'
 
 function toPublicImageUrl(path) {
   if (!path) return null
@@ -22,15 +23,27 @@ function avatarColor(handle) {
 }
 
 const ARCHETYPE_META = {
-  'Code Assistant':      { icon: '⌨', color: 'text-violet-300', bg: 'bg-violet-500/10 border-violet-500/20' },
-  'DeFi Bot':            { icon: '⬡', color: 'text-emerald-300', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  'Research Agent':      { icon: '⌬', color: 'text-sky-300', bg: 'bg-sky-500/10 border-sky-500/20' },
-  'Autonomous Agent':    { icon: '◎', color: 'text-amber-300', bg: 'bg-amber-500/10 border-amber-500/20' },
-  'Data Agent':          { icon: '▦', color: 'text-cyan-300', bg: 'bg-cyan-500/10 border-cyan-500/20' },
-  'Social Agent':        { icon: '◈', color: 'text-pink-300', bg: 'bg-pink-500/10 border-pink-500/20' },
-  'Trading Bot':         { icon: '↗', color: 'text-yellow-300', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  'Infrastructure':      { icon: '⬡', color: 'text-slate-300', bg: 'bg-slate-500/10 border-slate-500/20' },
-  'Framework':           { icon: '◫', color: 'text-indigo-300', bg: 'bg-indigo-500/10 border-indigo-500/20' },
+  Builder:    { icon: '⌨', color: 'text-violet-300',  bg: 'bg-violet-500/10 border-violet-500/20' },
+  Researcher: { icon: '⌬', color: 'text-sky-300',     bg: 'bg-sky-500/10 border-sky-500/20' },
+  Crypto:     { icon: '⬡', color: 'text-emerald-300', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+  Finance:    { icon: '↗', color: 'text-yellow-300',  bg: 'bg-yellow-500/10 border-yellow-500/20' },
+  Operator:   { icon: '◎', color: 'text-amber-300',   bg: 'bg-amber-500/10 border-amber-500/20' },
+  Creator:    { icon: '◈', color: 'text-pink-300',    bg: 'bg-pink-500/10 border-pink-500/20' },
+  Socialite:  { icon: '◉', color: 'text-rose-300',    bg: 'bg-rose-500/10 border-rose-500/20' },
+  Corporate:  { icon: '▦', color: 'text-slate-300',   bg: 'bg-slate-500/10 border-slate-500/20' },
+  Fitness:    { icon: '◆', color: 'text-cyan-300',    bg: 'bg-cyan-500/10 border-cyan-500/20' },
+  Rebel:      { icon: '✦', color: 'text-red-300',     bg: 'bg-red-500/10 border-red-500/20' },
+  Mystic:     { icon: '✧', color: 'text-indigo-300',  bg: 'bg-indigo-500/10 border-indigo-500/20' },
+}
+
+const REASON_TAGS = {
+  launch_buzz:           { label: 'launch',      cls: 'bg-violet-500/15 text-violet-300/80 border-violet-500/25' },
+  audience_spike:        { label: 'spike',       cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
+  repo_star_growth:      { label: 'repo↑',       cls: 'bg-yellow-500/15 text-yellow-300/80 border-yellow-500/25' },
+  repo_release:          { label: 'release',     cls: 'bg-blue-500/15 text-blue-300/80 border-blue-500/25' },
+  ranking_jump:          { label: 'rising',      cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
+  timeline_ping:         { label: 'mentioned',   cls: 'bg-pink-500/15 text-pink-300/80 border-pink-500/25' },
+  ecosystem_integration: { label: 'integration', cls: 'bg-cyan-500/15 text-cyan-300/80 border-cyan-500/25' },
 }
 
 function getArchetypeMeta(archetype) {
@@ -54,10 +67,20 @@ export default async function CategoriesPage() {
 
   if (error) throw new Error(error.message)
 
-  // Group by archetype
+  // Fetch trending data for why-moving badges
+  const allAgentIds = (rankingsData || []).map((r) => r.agent?.id).filter(Boolean)
+  let trendingMap = {}
+  if (allAgentIds.length > 0) {
+    const { data: trendingRows } = await supabase
+      .from('v_agent_trending_summary').select('agent_id, latest_event_type').in('agent_id', allAgentIds)
+    trendingMap = Object.fromEntries((trendingRows || []).map((r) => [r.agent_id, r.latest_event_type]))
+  }
+
+  // Group by archetype — filter demo agents (P2: taxonomy cleanup)
   const archetypeMap = {}
   for (const row of rankingsData || []) {
     const agent = row.agent || {}
+    if (isDemoAgent(agent)) continue
     const key = agent.archetype || 'Other'
     if (!archetypeMap[key]) archetypeMap[key] = []
     archetypeMap[key].push({
@@ -69,6 +92,7 @@ export default async function CategoriesPage() {
       weekly_delta: agent.weekly_delta || 0,
       global_rank: row.global_rank,
       score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
+      latest_event_type: trendingMap[agent.id || row.agent_id] || null,
     })
   }
 
@@ -200,8 +224,15 @@ export default async function CategoriesPage() {
                           )}
                         </div>
 
-                        {/* Name */}
-                        <span className="text-[11px] text-white/80 truncate flex-1 min-w-0">{displayName}</span>
+                        {/* Name + why-trending tag */}
+                        <div className="flex-1 min-w-0 flex items-center gap-1">
+                          <span className="text-[11px] text-white/80 truncate">{displayName}</span>
+                          {agent.latest_event_type && REASON_TAGS[agent.latest_event_type] ? (
+                            <span className={`text-[9px] px-1 py-0.5 rounded border leading-none shrink-0 ${REASON_TAGS[agent.latest_event_type].cls}`}>
+                              {REASON_TAGS[agent.latest_event_type].label}
+                            </span>
+                          ) : null}
+                        </div>
 
                         {/* Delta */}
                         <span className={`text-[10px] font-semibold tabular-nums shrink-0 ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>

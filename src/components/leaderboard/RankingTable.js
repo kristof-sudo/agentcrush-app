@@ -113,8 +113,9 @@ export default function RankingTable({ rows = [] }) {
                             <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium leading-none shrink-0 ${tag.cls}`}>
                               {tag.label}
                             </span>
-                          ) : archetype ? (
-                            <span className="hidden xl:inline text-[9px] px-1 py-0.5 rounded bg-white/[0.05] text-white/25 shrink-0 leading-none">
+                          ) : null}
+                          {archetype ? (
+                            <span className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-white/[0.05] text-white/25 shrink-0 leading-none">
                               {archetype}
                             </span>
                           ) : null}
