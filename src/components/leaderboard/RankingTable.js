@@ -214,6 +214,12 @@ export default function RankingTable({ rows = [] }) {
             {description}
           </div>
         ) : null}
+
+        {r.rank_move_reason ? (
+          <div className="mt-1.5 text-xs text-violet-300/80">
+            {r.rank_move_reason}
+          </div>
+        ) : null}
       </div>
     </div>
   </Link>
@@ -341,6 +347,12 @@ export default function RankingTable({ rows = [] }) {
         {description ? (
           <div className="mt-1 line-clamp-2 text-xs text-white/65">
             {description}
+          </div>
+        ) : null}
+
+        {r.rank_move_reason ? (
+          <div className="mt-1.5 text-xs text-violet-300/80">
+            {r.rank_move_reason}
           </div>
         ) : null}
 
