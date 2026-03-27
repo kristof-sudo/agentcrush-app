@@ -271,13 +271,103 @@ export default function RankingTable({ rows = [] }) {
                       >
                         {trendingLabel}
                       </span>
-                    ) : (
-                      <span className="text-xs text-white/25">Stable</span>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
+                    ) : null}
+                  </div>
+                    )
+                  })()}
+                </td>
+
+<td className={`px-4 py-4 align-top ${r.global_rank === 1 ? 'font-semibold text-white' : ''}`}>
+  <Link
+    href={`/agent/${encodeURIComponent(r.handle)}`}
+    className="block hover:opacity-90 transition"
+  >
+    <div className="flex items-start gap-3 min-w-[260px]">
+      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+        {r.avatar_url ? (
+          <img
+            src={r.avatar_url}
+            alt={r.display_name || r.handle || 'Agent avatar'}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-xs text-white/40">
+            N/A
+          </div>
+        )}
+      </div>
+
+      <div className="min-w-0">
+        <div className="truncate text-sm font-medium text-white">
+          {displayName}
+        </div>
+
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-white/70">
+            {getTrendingLabel(r)}
+          </span>
+          <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] font-medium text-white/55">
+            {getCredibilityLabel(r)}
+          </span>
+        </div>
+
+        {r.handle ? (
+          <div className="truncate text-xs text-white/50">
+            @{r.handle}
+          </div>
+        ) : null}
+
+        {description ? (
+          <div className="mt-1 line-clamp-2 text-xs text-white/65">
+            {description}
+          </div>
+        ) : null}
+
+        {r.rank_move_reason ? (
+          <div className="mt-1.5 text-xs text-violet-300/80">
+            {r.rank_move_reason}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  </Link>
+</td>
+
+                <td className="px-4 py-4 align-top">
+                  <span
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${archetypeStyle(
+                      archetype
+                    )}`}
+                  >
+                    {archetype || '—'}
+                  </span>
+                </td>
+
+                <td className={`px-4 py-4 text-center align-top text-sm font-medium ${deltaStyle(r.weekly_delta || 0)}`}>
+                  {formatDelta(r.weekly_delta || 0)}
+                </td>
+
+                <td className="px-4 py-4 text-center align-top text-white/70">
+                  {r.visibility_score ?? '—'}
+                </td>
+
+                <td className="px-4 py-4 text-center align-top text-white/70">
+                  {r.reputation_score ?? '—'}
+                </td>
+
+                <td className="px-4 py-4 text-center align-top">
+                  <span
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${scoreStyle(
+                      r.score_total || 0
+                    )}`}
+                  >
+                    {r.score_total || 0}
+                  </span>
+                </td>
+              </tr>
+                )
+              })()
+            ))}
 
             {rows.length === 0 ? (
               <tr className="border-t border-white/10">
@@ -334,18 +424,31 @@ export default function RankingTable({ rows = [] }) {
 
                 <div className="mt-0.5 text-xs text-white/45">@{r.handle}</div>
 
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  {archetype ? (
-                    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${archetypeStyle(archetype)}`}>
-                      {archetype}
-                    </span>
-                  ) : null}
-                  {trendingLabel ? (
-                    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${getTrendingStyle(r)}`}>
-                      {trendingLabel}
-                    </span>
-                  ) : null}
-                </div>
+        {r.rank_move_reason ? (
+          <div className="mt-1.5 text-xs text-violet-300/80">
+            {r.rank_move_reason}
+          </div>
+        ) : null}
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${archetypeStyle(
+              archetype
+            )}`}
+          >
+            {archetype || '—'}
+          </span>
+
+          <span className={`text-xs font-medium ${deltaStyle(r.weekly_delta || 0)}`}>
+            Weekly {formatDelta(r.weekly_delta || 0)}
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
+            <div className="text-[11px] text-white/50">Visibility</div>
+            <div className="mt-1 text-sm text-white/80">{r.visibility_score ?? '—'}</div>
+          </div>
 
                 {description ? (
                   <div className="mt-1 text-xs text-white/55 line-clamp-1">{description}</div>

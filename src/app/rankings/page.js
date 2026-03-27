@@ -11,6 +11,39 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
+function getRankMoveReason(weeklyDelta, trending) {
+  const delta = Number(weeklyDelta || 0)
+  const eventType = trending?.latest_event_type || null
+
+  const movementPart =
+    delta > 0
+      ? `Rose ${delta} spot${delta !== 1 ? 's' : ''}`
+      : delta < 0
+      ? `Fell ${Math.abs(delta)} spot${Math.abs(delta) !== 1 ? 's' : ''}`
+      : null
+
+  const reasonByEvent = {
+    repo_star_growth: 'GitHub stars growing',
+    repo_release: 'new release shipped',
+    audience_spike: 'X audience spike',
+    ranking_jump: 'ranking momentum',
+    timeline_ping: 'ecosystem mentions',
+    launch_buzz: 'launch buzz',
+    collab_win: 'new collaboration',
+    daily_boost: 'fresh activity',
+    canon_scene: 'ecosystem milestone',
+    ecosystem_integration: 'new integration',
+    dev_activity: 'developer activity',
+  }
+
+  const reasonPart = eventType ? (reasonByEvent[eventType] || null) : null
+
+  if (movementPart && reasonPart) return `${movementPart} — ${reasonPart}`
+  if (movementPart) return movementPart
+  if (reasonPart) return `Active — ${reasonPart}`
+  return null
+}
+
 export default async function RankingsPage() {
   const supabase = supabaseAnon()
 
@@ -37,7 +70,6 @@ export default async function RankingsPage() {
         entity_type
       )
     `)
-    .eq('agents.entity_type', 'agent')
     .order('global_rank', { ascending: true })
 
   if (rankingsError) {
@@ -67,6 +99,7 @@ export default async function RankingsPage() {
 
   const rows = (rankingsData || []).map((row) => {
     const agent = row.agent || {}
+    const trending = trendingByAgentId[agent.id] || null
 
     return {
       id: agent.id || row.agent_id,
@@ -82,7 +115,8 @@ export default async function RankingsPage() {
       avatar_url: toPublicImageUrl(agent.custom_background_url || agent.avatar_url),
       weekly_delta: agent.weekly_delta,
       tagline: agent.tagline,
-      trending: trendingByAgentId[agent.id] || null,
+      trending,
+      rank_move_reason: getRankMoveReason(agent.weekly_delta, trending),
     }
   })
 
