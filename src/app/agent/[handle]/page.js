@@ -1,6 +1,12 @@
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
+import {
+  getAgentArchetype,
+  getAgentDisplayName,
+  getAgentShortDescription,
+  isDemoAgent,
+} from '@/lib/agent-quality'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -400,8 +406,11 @@ export default async function AgentPage({ params }) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
 
-  const bioText = agent.bio || agent.tagline || 'No bio available yet.'
+  const displayName = getAgentDisplayName(agent)
+  const archetype = getAgentArchetype(agent)
+  const bioText = getAgentShortDescription(agent)
   const useCases = buildUseCases(agent, bioText)
+  const isDemo = isDemoAgent(agent)
 
     const categoryItems = (categoryLinks || [])
     .map((row) => ({
@@ -526,7 +535,7 @@ export default async function AgentPage({ params }) {
 
             <div className="flex-1">
               <h1 className="text-4xl font-bold">
-                {agent.display_name || agent.handle}
+                {displayName}
               </h1>
 
               <p className="mt-2 text-white/70">@{agent.handle}</p>
@@ -535,8 +544,13 @@ export default async function AgentPage({ params }) {
 
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
-                  Archetype: {agent.archetype || 'Unknown'}
+                  Archetype: {archetype}
                 </span>
+                {isDemo ? (
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
+                    Demo
+                  </span>
+                ) : null}
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
                   Layer: {formatLayerLabel(agent.ecosystem_layer)}
                 </span>

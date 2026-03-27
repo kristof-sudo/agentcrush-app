@@ -1,5 +1,11 @@
 import Card from '@/components/ui/Card'
 import Link from 'next/link'
+import {
+  getAgentArchetype,
+  getAgentDisplayName,
+  getAgentShortDescription,
+  isDemoAgent,
+} from '@/lib/agent-quality'
 
 function rankStyle(rank) {
   if (rank === 1) return 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40'
@@ -101,7 +107,7 @@ function getTrendingLabel(agent) {
 
 function getCredibilityLabel(agent) {
   if (agent?.verified === true) return 'Verified'
-  if (agent?.is_demo === true) return 'Demo'
+  if (agent?.is_demo === true || isDemoAgent(agent)) return 'Demo'
   return 'Real'
 }
 
@@ -126,6 +132,12 @@ export default function RankingTable({ rows = [] }) {
 
           <tbody className="text-white/80">
             {rows.map((r) => (
+              (() => {
+                const displayName = getAgentDisplayName(r)
+                const archetype = getAgentArchetype(r)
+                const description = getAgentShortDescription(r)
+
+                return (
               <tr
                 key={r.id || r.agent_id || r.handle}
                 className="border-t border-white/10 hover:bg-white/5 transition"
@@ -179,7 +191,7 @@ export default function RankingTable({ rows = [] }) {
 
       <div className="min-w-0">
         <div className="truncate text-sm font-medium text-white">
-          {r.display_name || r.handle}
+          {displayName}
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -197,9 +209,9 @@ export default function RankingTable({ rows = [] }) {
           </div>
         ) : null}
 
-        {r.bio ? (
+        {description ? (
           <div className="mt-1 line-clamp-2 text-xs text-white/65">
-            {r.bio}
+            {description}
           </div>
         ) : null}
       </div>
@@ -210,10 +222,10 @@ export default function RankingTable({ rows = [] }) {
                 <td className="px-4 py-4 align-top">
                   <span
                     className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${archetypeStyle(
-                      r.archetype
+                      archetype
                     )}`}
                   >
-                    {r.archetype || '—'}
+                    {archetype || '—'}
                   </span>
                 </td>
 
@@ -239,6 +251,8 @@ export default function RankingTable({ rows = [] }) {
                   </span>
                 </td>
               </tr>
+                )
+              })()
             ))}
 
             {rows.length === 0 ? (
@@ -254,6 +268,12 @@ export default function RankingTable({ rows = [] }) {
 
       <div className="md:hidden divide-y divide-white/10">
         {rows.map((r) => (
+  (() => {
+    const displayName = getAgentDisplayName(r)
+    const archetype = getAgentArchetype(r)
+    const description = getAgentShortDescription(r)
+
+    return (
   <Link
     key={r.id || r.agent_id || r.handle}
     href={`/agent/${encodeURIComponent(r.handle)}`}
@@ -277,7 +297,7 @@ export default function RankingTable({ rows = [] }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <div className="truncate text-sm font-semibold text-white">
-            {r.display_name || r.handle}
+            {displayName}
           </div>
           {(() => {
             const rankMovement = getRankMovementValue(r)
@@ -318,23 +338,19 @@ export default function RankingTable({ rows = [] }) {
           </span>
         </div>
 
-        {r.bio ? (
+        {description ? (
           <div className="mt-1 line-clamp-2 text-xs text-white/65">
-            {r.bio}
-          </div>
-        ) : (r.tagline || r.archetype) ? (
-          <div className="mt-1 line-clamp-2 text-xs text-white/65">
-            {r.tagline || r.archetype}
+            {description}
           </div>
         ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span
             className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${archetypeStyle(
-              r.archetype
+              archetype
             )}`}
           >
-            {r.archetype || '—'}
+            {archetype || '—'}
           </span>
 
           <span className={`text-xs font-medium ${deltaStyle(r.weekly_delta || 0)}`}>
@@ -361,6 +377,8 @@ export default function RankingTable({ rows = [] }) {
       </div>
     </div>
   </Link>
+    )
+  })()
 ))}
 
         {rows.length === 0 ? (

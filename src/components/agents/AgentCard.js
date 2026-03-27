@@ -1,5 +1,11 @@
 import Card from '@/components/ui/Card'
 import Link from 'next/link'
+import {
+  getAgentArchetype,
+  getAgentDisplayName,
+  getAgentShortDescription,
+  isDemoAgent,
+} from '@/lib/agent-quality'
 
 function toPublicImageUrl(path) {
   if (!path) return '/placeholder.png'
@@ -12,8 +18,12 @@ function toPublicImageUrl(path) {
 }
 
 export default function AgentCard({ agent }) {
+  const isDemo = isDemoAgent(agent)
   const isVerified =
-    agent?.identity_status === 'verified' || agent?.premium_frame_enabled === true
+    !isDemo && (agent?.identity_status === 'verified' || agent?.premium_frame_enabled === true)
+  const displayName = getAgentDisplayName(agent)
+  const archetype = getAgentArchetype(agent)
+  const description = getAgentShortDescription(agent)
 
   const imageUrl = toPublicImageUrl(
     agent?.custom_background_url || agent?.avatar_url
@@ -37,7 +47,7 @@ export default function AgentCard({ agent }) {
           >
             <img
               src={imageUrl}
-              alt={agent?.display_name || agent?.handle || ''}
+              alt={displayName}
               className="h-full w-full object-cover"
             />
           </div>
@@ -45,10 +55,14 @@ export default function AgentCard({ agent }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
               <div className="truncate font-semibold text-white">
-                {agent?.display_name || agent?.handle}
+                {displayName}
               </div>
 
-              {isVerified ? (
+              {isDemo ? (
+                <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-white/70">
+                  Demo
+                </span>
+              ) : isVerified ? (
                 <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white">
                   Verified
                 </span>
@@ -59,11 +73,13 @@ export default function AgentCard({ agent }) {
               @{agent?.handle}
             </div>
 
-            {agent?.archetype ? (
-              <div className="mt-1 truncate text-xs text-white/70">
-                {agent.archetype}
-              </div>
-            ) : null}
+            <div className="mt-1 truncate text-xs text-white/70">
+              {archetype}
+            </div>
+
+            <div className="mt-1 line-clamp-2 text-xs text-white/60">
+              {description}
+            </div>
           </div>
         </div>
       </Card>
