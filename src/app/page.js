@@ -118,6 +118,104 @@ function formatImpactText(v, r) {
   return parts.join(' • ')
 }
 
+function readMetadataNumber(metadata, keys = []) {
+  for (const key of keys) {
+    const value = metadata?.[key]
+    if (value === null || value === undefined || value === '') continue
+
+    const numericValue = Number(value)
+    if (!Number.isNaN(numericValue)) return numericValue
+  }
+
+  return null
+}
+
+function readMetadataText(metadata, keys = []) {
+  for (const key of keys) {
+    const value = metadata?.[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+
+  return null
+}
+
+function formatEventSummary(event) {
+  const metadata = event?.metadata || {}
+  const visibilityDelta = Number(event?.delta_visibility || 0)
+  const reputationDelta = Number(event?.delta_reputation || 0)
+  const stars = readMetadataNumber(metadata, ['stars_gained', 'star_gain', 'stars', 'github_stars'])
+  const mentions = readMetadataNumber(metadata, ['mention_count', 'mentions', 'post_count', 'x_posts'])
+  const rankJump = readMetadataNumber(metadata, ['rank_jump', 'positions_gained', 'rank_delta'])
+  const releaseName = readMetadataText(metadata, ['release_name', 'version', 'tag_name'])
+  const integrationName = readMetadataText(metadata, ['integration_name', 'partner', 'framework', 'platform'])
+
+  switch (event?.event_type) {
+    case 'repo_star_growth':
+      if (stars) return `gained ${stars} GitHub stars recently`
+      return 'GitHub repository picked up new stars'
+    case 'repo_release':
+      if (releaseName) return `published a new release: ${releaseName}`
+      return 'published a new release'
+    case 'audience_spike':
+      if (mentions) return `mentioned in ${mentions} recent X posts`
+      if (visibilityDelta > 0) return `picked up a visibility spike of ${visibilityDelta}`
+      return 'picked up a new audience spike'
+    case 'ranking_jump':
+      if (rankJump) return `climbed ${rankJump} spots in the rankings`
+      return 'moved up in the rankings'
+    case 'timeline_ping':
+      if (mentions) return `surfaced in ${mentions} ecosystem mentions`
+      return 'showed up across the ecosystem timeline'
+    case 'launch_buzz':
+      if (mentions) return `generated ${mentions} launch mentions`
+      return 'is getting fresh launch attention'
+    case 'collab_win':
+      if (integrationName) return `landed a collaboration with ${integrationName}`
+      return 'landed a collaboration signal'
+    case 'daily_boost':
+      if (visibilityDelta > 0) return `gained ${visibilityDelta} visibility in the latest cycle`
+      return 'picked up fresh daily activity'
+    case 'canon_scene':
+      return 'was part of a new ecosystem development'
+    case 'ecosystem_integration':
+      if (integrationName) return `added an ecosystem integration with ${integrationName}`
+      return 'added a new ecosystem integration'
+    case 'dev_activity':
+      return 'showed new development activity'
+    default:
+      return formatEventLabel(event?.event_type)
+  }
+}
+
+function formatEventWhyItMatters(event) {
+  const impact = formatImpactText(event?.delta_visibility, event?.delta_reputation)
+
+  if (impact !== 'No score change') {
+    return impact
+  }
+
+  switch (event?.event_type) {
+    case 'repo_release':
+      return 'Signals active shipping and recent product progress'
+    case 'repo_star_growth':
+      return 'Signals rising developer attention and distribution'
+    case 'audience_spike':
+    case 'timeline_ping':
+    case 'launch_buzz':
+      return 'Signals broader awareness and discovery momentum'
+    case 'ranking_jump':
+      return 'Signals improving standing versus other tracked agents'
+    case 'collab_win':
+    case 'ecosystem_integration':
+      return 'Signals stronger ecosystem positioning'
+    case 'dev_activity':
+    case 'daily_boost':
+      return 'Signals fresh execution and current momentum'
+    default:
+      return 'Signals a meaningful change in ecosystem activity'
+  }
+}
+
 function dedupeActivityRows(rows = [], limit = 8) {
   const seen = new Set()
   const output = []
@@ -245,10 +343,10 @@ export default async function Home() {
       id: e.id,
       created_at: e.created_at,
       event_type: e.event_type,
-      event_label: formatEventLabel(e.event_type),
+      event_label: formatEventSummary(e),
       handle: agent?.handle || 'unknown',
       display_name: agent?.display_name || agent?.handle || 'unknown',
-      impact: formatImpactText(e.delta_visibility, e.delta_reputation),
+      impact: formatEventWhyItMatters(e),
     }
   })
 
@@ -338,14 +436,6 @@ export default async function Home() {
                 ? '✨'
                 : '•'
 
-            const impactText = row.impact || ''
-            const visibilityMatch = impactText.match(/Visibility ([+-]?\d+)/)
-            const reputationMatch = impactText.match(/Reputation ([+-]?\d+)/)
-
-            const visibilityDelta = visibilityMatch ? visibilityMatch[1] : null
-            const reputationDelta = reputationMatch ? reputationMatch[1] : null
-            const hasBoth = visibilityDelta && reputationDelta
-
             return (
               <div
                 key={row.id}
@@ -366,17 +456,7 @@ export default async function Home() {
                 </div>
 
                 <div className="col-span-3 text-right text-white/60">
-                  {hasBoth ? (
-                    <>
-                      <span className="text-white/65">Visibility </span>
-                      <span className="font-medium text-emerald-300">{visibilityDelta}</span>
-                      <span className="text-white/35"> • </span>
-                      <span className="text-white/65">Reputation </span>
-                      <span className="font-medium text-emerald-300">{reputationDelta}</span>
-                    </>
-                  ) : (
-                    row.impact
-                  )}
+                  {row.impact}
                 </div>
               </div>
             )
