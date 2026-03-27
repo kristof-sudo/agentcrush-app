@@ -80,9 +80,11 @@ async function logRun(status, meta = {}, error = null) {
   } catch {}
 }
 
-async function publishTweet(text) {
+async function publishTweet(text, opts = {}) {
   const url = "https://api.x.com/2/tweets";
-  const body = JSON.stringify({ text });
+  const bodyObj = { text };
+  if (opts.quoteTweetId) bodyObj.quote_tweet_id = opts.quoteTweetId;
+  const body = JSON.stringify(bodyObj);
 
   const auth = oauthHeader({
     method: "POST",
@@ -250,7 +252,11 @@ async function main() {
     return;
   }
 
-  const tweetId = await publishTweet(text);
+  const quoteTweetId = type === "x_quote"
+    ? String(post.payload?.target_tweet_id || "").trim() || null
+    : null;
+
+  const tweetId = await publishTweet(text, quoteTweetId ? { quoteTweetId } : {});
 
   const { error: uErr } = await supabase
     .from("scheduled_posts")

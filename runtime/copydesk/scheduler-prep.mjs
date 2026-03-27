@@ -48,7 +48,7 @@ async function main() {
 
   const { data: outputs, error: outputsError } = await supabase
     .from("copydesk_outputs")
-    .select("id, output, x_text, scheduled_post_id, created_at")
+    .select("id, job_id, output, x_text, scheduled_post_id, created_at")
     .gte("created_at", freshnessCutoff)
     .is("scheduled_post_id", null)
     .order("created_at", { ascending: false })
@@ -131,10 +131,21 @@ async function main() {
     chosenRunAt = new Date(now.getTime() + interactionDelayMinutes * 60 * 1000).toISOString();
   }
 
+  let targetTweetId = null;
+  if (type === "x_quote" && post.job_id) {
+    const { data: sourceJob } = await supabase
+      .from("copydesk_jobs")
+      .select("context")
+      .eq("id", post.job_id)
+      .single();
+    targetTweetId = sourceJob?.context?.source_tweet_id || null;
+  }
+
   const payload = {
     type,
     text,
-    pr: post?.output?.pr ?? null
+    pr: post?.output?.pr ?? null,
+    ...(targetTweetId ? { target_tweet_id: targetTweetId } : {}),
   };
 
   console.log("SCHEDULER PR DEBUG", JSON.stringify({ sourceOutputId: post?.id, outputPr: post?.output?.pr ?? null, payloadPr: payload?.pr ?? null }));

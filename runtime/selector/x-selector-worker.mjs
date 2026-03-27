@@ -18,7 +18,7 @@ const supabase = createClient(
 const DAILY_CAPS = {
   reply: 2,
   quote: 3,
-  repost: 2,
+  repost: 4,
   roundup_candidate: 6,
 };
 
@@ -390,11 +390,11 @@ function detectSignals(post) {
     signals.strong_watchlist;
 
   signals.repost_worthy =
-    signals.strong_watchlist &&
+    (signals.strong_watchlist || (signals.agent_specific && signals.dense_signal)) &&
     !signals.funding &&
     !signals.acquisition &&
     signals.external_embedding &&
-    (Number(post.like_count || 0) >= 8 || Number(post.repost_count || 0) >= 3);
+    (Number(post.like_count || 0) >= 5 || Number(post.repost_count || 0) >= 2);
 
   signals.quote_worthy =
     signals.dense_signal ||
