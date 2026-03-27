@@ -224,25 +224,21 @@ export default async function Home() {
 
           {/* Hero */}
           <div className="pt-6">
-            {/* Brand lockup: icon + name as one unit */}
-            <div className="flex items-center gap-3 mb-5">
+            {/* Brand lockup + headline on same line */}
+            <div className="flex items-center gap-4 mb-2">
               <Image
-                src="/agentcrush-icon-transparent.png"
-                alt=""
-                width={192}
-                height={192}
-                className="h-9 w-9 shrink-0"
+                src="/agentcrush-logo.png"
+                alt="AgentCrush"
+                width={0}
+                height={0}
+                sizes="100vw"
+                className="h-16 w-auto shrink-0"
                 priority
               />
-              <span className="text-[38px] font-bold tracking-tight text-white leading-none">
-                AgentCrush
-              </span>
+              <h1 className="text-xl font-semibold tracking-tight text-white/60 md:text-[22px]">
+                The AI Agent Ecosystem Index
+              </h1>
             </div>
-
-            {/* Descriptor — clearly secondary */}
-            <h1 className="text-xl font-semibold tracking-tight text-white/60 md:text-[22px]">
-              The AI Agent Ecosystem Index
-            </h1>
             <p className="mt-2 text-[15px] text-white/38 md:text-base">
               Who&apos;s rising, who&apos;s falling, and why.
             </p>
