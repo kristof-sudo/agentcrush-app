@@ -218,38 +218,33 @@ export default async function Home() {
   const hasSignals = Number(signalsToday || 0) > 0
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(91,108,255,0.18),transparent_34%),radial-gradient(circle_at_18%_18%,rgba(129,140,248,0.16),transparent_24%),linear-gradient(180deg,#0B1020_0%,#0B0F1A_42%,#0B0F1A_100%)]">
       <Container>
         <div className="py-10 space-y-10">
 
           {/* Hero */}
           <div className="pt-4">
-            <div className="mb-4 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06]">
+            <div className="mb-4 flex items-center gap-4">
+              <div className="shrink-0">
                 <Image
                   src="/agentcrush-logo-transparent.png"
                   alt="AgentCrush"
-                  width={34}
-                  height={34}
-                  className="h-8 w-8 object-contain"
+                  width={54}
+                  height={54}
+                  className="h-12 w-12 object-contain md:h-[54px] md:w-[54px]"
                   priority
                 />
               </div>
 
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.22em] text-white/38">
-                  AgentCrush
-                </div>
-                <div className="text-lg font-semibold tracking-[0.08em] text-white">
-                  AgentCrush
-                </div>
-              </div>
+              <h1 className="text-[34px] font-semibold tracking-[0.02em] text-white md:text-[46px]">
+                AgentCrush
+              </h1>
             </div>
 
-            <h1 className="text-4xl font-bold tracking-tight text-white">
+            <div className="text-[20px] font-medium tracking-[0.01em] text-white/78 md:text-[24px]">
               The AI Agent Ecosystem Index
-            </h1>
-            <p className="mt-2 text-lg text-white/60">
+            </div>
+            <p className="mt-3 text-lg text-white/60">
               Who&apos;s rising, who&apos;s falling, and why.
             </p>
 
