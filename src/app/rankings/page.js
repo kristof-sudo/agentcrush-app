@@ -37,7 +37,6 @@ export default async function RankingsPage() {
         entity_type
       )
     `)
-    .eq('agents.entity_type', 'agent')
     .order('global_rank', { ascending: true })
 
   if (rankingsError) {
