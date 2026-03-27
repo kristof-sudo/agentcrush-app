@@ -25,37 +25,51 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.10] bg-[#0B0F1A]/95 backdrop-blur-md shadow-[0_1px_0_0_rgba(139,92,246,0.08)]">
       <Container>
-        <div className="flex items-center justify-between py-4 gap-4">
+        <div className="flex items-center justify-between gap-5 py-4 md:py-5">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center shrink-0">
-            <Image
-              src="/agentcrush-logo-transparent.png"
-              alt="AgentCrush"
-              width={160}
-              height={40}
-              className="h-6 w-auto"
-              priority
-            />
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 transition hover:border-white/15 hover:bg-white/[0.06]"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <Image
+                src="/agentcrush-logo-transparent.png"
+                alt="AgentCrush"
+                width={28}
+                height={28}
+                className="h-7 w-7 object-contain"
+                priority
+              />
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[15px] font-semibold tracking-[0.08em] text-white">
+                AgentCrush
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-white/35">
+                Ecosystem Index
+              </div>
+            </div>
           </Link>
 
           {/* Nav links */}
-          <nav className="hidden sm:flex items-center gap-1">
+          <nav className="hidden items-center rounded-2xl border border-white/10 bg-white/[0.04] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:flex">
             <Link
               href="/rankings"
-              className="px-3 py-1.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition"
+              className="rounded-xl px-4 py-2.5 text-[15px] font-medium text-white/72 transition hover:bg-white/[0.08] hover:text-white"
             >
               Rankings
             </Link>
             <Link
               href="/categories"
-              className="px-3 py-1.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition"
+              className="rounded-xl px-4 py-2.5 text-[15px] font-medium text-white/72 transition hover:bg-white/[0.08] hover:text-white"
             >
               Categories
             </Link>
             <Link
               href="/submit"
-              className="px-3 py-1.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition"
+              className="rounded-xl px-4 py-2.5 text-[15px] font-medium text-white/72 transition hover:bg-white/[0.08] hover:text-white"
             >
               Submit
             </Link>
@@ -65,20 +79,20 @@ export default async function Header() {
           {trending ? (
             <Link
               href={`/agent/${encodeURIComponent(trending.handle)}`}
-              className="hidden md:flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-xs hover:bg-emerald-500/20 transition"
+              className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-[13px] hover:bg-emerald-500/20 transition lg:flex"
             >
-              <span className="text-emerald-300 font-medium">↑ Trending</span>
-              <span className="text-white/80 truncate max-w-[120px]">
+              <span className="font-medium text-emerald-300">↑ Trending</span>
+              <span className="max-w-[140px] truncate text-white/80">
                 {trending.display_name || trending.handle}
               </span>
-              <span className="text-emerald-400 font-semibold">+{trending.weekly_delta}</span>
+              <span className="font-semibold text-emerald-400">+{trending.weekly_delta}</span>
             </Link>
           ) : null}
 
           {/* Mobile menu links */}
-          <div className="sm:hidden flex items-center gap-2">
-            <Link href="/rankings" className="text-xs text-white/60 hover:text-white transition">Rankings</Link>
-            <Link href="/categories" className="text-xs text-white/60 hover:text-white transition">Categories</Link>
+          <div className="flex items-center gap-1.5 sm:hidden">
+            <Link href="/rankings" className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/72 transition hover:text-white">Rankings</Link>
+            <Link href="/categories" className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/72 transition hover:text-white">Categories</Link>
           </div>
 
         </div>

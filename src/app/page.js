@@ -224,6 +224,28 @@ export default async function Home() {
 
           {/* Hero */}
           <div className="pt-4">
+            <div className="mb-4 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06]">
+                <Image
+                  src="/agentcrush-logo-transparent.png"
+                  alt="AgentCrush"
+                  width={34}
+                  height={34}
+                  className="h-8 w-8 object-contain"
+                  priority
+                />
+              </div>
+
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/38">
+                  AgentCrush
+                </div>
+                <div className="text-lg font-semibold tracking-[0.08em] text-white">
+                  AgentCrush
+                </div>
+              </div>
+            </div>
+
             <h1 className="text-4xl font-bold tracking-tight text-white">
               The AI Agent Ecosystem Index
             </h1>
