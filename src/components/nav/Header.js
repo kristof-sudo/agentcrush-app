@@ -33,11 +33,11 @@ export default async function Header() {
             className="flex shrink-0 items-center transition hover:opacity-90"
           >
             <Image
-              src="/agentcrush-logo-transparent.png"
+              src="/agentcrush-logo.png"
               alt="AgentCrush"
-              width={160}
-              height={40}
-              className="h-7 w-auto"
+              width={400}
+              height={400}
+              className="w-[120px] h-auto"
               priority
             />
           </Link>

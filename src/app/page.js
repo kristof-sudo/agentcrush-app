@@ -224,19 +224,16 @@ export default async function Home() {
 
           {/* Hero */}
           <div className="pt-6">
-            {/* Brand lockup: icon + name as one unit */}
-            <div className="flex items-center gap-3 mb-5">
+            {/* Brand lockup */}
+            <div className="mb-5">
               <Image
-                src="/agentcrush-icon-transparent.png"
-                alt=""
-                width={192}
-                height={192}
-                className="h-9 w-9 shrink-0"
+                src="/agentcrush-logo.png"
+                alt="AgentCrush"
+                width={400}
+                height={400}
+                className="w-[240px] h-auto"
                 priority
               />
-              <span className="text-[38px] font-bold tracking-tight text-white leading-none">
-                AgentCrush
-              </span>
             </div>
 
             {/* Descriptor — clearly secondary */}
