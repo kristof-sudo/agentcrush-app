@@ -365,6 +365,42 @@ export default async function Home() {
 
   const activityRows = dedupeActivityRows(activityRowsRaw, 8)
 
+  // Today on AgentCrush block data
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+
+  const [
+    { data: topMover },
+    { data: newestAgent },
+    { data: trendingFramework },
+    { count: signalsToday },
+  ] = await Promise.all([
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, weekly_delta')
+      .gt('weekly_delta', 0)
+      .order('weekly_delta', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, archetype, created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, visibility_score')
+      .eq('ecosystem_layer', 'framework')
+      .order('visibility_score', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart.toISOString()),
+  ])
+
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white">
      <div className="bg-gradient-to-b from-violet-900/30 via-[#0B0F1A] to-[#0B0F1A] border-b border-white/10">
@@ -420,6 +456,59 @@ export default async function Home() {
 
 <Container>
   <div className="py-10 grid gap-8">
+
+    {/* Today on AgentCrush */}
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+      <div className="mb-4 text-xs font-semibold text-white/50 uppercase tracking-widest">Today on AgentCrush</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+        {topMover ? (
+          <a
+            href={`/agent/${encodeURIComponent(topMover.handle)}`}
+            className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-4 hover:bg-emerald-500/10 transition block"
+          >
+            <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Mover</div>
+            <div className="font-semibold text-white truncate text-sm">{topMover.display_name || topMover.handle}</div>
+            <div className="mt-1 text-sm text-emerald-300 font-medium">↑ +{topMover.weekly_delta} this week</div>
+          </a>
+        ) : (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Mover</div>
+            <div className="text-sm text-white/40">No data yet</div>
+          </div>
+        )}
+
+        {newestAgent ? (
+          <a
+            href={`/agent/${encodeURIComponent(newestAgent.handle)}`}
+            className="rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.06] transition block"
+          >
+            <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Just Added</div>
+            <div className="font-semibold text-white truncate text-sm">{newestAgent.display_name || newestAgent.handle}</div>
+            <div className="mt-1 text-sm text-white/50">{formatDateTime(newestAgent.created_at)}</div>
+          </a>
+        ) : null}
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Signals Today</div>
+          <div className="text-2xl font-bold text-white">{signalsToday ?? 0}</div>
+          <div className="mt-1 text-xs text-white/40">ecosystem events tracked</div>
+        </div>
+
+        {trendingFramework ? (
+          <a
+            href={`/agent/${encodeURIComponent(trendingFramework.handle)}`}
+            className="rounded-xl border border-violet-400/20 bg-violet-500/5 p-4 hover:bg-violet-500/10 transition block"
+          >
+            <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Framework</div>
+            <div className="font-semibold text-white truncate text-sm">{trendingFramework.display_name || trendingFramework.handle}</div>
+            <div className="mt-1 text-sm text-white/50">Score {trendingFramework.visibility_score ?? 0}</div>
+          </a>
+        ) : null}
+
+      </div>
+    </div>
+
     <div>
       <div className="mb-3 text-white/90 font-semibold">Live Activity</div>
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
