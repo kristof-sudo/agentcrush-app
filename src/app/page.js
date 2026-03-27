@@ -1,9 +1,8 @@
 import Container from '@/components/ui/Container'
 import Button from '@/components/ui/Button'
-import RankingTable from '@/components/leaderboard/RankingTable'
 import AgentCard from '@/components/agents/AgentCard'
 import { supabaseAnon } from '@/lib/supabase'
-import Link from "next/link"
+import Link from 'next/link'
 
 function toPublicImageUrl(path) {
   if (!path) return '/placeholder.png'
@@ -15,165 +14,75 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
-function mixAgentsByArchetype(agents = [], limit = 12) {
-  const buckets = new Map()
-
-  for (const agent of agents) {
-    const key = agent?.archetype || 'Unknown'
-    if (!buckets.has(key)) buckets.set(key, [])
-    buckets.get(key).push(agent)
-  }
-
-  const bucketEntries = Array.from(buckets.entries()).sort((a, b) => {
-    const aNewest = new Date(a[1][0]?.created_at || 0).getTime()
-    const bNewest = new Date(b[1][0]?.created_at || 0).getTime()
-    return bNewest - aNewest
-  })
-
-  const result = []
-
-  while (result.length < limit) {
-    let addedInRound = false
-
-    for (const [, bucket] of bucketEntries) {
-      if (bucket.length > 0) {
-        result.push(bucket.shift())
-        addedInRound = true
-        if (result.length >= limit) break
-      }
-    }
-
-    if (!addedInRound) break
-  }
-
-  return result
-}
-
-function formatDateTime(value) {
+function formatRelativeTime(value) {
   if (!value) return ''
-
   const now = Date.now()
   const ts = new Date(value).getTime()
   const diff = Math.floor((now - ts) / 1000)
 
   if (diff < 3600) {
     const m = Math.max(1, Math.floor(diff / 60))
-    return `${m} min ago`
+    return `${m}m ago`
   }
-
   if (diff < 86400) {
     const h = Math.floor(diff / 3600)
-    return `${h} h ago`
+    return `${h}h ago`
   }
-
   try {
-    return (
-      new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(new Date(value)) + ' UTC'
-    )
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+    }).format(new Date(value))
   } catch {
     return value
   }
 }
 
-function formatEventLabel(eventType) {
-  const map = {
-    daily_boost: 'Gained community traction',
-    collab_win: 'Collaboration showing momentum',
-    spotlight_pick: 'Featured in spotlight',
-    profile_upgrade: 'Profile upgraded',
-    rumor_wave: 'Ecosystem chatter increasing',
-    canon_scene: 'New ecosystem development',
-    timeline_ping: 'Mentioned in the timeline',
-    ranking_jump: 'Climbed in the rankings',
-    audience_spike: 'Discovered by a new audience',
-    reputation_hit: 'Reputation under pressure',
-    reputation_recovery: 'Reputation recovering',
-    launch_buzz: 'Launch gaining attention',
-  }
-
-  return map[eventType] || 'Activity detected'
-}
-
-function formatImpactText(v, r) {
-  const vis = Number(v || 0)
-  const rep = Number(r || 0)
-
-  const parts = []
-
-  if (vis !== 0) {
-    parts.push(`Visibility ${vis > 0 ? '+' : ''}${vis}`)
-  }
-
-  if (rep !== 0) {
-    parts.push(`Reputation ${rep > 0 ? '+' : ''}${rep}`)
-  }
-
-  if (parts.length === 0) return 'No score change'
-
-  return parts.join(' • ')
-}
-
-function formatSignedValue(value) {
-  return value > 0 ? `+${value}` : `${value}`
-}
-
-function readMetadataNumber(metadata, keys = []) {
-  for (const key of keys) {
-    const value = metadata?.[key]
-    if (value === null || value === undefined || value === '') continue
-
-    const numericValue = Number(value)
-    if (!Number.isNaN(numericValue)) return numericValue
-  }
-
-  return null
-}
-
-function readMetadataText(metadata, keys = []) {
-  for (const key of keys) {
-    const value = metadata?.[key]
-    if (typeof value === 'string' && value.trim()) return value.trim()
-  }
-
-  return null
-}
-
 function formatEventSummary(event) {
   const metadata = event?.metadata || {}
-  const visibilityDelta = Number(event?.delta_visibility || 0)
-  const stars = readMetadataNumber(metadata, ['stars_gained', 'star_gain', 'stars', 'github_stars'])
-  const mentions = readMetadataNumber(metadata, ['mention_count', 'mentions', 'post_count', 'x_posts'])
-  const rankJump = readMetadataNumber(metadata, ['rank_jump', 'positions_gained', 'rank_delta'])
-  const releaseName = readMetadataText(metadata, ['release_name', 'version', 'tag_name'])
-  const integrationName = readMetadataText(metadata, ['integration_name', 'partner', 'framework', 'platform'])
+
+  function readNum(keys) {
+    for (const k of keys) {
+      const v = metadata?.[k]
+      if (v !== null && v !== undefined && v !== '') {
+        const n = Number(v)
+        if (!Number.isNaN(n)) return n
+      }
+    }
+    return null
+  }
+
+  function readText(keys) {
+    for (const k of keys) {
+      const v = metadata?.[k]
+      if (typeof v === 'string' && v.trim()) return v.trim()
+    }
+    return null
+  }
+
+  const stars = readNum(['stars_gained', 'star_gain', 'stars', 'github_stars'])
+  const mentions = readNum(['mention_count', 'mentions', 'post_count', 'x_posts'])
+  const rankJump = readNum(['rank_jump', 'positions_gained', 'rank_delta'])
+  const releaseName = readText(['release_name', 'version', 'tag_name'])
+  const integrationName = readText(['integration_name', 'partner', 'framework', 'platform'])
+  const visDelta = Number(event?.delta_visibility || 0)
 
   switch (event?.event_type) {
     case 'repo_star_growth':
-      if (stars) return `gained ${stars} GitHub stars recently`
-      return 'GitHub repository picked up new stars'
+      return stars ? `gained ${stars} GitHub stars` : 'GitHub stars growing'
     case 'repo_release':
-      if (releaseName) return `published a new release: ${releaseName}`
-      return 'published a new release'
+      return releaseName ? `released ${releaseName}` : 'new release shipped'
     case 'audience_spike':
       if (mentions) return `mentioned in ${mentions} recent X posts`
       return 'audience spike detected'
     case 'ranking_jump':
-      if (rankJump) return `climbed ${rankJump} spots in the rankings`
-      return 'moved up in the rankings'
+      return rankJump ? `climbed ${rankJump} spots` : 'moved up in rankings'
     case 'timeline_ping':
-      if (mentions) return `surfaced in ${mentions} ecosystem mentions`
-      return 'mentioned in multiple ecosystem events'
+      return mentions ? `${mentions} ecosystem mentions` : 'ecosystem mention'
     case 'launch_buzz':
-      if (mentions) return `generated ${mentions} launch mentions`
-      return 'launch attention detected'
+      return mentions ? `${mentions} launch mentions` : 'launch attention'
     case 'collab_win':
-      if (integrationName) return `new collaboration detected with ${integrationName}`
-      return 'new collaboration detected'
+      return integrationName ? `new collab with ${integrationName}` : 'new collaboration'
     case 'daily_boost':
       return 'picked up fresh momentum'
     case 'canon_scene':
@@ -235,48 +144,114 @@ function dedupeActivityRows(rows = [], limit = 8) {
   return output
 }
 
+const eventIcon = {
+  audience_spike: '📡',
+  ranking_jump: '📈',
+  timeline_ping: '💬',
+  canon_scene: '🌀',
+  collab_win: '🤝',
+  launch_buzz: '🚀',
+  daily_boost: '✨',
+  repo_star_growth: '⭐',
+  repo_release: '🔖',
+  ecosystem_integration: '🔗',
+  dev_activity: '⚙️',
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
   const supabase = supabaseAnon()
 
-  const { data: topRankings } = await supabase
-  .from('rankings')
-  .select(`
-    agent_id,
-    global_rank,
-    score_visibility,
-    score_reputation,
-    score_total,
-    agent:agents!inner (
-      id,
-      handle,
-      display_name,
-      avatar_url,
-      custom_background_url,
-      identity_status,
-      premium_frame_enabled,
-      tagline,
-      archetype,
-      weekly_delta,
-      entity_type
-    )
-  `)
-  .order('global_rank', { ascending: true })
-  .limit(10)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
 
-  const rows = (topRankings || []).map((row) => {
+  const [
+    { data: topRankings },
+    { data: recentAgents },
+    { data: events },
+    { data: topMover },
+    { data: newestAgent },
+    { count: signalsToday },
+    { data: categoryCounts },
+    { data: topFrameworkAgents },
+  ] = await Promise.all([
+    supabase
+      .from('rankings')
+      .select(`
+        agent_id,
+        global_rank,
+        score_visibility,
+        score_reputation,
+        agent:agents!inner (
+          id,
+          handle,
+          display_name,
+          avatar_url,
+          custom_background_url,
+          tagline,
+          archetype,
+          weekly_delta
+        )
+      `)
+      .order('global_rank', { ascending: true })
+      .limit(5),
+
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, avatar_url, custom_background_url, identity_status, premium_frame_enabled, tagline, archetype, created_at')
+      .order('created_at', { ascending: false })
+      .limit(18),
+
+    supabase
+      .from('events')
+      .select('id, agent_id, event_type, delta_visibility, metadata, created_at')
+      .order('created_at', { ascending: false })
+      .limit(24),
+
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, weekly_delta')
+      .gt('weekly_delta', 0)
+      .order('weekly_delta', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, archetype, created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+
+    supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart.toISOString()),
+
+    supabase
+      .from('v_category_counts')
+      .select('name, agent_count, category_group')
+      .eq('category_group', 'agent_type')
+      .order('agent_count', { ascending: false })
+      .limit(6),
+
+    supabase
+      .from('agents')
+      .select('framework_name')
+      .not('framework_name', 'is', null)
+      .neq('framework_name', ''),
+  ])
+
+  // Top 5 rankings
+  const rankingRows = (topRankings || []).map((row) => {
     const a = row.agent || {}
-
     return {
       id: a.id || row.agent_id,
       global_rank: row.global_rank,
       handle: a.handle,
       display_name: a.display_name || a.handle,
       avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
-      custom_background_url: a.custom_background_url,
-      identity_status: a.identity_status,
-      premium_frame_enabled: a.premium_frame_enabled,
       tagline: a.tagline || '',
       archetype: a.archetype || '',
       visibility_score: row.score_visibility || 0,
@@ -286,71 +261,41 @@ export default async function Home() {
     }
   })
 
-  const { data: recentAgents } = await supabase
-    .from('agents')
-    .select(`
-      id,
-      handle,
-      display_name,
-      avatar_url,
-      custom_background_url,
-      identity_status,
-      premium_frame_enabled,
-      tagline,
-      archetype,
-      created_at
-    `)
-    .order('created_at', { ascending: false })
-    .limit(36)
-
-  const featuredAgents = mixAgentsByArchetype(recentAgents || [], 12)
-
-  const { data: events, error: eventsError } = await supabase
-    .from('events')
-    .select(`
-      id,
-      agent_id,
-      event_type,
-      delta_visibility,
-      delta_reputation,
-      metadata,
-      created_at
-    `)
-    .order('created_at', { ascending: false })
-    .limit(24)
-
-  console.log('EVENTS_DEBUG', {
-    count: events?.length || 0,
-    error: eventsError?.message || null,
-    sample: events?.[0] || null,
-  })
-
+  // Activity feed
   const eventAgentIds = [...new Set((events || []).map((e) => e.agent_id).filter(Boolean))]
-
   const { data: eventAgents } = eventAgentIds.length
-    ? await supabase
-        .from('agents')
-        .select('id, handle, display_name')
-        .in('id', eventAgentIds)
+    ? await supabase.from('agents').select('id, handle, display_name').in('id', eventAgentIds)
     : { data: [] }
 
   const eventAgentMap = new Map((eventAgents || []).map((a) => [a.id, a]))
 
-  const activityRowsRaw = (events || []).map((e) => {
-    const agent = eventAgentMap.get(e.agent_id)
+  const activityRows = dedupeActivityRows(
+    (events || []).map((e) => {
+      const agent = eventAgentMap.get(e.agent_id)
+      return {
+        id: e.id,
+        created_at: e.created_at,
+        event_type: e.event_type,
+        event_label: formatEventSummary(e),
+        handle: agent?.handle || 'unknown',
+        display_name: agent?.display_name || agent?.handle || 'unknown',
+      }
+    }),
+    8
+  )
 
-    return {
-      id: e.id,
-      created_at: e.created_at,
-      event_type: e.event_type,
-      event_label: formatEventSummary(e),
-      handle: agent?.handle || 'unknown',
-      display_name: agent?.display_name || agent?.handle || 'unknown',
-      impact: formatEventWhyItMatters(e),
-    }
-  })
+  // Top frameworks by agent count
+  const frameworkCounts = new Map()
+  for (const row of topFrameworkAgents || []) {
+    const fn = row.framework_name
+    if (fn) frameworkCounts.set(fn, (frameworkCounts.get(fn) || 0) + 1)
+  }
+  const topFrameworks = [...frameworkCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
 
-  const activityRows = dedupeActivityRows(activityRowsRaw, 8)
+  // Newest agents (6 cards)
+  const newestCards = (recentAgents || []).slice(0, 6)
 
   // Today on AgentCrush block data
   const todayStart = new Date()
@@ -411,26 +356,65 @@ export default async function Home() {
             Public rankings, visibility shifts, and emerging influence across the AI agent ecosystem.
           </div>
 
-          <div className="mt-1 text-xs text-white/40">
-            Ecosystem observations by Mike Matsh
+      {/* Compact hero */}
+      <div className="border-b border-white/10 bg-gradient-to-b from-violet-950/25 to-transparent">
+        <Container>
+          <div className="py-8 flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <div className="text-2xl font-bold tracking-tight text-white">AgentCrush</div>
+              <div className="mt-1 text-white/60 text-sm max-w-lg">
+                Rankings, reputation, and discovery for the AI agent ecosystem.
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button href="/rankings">View Rankings</Button>
+              <Button href="/categories" variant="secondary">Browse Categories</Button>
+              <Button href="/submit" variant="secondary">Submit Agent</Button>
+            </div>
           </div>
-        </div>
+        </Container>
       </div>
 
-      <div className="mt-6 max-w-2xl text-sm text-white/60 space-y-1">
-        <div><span className="text-white/80 font-medium">Live:</span> rankings, status shifts, and new agents entering the ecosystem</div>
-        <div><span className="text-white/80 font-medium">Status:</span> identity, visibility, and reputation tracked in real time</div>
-        <div><span className="text-white/80 font-medium">Upgrades:</span> advanced profiles and unlocks (coming soon)</div>
-      </div>
+      <Container>
+        <div className="py-8 space-y-10">
 
-      <div className="mt-5 flex justify-start">
-        <Link
-          href="/start-here"
-          className="rounded-xl border border-white/10 bg-gradient-to-b from-[#5B6CFF] via-[#3B2FA8] to-[#211A68] px-6 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-950/40 ring-1 ring-white/10 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.18),0_10px_24px_rgba(15,23,42,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-indigo-950/50 active:translate-y-0"
-        >
-          Curious about AI agents? Start here →
-        </Link>
-      </div>
+          {/* Today on AgentCrush */}
+          <div>
+            <div className="mb-3 text-xs font-semibold text-white/40 uppercase tracking-widest">Today on AgentCrush</div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+              {topMover ? (
+                <Link
+                  href={`/agent/${encodeURIComponent(topMover.handle)}`}
+                  className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-4 hover:bg-emerald-500/10 transition block"
+                >
+                  <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Mover</div>
+                  <div className="font-semibold text-white truncate text-sm">{topMover.display_name || topMover.handle}</div>
+                  <div className="mt-1 text-sm text-emerald-300 font-medium">↑ +{topMover.weekly_delta} this week</div>
+                </Link>
+              ) : (
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Mover</div>
+                  <div className="text-sm text-white/40">No data yet</div>
+                </div>
+              )}
+
+              {newestAgent ? (
+                <Link
+                  href={`/agent/${encodeURIComponent(newestAgent.handle)}`}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.06] transition block"
+                >
+                  <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Just Added</div>
+                  <div className="font-semibold text-white truncate text-sm">{newestAgent.display_name || newestAgent.handle}</div>
+                  <div className="mt-1 text-sm text-white/50">{formatRelativeTime(newestAgent.created_at)}</div>
+                </Link>
+              ) : null}
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Signals Today</div>
+                <div className="text-2xl font-bold text-white">{signalsToday ?? 0}</div>
+                <div className="mt-1 text-xs text-white/40">ecosystem events</div>
+              </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button href="/rankings">View Rankings</Button>
@@ -506,86 +490,165 @@ export default async function Home() {
           <div className="col-span-3 text-right">Impact</div>
         </div>
 
-        <div className="max-h-[420px] overflow-y-auto">
-          {activityRows.map((row) => {
-            const eventIcon =
-              row.event_type === 'audience_spike'
-                ? '📡'
-                : row.event_type === 'ranking_jump'
-                ? '📈'
-                : row.event_type === 'timeline_ping'
-                ? '💬'
-                : row.event_type === 'canon_scene'
-                ? '🌀'
-                : row.event_type === 'collab_win'
-                ? '🤝'
-                : row.event_type === 'launch_buzz'
-                ? '🚀'
-                : row.event_type === 'daily_boost'
-                ? '✨'
-                : '•'
-
-            return (
-              <div
-                key={row.id}
-                className="grid grid-cols-12 gap-3 border-b border-white/5 px-4 py-3 text-sm transition hover:bg-white/5"
-              >
-                <div className="col-span-3 text-white/60">
-                  {formatDateTime(row.created_at)}
-                </div>
-
-                <div className="col-span-3 truncate">
-                  <div className="text-white">{row.display_name}</div>
-                  <div className="text-xs text-white/45">@{row.handle}</div>
-                </div>
-
-                <div className="col-span-3 break-words whitespace-normal text-white/90 font-medium">
-                  <span className="mr-2">{eventIcon}</span>
-                  {row.event_label}
-                </div>
-
-                <div className="col-span-3 text-right text-white/60">
-                  {row.impact}
-                </div>
-              </div>
-            )
-          })}
-
-          {activityRows.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-white/50">No recent activity yet.</div>
-          ) : null}
-        </div>
-      </div>
-    </div>
-
-    <RankingTable rows={rows} />
-
-<div>
-  <div className="mb-3 text-white/90 font-semibold">Newest Agents</div>
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    {featuredAgents.map((a) => (
-      <AgentCard key={a.id} agent={a} />
-    ))}
-  </div>
-</div>
-
-        <div className="mt-16 border-t border-white/10 pt-6 text-center text-sm text-white/50">
-          <p>© {new Date().getFullYear()} AgentCrush</p>
-          <div className="mt-2 flex justify-center gap-6">
-            <a href="/about" className="hover:text-white">About</a>
-            <a href="/terms" className="hover:text-white">Terms</a>
-            <a
-              href="https://x.com/MikeMatshAI"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-white"
-            >
-              Mike on X
-            </a>
+            </div>
           </div>
+
+          {/* Rising now — top 5 compact ranking */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-white/90 font-semibold">Rising Now</div>
+              <Link href="/rankings" className="text-xs text-violet-400 hover:text-violet-300">
+                Full rankings →
+              </Link>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
+              {rankingRows.map((r) => (
+                <Link
+                  key={r.id}
+                  href={`/agent/${encodeURIComponent(r.handle)}`}
+                  className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05] last:border-0 hover:bg-white/[0.04] transition"
+                >
+                  <div className="w-6 text-center">
+                    <span className={`text-xs font-bold ${r.global_rank === 1 ? 'text-yellow-300' : r.global_rank === 2 ? 'text-gray-300' : r.global_rank === 3 ? 'text-amber-400' : 'text-white/40'}`}>
+                      #{r.global_rank}
+                    </span>
+                  </div>
+
+                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                    {r.avatar_url && r.avatar_url !== '/placeholder.png' ? (
+                      <img src={r.avatar_url} alt={r.display_name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-white/30">?</div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-white truncate">{r.display_name || r.handle}</div>
+                    {r.tagline ? (
+                      <div className="text-xs text-white/45 truncate">{r.tagline}</div>
+                    ) : (
+                      <div className="text-xs text-white/30">@{r.handle}</div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {r.weekly_delta > 0 ? (
+                      <span className="text-xs font-semibold text-emerald-300">+{r.weekly_delta}</span>
+                    ) : r.weekly_delta < 0 ? (
+                      <span className="text-xs font-semibold text-red-300">{r.weekly_delta}</span>
+                    ) : null}
+                    <span className="text-sm font-bold text-white/80">{r.score_total}</span>
+                  </div>
+                </Link>
+              ))}
+
+              {rankingRows.length === 0 ? (
+                <div className="px-4 py-6 text-sm text-white/40">No rankings available yet.</div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Live Activity */}
+          <div>
+            <div className="mb-3 text-white/90 font-semibold">Live Activity</div>
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+              <div className="max-h-[360px] overflow-y-auto divide-y divide-white/[0.05]">
+                {activityRows.map((row) => (
+                  <div key={row.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03] transition">
+                    <span className="text-sm w-5 shrink-0">{eventIcon[row.event_type] || '•'}</span>
+                    <Link
+                      href={`/agent/${encodeURIComponent(row.handle)}`}
+                      className="font-medium text-white text-sm hover:text-white/80 transition shrink-0 max-w-[130px] truncate"
+                    >
+                      {row.display_name}
+                    </Link>
+                    <span className="text-sm text-white/60 min-w-0 truncate flex-1">{row.event_label}</span>
+                    <span className="text-xs text-white/35 shrink-0">{formatRelativeTime(row.created_at)}</span>
+                  </div>
+                ))}
+
+                {activityRows.length === 0 ? (
+                  <div className="px-4 py-6 text-sm text-white/40">No recent activity yet.</div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          {/* Explore by category */}
+          {(categoryCounts || []).length > 0 ? (
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-white/90 font-semibold">Explore by Category</div>
+                <Link href="/categories" className="text-xs text-violet-400 hover:text-violet-300">
+                  All categories →
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                {(categoryCounts || []).map((cat) => (
+                  <Link
+                    key={cat.name}
+                    href={`/categories/${encodeURIComponent(cat.name.toLowerCase().replace(/\s+/g, '-'))}`}
+                    className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-center hover:bg-white/[0.06] transition"
+                  >
+                    <div className="text-sm font-medium text-white truncate">{cat.name}</div>
+                    <div className="mt-1 text-xs text-white/45">{cat.agent_count} agents</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Trending Frameworks */}
+          {topFrameworks.length > 0 ? (
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-white/90 font-semibold">Trending Frameworks</div>
+                <Link href="/categories" className="text-xs text-violet-400 hover:text-violet-300">
+                  Explore all →
+                </Link>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {topFrameworks.map(([name, count]) => (
+                  <Link
+                    key={name}
+                    href={`/framework/${encodeURIComponent(name)}`}
+                    className="rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-sm text-violet-300 hover:bg-violet-500/20 transition flex items-center gap-2"
+                  >
+                    <span>{name}</span>
+                    <span className="text-violet-400/70 text-xs">{count}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Newest agents */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-white/90 font-semibold">Newest Agents</div>
+              <Link href="/rankings" className="text-xs text-violet-400 hover:text-violet-300">
+                View all →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {newestCards.map((a) => (
+                <AgentCard key={a.id} agent={a} />
+              ))}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-white/10 pt-6 text-center text-sm text-white/40">
+            <p>© {new Date().getFullYear()} AgentCrush</p>
+            <div className="mt-2 flex justify-center gap-6">
+              <a href="/about" className="hover:text-white">About</a>
+              <a href="/terms" className="hover:text-white">Terms</a>
+              <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer" className="hover:text-white">Mike on X</a>
+            </div>
+          </div>
+
         </div>
-      </div>
-    </Container>
-  </div>
-)
+      </Container>
+    </div>
+  )
 }
