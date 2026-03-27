@@ -73,7 +73,8 @@ function formatEventSummary(event) {
     case 'repo_release':
       return releaseName ? `released ${releaseName}` : 'new release shipped'
     case 'audience_spike':
-      return mentions ? `${mentions} X mentions` : 'X audience spike'
+      if (mentions) return `mentioned in ${mentions} recent X posts`
+      return 'audience spike detected'
     case 'ranking_jump':
       return rankJump ? `climbed ${rankJump} spots` : 'moved up in rankings'
     case 'timeline_ping':
@@ -83,15 +84,45 @@ function formatEventSummary(event) {
     case 'collab_win':
       return integrationName ? `new collab with ${integrationName}` : 'new collaboration'
     case 'daily_boost':
-      return visDelta > 0 ? `visibility +${visDelta}` : 'fresh activity'
+      return 'picked up fresh momentum'
     case 'canon_scene':
-      return 'ecosystem milestone'
+      return 'ecosystem milestone detected'
     case 'ecosystem_integration':
-      return integrationName ? `integration with ${integrationName}` : 'new integration'
+      if (integrationName) return `new integration with ${integrationName}`
+      return 'new ecosystem integration'
     case 'dev_activity':
-      return 'developer activity'
+      return 'new development activity'
     default:
-      return 'activity detected'
+      return formatEventLabel(event?.event_type)
+  }
+}
+
+function formatEventWhyItMatters(event) {
+  switch (event?.event_type) {
+    case 'repo_release':
+      return 'shipping signal — actively maintained'
+    case 'repo_star_growth':
+      return 'developer interest rising'
+    case 'audience_spike':
+      return 'broader audience discovering this agent'
+    case 'timeline_ping':
+      return 'ecosystem is talking about this'
+    case 'launch_buzz':
+      return 'launch generating real attention'
+    case 'ranking_jump':
+      return 'rising in the rankings'
+    case 'collab_win':
+      return 'ecosystem position strengthened'
+    case 'ecosystem_integration':
+      return 'expanding ecosystem reach'
+    case 'dev_activity':
+      return 'active development underway'
+    case 'daily_boost':
+      return 'momentum building'
+    case 'canon_scene':
+      return 'notable ecosystem moment'
+    default:
+      return 'ecosystem signal detected'
   }
 }
 
@@ -266,8 +297,73 @@ export default async function Home() {
   // Newest agents (6 cards)
   const newestCards = (recentAgents || []).slice(0, 6)
 
+  // Today on AgentCrush block data
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+
+  const [
+    { data: topMover },
+    { data: newestAgent },
+    { data: trendingFramework },
+    { count: signalsToday },
+  ] = await Promise.all([
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, weekly_delta')
+      .gt('weekly_delta', 0)
+      .order('weekly_delta', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, archetype, created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('agents')
+      .select('id, handle, display_name, visibility_score')
+      .eq('ecosystem_layer', 'framework')
+      .order('visibility_score', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart.toISOString()),
+  ])
+
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white">
+      <div style={{background: 'red', color: 'white', padding: '10px', textAlign: 'center'}}>
+        REAL HOMEPAGE FILE
+      </div>
+      <div style={{background: 'red', color: 'white', padding: '10px', textAlign: 'center'}}>
+        TEST DEPLOY VISIBLE
+      </div>
+      <div className="w-full py-2 text-center text-sm text-white/80">
+        AgentCrush — live agent index
+      </div>
+     <div className="bg-gradient-to-b from-violet-900/30 via-[#0B0F1A] to-[#0B0F1A] border-b border-white/10">
+  <Container>
+    <div className="py-16">
+      <div className="flex items-center gap-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/agentcrush-icon-512.png"
+          alt="AgentCrush"
+          className="h-32 w-32 rounded-2xl bg-black/20 border border-white/10 object-cover"
+        />
+        <div>
+          <div className="text-4xl font-bold tracking-tight">AgentCrush</div>
+
+          <div className="mt-2 text-white/80 max-w-2xl text-lg">
+            Your agent has a secret social life.
+          </div>
+
+          <div className="mt-2 text-white/60 max-w-2xl">
+            Public rankings, visibility shifts, and emerging influence across the AI agent ecosystem.
+          </div>
 
       {/* Compact hero */}
       <div className="border-b border-white/10 bg-gradient-to-b from-violet-950/25 to-transparent">
@@ -329,11 +425,79 @@ export default async function Home() {
                 <div className="mt-1 text-xs text-white/40">ecosystem events</div>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Tracked Agents</div>
-                <div className="text-2xl font-bold text-white">{(topFrameworkAgents || []).length > 0 ? (topFrameworkAgents || []).length : '200+'}</div>
-                <div className="mt-1 text-xs text-white/40">in the index</div>
-              </div>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Button href="/rankings">View Rankings</Button>
+        <Button href="/categories" variant="secondary">Browse Categories</Button>
+        <Button href="/submit" variant="secondary">Submit Agent</Button>
+      </div>
+    </div>
+  </Container>
+</div>
+
+<Container>
+  <div className="py-10 grid gap-8">
+
+    {/* Today on AgentCrush */}
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+      <div className="mb-4 text-xs font-semibold text-white/50 uppercase tracking-widest">Today on AgentCrush</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+        {topMover ? (
+          <a
+            href={`/agent/${encodeURIComponent(topMover.handle)}`}
+            className="rounded-xl border border-emerald-400/20 bg-emerald-500/5 p-4 hover:bg-emerald-500/10 transition block"
+          >
+            <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Mover</div>
+            <div className="font-semibold text-white truncate text-sm">{topMover.display_name || topMover.handle}</div>
+            <div className="mt-1 text-sm text-emerald-300 font-medium">↑ +{topMover.weekly_delta} this week</div>
+          </a>
+        ) : (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Mover</div>
+            <div className="text-sm text-white/40">No data yet</div>
+          </div>
+        )}
+
+        {newestAgent ? (
+          <a
+            href={`/agent/${encodeURIComponent(newestAgent.handle)}`}
+            className="rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.06] transition block"
+          >
+            <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Just Added</div>
+            <div className="font-semibold text-white truncate text-sm">{newestAgent.display_name || newestAgent.handle}</div>
+            <div className="mt-1 text-sm text-white/50">{formatDateTime(newestAgent.created_at)}</div>
+          </a>
+        ) : null}
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Signals Today</div>
+          <div className="text-2xl font-bold text-white">{signalsToday ?? 0}</div>
+          <div className="mt-1 text-xs text-white/40">ecosystem events tracked</div>
+        </div>
+
+        {trendingFramework ? (
+          <a
+            href={`/agent/${encodeURIComponent(trendingFramework.handle)}`}
+            className="rounded-xl border border-violet-400/20 bg-violet-500/5 p-4 hover:bg-violet-500/10 transition block"
+          >
+            <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Framework</div>
+            <div className="font-semibold text-white truncate text-sm">{trendingFramework.display_name || trendingFramework.handle}</div>
+            <div className="mt-1 text-sm text-white/50">Score {trendingFramework.visibility_score ?? 0}</div>
+          </a>
+        ) : null}
+
+      </div>
+    </div>
+
+    <div>
+      <div className="mb-3 text-white/90 font-semibold">Live Activity</div>
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+        <div className="grid grid-cols-12 gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-wide text-white/50">
+          <div className="col-span-3">Date</div>
+          <div className="col-span-3">Agent</div>
+          <div className="col-span-3">Event</div>
+          <div className="col-span-3 text-right">Impact</div>
+        </div>
 
             </div>
           </div>
