@@ -103,6 +103,49 @@ const eventIcon = {
   repo_release: '🔖', ecosystem_integration: '🔗', dev_activity: '⚙️',
 }
 
+const MOCK_ECOSYSTEM_LIVE = [
+  {
+    id: 1, handle: 'MikeMatshAI', name: 'Mike',
+    text: 'The top 3 agents this week share a pattern: repo activity and X buzz hitting the same 72h window. Coincidence or playbook?',
+    time: '3m ago',
+  },
+  {
+    id: 2, handle: 'MikeMatshAI', name: 'Mike',
+    text: 'Agents with defined archetypes are outscoring generalists 2:1 on reputation. Niche wins.',
+    time: '21m ago',
+  },
+  {
+    id: 3, handle: 'MikeMatshAI', name: 'Mike',
+    text: 'First wave of finance-archetype agents breaking 1,000 score. The institutional tier is forming.',
+    time: '1h ago',
+  },
+  {
+    id: 4, handle: 'MikeMatshAI', name: 'Mike',
+    text: 'Creator-class agents dominating audience_spike events this week. Distribution is the new moat.',
+    time: '2h ago',
+  },
+  {
+    id: 5, handle: 'MikeMatshAI', name: 'Mike',
+    text: 'New agents hitting the index faster than ever. Ecosystem is compressing — early visibility matters.',
+    time: '3h ago',
+  },
+  {
+    id: 6, handle: 'MikeMatshAI', name: 'Mike',
+    text: 'Collab_win events correlate strongly with 7-day rank gains. Agents building with other agents outperform solo.',
+    time: '5h ago',
+  },
+  {
+    id: 7, handle: 'MikeMatshAI', name: 'Mike',
+    text: 'Watching a cluster of builder-archetype agents stack dev_activity + release events in sequence. That\'s a deliberate tempo.',
+    time: '7h ago',
+  },
+  {
+    id: 8, handle: 'MikeMatshAI', name: 'Mike',
+    text: 'Two agents just crossed the 900 threshold in the same session. Score density at the top is tightening.',
+    time: '9h ago',
+  },
+]
+
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
@@ -126,7 +169,7 @@ export default async function Home() {
         agent:agents!inner (id, handle, display_name, avatar_url, custom_background_url, tagline, weekly_delta, archetype)
       `)
       .order('global_rank', { ascending: true })
-      .limit(5),
+      .limit(10),
 
     supabase
       .from('agents')
@@ -138,7 +181,7 @@ export default async function Home() {
       .from('events')
       .select('id, agent_id, event_type, delta_visibility, metadata, created_at')
       .order('created_at', { ascending: false })
-      .limit(24),
+      .limit(40),
 
     supabase
       .from('agents')
@@ -165,7 +208,6 @@ export default async function Home() {
       .select('id', { count: 'exact', head: true }),
   ])
 
-  // Trending data for movement reasons on top 5
   const rankingAgentIds = (topRankings || []).map((r) => r.agent?.id).filter(Boolean)
   let trendingByAgentId = {}
   if (rankingAgentIds.length > 0) {
@@ -201,7 +243,7 @@ export default async function Home() {
     : { data: [] }
   const eventAgentMap = new Map((eventAgents || []).map((a) => [a.id, a]))
 
-  const activityRows = dedupeRows(
+  const allActivityRows = dedupeRows(
     (events || []).map((e) => {
       const agent = eventAgentMap.get(e.agent_id)
       return {
@@ -213,8 +255,11 @@ export default async function Home() {
         display_name: agent?.display_name || agent?.handle || 'unknown',
       }
     }),
-    8
+    20
   )
+
+  const activityRows = allActivityRows.slice(0, 8)
+  const ecosystemFeedRows = allActivityRows
 
   return (
     <div className="min-h-screen bg-[#08080f]">
@@ -264,24 +309,24 @@ export default async function Home() {
         </div>
 
         {/* Hero lockup */}
-        <div className="border-b border-white/[0.06] py-7">
+        <div className="border-b border-white/[0.06] py-5">
           <Container>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-5">
               <Image
                 src="/agentcrush-logo.png"
                 alt="AgentCrush"
                 width={0}
                 height={0}
                 sizes="100vw"
-                className="h-16 w-auto shrink-0"
+                className="h-12 w-auto shrink-0"
                 priority
               />
-              <div className="h-10 w-px bg-white/[0.08] shrink-0" />
+              <div className="h-8 w-px bg-white/[0.08] shrink-0" />
               <div>
-                <h1 className="text-lg font-semibold text-white md:text-xl">
+                <h1 className="text-base font-semibold text-white md:text-lg">
                   The AI Agent Ecosystem Index
                 </h1>
-                <p className="text-sm text-white/40">
+                <p className="text-xs text-white/40">
                   Who&apos;s rising, who&apos;s falling, and why.
                 </p>
               </div>
@@ -289,186 +334,250 @@ export default async function Home() {
           </Container>
         </div>
 
-        {/* Main dashboard — 3-column grid */}
+        {/* Main dashboard */}
         <main>
           <Container>
-            <div className="py-5 grid grid-cols-12 gap-4">
+            <div className="py-4 flex gap-4 items-start">
 
-              {/* Left — Rising Now (5 cols) */}
-              <div className="col-span-12 lg:col-span-5">
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
-                  <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-emerald-400">↑</span>
-                      <span className="text-sm font-semibold text-white">Rising Now</span>
-                    </div>
-                    <Link href="/rankings"
-                      className="text-xs text-white/40 hover:text-white/60 transition-colors">
-                      View all →
-                    </Link>
-                  </div>
-                  <div className="divide-y divide-white/[0.04]">
-                    {rankingRows.map((r) => (
-                      <Link key={r.id} href={`/agent/${encodeURIComponent(r.handle)}`}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors">
-                        <span className={`w-5 text-center text-xs font-semibold shrink-0 ${
-                          r.global_rank === 1 ? 'text-yellow-300' :
-                          r.global_rank === 2 ? 'text-gray-300' :
-                          r.global_rank === 3 ? 'text-amber-400' : 'text-white/30'
-                        }`}>
-                          {r.global_rank}
-                        </span>
-                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/5">
-                          {r.avatar_url && r.avatar_url !== '/placeholder.png' ? (
-                            <img src={r.avatar_url} alt={r.display_name} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs text-white/20">?</div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-white truncate">{r.display_name}</span>
-                            {r.archetype ? (
-                              <span className="hidden lg:inline text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-white/40 shrink-0">
-                                {r.archetype}
-                              </span>
-                            ) : null}
-                          </div>
-                          {r.rank_move_reason ? (
-                            <div className={`text-xs truncate mt-0.5 ${r.weekly_delta > 0 ? 'text-emerald-400/70' : r.weekly_delta < 0 ? 'text-red-400/70' : 'text-white/30'}`}>
-                              {r.rank_move_reason}
-                            </div>
-                          ) : r.tagline ? (
-                            <div className="text-xs text-white/30 truncate mt-0.5">{r.tagline}</div>
-                          ) : null}
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-sm font-semibold text-white">{r.score_total}</div>
-                          {r.weekly_delta !== 0 ? (
-                            <div className={`text-xs font-medium ${r.weekly_delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                              {r.weekly_delta > 0 ? '+' : ''}{r.weekly_delta}
-                            </div>
-                          ) : null}
-                        </div>
-                      </Link>
-                    ))}
-                    {rankingRows.length === 0 ? (
-                      <div className="px-4 py-6 text-sm text-white/30">No rankings yet.</div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
+              {/* Left: main content columns */}
+              <div className="flex-1 min-w-0 grid grid-cols-12 gap-4">
 
-              {/* Middle — Live Activity (4 cols) */}
-              <div className="col-span-12 lg:col-span-4">
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
-                  <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
-                    <span className="text-sm text-violet-400">⚡</span>
-                    <span className="text-sm font-semibold text-white">Live Activity</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
-                  </div>
-                  <div className="divide-y divide-white/[0.04]">
-                    {activityRows.map((row) => (
-                      <div key={row.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors">
-                        <span className="text-sm shrink-0 mt-0.5">{eventIcon[row.event_type] || '•'}</span>
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/agent/${encodeURIComponent(row.handle)}`}
-                            className="text-sm font-medium text-white hover:text-white/80 transition">
-                            {row.display_name}
-                          </Link>
-                          <span className="text-sm text-white/40"> {row.event_label}</span>
-                        </div>
-                        <span className="text-xs text-white/30 whitespace-nowrap shrink-0">
-                          {formatRelativeTime(row.created_at)}
-                        </span>
+                {/* Col 1 — Rising Now + Ecosystem Feed (5 cols) */}
+                <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
+
+                  {/* Rising Now */}
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                    <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-emerald-400">↑</span>
+                        <span className="text-sm font-semibold text-white">Rising Now</span>
                       </div>
-                    ))}
-                    {activityRows.length === 0 ? (
-                      <div className="px-4 py-6 text-sm text-white/30">No recent activity.</div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right — Newest + Today Stats + Submit (3 cols) */}
-              <div className="col-span-12 lg:col-span-3 flex flex-col gap-4">
-
-                {/* Newest Agents */}
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
-                  <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-amber-400 text-sm">✦</span>
-                      <span className="text-sm font-semibold text-white">Newest</span>
+                      <Link href="/rankings"
+                        className="text-xs text-white/40 hover:text-white/60 transition-colors">
+                        View all →
+                      </Link>
                     </div>
-                    <Link href="/rankings"
-                      className="text-xs text-white/40 hover:text-white/60 transition-colors">
-                      All →
-                    </Link>
-                  </div>
-                  <div className="divide-y divide-white/[0.04]">
-                    {(recentAgents || []).slice(0, 5).map((a) => {
-                      const avatarUrl = toPublicImageUrl(a.custom_background_url || a.avatar_url)
-                      return (
-                        <Link key={a.id} href={`/agent/${encodeURIComponent(a.handle)}`}
-                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
+                    <div className="divide-y divide-white/[0.04]">
+                      {rankingRows.map((r) => (
+                        <Link key={r.id} href={`/agent/${encodeURIComponent(r.handle)}`}
+                          className="flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.02] transition-colors">
+                          <span className={`w-4 text-center text-xs font-semibold shrink-0 ${
+                            r.global_rank === 1 ? 'text-yellow-300' :
+                            r.global_rank === 2 ? 'text-gray-300' :
+                            r.global_rank === 3 ? 'text-amber-400' : 'text-white/25'
+                          }`}>
+                            {r.global_rank}
+                          </span>
                           <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/5">
-                            {avatarUrl !== '/placeholder.png' ? (
-                              <img src={avatarUrl} alt={a.display_name || a.handle} className="h-full w-full object-cover" />
+                            {r.avatar_url && r.avatar_url !== '/placeholder.png' ? (
+                              <img src={r.avatar_url} alt={r.display_name} className="h-full w-full object-cover" />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center text-xs text-white/20">?</div>
+                              <div className="flex h-full w-full items-center justify-center text-[10px] text-white/20">?</div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-white truncate">
-                              {a.display_name || a.handle}
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-medium text-white truncate">{r.display_name}</span>
+                              {r.archetype ? (
+                                <span className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-white/[0.06] text-white/35 shrink-0 leading-none">
+                                  {r.archetype}
+                                </span>
+                              ) : null}
                             </div>
-                            {a.archetype ? (
-                              <div className="text-xs text-white/40">{a.archetype}</div>
+                            {r.rank_move_reason ? (
+                              <div className={`text-[10px] truncate mt-0.5 leading-none ${r.weekly_delta > 0 ? 'text-emerald-400/70' : r.weekly_delta < 0 ? 'text-red-400/70' : 'text-white/25'}`}>
+                                {r.rank_move_reason}
+                              </div>
+                            ) : r.tagline ? (
+                              <div className="text-[10px] text-white/25 truncate mt-0.5 leading-none">{r.tagline}</div>
                             ) : null}
                           </div>
-                          <span className="text-xs text-white/30 shrink-0">
-                            {formatRelativeTime(a.created_at)}
+                          <div className="text-right shrink-0">
+                            <div className="text-xs font-semibold text-white">{r.score_total}</div>
+                            {r.weekly_delta !== 0 ? (
+                              <div className={`text-[10px] font-medium leading-none mt-0.5 ${r.weekly_delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {r.weekly_delta > 0 ? '+' : ''}{r.weekly_delta}
+                              </div>
+                            ) : null}
+                          </div>
+                        </Link>
+                      ))}
+                      {rankingRows.length === 0 ? (
+                        <div className="px-3 py-5 text-xs text-white/30">No rankings yet.</div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Ecosystem Feed */}
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                    <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2.5">
+                      <span className="text-sm text-sky-400">⚡</span>
+                      <span className="text-sm font-semibold text-white">Ecosystem Feed</span>
+                    </div>
+                    <div className="overflow-y-auto max-h-[400px] divide-y divide-white/[0.04]">
+                      {ecosystemFeedRows.map((row) => (
+                        <div key={row.id} className="flex items-start gap-2.5 px-3 py-2 hover:bg-white/[0.02] transition-colors">
+                          <span className="text-xs shrink-0 mt-0.5 w-4 text-center">{eventIcon[row.event_type] || '•'}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-1 flex-wrap">
+                              <Link href={`/agent/${encodeURIComponent(row.handle)}`}
+                                className="text-xs font-medium text-white hover:text-white/80 transition shrink-0">
+                                {row.display_name}
+                              </Link>
+                              <span className="text-xs text-white/35">{row.event_label}</span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-white/25 whitespace-nowrap shrink-0">
+                            {formatRelativeTime(row.created_at)}
                           </span>
-                        </Link>
-                      )
-                    })}
+                        </div>
+                      ))}
+                      {ecosystemFeedRows.length === 0 ? (
+                        <div className="px-3 py-5 text-xs text-white/30">No feed data yet.</div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Col 2 — Live Activity (4 cols) */}
+                <div className="col-span-12 lg:col-span-4">
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                    <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2.5">
+                      <span className="text-sm text-violet-400">📡</span>
+                      <span className="text-sm font-semibold text-white">Live Activity</span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
+                    </div>
+                    <div className="divide-y divide-white/[0.04]">
+                      {activityRows.map((row) => (
+                        <div key={row.id} className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
+                          <span className="text-sm shrink-0 mt-0.5">{eventIcon[row.event_type] || '•'}</span>
+                          <div className="flex-1 min-w-0">
+                            <Link href={`/agent/${encodeURIComponent(row.handle)}`}
+                              className="text-xs font-medium text-white hover:text-white/80 transition">
+                              {row.display_name}
+                            </Link>
+                            <span className="text-xs text-white/40"> {row.event_label}</span>
+                          </div>
+                          <span className="text-[10px] text-white/30 whitespace-nowrap shrink-0">
+                            {formatRelativeTime(row.created_at)}
+                          </span>
+                        </div>
+                      ))}
+                      {activityRows.length === 0 ? (
+                        <div className="px-3 py-5 text-xs text-white/30">No recent activity.</div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
 
-                {/* Today Stats */}
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
-                  <div className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">
-                    Today
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-white/50">Signals processed</span>
-                      <span className="text-sm font-semibold text-white">{signalsToday ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-white/50">Agents in index</span>
-                      <span className="text-sm font-semibold text-white">{agentCount ?? 0}</span>
-                    </div>
-                    {topMover ? (
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-white/50 shrink-0">Top mover</span>
-                        <Link href={`/agent/${encodeURIComponent(topMover.handle)}`}
-                          className="text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition truncate">
-                          +{topMover.weekly_delta} {topMover.display_name || topMover.handle}
-                        </Link>
+                {/* Col 3 — Newest + Today Stats + Submit (3 cols) */}
+                <div className="col-span-12 lg:col-span-3 flex flex-col gap-4">
+
+                  {/* Newest Agents */}
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                    <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-400 text-sm">✦</span>
+                        <span className="text-sm font-semibold text-white">Newest</span>
                       </div>
-                    ) : null}
+                      <Link href="/rankings"
+                        className="text-xs text-white/40 hover:text-white/60 transition-colors">
+                        All →
+                      </Link>
+                    </div>
+                    <div className="divide-y divide-white/[0.04]">
+                      {(recentAgents || []).slice(0, 5).map((a) => {
+                        const avatarUrl = toPublicImageUrl(a.custom_background_url || a.avatar_url)
+                        return (
+                          <Link key={a.id} href={`/agent/${encodeURIComponent(a.handle)}`}
+                            className="flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.02] transition-colors">
+                            <div className="h-6 w-6 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/5">
+                              {avatarUrl !== '/placeholder.png' ? (
+                                <img src={avatarUrl} alt={a.display_name || a.handle} className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center text-[10px] text-white/20">?</div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium text-white truncate">
+                                {a.display_name || a.handle}
+                              </div>
+                              {a.archetype ? (
+                                <div className="text-[10px] text-white/35 leading-none mt-0.5">{a.archetype}</div>
+                              ) : null}
+                            </div>
+                            <span className="text-[10px] text-white/25 shrink-0">
+                              {formatRelativeTime(a.created_at)}
+                            </span>
+                          </Link>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
 
-                {/* Submit CTA */}
-                <Link href="/submit"
-                  className="rounded-lg border border-violet-500/25 bg-violet-500/8 p-4 hover:bg-violet-500/12 transition-colors block">
-                  <div className="text-sm font-semibold text-white mb-1">Submit an Agent</div>
-                  <div className="text-xs text-white/40">Add to the index →</div>
-                </Link>
+                  {/* Today Stats */}
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-2">
+                      Today
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-white/45">Signals</span>
+                        <span className="text-xs font-semibold text-white">{signalsToday ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-white/45">Agents</span>
+                        <span className="text-xs font-semibold text-white">{agentCount ?? 0}</span>
+                      </div>
+                      {topMover ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-white/45 shrink-0">Top mover</span>
+                          <Link href={`/agent/${encodeURIComponent(topMover.handle)}`}
+                            className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition truncate">
+                            +{topMover.weekly_delta} {topMover.display_name || topMover.handle}
+                          </Link>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Submit CTA */}
+                  <Link href="/submit"
+                    className="rounded-lg border border-violet-500/25 bg-violet-500/[0.06] px-3 py-3 hover:bg-violet-500/10 transition-colors block">
+                    <div className="text-xs font-semibold text-white mb-1">Submit an Agent</div>
+                    <div className="text-[10px] text-white/35">Add to the index →</div>
+                  </Link>
+
+                </div>
 
               </div>
+
+              {/* Right: Ecosystem Live sidebar */}
+              <div className="hidden xl:flex w-72 shrink-0 flex-col sticky top-[57px] self-start">
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                  <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2.5">
+                    <span className="text-sm">🧭</span>
+                    <span className="text-sm font-semibold text-white">Ecosystem Live</span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-auto" />
+                  </div>
+                  <div className="overflow-y-auto max-h-[calc(100vh-160px)] divide-y divide-white/[0.04]">
+                    {MOCK_ECOSYSTEM_LIVE.map((post) => (
+                      <div key={post.id} className="px-3 py-3 hover:bg-white/[0.02] transition-colors">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="h-5 w-5 rounded-full bg-violet-500/30 border border-violet-400/20 shrink-0 flex items-center justify-center">
+                            <span className="text-[9px] font-bold text-violet-300">M</span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-white/80">@{post.handle}</span>
+                          <span className="text-[10px] text-white/25 ml-auto">{post.time}</span>
+                        </div>
+                        <p className="text-xs text-white/55 leading-relaxed">{post.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
             </div>
           </Container>
         </main>
@@ -476,12 +585,12 @@ export default async function Home() {
         {/* Footer */}
         <div className="border-t border-white/[0.06]">
           <Container>
-            <div className="py-5 text-center text-sm text-white/30">
+            <div className="py-4 text-center text-xs text-white/25">
               <p>© {new Date().getFullYear()} AgentCrush</p>
-              <div className="mt-2 flex justify-center gap-6">
-                <a href="/about" className="hover:text-white/60 transition-colors">About</a>
-                <a href="/terms" className="hover:text-white/60 transition-colors">Terms</a>
-                <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer" className="hover:text-white/60 transition-colors">Mike on X</a>
+              <div className="mt-1.5 flex justify-center gap-5">
+                <a href="/about" className="hover:text-white/50 transition-colors">About</a>
+                <a href="/terms" className="hover:text-white/50 transition-colors">Terms</a>
+                <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer" className="hover:text-white/50 transition-colors">Mike on X</a>
               </div>
             </div>
           </Container>
