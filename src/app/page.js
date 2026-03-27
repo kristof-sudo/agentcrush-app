@@ -3,6 +3,18 @@ import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
 
+// CSS-only hover tooltip — no JS, no dep
+function Tip({ children, label }) {
+  return (
+    <span className="group/tip relative inline-flex items-center cursor-help">
+      {children}
+      <span className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-52 rounded border border-white/[0.12] bg-[#0d0d1e] px-2.5 py-1.5 text-[11px] leading-snug text-white/55 shadow-2xl group-hover/tip:block whitespace-normal">
+        {label}
+      </span>
+    </span>
+  )
+}
+
 function toPublicImageUrl(path) {
   if (!path) return null
   if (path.startsWith('http://') || path.startsWith('https://')) return path
@@ -240,26 +252,34 @@ export default async function Home() {
             <div className="flex items-center justify-between py-1.5">
               <div className="flex items-center gap-5 overflow-x-auto">
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[11px] text-white/35">Agents</span>
-                  <span className="text-xs font-semibold text-white">{agentCount ?? 0}</span>
+                  <Tip label="Total AI agents currently indexed on AgentCrush">
+                    <span className="text-[11px] text-white/35 underline decoration-dotted decoration-white/20">Agents</span>
+                  </Tip>
+                  <span className="text-xs font-bold text-white">{agentCount ?? 0}</span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[11px] text-white/35">Signals Today</span>
-                  <span className="text-xs font-semibold text-white">{signalsToday ?? 0}</span>
+                  <Tip label="Ecosystem events processed across all indexed agents in the last 24h (repo activity, X mentions, rank changes)">
+                    <span className="text-[11px] text-white/35 underline decoration-dotted decoration-white/20">Signals Today</span>
+                  </Tip>
+                  <span className="text-xs font-bold text-white">{signalsToday ?? 0}</span>
                 </div>
                 {topMover ? (
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[11px] text-white/35">Top Mover</span>
+                    <Tip label="Agent with the highest 7-day rank improvement this week">
+                      <span className="text-[11px] text-white/35 underline decoration-dotted decoration-white/20">Top Mover</span>
+                    </Tip>
                     <Link href={`/agent/${encodeURIComponent(topMover.handle)}`}
                       className="text-xs font-semibold text-white hover:text-white/80 transition">
                       {topMover.display_name || topMover.handle}
                     </Link>
-                    <span className="text-[11px] font-semibold text-emerald-400">+{topMover.weekly_delta}</span>
+                    <span className="text-[11px] font-bold text-emerald-400">+{topMover.weekly_delta}</span>
                   </div>
                 ) : null}
                 {newestAgent ? (
                   <div className="hidden md:flex items-center gap-1.5 shrink-0">
-                    <span className="text-[11px] text-white/35">Just Added</span>
+                    <Tip label="Most recently added agent to the index">
+                      <span className="text-[11px] text-white/35 underline decoration-dotted decoration-white/20">Just Added</span>
+                    </Tip>
                     <Link href={`/agent/${encodeURIComponent(newestAgent.handle)}`}
                       className="text-xs font-semibold text-white hover:text-white/80 transition">
                       {newestAgent.display_name || newestAgent.handle}
@@ -319,9 +339,17 @@ export default async function Home() {
                         <span className="text-xs text-emerald-400">↑</span>
                         <span className="text-xs font-semibold text-white">Rising Now</span>
                       </div>
-                      <Link href="/rankings" className="text-[10px] text-white/35 hover:text-white/55 transition-colors">
-                        View all →
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Tip label="Combined visibility score + reputation score. Higher = stronger ecosystem presence.">
+                          <span className="text-[10px] text-white/25 underline decoration-dotted decoration-white/15 cursor-help">Score</span>
+                        </Tip>
+                        <Tip label="7-day rank change. Positive = climbed positions this week.">
+                          <span className="text-[10px] text-white/25 underline decoration-dotted decoration-white/15 cursor-help">7d</span>
+                        </Tip>
+                        <Link href="/rankings" className="text-[10px] text-white/35 hover:text-white/55 transition-colors">
+                          All →
+                        </Link>
+                      </div>
                     </div>
                     <div className="divide-y divide-white/[0.04]">
                       {rankingRows.map((r) => (
@@ -478,18 +506,22 @@ export default async function Home() {
                     <div className="text-[9px] font-semibold uppercase tracking-widest text-white/25 mb-2">Today</div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-white/40">Signals processed</span>
-                        <span className="text-xs font-semibold text-white">{signalsToday ?? 0}</span>
+                        <Tip label="Ecosystem events processed across all agents today">
+                          <span className="text-[11px] text-white/40 underline decoration-dotted decoration-white/15">Signals</span>
+                        </Tip>
+                        <span className="text-xs font-bold text-white tabular-nums">{signalsToday ?? 0}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-white/40">Agents in index</span>
-                        <span className="text-xs font-semibold text-white">{agentCount ?? 0}</span>
+                        <span className="text-[11px] text-white/40">Agents tracked</span>
+                        <span className="text-xs font-bold text-white tabular-nums">{agentCount ?? 0}</span>
                       </div>
                       {topMover ? (
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[11px] text-white/40 shrink-0">Top mover</span>
+                          <Tip label="Agent with most rank positions gained this week">
+                            <span className="text-[11px] text-white/40 underline decoration-dotted decoration-white/15 shrink-0">Top mover</span>
+                          </Tip>
                           <Link href={`/agent/${encodeURIComponent(topMover.handle)}`}
-                            className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition truncate">
+                            className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition truncate">
                             +{topMover.weekly_delta} {topMover.display_name || topMover.handle}
                           </Link>
                         </div>
