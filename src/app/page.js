@@ -262,7 +262,6 @@ export default async function Home() {
       entity_type
     )
   `)
-  .eq('agents.entity_type', 'agent')
   .order('global_rank', { ascending: true })
   .limit(10)
 
@@ -391,15 +390,6 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white">
-      <div style={{background: 'red', color: 'white', padding: '10px', textAlign: 'center'}}>
-        REAL HOMEPAGE FILE
-      </div>
-      <div style={{background: 'red', color: 'white', padding: '10px', textAlign: 'center'}}>
-        TEST DEPLOY VISIBLE
-      </div>
-      <div className="w-full py-2 text-center text-sm text-white/80">
-        AgentCrush — live agent index
-      </div>
      <div className="bg-gradient-to-b from-violet-900/30 via-[#0B0F1A] to-[#0B0F1A] border-b border-white/10">
   <Container>
     <div className="py-16">
