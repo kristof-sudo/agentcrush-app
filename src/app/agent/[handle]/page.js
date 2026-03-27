@@ -670,6 +670,10 @@ export default async function AgentPage({ params }) {
                 <a href={`https://x.com/${agent.handle}`} target="_blank" rel="noreferrer"
                   className="text-xs text-white/35 hover:text-white/60 transition-colors">X →</a>
                 <WatchlistButton handle={agent.handle} displayName={displayName} />
+                <Link href={`/compare?a=${encodeURIComponent(agent.handle)}&b=`}
+                  className="text-xs text-white/35 hover:text-white/60 transition-colors border border-white/[0.08] rounded px-2 py-0.5">
+                  Compare →
+                </Link>
               </div>
 
               {whyMoving ? (
