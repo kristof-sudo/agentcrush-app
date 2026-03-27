@@ -287,7 +287,7 @@ export default async function Home() {
   const ecosystemFeedRows = allActivityRows
 
   return (
-    <div className="min-h-screen bg-[#08080f]">
+    <div className="min-h-screen bg-[#08080f] overflow-x-hidden">
       <div className="fixed inset-0 bg-gradient-to-b from-[#0c0c1a] via-[#08080f] to-[#0a0812] pointer-events-none" />
 
       <div className="relative">
@@ -350,8 +350,9 @@ export default async function Home() {
                 alt="AgentCrush"
                 width={0}
                 height={0}
-                sizes="(max-width: 768px) 120px, 160px"
+                sizes="160px"
                 className="h-10 w-auto shrink-0"
+                style={{ maxWidth: '160px' }}
                 priority
               />
               <div className="h-7 w-px bg-white/[0.08] shrink-0" />
@@ -396,7 +397,7 @@ export default async function Home() {
             <div className="py-3 flex gap-3 items-start">
 
               {/* Left: 3-column main grid */}
-              <div className="flex-1 min-w-0 grid grid-cols-12 gap-3" style={{ alignItems: 'stretch' }}>
+              <div className="flex-1 min-w-0 grid grid-cols-12 gap-3 min-w-0" style={{ alignItems: 'stretch' }}>
 
                 {/* Col 1 — Rising Now + Ecosystem Feed (5 cols) */}
                 <div className="col-span-12 lg:col-span-5 flex flex-col gap-3">
@@ -635,8 +636,8 @@ export default async function Home() {
 
               </div>
 
-              {/* Right: Ecosystem Live sidebar */}
-              <div className="hidden xl:flex w-64 shrink-0 flex-col sticky top-[53px] self-start">
+              {/* Right: Ecosystem Live sidebar — visible from lg */}
+              <div className="hidden lg:flex w-60 shrink-0 flex-col sticky top-[53px] self-start">
                 <div className="flex flex-col rounded-lg border border-white/[0.06] bg-white/[0.02]">
                   <div className="flex items-center gap-1.5 border-b border-white/[0.06] px-3 py-2 shrink-0">
                     <span className="text-xs">🧭</span>
