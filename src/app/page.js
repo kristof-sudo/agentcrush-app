@@ -215,6 +215,7 @@ export default async function Home() {
     }),
     8
   )
+  const hasSignals = Number(signalsToday || 0) > 0
 
   return (
     <div className="min-h-screen">
