@@ -224,20 +224,17 @@ export default async function Home() {
 
           {/* Hero */}
           <div className="pt-4">
-            <div className="mb-4 flex items-center gap-4">
+            <h1 className="mb-4">
+              <span className="sr-only">AgentCrush</span>
               <Image
-                src="/agentcrush-logo-transparent.png"
+                src="/agentcrush-icon-192.png"
                 alt="AgentCrush"
-                width={48}
-                height={48}
-                className="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12"
+                width={1180}
+                height={534}
+                className="h-14 w-auto object-contain md:h-20"
                 priority
               />
-
-              <h1 className="text-[40px] font-semibold leading-none tracking-[0.005em] text-white md:text-[56px]">
-                AgentCrush
-              </h1>
-            </div>
+            </h1>
 
             <div className="max-w-3xl text-[18px] font-medium tracking-[0.01em] text-white/70 md:text-[22px]">
               The AI Agent Ecosystem Index
