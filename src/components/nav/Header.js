@@ -23,7 +23,7 @@ export default async function Header() {
   const trending = await getTrendingAgent()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.10] bg-[#0B0F1A]/80 backdrop-blur-xl shadow-[0_1px_0_0_rgba(91,108,255,0.10)]">
+    <header className="sticky top-0 z-50 border-b border-white/[0.12] bg-[#0B1020]/78 backdrop-blur-xl shadow-[0_1px_0_0_rgba(103,116,255,0.14)]">
       <Container>
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-4 md:py-5">
 
@@ -43,22 +43,22 @@ export default async function Header() {
           </Link>
 
           {/* Nav links */}
-          <nav className="hidden items-center justify-center gap-8 sm:flex">
+          <nav className="hidden items-center justify-center gap-10 sm:flex">
             <Link
               href="/rankings"
-              className="text-[15px] font-semibold tracking-[0.02em] text-white/72 transition hover:text-white"
+              className="text-[16px] font-semibold tracking-[0.01em] text-white/82 transition hover:text-white"
             >
               Rankings
             </Link>
             <Link
               href="/categories"
-              className="text-[15px] font-semibold tracking-[0.02em] text-white/72 transition hover:text-white"
+              className="text-[16px] font-semibold tracking-[0.01em] text-white/82 transition hover:text-white"
             >
               Categories
             </Link>
             <Link
               href="/submit"
-              className="text-[15px] font-semibold tracking-[0.02em] text-white/72 transition hover:text-white"
+              className="text-[16px] font-semibold tracking-[0.01em] text-white/82 transition hover:text-white"
             >
               Submit
             </Link>
@@ -80,8 +80,8 @@ export default async function Header() {
 
           {/* Mobile menu links */}
           <div className="flex items-center gap-3 sm:hidden">
-            <Link href="/rankings" className="text-xs font-semibold tracking-[0.02em] text-white/72 transition hover:text-white">Rankings</Link>
-            <Link href="/categories" className="text-xs font-semibold tracking-[0.02em] text-white/72 transition hover:text-white">Categories</Link>
+            <Link href="/rankings" className="text-sm font-semibold tracking-[0.01em] text-white/82 transition hover:text-white">Rankings</Link>
+            <Link href="/categories" className="text-sm font-semibold tracking-[0.01em] text-white/82 transition hover:text-white">Categories</Link>
           </div>
 
         </div>

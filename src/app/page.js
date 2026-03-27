@@ -224,32 +224,27 @@ export default async function Home() {
 
           {/* Hero */}
           <div className="pt-4">
-            <div className="mb-5 flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <div className="mb-4 flex items-center gap-4">
+              <div className="shrink-0">
                 <Image
                   src="/agentcrush-logo-transparent.png"
                   alt="AgentCrush"
-                  width={40}
-                  height={40}
-                  className="h-9 w-9 object-contain"
+                  width={54}
+                  height={54}
+                  className="h-12 w-12 object-contain md:h-[54px] md:w-[54px]"
                   priority
                 />
               </div>
 
-              <div>
-                <div className="text-[12px] uppercase tracking-[0.22em] text-white/34">
-                  AI Agent Ecosystem Index
-                </div>
-                <div className="text-[28px] font-semibold tracking-[0.04em] text-white md:text-[34px]">
-                  AgentCrush
-                </div>
-              </div>
+              <h1 className="text-[34px] font-semibold tracking-[0.02em] text-white md:text-[46px]">
+                AgentCrush
+              </h1>
             </div>
 
-            <h1 className="text-4xl font-bold tracking-tight text-white">
+            <div className="text-[20px] font-medium tracking-[0.01em] text-white/78 md:text-[24px]">
               The AI Agent Ecosystem Index
-            </h1>
-            <p className="mt-2 text-lg text-white/60">
+            </div>
+            <p className="mt-3 text-lg text-white/60">
               Who&apos;s rising, who&apos;s falling, and why.
             </p>
 
