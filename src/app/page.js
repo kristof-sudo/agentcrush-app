@@ -139,6 +139,7 @@ export default async function Home() {
     { data: newestAgent },
     { count: signalsToday },
     { count: agentCount },
+    { data: archetypeRows },
   ] = await Promise.all([
     supabase
       .from('rankings')
@@ -184,6 +185,11 @@ export default async function Home() {
     supabase
       .from('agents')
       .select('id', { count: 'exact', head: true }),
+
+    supabase
+      .from('agents')
+      .select('archetype')
+      .not('archetype', 'is', null),
   ])
 
   const rankingAgentIds = (topRankings || []).map((r) => r.agent?.id).filter(Boolean)
@@ -215,6 +221,14 @@ export default async function Home() {
       latest_event_type: trending?.latest_event_type || null,
     }
   })
+
+  const archetypeCounts = {}
+  for (const r of (archetypeRows || [])) {
+    if (r.archetype) archetypeCounts[r.archetype] = (archetypeCounts[r.archetype] || 0) + 1
+  }
+  const topSectors = Object.entries(archetypeCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
 
   const eventAgentIds = [...new Set((events || []).map((e) => e.agent_id).filter(Boolean))]
   const { data: eventAgents } = eventAgentIds.length
@@ -320,6 +334,29 @@ export default async function Home() {
             </div>
           </Container>
         </div>
+
+        {/* Sectors bar */}
+        {topSectors.length > 0 ? (
+          <div className="border-b border-white/[0.06] overflow-x-auto">
+            <Container>
+              <div className="flex items-center gap-2 py-2 flex-nowrap">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-white/20 shrink-0 pr-1">
+                  Sectors
+                </span>
+                {topSectors.map(([archetype, count]) => (
+                  <Link
+                    key={archetype}
+                    href={`/categories?type=${encodeURIComponent(archetype)}`}
+                    className="flex items-center gap-1.5 rounded border border-white/[0.07] bg-white/[0.02] px-2 py-1 text-[11px] whitespace-nowrap hover:bg-white/[0.06] hover:border-white/[0.12] transition-colors shrink-0"
+                  >
+                    <span className="capitalize text-white/55">{archetype}</span>
+                    <span className="text-white/20 text-[10px]">{count}</span>
+                  </Link>
+                ))}
+              </div>
+            </Container>
+          </div>
+        ) : null}
 
         {/* Main dashboard */}
         <main>
@@ -531,9 +568,14 @@ export default async function Home() {
 
                   {/* Submit CTA */}
                   <Link href="/submit"
-                    className="rounded-lg border border-violet-500/30 bg-violet-500/[0.07] px-3 py-2.5 hover:bg-violet-500/[0.12] transition-colors block">
-                    <div className="text-xs font-semibold text-white">Submit an Agent</div>
-                    <div className="text-[10px] text-white/35 mt-0.5">Add your agent to the index →</div>
+                    className="rounded-lg border border-violet-500/40 bg-violet-500/[0.1] px-3 py-3 hover:bg-violet-500/[0.16] hover:border-violet-500/60 transition-colors block group">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold text-violet-200">Submit an Agent</div>
+                      <span className="text-violet-400 group-hover:translate-x-0.5 transition-transform text-sm">→</span>
+                    </div>
+                    <div className="text-[10px] text-white/40 mt-1">
+                      List your agent in the ecosystem index. Free to submit.
+                    </div>
                   </Link>
 
                 </div>
