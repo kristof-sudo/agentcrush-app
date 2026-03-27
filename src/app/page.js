@@ -124,6 +124,20 @@ function dedupeRows(rows = [], limit = 8) {
   return out
 }
 
+// Lightweight signal tag derived from event_type — no backend change needed
+const REASON_TAGS = {
+  launch_buzz:           { label: 'launch',     cls: 'bg-violet-500/15 text-violet-300/80 border-violet-500/25' },
+  audience_spike:        { label: 'trending',   cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
+  repo_star_growth:      { label: 'repo spike', cls: 'bg-yellow-500/15 text-yellow-300/80 border-yellow-500/25' },
+  repo_release:          { label: 'release',    cls: 'bg-blue-500/15 text-blue-300/80 border-blue-500/25' },
+  collab_win:            { label: 'collab',     cls: 'bg-sky-500/15 text-sky-300/80 border-sky-500/25' },
+  ranking_jump:          { label: 'rising',     cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
+  dev_activity:          { label: 'dev active', cls: 'bg-slate-500/15 text-slate-300/80 border-slate-500/25' },
+  ecosystem_integration: { label: 'integration',cls: 'bg-cyan-500/15 text-cyan-300/80 border-cyan-500/25' },
+  canon_scene:           { label: 'milestone',  cls: 'bg-indigo-500/15 text-indigo-300/80 border-indigo-500/25' },
+  timeline_ping:         { label: 'mentions',   cls: 'bg-pink-500/15 text-pink-300/80 border-pink-500/25' },
+}
+
 const eventIcon = {
   audience_spike: '📡', ranking_jump: '📈', timeline_ping: '💬', canon_scene: '🌀',
   collab_win: '🤝', launch_buzz: '🚀', daily_boost: '✨', repo_star_growth: '⭐',
@@ -304,7 +318,7 @@ export default async function Home() {
                       className="text-xs font-semibold text-white hover:text-white/80 transition">
                       {topMover.display_name || topMover.handle}
                     </Link>
-                    <span className="text-[11px] font-bold text-emerald-400">+{topMover.weekly_delta}</span>
+                    <span className="text-[11px] font-bold text-emerald-400">+{topMover.weekly_delta} spots</span>
                   </div>
                 ) : null}
                 {newestAgent ? (
@@ -429,7 +443,11 @@ export default async function Home() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 min-w-0">
                               <span className="text-xs font-medium text-white truncate">{r.display_name}</span>
-                              {r.archetype ? (
+                              {r.latest_event_type && REASON_TAGS[r.latest_event_type] ? (
+                                <span className={`hidden sm:inline text-[9px] px-1.5 py-0.5 rounded border shrink-0 leading-none font-medium ${REASON_TAGS[r.latest_event_type].cls}`}>
+                                  {REASON_TAGS[r.latest_event_type].label}
+                                </span>
+                              ) : r.archetype ? (
                                 <span className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-white/[0.05] text-white/30 shrink-0 leading-none">
                                   {r.archetype}
                                 </span>
