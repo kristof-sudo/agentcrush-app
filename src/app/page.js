@@ -118,6 +118,10 @@ function formatImpactText(v, r) {
   return parts.join(' • ')
 }
 
+function formatSignedValue(value) {
+  return value > 0 ? `+${value}` : `${value}`
+}
+
 function readMetadataNumber(metadata, keys = []) {
   for (const key of keys) {
     const value = metadata?.[key]
@@ -142,7 +146,6 @@ function readMetadataText(metadata, keys = []) {
 function formatEventSummary(event) {
   const metadata = event?.metadata || {}
   const visibilityDelta = Number(event?.delta_visibility || 0)
-  const reputationDelta = Number(event?.delta_reputation || 0)
   const stars = readMetadataNumber(metadata, ['stars_gained', 'star_gain', 'stars', 'github_stars'])
   const mentions = readMetadataNumber(metadata, ['mention_count', 'mentions', 'post_count', 'x_posts'])
   const rankJump = readMetadataNumber(metadata, ['rank_jump', 'positions_gained', 'rank_delta'])
@@ -158,61 +161,71 @@ function formatEventSummary(event) {
       return 'published a new release'
     case 'audience_spike':
       if (mentions) return `mentioned in ${mentions} recent X posts`
-      if (visibilityDelta > 0) return `picked up a visibility spike of ${visibilityDelta}`
-      return 'picked up a new audience spike'
+      if (visibilityDelta > 0) return `visibility spike ${formatSignedValue(visibilityDelta)}`
+      return 'audience spike detected'
     case 'ranking_jump':
       if (rankJump) return `climbed ${rankJump} spots in the rankings`
       return 'moved up in the rankings'
     case 'timeline_ping':
       if (mentions) return `surfaced in ${mentions} ecosystem mentions`
-      return 'showed up across the ecosystem timeline'
+      return 'mentioned in multiple ecosystem events'
     case 'launch_buzz':
       if (mentions) return `generated ${mentions} launch mentions`
-      return 'is getting fresh launch attention'
+      return 'launch attention detected'
     case 'collab_win':
-      if (integrationName) return `landed a collaboration with ${integrationName}`
-      return 'landed a collaboration signal'
+      if (integrationName) return `new collaboration detected with ${integrationName}`
+      return 'new collaboration detected'
     case 'daily_boost':
-      if (visibilityDelta > 0) return `gained ${visibilityDelta} visibility in the latest cycle`
-      return 'picked up fresh daily activity'
+      if (visibilityDelta > 0) return `visibility increased by ${formatSignedValue(visibilityDelta)}`
+      return 'fresh activity detected'
     case 'canon_scene':
-      return 'was part of a new ecosystem development'
+      return 'new ecosystem event detected'
     case 'ecosystem_integration':
-      if (integrationName) return `added an ecosystem integration with ${integrationName}`
-      return 'added a new ecosystem integration'
+      if (integrationName) return `new integration detected with ${integrationName}`
+      return 'new ecosystem integration detected'
     case 'dev_activity':
-      return 'showed new development activity'
+      return 'new development activity detected'
     default:
       return formatEventLabel(event?.event_type)
   }
 }
 
 function formatEventWhyItMatters(event) {
-  const impact = formatImpactText(event?.delta_visibility, event?.delta_reputation)
+  const visibilityDelta = Number(event?.delta_visibility || 0)
+  const reputationDelta = Number(event?.delta_reputation || 0)
+  const parts = []
 
-  if (impact !== 'No score change') {
-    return impact
+  if (visibilityDelta !== 0) {
+    parts.push(`visibility increased by ${formatSignedValue(visibilityDelta)}`)
+  }
+
+  if (reputationDelta !== 0) {
+    parts.push(`reputation changed by ${formatSignedValue(reputationDelta)}`)
+  }
+
+  if (parts.length > 0) {
+    return parts.join(' • ')
   }
 
   switch (event?.event_type) {
     case 'repo_release':
-      return 'Signals active shipping and recent product progress'
+      return 'active shipping signal'
     case 'repo_star_growth':
-      return 'Signals rising developer attention and distribution'
+      return 'developer attention increased'
     case 'audience_spike':
     case 'timeline_ping':
     case 'launch_buzz':
-      return 'Signals broader awareness and discovery momentum'
+      return 'awareness increased'
     case 'ranking_jump':
-      return 'Signals improving standing versus other tracked agents'
+      return 'ranking momentum improved'
     case 'collab_win':
     case 'ecosystem_integration':
-      return 'Signals stronger ecosystem positioning'
+      return 'ecosystem position strengthened'
     case 'dev_activity':
     case 'daily_boost':
-      return 'Signals fresh execution and current momentum'
+      return 'fresh execution signal'
     default:
-      return 'Signals a meaningful change in ecosystem activity'
+      return 'activity changed'
   }
 }
 
