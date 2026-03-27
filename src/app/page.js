@@ -218,33 +218,33 @@ export default async function Home() {
   const hasSignals = Number(signalsToday || 0) > 0
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(91,108,255,0.18),transparent_34%),radial-gradient(circle_at_18%_18%,rgba(129,140,248,0.16),transparent_24%),linear-gradient(180deg,#0B1020_0%,#0B0F1A_42%,#0B0F1A_100%)]">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(104,92,255,0.24),transparent_34%),radial-gradient(circle_at_18%_16%,rgba(167,139,250,0.18),transparent_26%),radial-gradient(circle_at_78%_12%,rgba(236,72,153,0.10),transparent_20%),linear-gradient(180deg,#0B1022_0%,#0B0E1B_40%,#090B14_100%)]">
       <Container>
         <div className="py-10 space-y-10">
 
           {/* Hero */}
           <div className="pt-4">
-            <div className="mb-4 flex items-center gap-4">
+            <div className="mb-4 flex items-center gap-4 md:gap-5">
               <div className="shrink-0">
                 <Image
                   src="/agentcrush-logo-transparent.png"
                   alt="AgentCrush"
                   width={54}
                   height={54}
-                  className="h-12 w-12 object-contain md:h-[54px] md:w-[54px]"
+                  className="h-12 w-12 object-contain md:h-[56px] md:w-[56px]"
                   priority
                 />
               </div>
 
-              <h1 className="text-[34px] font-semibold tracking-[0.02em] text-white md:text-[46px]">
+              <h1 className="text-[36px] font-semibold tracking-[0.01em] text-white md:text-[52px]">
                 AgentCrush
               </h1>
             </div>
 
-            <div className="text-[20px] font-medium tracking-[0.01em] text-white/78 md:text-[24px]">
+            <div className="max-w-3xl text-[18px] font-medium tracking-[0.01em] text-white/70 md:text-[22px]">
               The AI Agent Ecosystem Index
             </div>
-            <p className="mt-3 text-lg text-white/60">
+            <p className="mt-3 text-lg text-white/58">
               Who&apos;s rising, who&apos;s falling, and why.
             </p>
 
