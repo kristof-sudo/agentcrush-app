@@ -161,7 +161,6 @@ function formatEventSummary(event) {
       return 'published a new release'
     case 'audience_spike':
       if (mentions) return `mentioned in ${mentions} recent X posts`
-      if (visibilityDelta > 0) return `visibility spike ${formatSignedValue(visibilityDelta)}`
       return 'audience spike detected'
     case 'ranking_jump':
       if (rankJump) return `climbed ${rankJump} spots in the rankings`
@@ -176,56 +175,45 @@ function formatEventSummary(event) {
       if (integrationName) return `new collaboration detected with ${integrationName}`
       return 'new collaboration detected'
     case 'daily_boost':
-      if (visibilityDelta > 0) return `visibility increased by ${formatSignedValue(visibilityDelta)}`
-      return 'fresh activity detected'
+      return 'picked up fresh momentum'
     case 'canon_scene':
-      return 'new ecosystem event detected'
+      return 'ecosystem milestone detected'
     case 'ecosystem_integration':
-      if (integrationName) return `new integration detected with ${integrationName}`
-      return 'new ecosystem integration detected'
+      if (integrationName) return `new integration with ${integrationName}`
+      return 'new ecosystem integration'
     case 'dev_activity':
-      return 'new development activity detected'
+      return 'new development activity'
     default:
       return formatEventLabel(event?.event_type)
   }
 }
 
 function formatEventWhyItMatters(event) {
-  const visibilityDelta = Number(event?.delta_visibility || 0)
-  const reputationDelta = Number(event?.delta_reputation || 0)
-  const parts = []
-
-  if (visibilityDelta !== 0) {
-    parts.push(`visibility increased by ${formatSignedValue(visibilityDelta)}`)
-  }
-
-  if (reputationDelta !== 0) {
-    parts.push(`reputation changed by ${formatSignedValue(reputationDelta)}`)
-  }
-
-  if (parts.length > 0) {
-    return parts.join(' • ')
-  }
-
   switch (event?.event_type) {
     case 'repo_release':
-      return 'active shipping signal'
+      return 'shipping signal — actively maintained'
     case 'repo_star_growth':
-      return 'developer attention increased'
+      return 'developer interest rising'
     case 'audience_spike':
+      return 'broader audience discovering this agent'
     case 'timeline_ping':
+      return 'ecosystem is talking about this'
     case 'launch_buzz':
-      return 'awareness increased'
+      return 'launch generating real attention'
     case 'ranking_jump':
-      return 'ranking momentum improved'
+      return 'rising in the rankings'
     case 'collab_win':
-    case 'ecosystem_integration':
       return 'ecosystem position strengthened'
+    case 'ecosystem_integration':
+      return 'expanding ecosystem reach'
     case 'dev_activity':
+      return 'active development underway'
     case 'daily_boost':
-      return 'fresh execution signal'
+      return 'momentum building'
+    case 'canon_scene':
+      return 'notable ecosystem moment'
     default:
-      return 'activity changed'
+      return 'ecosystem signal detected'
   }
 }
 
