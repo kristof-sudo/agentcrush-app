@@ -662,7 +662,7 @@ export default async function AgentPage({ params }) {
                   {ecosystemCategories.map((item) => (
                     <Link
                       key={`${item.category_group}-${item.slug}`}
-                      href={`/categories/${item.slug}`}
+                      href={`/ecosystem/${encodeURIComponent(item.name)}`}
                       className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
                     >
                       {item.name}
