@@ -39,8 +39,8 @@ export default async function Header() {
               width={0}
               height={0}
               sizes="160px"
-              className="h-7 w-auto"
-              style={{ maxWidth: '160px' }}
+              className="h-9 w-auto"
+              style={{ maxWidth: '200px' }}
               priority
             />
           </Link>

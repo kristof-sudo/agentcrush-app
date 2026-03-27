@@ -86,7 +86,7 @@ export default function RankingTable({ rows = [] }) {
                   className="hover:bg-white/[0.025] transition-colors group">
 
                   {/* Rank + trend arrow */}
-                  <td className="px-3 py-2 align-middle">
+                  <td className="px-3 py-1.5 align-middle">
                     <div className="flex items-center gap-1">
                       <span className={`text-xs font-bold tabular-nums w-5 text-right ${rankBadgeStyle(r.global_rank)}`}>
                         {r.global_rank}
@@ -96,7 +96,7 @@ export default function RankingTable({ rows = [] }) {
                   </td>
 
                   {/* Agent: avatar + name + tags + move reason on hover */}
-                  <td className="px-3 py-2 align-middle">
+                  <td className="px-3 py-1.5 align-middle">
                     <Link href={`/agent/${encodeURIComponent(r.handle)}`}
                       className="flex items-center gap-2.5">
                       <div className={`h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] flex items-center justify-center ${!r.avatar_url || r.avatar_url === '/placeholder.png' ? avatarColor(r.handle) : 'bg-white/[0.04]'}`}>
@@ -131,27 +131,27 @@ export default function RankingTable({ rows = [] }) {
                     </Link>
                   </td>
 
-                  {/* Score */}
-                  <td className="px-3 py-2 align-middle text-right">
-                    <span className={`text-xs font-bold tabular-nums ${scoreColor(r.score_total || 0)}`}>
+                  {/* Score — dimmed, delta is primary signal */}
+                  <td className="px-3 py-1.5 align-middle text-right">
+                    <span className={`text-[11px] font-medium tabular-nums ${scoreColor(r.score_total || 0)}`}>
                       {r.score_total || 0}
                     </span>
                   </td>
 
-                  {/* 7d delta */}
-                  <td className="px-3 py-2 align-middle text-center">
-                    <span className={`text-xs font-semibold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
+                  {/* 7d delta — emphasized */}
+                  <td className="px-3 py-1.5 align-middle text-center">
+                    <span className={`text-xs font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
                       {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '—'}
                     </span>
                   </td>
 
                   {/* Visibility */}
-                  <td className="px-3 py-2 align-middle text-right hidden lg:table-cell">
+                  <td className="px-3 py-1.5 align-middle text-right hidden lg:table-cell">
                     <span className="text-[11px] font-medium text-white/50 tabular-nums">{r.visibility_score ?? '—'}</span>
                   </td>
 
                   {/* Reputation */}
-                  <td className="px-3 py-2 align-middle text-right hidden lg:table-cell">
+                  <td className="px-3 py-1.5 align-middle text-right hidden lg:table-cell">
                     <span className="text-[11px] font-medium text-white/50 tabular-nums">{r.reputation_score ?? '—'}</span>
                   </td>
                 </tr>
