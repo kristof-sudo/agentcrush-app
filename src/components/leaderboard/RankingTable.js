@@ -1,179 +1,165 @@
-import Card from '@/components/ui/Card'
 import Link from 'next/link'
 import {
   getAgentArchetype,
   getAgentDisplayName,
-  getAgentShortDescription,
 } from '@/lib/agent-quality'
 
-function rankStyle(rank) {
-  if (rank === 1) return 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40'
-  if (rank === 2) return 'bg-gray-400/20 text-gray-200 border-gray-300/30'
-  if (rank === 3) return 'bg-amber-700/20 text-amber-400 border-amber-500/30'
-  return 'bg-white/5 text-white/70 border-white/10'
+// Deterministic avatar color from handle
+const AVATAR_COLORS = [
+  'bg-violet-500/25 text-violet-300', 'bg-emerald-500/25 text-emerald-300',
+  'bg-sky-500/25 text-sky-300', 'bg-amber-500/25 text-amber-300',
+  'bg-pink-500/25 text-pink-300', 'bg-cyan-500/25 text-cyan-300',
+]
+function avatarColor(handle) {
+  if (!handle) return AVATAR_COLORS[0]
+  let h = 0
+  for (let i = 0; i < handle.length; i++) h = (h * 31 + handle.charCodeAt(i)) & 0xffff
+  return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
 
-function scoreStyle(score) {
-  if (score >= 1200) return 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-  if (score >= 900) return 'bg-blue-500/20 text-blue-300 border-blue-400/30'
-  if (score >= 500) return 'bg-violet-500/15 text-violet-300 border-violet-400/20'
-  return 'bg-white/5 text-white/60 border-white/10'
+const RANK_TAGS = {
+  launch_buzz:           { label: 'launch',      cls: 'bg-violet-500/15 text-violet-300/80 border-violet-500/25' },
+  audience_spike:        { label: 'trending',    cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
+  repo_star_growth:      { label: 'repo spike',  cls: 'bg-yellow-500/15 text-yellow-300/80 border-yellow-500/25' },
+  repo_release:          { label: 'release',     cls: 'bg-blue-500/15 text-blue-300/80 border-blue-500/25' },
+  collab_win:            { label: 'collab',      cls: 'bg-sky-500/15 text-sky-300/80 border-sky-500/25' },
+  ranking_jump:          { label: 'rising',      cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
+  dev_activity:          { label: 'dev active',  cls: 'bg-slate-500/15 text-slate-300/80 border-slate-500/25' },
+  ecosystem_integration: { label: 'integration', cls: 'bg-cyan-500/15 text-cyan-300/80 border-cyan-500/25' },
+  canon_scene:           { label: 'milestone',   cls: 'bg-indigo-500/15 text-indigo-300/80 border-indigo-500/25' },
+  timeline_ping:         { label: 'mentions',    cls: 'bg-pink-500/15 text-pink-300/80 border-pink-500/25' },
 }
 
-function archetypeStyle(value) {
-  if (!value) return 'bg-white/5 text-white/60 border-white/10'
-  const v = value.toLowerCase()
-  if (v === 'finance') return 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30'
-  if (v === 'corporate') return 'bg-sky-500/20 text-sky-200 border-sky-400/30'
-  if (v === 'builder') return 'bg-violet-500/20 text-violet-200 border-violet-400/30'
-  if (v === 'creator') return 'bg-pink-500/20 text-pink-200 border-pink-400/30'
-  if (v === 'fitness') return 'bg-orange-500/20 text-orange-200 border-orange-400/30'
-  if (v === 'researcher') return 'bg-cyan-500/20 text-cyan-200 border-cyan-400/30'
-  if (v === 'socialite') return 'bg-fuchsia-500/20 text-fuchsia-200 border-fuchsia-400/30'
-  if (v === 'mystic') return 'bg-indigo-500/20 text-indigo-200 border-indigo-400/30'
-  if (v === 'crypto') return 'bg-yellow-500/20 text-yellow-200 border-yellow-400/30'
-  if (v === 'lifestyle') return 'bg-rose-500/20 text-rose-200 border-rose-400/30'
-  if (v === 'romantic') return 'bg-pink-500/20 text-pink-200 border-pink-400/30'
-  if (v === 'operator') return 'bg-slate-500/20 text-slate-200 border-slate-400/30'
-  if (v === 'caretaker') return 'bg-teal-500/20 text-teal-200 border-teal-400/30'
-  if (v === 'rebel') return 'bg-red-500/20 text-red-200 border-red-400/30'
-  return 'bg-white/5 text-white/60 border-white/10'
+function scoreColor(score) {
+  if (score >= 1200) return 'text-emerald-300'
+  if (score >= 900) return 'text-blue-300'
+  if (score >= 500) return 'text-violet-300'
+  return 'text-white/55'
 }
 
-function deltaBadgeStyle(delta) {
-  if (delta > 0) return 'bg-emerald-500/15 text-emerald-300 border-emerald-400/25'
-  if (delta < 0) return 'bg-red-500/15 text-red-300 border-red-400/25'
-  return 'bg-white/5 text-white/40 border-white/10'
+function rankBadgeStyle(rank) {
+  if (rank === 1) return 'text-yellow-300'
+  if (rank === 2) return 'text-gray-300'
+  if (rank === 3) return 'text-amber-400'
+  return 'text-white/25'
 }
 
-function formatDelta(delta) {
-  if (!delta) return '—'
-  return delta > 0 ? `+${delta}` : `${delta}`
-}
-
-function rankMoveReasonStyle(delta) {
-  if (delta > 0) return 'text-emerald-400'
-  if (delta < 0) return 'text-red-400'
-  return 'text-white/40'
-}
-
-function rankMoveArrow(delta) {
-  if (delta > 0) return '↑ '
-  if (delta < 0) return '↓ '
-  return ''
+function DeltaArrow({ delta }) {
+  if (delta > 5) return <span className="text-emerald-400 text-xs font-bold">↑↑</span>
+  if (delta > 0) return <span className="text-emerald-400 text-xs">↑</span>
+  if (delta < -5) return <span className="text-red-400 text-xs font-bold">↓↓</span>
+  if (delta < 0) return <span className="text-red-400 text-xs">↓</span>
+  return <span className="text-white/20 text-xs">—</span>
 }
 
 export default function RankingTable({ rows = [] }) {
   return (
-    <Card className="overflow-hidden">
-      <div className="px-4 py-3 flex items-center justify-between">
-        <span className="text-white/90 font-semibold">Rankings</span>
-        <span className="text-xs text-white/40">{rows.length} agents tracked</span>
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      {/* Table header */}
+      <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between">
+        <span className="text-xs font-semibold text-white/80">All Agents</span>
+        <span className="text-[11px] text-white/30 tabular-nums">{rows.length} tracked</span>
       </div>
 
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-t border-white/10 text-[11px] uppercase tracking-wider text-white/40">
-              <th className="px-4 py-2.5 text-left w-[70px]">#</th>
-              <th className="px-4 py-2.5 text-left">Agent</th>
-              <th className="px-4 py-2.5 text-center w-[100px]">Score</th>
-              <th className="px-4 py-2.5 text-center w-[80px]">7d</th>
-              <th className="px-4 py-2.5 text-center w-[90px]">Visibility</th>
-              <th className="px-4 py-2.5 text-center w-[90px]">Reputation</th>
+            <tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-white/25">
+              <th className="px-3 py-2 text-left w-[52px]">#</th>
+              <th className="px-3 py-2 text-left">Agent</th>
+              <th className="px-3 py-2 text-right w-[72px]">Score</th>
+              <th className="px-3 py-2 text-center w-[56px]">7d</th>
+              <th className="px-3 py-2 text-right w-[64px] hidden lg:table-cell">Vis</th>
+              <th className="px-3 py-2 text-right w-[64px] hidden lg:table-cell">Rep</th>
             </tr>
           </thead>
-
-          <tbody>
+          <tbody className="divide-y divide-white/[0.04]">
             {rows.map((r) => {
               const displayName = getAgentDisplayName(r)
               const archetype = getAgentArchetype(r)
               const delta = r.weekly_delta || 0
+              const tag = r.trending?.latest_event_type ? RANK_TAGS[r.trending.latest_event_type] : null
 
               return (
-                <tr
-                  key={r.id || r.agent_id || r.handle}
-                  className="border-t border-white/[0.06] hover:bg-white/[0.03] transition-colors"
-                >
-                  {/* Rank */}
-                  <td className="px-4 py-3 align-middle">
-                    <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-bold ${rankStyle(r.global_rank)}`}>
-                      #{r.global_rank}
-                    </span>
+                <tr key={r.id || r.agent_id || r.handle}
+                  className="hover:bg-white/[0.025] transition-colors group">
+
+                  {/* Rank + trend arrow */}
+                  <td className="px-3 py-2 align-middle">
+                    <div className="flex items-center gap-1">
+                      <span className={`text-xs font-bold tabular-nums w-5 text-right ${rankBadgeStyle(r.global_rank)}`}>
+                        {r.global_rank}
+                      </span>
+                      <DeltaArrow delta={delta} />
+                    </div>
                   </td>
 
-                  {/* Agent */}
-                  <td className="px-4 py-3 align-middle">
-                    <Link
-                      href={`/agent/${encodeURIComponent(r.handle)}`}
-                      className="flex items-center gap-3 hover:opacity-90 transition-opacity"
-                    >
-                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                        {r.avatar_url ? (
-                          <img
-                            src={r.avatar_url}
-                            alt={displayName}
-                            className="h-full w-full object-cover"
-                          />
+                  {/* Agent: avatar + name + tags + move reason on hover */}
+                  <td className="px-3 py-2 align-middle">
+                    <Link href={`/agent/${encodeURIComponent(r.handle)}`}
+                      className="flex items-center gap-2.5">
+                      <div className={`h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] flex items-center justify-center ${!r.avatar_url || r.avatar_url === '/placeholder.png' ? avatarColor(r.handle) : 'bg-white/[0.04]'}`}>
+                        {r.avatar_url && r.avatar_url !== '/placeholder.png' ? (
+                          <img src={r.avatar_url} alt={displayName} className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xs text-white/30">?</div>
+                          <span className="text-[9px] font-bold">{(displayName || '?')[0].toUpperCase()}</span>
                         )}
                       </div>
-
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-white text-sm truncate max-w-[200px]">
-                            {displayName}
-                          </span>
-                          {archetype ? (
-                            <span className={`hidden lg:inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${archetypeStyle(archetype)}`}>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-semibold text-white truncate max-w-[160px]">{displayName}</span>
+                          {tag ? (
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium leading-none shrink-0 ${tag.cls}`}>
+                              {tag.label}
+                            </span>
+                          ) : archetype ? (
+                            <span className="hidden xl:inline text-[9px] px-1 py-0.5 rounded bg-white/[0.05] text-white/25 shrink-0 leading-none">
                               {archetype}
                             </span>
                           ) : null}
                         </div>
-                        <div className="text-xs text-white/45 mt-0.5">@{r.handle}</div>
-                        {r.rank_move_reason ? (
-                          <div className={`text-xs mt-0.5 ${rankMoveReasonStyle(delta)}`}>
-                            {rankMoveArrow(delta)}{r.rank_move_reason}
-                          </div>
-                        ) : null}
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-white/30">@{r.handle}</span>
+                          {r.rank_move_reason ? (
+                            <span className={`text-[10px] truncate max-w-[200px] ${delta > 0 ? 'text-emerald-400/60' : delta < 0 ? 'text-red-400/60' : 'text-white/20'}`}>
+                              {r.rank_move_reason}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     </Link>
                   </td>
 
                   {/* Score */}
-                  <td className="px-4 py-3 align-middle text-center">
-                    <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-bold ${scoreStyle(r.score_total || 0)}`}>
+                  <td className="px-3 py-2 align-middle text-right">
+                    <span className={`text-xs font-bold tabular-nums ${scoreColor(r.score_total || 0)}`}>
                       {r.score_total || 0}
                     </span>
                   </td>
 
                   {/* 7d delta */}
-                  <td className="px-4 py-3 align-middle text-center">
-                    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold ${deltaBadgeStyle(delta)}`}>
-                      {formatDelta(delta)}
+                  <td className="px-3 py-2 align-middle text-center">
+                    <span className={`text-xs font-semibold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
+                      {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '—'}
                     </span>
                   </td>
 
                   {/* Visibility */}
-                  <td className="px-4 py-3 align-middle text-center">
-                    <div className="text-sm font-medium text-white/70">{r.visibility_score ?? '—'}</div>
-                    <div className="text-[10px] text-white/30 mt-0.5">vis</div>
+                  <td className="px-3 py-2 align-middle text-right hidden lg:table-cell">
+                    <span className="text-[11px] font-medium text-white/50 tabular-nums">{r.visibility_score ?? '—'}</span>
                   </td>
 
                   {/* Reputation */}
-                  <td className="px-4 py-3 align-middle text-center">
-                    <div className="text-sm font-medium text-white/70">{r.reputation_score ?? '—'}</div>
-                    <div className="text-[10px] text-white/30 mt-0.5">rep</div>
+                  <td className="px-3 py-2 align-middle text-right hidden lg:table-cell">
+                    <span className="text-[11px] font-medium text-white/50 tabular-nums">{r.reputation_score ?? '—'}</span>
                   </td>
                 </tr>
               )
             })}
-
             {rows.length === 0 ? (
-              <tr className="border-t border-white/10">
-                <td colSpan={6} className="px-4 py-8 text-center text-white/40">
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-xs text-white/25">
                   No rankings available yet.
                 </td>
               </tr>
@@ -183,75 +169,55 @@ export default function RankingTable({ rows = [] }) {
       </div>
 
       {/* Mobile list */}
-      <div className="md:hidden divide-y divide-white/[0.06]">
+      <div className="md:hidden divide-y divide-white/[0.05]">
         {rows.map((r) => {
           const displayName = getAgentDisplayName(r)
           const delta = r.weekly_delta || 0
+          const tag = r.trending?.latest_event_type ? RANK_TAGS[r.trending.latest_event_type] : null
 
           return (
-            <Link
-              key={r.id || r.agent_id || r.handle}
+            <Link key={r.id || r.agent_id || r.handle}
               href={`/agent/${encodeURIComponent(r.handle)}`}
-              className="flex items-start gap-3 p-4 hover:bg-white/[0.03] transition-colors"
-            >
-              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                {r.avatar_url ? (
-                  <img
-                    src={r.avatar_url}
-                    alt={displayName}
-                    className="h-full w-full object-cover"
-                  />
+              className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/[0.025] transition-colors">
+              <div className="flex flex-col items-center gap-0.5 w-7 shrink-0">
+                <span className={`text-[10px] font-bold tabular-nums ${rankBadgeStyle(r.global_rank)}`}>{r.global_rank}</span>
+                <DeltaArrow delta={delta} />
+              </div>
+              <div className={`h-8 w-8 shrink-0 overflow-hidden rounded-md border border-white/[0.08] flex items-center justify-center ${!r.avatar_url || r.avatar_url === '/placeholder.png' ? avatarColor(r.handle) : 'bg-white/[0.04]'}`}>
+                {r.avatar_url && r.avatar_url !== '/placeholder.png' ? (
+                  <img src={r.avatar_url} alt={displayName} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs text-white/30">?</div>
+                  <span className="text-[10px] font-bold">{(displayName || '?')[0].toUpperCase()}</span>
                 )}
               </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="truncate text-sm font-semibold text-white">{displayName}</div>
-                  <span className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-[11px] font-bold shrink-0 ${rankStyle(r.global_rank)}`}>
-                    #{r.global_rank}
-                  </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-semibold text-white truncate">{displayName}</span>
+                  {tag ? (
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium leading-none shrink-0 ${tag.cls}`}>
+                      {tag.label}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="mt-0.5 text-xs text-white/45">@{r.handle}</div>
                 {r.rank_move_reason ? (
-                  <div className={`text-xs mt-0.5 ${rankMoveReasonStyle(delta)}`}>
-                    {rankMoveArrow(delta)}{r.rank_move_reason}
+                  <div className={`text-[10px] mt-0.5 ${delta > 0 ? 'text-emerald-400/60' : delta < 0 ? 'text-red-400/60' : 'text-white/20'}`}>
+                    {r.rank_move_reason}
                   </div>
                 ) : null}
-                <div className="mt-2 flex items-center gap-3 text-xs">
-                  <div className="flex items-center gap-1">
-                    <span className="text-white/40">Score</span>
-                    <span className={`font-bold ${(r.score_total || 0) >= 900 ? 'text-emerald-300' : 'text-white/80'}`}>
-                      {r.score_total || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-white/40">7d</span>
-                    <span className={`font-semibold ${delta > 0 ? 'text-emerald-300' : delta < 0 ? 'text-red-300' : 'text-white/40'}`}>
-                      {formatDelta(delta)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-white/40">Vis</span>
-                    <span className="text-white/70">{r.visibility_score ?? '—'}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-white/40">Rep</span>
-                    <span className="text-white/70">{r.reputation_score ?? '—'}</span>
-                  </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className={`text-xs font-bold tabular-nums ${scoreColor(r.score_total || 0)}`}>{r.score_total || 0}</div>
+                <div className={`text-[10px] font-semibold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
+                  {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '—'}
                 </div>
               </div>
             </Link>
           )
         })}
-
         {rows.length === 0 ? (
-          <div className="px-4 py-8 text-center text-white/40">
-            No rankings available yet.
-          </div>
+          <div className="px-4 py-8 text-center text-xs text-white/25">No rankings available yet.</div>
         ) : null}
       </div>
-    </Card>
+    </div>
   )
 }
