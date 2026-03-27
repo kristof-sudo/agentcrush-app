@@ -2,6 +2,7 @@ import Container from '@/components/ui/Container'
 import AgentCard from '@/components/agents/AgentCard'
 import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
+import Image from 'next/image'
 
 function toPublicImageUrl(path) {
   if (!path) return '/placeholder.png'
@@ -250,11 +251,12 @@ export default async function Home() {
                 </Link>
               ) : null}
             </div>
+
           </div>
 
           {/* Today on AgentCrush */}
           <div>
-            <div className="mb-3 text-xs font-semibold text-white/40 uppercase tracking-widest">Today on AgentCrush</div>
+            <div className="mb-3 text-xs font-semibold text-white/35 uppercase tracking-widest">Today on AgentCrush</div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {topMover ? (
                 <Link href={`/agent/${encodeURIComponent(topMover.handle)}`}
@@ -266,7 +268,7 @@ export default async function Home() {
               ) : (
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
                   <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Top Mover</div>
-                  <div className="text-sm text-white/40">No data yet</div>
+                  <div className="text-sm text-white/30">No data yet</div>
                 </div>
               )}
 
@@ -284,10 +286,16 @@ export default async function Home() {
                 </div>
               )}
 
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className={`rounded-xl border p-4 ${hasSignals ? 'border-violet-400/15 bg-violet-500/5' : 'border-white/10 bg-white/[0.02]'}`}>
                 <div className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Signals Today</div>
-                <div className="text-2xl font-bold text-white">{signalsToday ?? 0}</div>
-                <div className="mt-1 text-xs text-white/40">ecosystem events</div>
+                {hasSignals ? (
+                  <>
+                    <div className="text-2xl font-bold text-white">{signalsToday}</div>
+                    <div className="mt-1 text-xs text-white/40">ecosystem events</div>
+                  </>
+                ) : (
+                  <div className="text-sm text-white/30 mt-1">Quiet so far</div>
+                )}
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
