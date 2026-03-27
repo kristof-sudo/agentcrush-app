@@ -35,9 +35,10 @@ export default async function Header() {
             <Image
               src="/agentcrush-logo.png"
               alt="AgentCrush"
-              width={400}
-              height={400}
-              className="w-[120px] h-auto"
+              width={0}
+              height={0}
+              sizes="100vw"
+              className="h-7 w-auto"
               priority
             />
           </Link>
