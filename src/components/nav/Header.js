@@ -35,9 +35,9 @@ export default async function Header() {
             <Image
               src="/agentcrush-logo-transparent.png"
               alt="AgentCrush"
-              width={34}
-              height={34}
-              className="h-8 w-8 object-contain md:h-9 md:w-9"
+              width={160}
+              height={40}
+              className="h-7 w-auto"
               priority
             />
           </Link>
