@@ -269,6 +269,106 @@ function buildUseCases(agent, bioText) {
   return useCases.slice(0, 3)
 }
 
+function RankSparkline({ history = [] }) {
+  const points = [...history].reverse()
+  if (points.length < 2) return null
+
+  const ranks = points.map((p) => p.global_rank)
+  const minRank = Math.min(...ranks)
+  const maxRank = Math.max(...ranks)
+  const range = maxRank - minRank || 1
+
+  const W = 80
+  const H = 28
+  const coords = points.map((p, i) => {
+    const x = (i / (points.length - 1)) * W
+    const y = H - ((maxRank - p.global_rank) / range) * H
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  })
+
+  const latest = ranks[ranks.length - 1]
+  const earliest = ranks[0]
+  const improved = latest < earliest
+  const color = improved ? '#6ee7b7' : latest > earliest ? '#fca5a5' : '#94a3b8'
+
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible">
+      <polyline
+        points={coords.join(' ')}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function formatProfileEventSummary(event) {
+  const metadata = event?.metadata || {}
+
+  function readNum(keys) {
+    for (const k of keys) {
+      const v = metadata?.[k]
+      if (v !== null && v !== undefined && v !== '') {
+        const n = Number(v)
+        if (!Number.isNaN(n)) return n
+      }
+    }
+    return null
+  }
+
+  function readText(keys) {
+    for (const k of keys) {
+      const v = metadata?.[k]
+      if (typeof v === 'string' && v.trim()) return v.trim()
+    }
+    return null
+  }
+
+  const stars = readNum(['stars_gained', 'star_gain', 'stars', 'github_stars'])
+  const mentions = readNum(['mention_count', 'mentions', 'post_count', 'x_posts'])
+  const rankJump = readNum(['rank_jump', 'positions_gained', 'rank_delta'])
+  const releaseName = readText(['release_name', 'version', 'tag_name'])
+  const integrationName = readText(['integration_name', 'partner', 'framework', 'platform'])
+
+  switch (event?.event_type) {
+    case 'repo_star_growth':
+      if (stars) return `Gained ${stars} GitHub stars`
+      return 'GitHub repository picked up new stars'
+    case 'repo_release':
+      if (releaseName) return `Published release: ${releaseName}`
+      return 'Published a new release'
+    case 'audience_spike':
+      if (mentions) return `Mentioned in ${mentions} recent X posts`
+      return 'Audience spike detected'
+    case 'ranking_jump':
+      if (rankJump) return `Climbed ${rankJump} spots in the rankings`
+      return 'Moved up in the rankings'
+    case 'timeline_ping':
+      if (mentions) return `Surfaced in ${mentions} ecosystem mentions`
+      return 'Mentioned in the ecosystem'
+    case 'launch_buzz':
+      if (mentions) return `Generated ${mentions} launch mentions`
+      return 'Launch attention detected'
+    case 'collab_win':
+      if (integrationName) return `New collaboration with ${integrationName}`
+      return 'New collaboration detected'
+    case 'daily_boost':
+      return 'Picked up fresh momentum'
+    case 'canon_scene':
+      return 'Ecosystem milestone detected'
+    case 'ecosystem_integration':
+      if (integrationName) return `New integration with ${integrationName}`
+      return 'New ecosystem integration'
+    case 'dev_activity':
+      return 'New development activity'
+    default:
+      return formatEventLabel(event?.event_type)
+  }
+}
+
 export default async function AgentPage({ params }) {
   const { handle } = await params
   const cleanHandle = decodeURIComponent(handle)
@@ -311,6 +411,13 @@ export default async function AgentPage({ params }) {
     .order('computed_at', { ascending: false })
     .limit(1)
     .maybeSingle()
+
+  const { data: rankHistory } = await supabase
+    .from('rankings')
+    .select('global_rank, computed_at')
+    .eq('agent_id', agent.id)
+    .order('computed_at', { ascending: false })
+    .limit(7)
 
     const { data: categoryLinks } = await supabase
     .from('agent_categories')
@@ -581,9 +688,9 @@ export default async function AgentPage({ params }) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-2xl border border-violet-400/20 bg-violet-500/5 p-6">
           <h2 className="text-xl font-semibold">What this agent is for</h2>
-          <ul className="mt-4 space-y-2 text-sm text-white/80">
+          <ul className="mt-4 space-y-3 text-sm text-white/85">
             {useCases.map((item) => (
               <li key={item} className="flex gap-3">
                 <span className="mt-[3px] text-white/40">•</span>
@@ -604,6 +711,11 @@ export default async function AgentPage({ params }) {
             <div className="mt-2 text-2xl font-semibold">
               {ranking?.global_rank ? `#${ranking.global_rank}` : '—'}
             </div>
+            {(rankHistory || []).length >= 2 ? (
+              <div className="mt-2">
+                <RankSparkline history={rankHistory} />
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -752,12 +864,12 @@ export default async function AgentPage({ params }) {
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-xl font-semibold">Recent Activity</h2>
+        {(recentEvents || []).length > 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h2 className="text-xl font-semibold">Recent Activity</h2>
 
-          <div className="mt-4 space-y-3">
-            {(recentEvents || []).length > 0 ? (
-              recentEvents.map((event) => (
+            <div className="mt-4 space-y-3">
+              {recentEvents.map((event) => (
                 <div
                   key={event.id}
                   className="rounded-xl border border-white/10 bg-white/5 p-4"
@@ -765,28 +877,23 @@ export default async function AgentPage({ params }) {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <div className="font-medium">
-                        {formatEventLabel(event.event_type)}
+                        {formatProfileEventSummary(event)}
                       </div>
                       {isFrameworkPage && event.agent_id !== agent.id ? (
                         <div className="mt-1 text-xs text-white/50">
                           from {eventAgentMap.get(event.agent_id)?.display_name || eventAgentMap.get(event.agent_id)?.handle || 'connected project'}
                         </div>
                       ) : null}
-                      <div className="mt-1 text-sm text-white/60">
-                        {formatImpact(event)}
-                      </div>
                     </div>
-                    <div className="text-sm text-white/50">
+                    <div className="text-sm text-white/50 shrink-0">
                       {formatTimeAgo(event.created_at)}
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-white/60">No recent activity yet.</div>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {alternativeAgents.length > 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
