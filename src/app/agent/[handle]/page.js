@@ -8,6 +8,7 @@ import {
   isDemoAgent,
 } from '@/lib/agent-quality'
 import WatchlistButton from '@/components/agents/WatchlistButton'
+import { getWhyMoving } from '@/lib/why-moving'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -628,22 +629,8 @@ export default async function AgentPage({ params }) {
 
   // Why trending: derive from most recent event type + weekly_delta
   const latestEventType = recentEvents?.[0]?.event_type || null
-  const WHY_LABELS = {
-    repo_star_growth: 'repo spike', audience_spike: 'X mentions', launch_buzz: 'launch buzz',
-    ranking_jump: 'ranking jump', timeline_ping: 'ecosystem mention', repo_release: 'new release',
-    ecosystem_integration: 'ecosystem cluster', collab_win: 'new collab', dev_activity: 'dev activity',
-  }
-  const whyLabel = latestEventType ? WHY_LABELS[latestEventType] : null
   const weeklyDelta = Number(agent.weekly_delta || 0)
-  const whyMoving = weeklyDelta > 0 && whyLabel
-    ? `↑${weeklyDelta} this week · ${whyLabel}`
-    : weeklyDelta > 0
-    ? `↑${weeklyDelta} positions this week`
-    : weeklyDelta < 0
-    ? `↓${Math.abs(weeklyDelta)} positions this week`
-    : whyLabel
-    ? `Active · ${whyLabel}`
-    : null
+  const whyMoving = getWhyMoving(weeklyDelta, latestEventType)
 
   return (
     <main className="min-h-screen bg-[#050816] text-white px-6 py-10">

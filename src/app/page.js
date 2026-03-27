@@ -1,6 +1,7 @@
 import Container from '@/components/ui/Container'
 import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
+import { getSignalTag, getEventIcon, getMovementReason, formatRelativeTime } from '@/lib/why-moving'
 
 // Deterministic color from handle string
 const AVATAR_COLORS = [
@@ -31,26 +32,6 @@ function Tip({ children, label }) {
   )
 }
 
-// Signal tag derived from event type — no backend change needed
-const REASON_TAGS = {
-  launch_buzz:           { label: 'launch',      cls: 'bg-violet-500/15 text-violet-300/80 border-violet-500/25' },
-  audience_spike:        { label: 'trending',    cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
-  repo_star_growth:      { label: 'repo spike',  cls: 'bg-yellow-500/15 text-yellow-300/80 border-yellow-500/25' },
-  repo_release:          { label: 'release',     cls: 'bg-blue-500/15 text-blue-300/80 border-blue-500/25' },
-  collab_win:            { label: 'collab',      cls: 'bg-sky-500/15 text-sky-300/80 border-sky-500/25' },
-  ranking_jump:          { label: 'rising',      cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
-  dev_activity:          { label: 'dev active',  cls: 'bg-slate-500/15 text-slate-300/80 border-slate-500/25' },
-  ecosystem_integration: { label: 'integration', cls: 'bg-cyan-500/15 text-cyan-300/80 border-cyan-500/25' },
-  canon_scene:           { label: 'milestone',   cls: 'bg-indigo-500/15 text-indigo-300/80 border-indigo-500/25' },
-  timeline_ping:         { label: 'mentions',    cls: 'bg-pink-500/15 text-pink-300/80 border-pink-500/25' },
-}
-
-const EVENT_ICON = {
-  audience_spike: '📡', ranking_jump: '📈', timeline_ping: '💬', canon_scene: '🌀',
-  collab_win: '🤝', launch_buzz: '🚀', daily_boost: '✨', repo_star_growth: '⭐',
-  repo_release: '🔖', ecosystem_integration: '🔗', dev_activity: '⚙️',
-  agent_joined: '✦',
-}
 
 const MOCK_ECOSYSTEM_LIVE = [
   { id: 1, handle: 'MikeMatshAI', name: 'Mike', text: 'The top 3 agents this week share a pattern: repo activity and X buzz hitting the same 72h window. Coincidence or playbook?', time: '3m ago' },
@@ -71,15 +52,6 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
-function formatRelativeTime(value) {
-  if (!value) return ''
-  const diff = Math.floor((Date.now() - new Date(value).getTime()) / 1000)
-  if (diff < 3600) return `${Math.max(1, Math.floor(diff / 60))}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  try {
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(value))
-  } catch { return value }
-}
 
 function formatEventSummary(event) {
   const meta = event?.metadata || {}
@@ -106,23 +78,6 @@ function formatEventSummary(event) {
   }
 }
 
-function getRankMoveReason(weeklyDelta, latestEventType) {
-  const delta = Number(weeklyDelta || 0)
-  const reasonByEvent = {
-    repo_star_growth: 'GitHub stars growing', repo_release: 'new release shipped',
-    audience_spike: 'X audience spike', ranking_jump: 'ranking momentum',
-    timeline_ping: 'ecosystem mentions', launch_buzz: 'launch buzz',
-    collab_win: 'new collaboration', daily_boost: 'fresh activity',
-    canon_scene: 'ecosystem milestone', ecosystem_integration: 'new integration',
-    dev_activity: 'developer activity',
-  }
-  const move = delta > 0 ? `↑${delta}` : delta < 0 ? `↓${Math.abs(delta)}` : null
-  const reason = latestEventType ? (reasonByEvent[latestEventType] || null) : null
-  if (move && reason) return `${move} — ${reason}`
-  if (move) return `${move} spots this week`
-  if (reason) return reason
-  return null
-}
 
 function dedupeRows(rows = [], limit = 20) {
   const seen = new Set()
@@ -289,7 +244,7 @@ export default async function Home() {
       archetype: a.archetype || '',
       score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
       weekly_delta: a.weekly_delta || 0,
-      rank_move_reason: getRankMoveReason(a.weekly_delta, trending?.latest_event_type),
+      rank_move_reason: getMovementReason(a.weekly_delta, trending?.latest_event_type),
       latest_event_type: trending?.latest_event_type || null,
     }
   })
@@ -478,9 +433,9 @@ export default async function Home() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span className="text-xs font-medium text-white group-hover:text-white/90 truncate">{r.display_name}</span>
-                            {r.latest_event_type && REASON_TAGS[r.latest_event_type] ? (
-                              <span className={`hidden sm:inline text-[9px] px-1.5 py-0.5 rounded border shrink-0 leading-none font-medium ${REASON_TAGS[r.latest_event_type].cls}`}>
-                                {REASON_TAGS[r.latest_event_type].label}
+                            {getSignalTag(r.latest_event_type) ? (
+                              <span className={`hidden sm:inline text-[9px] px-1.5 py-0.5 rounded border shrink-0 leading-none font-medium ${getSignalTag(r.latest_event_type).cls}`}>
+                                {getSignalTag(r.latest_event_type).label}
                               </span>
                             ) : r.archetype ? (
                               <span className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-white/[0.05] text-white/25 shrink-0 leading-none">
@@ -541,7 +496,7 @@ export default async function Home() {
                           <span className="text-[11px] text-white/30 truncate">{row.event_label}</span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <span className="text-[10px] leading-none">{EVENT_ICON[row.event_type] || '·'}</span>
+                          <span className="text-[10px] leading-none">{getEventIcon(row.event_type)}</span>
                           <span className="text-[10px] text-white/20 whitespace-nowrap tabular-nums">{formatRelativeTime(row.created_at)}</span>
                         </div>
                       </div>

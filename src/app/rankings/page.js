@@ -1,5 +1,6 @@
 import SearchableRankings from '@/components/rankings/SearchableRankings'
 import { supabaseAnon } from '@/lib/supabase'
+import { getMovementReason } from '@/lib/why-moving'
 
 function toPublicImageUrl(path) {
   if (!path) return '/placeholder.png'
@@ -9,24 +10,6 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
-function getRankMoveReason(weeklyDelta, trending) {
-  const delta = Number(weeklyDelta || 0)
-  const eventType = trending?.latest_event_type || null
-  const movementPart = delta > 0 ? `Rose ${delta} spot${delta !== 1 ? 's' : ''}` : delta < 0 ? `Fell ${Math.abs(delta)} spot${Math.abs(delta) !== 1 ? 's' : ''}` : null
-  const reasonByEvent = {
-    repo_star_growth: 'GitHub stars growing', repo_release: 'new release shipped',
-    audience_spike: 'X audience spike', ranking_jump: 'ranking momentum',
-    timeline_ping: 'ecosystem mentions', launch_buzz: 'launch buzz',
-    collab_win: 'new collaboration', daily_boost: 'fresh activity',
-    canon_scene: 'ecosystem milestone', ecosystem_integration: 'new integration',
-    dev_activity: 'developer activity',
-  }
-  const reasonPart = eventType ? (reasonByEvent[eventType] || null) : null
-  if (movementPart && reasonPart) return `${movementPart} — ${reasonPart}`
-  if (movementPart) return movementPart
-  if (reasonPart) return `Active — ${reasonPart}`
-  return null
-}
 
 export const dynamic = 'force-dynamic'
 
@@ -73,7 +56,7 @@ export default async function RankingsPage({ searchParams }) {
       weekly_delta: agent.weekly_delta,
       tagline: agent.tagline,
       trending,
-      rank_move_reason: getRankMoveReason(agent.weekly_delta, trending),
+      rank_move_reason: getMovementReason(agent.weekly_delta, trending?.latest_event_type),
     }
   })
 

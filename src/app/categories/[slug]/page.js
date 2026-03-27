@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
 import { isDemoAgent } from '@/lib/agent-quality'
+import { getSignalLabel, formatRelativeTime } from '@/lib/why-moving'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,19 +25,6 @@ function avatarColor(handle) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
 
-const EVENT_LABELS = {
-  repo_star_growth: 'repo spike', audience_spike: 'X spike', launch_buzz: 'launch buzz',
-  ranking_jump: 'ranking jump', repo_release: 'release', timeline_ping: 'ecosystem mention',
-  ecosystem_integration: 'integration', collab_win: 'collab', dev_activity: 'dev activity',
-}
-
-function formatTimeAgo(value) {
-  if (!value) return ''
-  const diff = Math.floor((Date.now() - new Date(value).getTime()) / 1000)
-  if (diff < 3600) return `${Math.max(1, Math.floor(diff / 60))}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  return `${Math.floor(diff / 86400)}d ago`
-}
 
 export default async function CategoryPage({ params }) {
   const { slug } = await params
@@ -125,7 +113,7 @@ export default async function CategoryPage({ params }) {
   const recentSignals = recentEvents.slice(0, 8).map((e) => ({
     ...e,
     agent_name: agentNameMap[e.agent_id] || 'unknown',
-    label: EVENT_LABELS[e.event_type] || e.event_type,
+    label: getSignalLabel(e.event_type) || e.event_type,
   }))
 
   return (
@@ -189,9 +177,9 @@ export default async function CategoryPage({ params }) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-medium text-white/90 truncate">{agent.display_name || agent.handle}</span>
-                        {agent.latest_event_type && EVENT_LABELS[agent.latest_event_type] ? (
+                        {getSignalLabel(agent.latest_event_type) ? (
                           <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-300/80 border border-emerald-500/25 leading-none shrink-0">
-                            {EVENT_LABELS[agent.latest_event_type]}
+                            {getSignalLabel(agent.latest_event_type)}
                           </span>
                         ) : null}
                       </div>
@@ -224,9 +212,9 @@ export default async function CategoryPage({ params }) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[11px] font-medium text-white/80 truncate">{agent.display_name || agent.handle}</span>
-                        {agent.latest_event_type && EVENT_LABELS[agent.latest_event_type] ? (
+                        {getSignalLabel(agent.latest_event_type) ? (
                           <span className="text-[9px] px-1 py-0.5 rounded bg-white/[0.06] text-white/35 leading-none shrink-0 hidden sm:inline">
-                            {EVENT_LABELS[agent.latest_event_type]}
+                            {getSignalLabel(agent.latest_event_type)}
                           </span>
                         ) : null}
                       </div>
@@ -267,7 +255,7 @@ export default async function CategoryPage({ params }) {
                         : <span className="text-[7px] font-bold">{(agent.display_name || '?')[0].toUpperCase()}</span>}
                     </div>
                     <span className="text-[11px] text-white/70 truncate flex-1 min-w-0">{agent.display_name || agent.handle}</span>
-                    <span className="text-[10px] text-white/25 shrink-0 tabular-nums">{formatTimeAgo(agent.created_at)}</span>
+                    <span className="text-[10px] text-white/25 shrink-0 tabular-nums">{formatRelativeTime(agent.created_at)}</span>
                   </Link>
                 ))}
               </div>
@@ -288,7 +276,7 @@ export default async function CategoryPage({ params }) {
                       <span className="text-[11px] font-medium text-white/70">{e.agent_name}</span>
                       <span className="text-[11px] text-white/30"> · {e.label}</span>
                     </div>
-                    <span className="text-[10px] text-white/20 shrink-0 tabular-nums whitespace-nowrap">{formatTimeAgo(e.created_at)}</span>
+                    <span className="text-[10px] text-white/20 shrink-0 tabular-nums whitespace-nowrap">{formatRelativeTime(e.created_at)}</span>
                   </div>
                 ))}
               </div>

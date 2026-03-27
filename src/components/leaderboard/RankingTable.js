@@ -3,6 +3,7 @@ import {
   getAgentArchetype,
   getAgentDisplayName,
 } from '@/lib/agent-quality'
+import { getSignalTag } from '@/lib/why-moving'
 
 // Deterministic avatar color from handle
 const AVATAR_COLORS = [
@@ -17,18 +18,6 @@ function avatarColor(handle) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
 
-const RANK_TAGS = {
-  launch_buzz:           { label: 'launch',      cls: 'bg-violet-500/15 text-violet-300/80 border-violet-500/25' },
-  audience_spike:        { label: 'trending',    cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
-  repo_star_growth:      { label: 'repo spike',  cls: 'bg-yellow-500/15 text-yellow-300/80 border-yellow-500/25' },
-  repo_release:          { label: 'release',     cls: 'bg-blue-500/15 text-blue-300/80 border-blue-500/25' },
-  collab_win:            { label: 'collab',      cls: 'bg-sky-500/15 text-sky-300/80 border-sky-500/25' },
-  ranking_jump:          { label: 'rising',      cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
-  dev_activity:          { label: 'dev active',  cls: 'bg-slate-500/15 text-slate-300/80 border-slate-500/25' },
-  ecosystem_integration: { label: 'integration', cls: 'bg-cyan-500/15 text-cyan-300/80 border-cyan-500/25' },
-  canon_scene:           { label: 'milestone',   cls: 'bg-indigo-500/15 text-indigo-300/80 border-indigo-500/25' },
-  timeline_ping:         { label: 'mentions',    cls: 'bg-pink-500/15 text-pink-300/80 border-pink-500/25' },
-}
 
 function scoreColor(score) {
   if (score >= 1200) return 'text-emerald-300'
@@ -79,7 +68,7 @@ export default function RankingTable({ rows = [] }) {
               const displayName = getAgentDisplayName(r)
               const archetype = getAgentArchetype(r)
               const delta = r.weekly_delta || 0
-              const tag = r.trending?.latest_event_type ? RANK_TAGS[r.trending.latest_event_type] : null
+              const tag = getSignalTag(r.trending?.latest_event_type)
 
               return (
                 <tr key={r.id || r.agent_id || r.handle}
@@ -174,7 +163,7 @@ export default function RankingTable({ rows = [] }) {
         {rows.map((r) => {
           const displayName = getAgentDisplayName(r)
           const delta = r.weekly_delta || 0
-          const tag = r.trending?.latest_event_type ? RANK_TAGS[r.trending.latest_event_type] : null
+          const tag = getSignalTag(r.trending?.latest_event_type)
 
           return (
             <Link key={r.id || r.agent_id || r.handle}

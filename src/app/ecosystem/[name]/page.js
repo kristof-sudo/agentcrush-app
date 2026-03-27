@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import AgentCard from '@/components/agents/AgentCard'
 import { supabaseAnon } from '@/lib/supabase'
+import { getTrendDirection, formatRelativeTime, getSignalLong } from '@/lib/why-moving'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,40 +14,6 @@ function uniqueSorted(values = []) {
   return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b))
 }
 
-function getTrendDirection(events = []) {
-  if (events.length === 0) return null
-  const positiveTypes = ['repo_star_growth', 'repo_release', 'audience_spike', 'launch_buzz', 'ranking_jump', 'collab_win']
-  const positiveCount = events.filter((e) => positiveTypes.includes(e.event_type)).length
-  if (positiveCount >= events.length * 0.6) return 'rising'
-  if (positiveCount <= events.length * 0.3) return 'stable'
-  return 'active'
-}
-
-function formatRelativeTime(value) {
-  if (!value) return ''
-  const diff = Math.floor((Date.now() - new Date(value).getTime()) / 1000)
-  if (diff < 3600) return `${Math.max(1, Math.floor(diff / 60))}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  const d = Math.floor(diff / 86400)
-  return `${d}d ago`
-}
-
-function eventLabel(eventType) {
-  const map = {
-    repo_star_growth: 'GitHub stars growing',
-    repo_release: 'New release shipped',
-    audience_spike: 'X audience spike',
-    ranking_jump: 'Climbed in rankings',
-    timeline_ping: 'Ecosystem mention',
-    launch_buzz: 'Launch buzz',
-    collab_win: 'New collaboration',
-    daily_boost: 'Fresh activity',
-    canon_scene: 'Ecosystem milestone',
-    ecosystem_integration: 'New integration',
-    dev_activity: 'Developer activity',
-  }
-  return map[eventType] || 'Activity detected'
-}
 
 export default async function EcosystemPage({ params }) {
   const { name } = await params
@@ -282,7 +249,7 @@ export default async function EcosystemPage({ params }) {
                       {agent.display_name || agent.handle}
                     </Link>
                   ) : null}
-                  <span className="text-white/60 truncate">{eventLabel(event.event_type)}</span>
+                  <span className="text-white/60 truncate">{getSignalLong(event.event_type)}</span>
                 </div>
               )
             })}

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
 import { isDemoAgent } from '@/lib/agent-quality'
+import { getSignalTag } from '@/lib/why-moving'
 
 function toPublicImageUrl(path) {
   if (!path) return null
@@ -36,15 +37,6 @@ const ARCHETYPE_META = {
   Mystic:     { icon: '✧', color: 'text-indigo-300',  bg: 'bg-indigo-500/10 border-indigo-500/20' },
 }
 
-const REASON_TAGS = {
-  launch_buzz:           { label: 'launch',      cls: 'bg-violet-500/15 text-violet-300/80 border-violet-500/25' },
-  audience_spike:        { label: 'spike',       cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
-  repo_star_growth:      { label: 'repo↑',       cls: 'bg-yellow-500/15 text-yellow-300/80 border-yellow-500/25' },
-  repo_release:          { label: 'release',     cls: 'bg-blue-500/15 text-blue-300/80 border-blue-500/25' },
-  ranking_jump:          { label: 'rising',      cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
-  timeline_ping:         { label: 'mentioned',   cls: 'bg-pink-500/15 text-pink-300/80 border-pink-500/25' },
-  ecosystem_integration: { label: 'integration', cls: 'bg-cyan-500/15 text-cyan-300/80 border-cyan-500/25' },
-}
 
 function getArchetypeMeta(archetype) {
   return ARCHETYPE_META[archetype] || { icon: '◆', color: 'text-white/60', bg: 'bg-white/[0.05] border-white/[0.08]' }
@@ -227,9 +219,9 @@ export default async function CategoriesPage() {
                         {/* Name + why-trending tag */}
                         <div className="flex-1 min-w-0 flex items-center gap-1">
                           <span className="text-[11px] text-white/80 truncate">{displayName}</span>
-                          {agent.latest_event_type && REASON_TAGS[agent.latest_event_type] ? (
-                            <span className={`text-[9px] px-1 py-0.5 rounded border leading-none shrink-0 ${REASON_TAGS[agent.latest_event_type].cls}`}>
-                              {REASON_TAGS[agent.latest_event_type].label}
+                          {getSignalTag(agent.latest_event_type) ? (
+                            <span className={`text-[9px] px-1 py-0.5 rounded border leading-none shrink-0 ${getSignalTag(agent.latest_event_type).cls}`}>
+                              {getSignalTag(agent.latest_event_type).label}
                             </span>
                           ) : null}
                         </div>
