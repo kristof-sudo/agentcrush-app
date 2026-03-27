@@ -89,11 +89,11 @@ export default async function CategoriesPage() {
     }
   }).sort((a, b) => b.total - a.total)
 
-  // Hot categories = top 4 by risingCount (min 2 agents)
+  // Trending categories = top 5 by risingCount (min 2 agents)
   const hotCategories = [...categories]
     .filter((c) => c.total >= 2)
     .sort((a, b) => b.risingCount - a.risingCount || b.trend - a.trend)
-    .slice(0, 4)
+    .slice(0, 5)
 
   const totalAgents = categories.reduce((s, c) => s + c.total, 0)
   const totalRising = categories.reduce((s, c) => s + c.risingCount, 0)
@@ -113,10 +113,10 @@ export default async function CategoriesPage() {
       {hotCategories.length > 0 && (
         <section className="mb-8">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">Hot Right Now</span>
+            <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">Trending Categories</span>
             <span className="h-px flex-1 bg-white/[0.06]" />
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
             {hotCategories.map((cat) => {
               const meta = getArchetypeMeta(cat.archetype)
               return (
@@ -131,11 +131,9 @@ export default async function CategoriesPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-white/50">{cat.total} agents</span>
-                    {cat.risingCount > 0 && (
-                      <span className="text-[11px] font-semibold text-emerald-400">
-                        ↑ {cat.risingCount} rising
-                      </span>
-                    )}
+                    {cat.trend > 0 ? (
+                      <span className="text-[11px] font-semibold text-emerald-400">+{cat.trend}%</span>
+                    ) : null}
                   </div>
                 </Link>
               )
