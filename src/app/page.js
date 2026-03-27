@@ -50,6 +50,7 @@ const EVENT_ICON = {
   audience_spike: '📡', ranking_jump: '📈', timeline_ping: '💬', canon_scene: '🌀',
   collab_win: '🤝', launch_buzz: '🚀', daily_boost: '✨', repo_star_growth: '⭐',
   repo_release: '🔖', ecosystem_integration: '🔗', dev_activity: '⚙️',
+  agent_joined: '✦',
 }
 
 const MOCK_ECOSYSTEM_LIVE = [
@@ -137,12 +138,69 @@ function dedupeRows(rows = [], limit = 20) {
   return out
 }
 
+/**
+ * Content engine: builds a mixed, always-populated feed.
+ * Priority: real signal events → new agent joins → ecosystem fallback.
+ * Interleaves "new agent" entries from recentAgents so the feed stays
+ * lively even when signal events are sparse.
+ */
+function buildContentFeed(signalRows = [], newAgents = [], maxItems = 24) {
+  // Start with real signal events
+  const feed = [...signalRows]
+
+  // Synthesize "joined the index" entries from newest agents
+  const toPublic = (path) => {
+    if (!path) return null
+    if (path.startsWith('http://') || path.startsWith('https://')) return path
+    const base = process.env.NEXT_PUBLIC_SUPABASE_URL
+    return base ? `${base}/storage/v1/object/public/${path}` : null
+  }
+  for (const a of newAgents) {
+    if (!a.created_at) continue
+    const agentInFeed = feed.some(
+      (r) => r.handle === a.handle &&
+        Math.abs(new Date(r.created_at) - new Date(a.created_at)) < 3600_000
+    )
+    if (!agentInFeed) {
+      feed.push({
+        id: `join-${a.id}`,
+        created_at: a.created_at,
+        event_type: 'agent_joined',
+        event_label: 'joined the index',
+        handle: a.handle,
+        display_name: a.display_name || a.handle,
+        avatar_url: toPublic(a.custom_background_url || a.avatar_url),
+        synthetic: true,
+      })
+    }
+  }
+
+  // Sort by recency, take maxItems
+  feed.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  return feed.slice(0, maxItems)
+}
+
 export const dynamic = 'force-dynamic'
+
+/** Count rows from a table safely — returns 0 if table doesn't exist */
+async function safeCount(supabase, table, filterFn) {
+  try {
+    const q = filterFn(supabase.from(table).select('id', { count: 'exact', head: true }))
+    const { count, error } = await q
+    return error ? 0 : (count || 0)
+  } catch {
+    return 0
+  }
+}
 
 export default async function Home() {
   const supabase = supabaseAnon()
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
+  const yesterdayStart = new Date(todayStart)
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+  const twoDaysAgo = new Date(todayStart)
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
 
   const [
     { data: topRankings },
@@ -150,7 +208,8 @@ export default async function Home() {
     { data: events },
     { data: topMover },
     { data: newestAgent },
-    { count: signalsToday },
+    { count: eventsTodayCount },
+    { count: eventsYesterdayCount },
     { count: agentCount },
     { data: archetypeRows },
   ] = await Promise.all([
@@ -178,10 +237,36 @@ export default async function Home() {
     supabase.from('events').select('id', { count: 'exact', head: true })
       .gte('created_at', todayStart.toISOString()),
 
+    supabase.from('events').select('id', { count: 'exact', head: true })
+      .gte('created_at', yesterdayStart.toISOString())
+      .lt('created_at', todayStart.toISOString()),
+
     supabase.from('agents').select('id', { count: 'exact', head: true }),
 
     supabase.from('agents').select('archetype').not('archetype', 'is', null),
   ])
+
+  // Multi-source signals count — add x_observed_posts + scheduled_posts if they exist
+  const [xPostsToday, scheduledToday] = await Promise.all([
+    safeCount(supabase, 'x_observed_posts', (q) => q.gte('created_at', todayStart.toISOString())),
+    safeCount(supabase, 'scheduled_posts', (q) => q.gte('created_at', todayStart.toISOString())),
+  ])
+
+  let signalsToday = (eventsTodayCount || 0) + xPostsToday + scheduledToday
+  const signalsYesterday = (eventsYesterdayCount || 0)
+
+  // Fallback: if today is sparse (< 5), extend window to last 48h
+  if (signalsToday < 5) {
+    const { count: signals48h } = await supabase
+      .from('events').select('id', { count: 'exact', head: true })
+      .gte('created_at', twoDaysAgo.toISOString())
+    signalsToday = Math.max(signalsToday, signals48h || 0)
+  }
+
+  // Delta vs yesterday (+/- %)
+  const signalsDelta = signalsYesterday > 0
+    ? Math.round(((signalsToday - signalsYesterday) / signalsYesterday) * 100)
+    : null
 
   // Trending data for rank movement
   const rankingAgentIds = (topRankings || []).map((r) => r.agent?.id).filter(Boolean)
@@ -217,7 +302,7 @@ export default async function Home() {
     : { data: [] }
   const eventAgentMap = new Map((eventAgents || []).map((a) => [a.id, a]))
 
-  const allActivityRows = dedupeRows(
+  const deduped = dedupeRows(
     (events || []).map((e) => {
       const agent = eventAgentMap.get(e.agent_id)
       return {
@@ -229,8 +314,10 @@ export default async function Home() {
       }
     }), 24
   )
-  const activityRows = allActivityRows.slice(0, 10)
-  const ecosystemFeedRows = allActivityRows
+
+  // Content engine: always-populated mixed feed
+  const ecosystemFeedRows = buildContentFeed(deduped, recentAgents || [], 30)
+  const activityRows = deduped.slice(0, 10)
 
   // Archetype counts for sectors bar
   const archetypeCounts = {}
@@ -257,10 +344,15 @@ export default async function Home() {
                   <span className="text-xs font-bold text-white tabular-nums">{agentCount ?? 0}</span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <Tip label="Ecosystem events processed across all indexed agents in the last 24h (repo, X, rank changes)">
-                    <span className="text-[11px] text-white/35 underline decoration-dotted decoration-white/20">Signals Today</span>
+                  <Tip label="Signals processed today: ecosystem events + X posts + scheduled activity across all indexed agents">
+                    <span className="text-[11px] text-white/35 underline decoration-dotted decoration-white/20">Signals</span>
                   </Tip>
-                  <span className="text-xs font-bold text-white tabular-nums">{signalsToday ?? 0}</span>
+                  <span className="text-xs font-bold text-white tabular-nums">{signalsToday}</span>
+                  {signalsDelta !== null ? (
+                    <span className={`text-[10px] font-semibold tabular-nums ${signalsDelta >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {signalsDelta >= 0 ? '+' : ''}{signalsDelta}%
+                    </span>
+                  ) : null}
                 </div>
                 {topMover ? (
                   <div className="flex items-center gap-1.5 shrink-0">
@@ -422,7 +514,7 @@ export default async function Home() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-[11px] font-medium text-white/75">{row.display_name}</span>
+                          <span className={`text-[11px] font-medium ${row.synthetic ? 'text-amber-300/70' : 'text-white/75'}`}>{row.display_name}</span>
                           <span className="text-[11px] text-white/30"> {row.event_label}</span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -543,11 +635,18 @@ export default async function Home() {
                 <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
                   <div className="text-[9px] font-semibold uppercase tracking-widest text-white/20 mb-2">Today</div>
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Tip label="Ecosystem events processed across all agents today">
+                    <div className="flex items-center justify-between gap-2">
+                      <Tip label="Total signals processed today across all sources">
                         <span className="text-[11px] text-white/40 underline decoration-dotted decoration-white/15">Signals</span>
                       </Tip>
-                      <span className="text-xs font-bold text-white tabular-nums">{signalsToday ?? 0}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-white tabular-nums">{signalsToday}</span>
+                        {signalsDelta !== null ? (
+                          <span className={`text-[9px] font-semibold tabular-nums ${signalsDelta >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {signalsDelta >= 0 ? '+' : ''}{signalsDelta}%
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-white/40">Agents tracked</span>
