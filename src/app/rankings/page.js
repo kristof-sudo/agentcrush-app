@@ -30,7 +30,8 @@ function getRankMoveReason(weeklyDelta, trending) {
 
 export const dynamic = 'force-dynamic'
 
-export default async function RankingsPage() {
+export default async function RankingsPage({ searchParams }) {
+  const initialQuery = (await searchParams)?.q || ''
   const supabase = supabaseAnon()
 
   const { data: rankingsData, error: rankingsError } = await supabase
@@ -89,7 +90,7 @@ export default async function RankingsPage() {
           <span className="text-violet-400">{trendingCount} trending</span>
         </p>
       </div>
-      <SearchableRankings rows={rows} />
+      <SearchableRankings rows={rows} initialQuery={initialQuery} />
     </main>
   )
 }
