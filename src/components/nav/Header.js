@@ -56,6 +56,9 @@ export default async function Header() {
             <Link href="/submit" className="text-sm font-semibold text-white/70 transition hover:text-white">
               Submit
             </Link>
+            <Link href="/watchlist" className="text-sm font-semibold text-white/70 transition hover:text-white">
+              Watchlist
+            </Link>
             <SearchBox />
           </nav>
 

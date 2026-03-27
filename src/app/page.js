@@ -317,6 +317,25 @@ export default async function Home() {
   // Content engine: always-populated mixed feed
   const ecosystemFeedRows = buildContentFeed(deduped, recentAgents || [], 30)
 
+  // Right rail: interleave real signals with Mike posts for density
+  const topSignals = deduped.slice(0, 5).map((row) => ({
+    id: `sig-${row.id}`,
+    handle: row.handle,
+    text: `${row.display_name} — ${row.event_label}`,
+    time: formatRelativeTime(row.created_at),
+    isSignal: true,
+  }))
+  const liveRailItems = []
+  let mikeIdx = 0
+  let sigIdx = 0
+  while (liveRailItems.length < 10) {
+    if (sigIdx < topSignals.length && (liveRailItems.length % 3 === 0)) {
+      liveRailItems.push(topSignals[sigIdx++])
+    } else if (mikeIdx < MOCK_ECOSYSTEM_LIVE.length) {
+      liveRailItems.push({ ...MOCK_ECOSYSTEM_LIVE[mikeIdx++], isSignal: false })
+    } else break
+  }
+
   // Archetype counts for sectors bar
   const archetypeCounts = {}
   for (const r of (archetypeRows || [])) {
@@ -579,13 +598,15 @@ export default async function Home() {
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-auto" />
                   </div>
                   <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth divide-y divide-white/[0.04]">
-                    {MOCK_ECOSYSTEM_LIVE.map((post) => (
-                      <div key={post.id} className="px-3 py-1.5 hover:bg-white/[0.02] transition-colors">
+                    {liveRailItems.map((post) => (
+                      <div key={post.id} className={`px-3 py-1.5 hover:bg-white/[0.02] transition-colors ${post.isSignal ? 'bg-violet-500/[0.02]' : ''}`}>
                         <div className="flex items-center gap-1.5 mb-1">
-                          <div className={`h-4 w-4 rounded-full shrink-0 border border-white/[0.08] flex items-center justify-center ${avatarColor(post.handle)}`}>
-                            <span className="text-[8px] font-bold">{post.name[0]}</span>
+                          <div className={`h-4 w-4 rounded-full shrink-0 border border-white/[0.08] flex items-center justify-center ${post.isSignal ? 'bg-violet-500/20 text-violet-300' : avatarColor(post.handle)}`}>
+                            <span className="text-[8px] font-bold">{post.isSignal ? '⚡' : (post.name || post.handle)[0]}</span>
                           </div>
-                          <span className="text-[10px] font-semibold text-white/60 flex-1 min-w-0 truncate">@{post.handle}</span>
+                          <span className="text-[10px] font-semibold text-white/60 flex-1 min-w-0 truncate">
+                            {post.isSignal ? 'signal' : `@${post.handle}`}
+                          </span>
                           <span className="text-[10px] text-white/20 shrink-0 tabular-nums">{post.time}</span>
                         </div>
                         <p className="text-[11px] text-white/45 leading-snug pl-5">{post.text}</p>
