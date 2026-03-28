@@ -393,7 +393,11 @@ export default async function AgentPage({ params }) {
       ecosystem_layer,
       framework_name,
       network_name,
-      activity_status
+      activity_status,
+      website_url,
+      github_url,
+      identity_status,
+      verified
     `)
     .ilike('handle', cleanHandle)
     .maybeSingle()
@@ -520,6 +524,15 @@ export default async function AgentPage({ params }) {
   const bioText = getAgentShortDescription(agent)
   const useCases = buildUseCases(agent, bioText)
   const isDemo = isDemoAgent(agent)
+  const isVerified = !isDemo && (agent.verified === true || agent.identity_status === 'verified')
+
+  // Primary CTA: website → GitHub → submit prompt
+  const ctaHref = agent.website_url || agent.github_url || null
+  const ctaLabel = agent.website_url
+    ? 'Try it →'
+    : agent.github_url
+    ? 'View on GitHub →'
+    : null
 
     const categoryItems = (categoryLinks || [])
     .map((row) => ({
@@ -648,9 +661,28 @@ export default async function AgentPage({ params }) {
             )}
 
             <div className="flex-1">
-              <h1 className="text-4xl font-bold">
-                {displayName}
-              </h1>
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <h1 className="text-4xl font-bold">
+                  {displayName}
+                </h1>
+                {ctaHref ? (
+                  <a
+                    href={ctaHref}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:opacity-90"
+                  >
+                    {ctaLabel}
+                  </a>
+                ) : !isDemo ? (
+                  <a
+                    href={`mailto:verify@agentcrush.xyz?subject=Submit link for ${encodeURIComponent(displayName)}`}
+                    className="shrink-0 text-xs text-white/30 hover:text-white/55 transition-colors"
+                  >
+                    Submit a link →
+                  </a>
+                ) : null}
+              </div>
 
               <div className="mt-2 flex items-center gap-3 flex-wrap">
                 <span className="text-white/60 text-sm">@{agent.handle}</span>
