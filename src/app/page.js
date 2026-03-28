@@ -397,7 +397,7 @@ export default async function Home() {
               <div className="col-span-12 lg:col-span-5 flex flex-col gap-2">
 
                 {/* Rising Now */}
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                <div className="flex-1 flex flex-col rounded-lg border border-white/[0.06] bg-white/[0.02] min-h-0">
                   <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2 shrink-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-emerald-400">↑</span>
@@ -414,7 +414,7 @@ export default async function Home() {
                       <Link href="/rankings" className="text-[10px] text-white/35 hover:text-white/55 transition-colors">All →</Link>
                     </div>
                   </div>
-                  <div className="divide-y divide-white/[0.04]">
+                  <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04]">
                     {rankingRows.map((r) => (
                       <Link key={r.id} href={`/agent/${encodeURIComponent(r.handle)}`}
                         className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.025] transition-colors group">
@@ -444,7 +444,7 @@ export default async function Home() {
                             ) : null}
                           </div>
                           {r.rank_move_reason ? (
-                            <div className={`text-[10px] truncate leading-snug ${r.weekly_delta > 0 ? 'text-emerald-400/60' : r.weekly_delta < 0 ? 'text-red-400/60' : 'text-white/20'}`}>
+                            <div className={`text-[10px] truncate leading-snug ${r.weekly_delta > 0 ? 'text-emerald-400/80' : r.weekly_delta < 0 ? 'text-red-400/75' : 'text-white/30'}`}>
                               {r.rank_move_reason}
                             </div>
                           ) : r.tagline ? (

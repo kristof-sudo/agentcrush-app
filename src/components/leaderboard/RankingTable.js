@@ -55,10 +55,10 @@ export default function RankingTable({ rows = [] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-white/25">
-              <th className="px-3 py-2 text-left w-[52px]">#</th>
+              <th className="px-3 py-2 text-left w-[44px]">#</th>
               <th className="px-3 py-2 text-left">Agent</th>
-              <th className="px-3 py-2 text-right w-[72px]">Score</th>
-              <th className="px-3 py-2 text-center w-[56px]">7d</th>
+              <th className="px-3 py-2 text-right w-[60px]">Score</th>
+              <th className="px-3 py-2 text-center w-[52px]">7d</th>
               <th className="px-3 py-2 text-right w-[64px] hidden lg:table-cell">Vis</th>
               <th className="px-3 py-2 text-right w-[64px] hidden lg:table-cell">Rep</th>
             </tr>
@@ -112,7 +112,7 @@ export default function RankingTable({ rows = [] }) {
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-white/30">@{r.handle}</span>
                           {r.rank_move_reason ? (
-                            <span className={`text-[10px] truncate max-w-[200px] ${delta > 0 ? 'text-emerald-400/60' : delta < 0 ? 'text-red-400/60' : 'text-white/20'}`}>
+                            <span className={`text-[10px] truncate max-w-[220px] ${delta > 0 ? 'text-emerald-400/80' : delta < 0 ? 'text-red-400/75' : 'text-white/35'}`}>
                               {r.rank_move_reason}
                             </span>
                           ) : null}
@@ -190,7 +190,7 @@ export default function RankingTable({ rows = [] }) {
                   ) : null}
                 </div>
                 {r.rank_move_reason ? (
-                  <div className={`text-[10px] mt-0.5 ${delta > 0 ? 'text-emerald-400/60' : delta < 0 ? 'text-red-400/60' : 'text-white/20'}`}>
+                  <div className={`text-[10px] mt-0.5 ${delta > 0 ? 'text-emerald-400/80' : delta < 0 ? 'text-red-400/75' : 'text-white/35'}`}>
                     {r.rank_move_reason}
                   </div>
                 ) : null}

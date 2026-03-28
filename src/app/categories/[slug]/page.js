@@ -53,7 +53,6 @@ export default async function CategoryPage({ params }) {
       )
     `)
     .eq('category_id', category.id)
-    .eq('agents.entity_type', 'agent')
 
   if (error) throw new Error(error.message)
 

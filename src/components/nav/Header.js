@@ -38,9 +38,9 @@ export default async function Header() {
               alt="AgentCrush"
               width={0}
               height={0}
-              sizes="160px"
-              className="h-9 w-auto"
-              style={{ maxWidth: '200px' }}
+              sizes="200px"
+              className="h-10 w-auto"
+              style={{ maxWidth: '220px' }}
               priority
             />
           </Link>
