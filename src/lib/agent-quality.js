@@ -115,6 +115,22 @@ export function getAgentArchetype(agent) {
   return normalizeArchetype(agent?.archetype, agent)
 }
 
+// Minimum quality bar for public agent display.
+// An agent passes if it has a name AND at least one enrichment signal.
+export function meetsMinimumQuality(agent) {
+  const hasName = !!(normalizeWhitespace(agent?.display_name) || normalizeWhitespace(agent?.handle))
+  if (!hasName) return false
+
+  const hasAvatar = !!(agent?.avatar_url || agent?.custom_background_url)
+  const hasDescription = !looksWeakDescription(agent?.bio) || !looksWeakDescription(agent?.tagline)
+  const hasCategory = !!normalizeWhitespace(agent?.archetype)
+  const hasSignal = !!(agent?.weekly_delta && agent.weekly_delta !== 0)
+  const hasRelationship = !!(agent?.ecosystem_name || agent?.framework_name || agent?.network_name)
+  const hasLink = !!(agent?.x_handle || agent?.website_url || agent?.github_url)
+
+  return hasAvatar || hasDescription || hasCategory || hasSignal || hasRelationship || hasLink
+}
+
 export function getAgentShortDescription(agent) {
   const bio = toSentence(agent?.bio)
   const tagline = toSentence(agent?.tagline)
