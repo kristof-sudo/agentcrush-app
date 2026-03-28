@@ -111,10 +111,10 @@ export default async function RankingsPage({ searchParams }) {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-white tracking-tight">Rankings</h1>
         <p className="mt-1 text-sm text-white/45">
-          Live ecosystem standings · {rows.length} agents indexed ·{' '}
+          Live ecosystem standings · {scoredRows.length} agents ranked ·{' '}
           <span className="text-emerald-400">{risingCount} rising</span> ·{' '}
           <span className="text-violet-400">{trendingCount} trending</span>
         </p>
