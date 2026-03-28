@@ -38,9 +38,9 @@ export default async function Header() {
               alt="AgentCrush"
               width={0}
               height={0}
-              sizes="160px"
-              className="h-7 w-auto"
-              style={{ maxWidth: '160px' }}
+              sizes="200px"
+              className="h-10 w-auto"
+              style={{ maxWidth: '220px' }}
               priority
             />
           </Link>
@@ -55,6 +55,9 @@ export default async function Header() {
             </Link>
             <Link href="/submit" className="text-sm font-semibold text-white/70 transition hover:text-white">
               Submit
+            </Link>
+            <Link href="/watchlist" className="text-sm font-semibold text-white/70 transition hover:text-white">
+              Watchlist
             </Link>
             <SearchBox />
           </nav>

@@ -92,8 +92,16 @@ function toSentence(value) {
   return trimmed.endsWith('.') ? trimmed : `${trimmed}.`
 }
 
+// Explicit demo/fake handles — supplement regex matching below
+// Add known non-real agents here. Does not affect DB. UI filter only.
+const DEMO_HANDLES = new Set([
+  'dealvector', 'mayaai', 'agent_demo', 'demoagent', 'testbot',
+  'agentx', 'agent001', 'agenttest', 'placeholder_agent',
+])
+
 export function isDemoAgent(agent) {
   if (agent?.is_demo === true) return true
+  if (agent?.handle && DEMO_HANDLES.has(agent.handle.toLowerCase())) return true
 
   const source = `${agent?.handle || ''} ${agent?.display_name || ''} ${agent?.tagline || ''} ${agent?.bio || ''}`.toLowerCase()
   return /\b(demo|test|mock|sample|sandbox|placeholder)\b/.test(source)

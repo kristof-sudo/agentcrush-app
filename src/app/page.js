@@ -1,7 +1,7 @@
 import Container from '@/components/ui/Container'
 import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
-import Image from 'next/image'
+import { getSignalTag, getEventIcon, getMovementReason, formatRelativeTime } from '@/lib/why-moving'
 
 // Deterministic color from handle string
 const AVATAR_COLORS = [
@@ -32,26 +32,6 @@ function Tip({ children, label }) {
   )
 }
 
-// Signal tag derived from event type — no backend change needed
-const REASON_TAGS = {
-  launch_buzz:           { label: 'launch',      cls: 'bg-violet-500/15 text-violet-300/80 border-violet-500/25' },
-  audience_spike:        { label: 'trending',    cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
-  repo_star_growth:      { label: 'repo spike',  cls: 'bg-yellow-500/15 text-yellow-300/80 border-yellow-500/25' },
-  repo_release:          { label: 'release',     cls: 'bg-blue-500/15 text-blue-300/80 border-blue-500/25' },
-  collab_win:            { label: 'collab',      cls: 'bg-sky-500/15 text-sky-300/80 border-sky-500/25' },
-  ranking_jump:          { label: 'rising',      cls: 'bg-emerald-500/15 text-emerald-300/80 border-emerald-500/25' },
-  dev_activity:          { label: 'dev active',  cls: 'bg-slate-500/15 text-slate-300/80 border-slate-500/25' },
-  ecosystem_integration: { label: 'integration', cls: 'bg-cyan-500/15 text-cyan-300/80 border-cyan-500/25' },
-  canon_scene:           { label: 'milestone',   cls: 'bg-indigo-500/15 text-indigo-300/80 border-indigo-500/25' },
-  timeline_ping:         { label: 'mentions',    cls: 'bg-pink-500/15 text-pink-300/80 border-pink-500/25' },
-}
-
-const EVENT_ICON = {
-  audience_spike: '📡', ranking_jump: '📈', timeline_ping: '💬', canon_scene: '🌀',
-  collab_win: '🤝', launch_buzz: '🚀', daily_boost: '✨', repo_star_growth: '⭐',
-  repo_release: '🔖', ecosystem_integration: '🔗', dev_activity: '⚙️',
-  agent_joined: '✦',
-}
 
 const MOCK_ECOSYSTEM_LIVE = [
   { id: 1, handle: 'MikeMatshAI', name: 'Mike', text: 'The top 3 agents this week share a pattern: repo activity and X buzz hitting the same 72h window. Coincidence or playbook?', time: '3m ago' },
@@ -72,15 +52,6 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
-function formatRelativeTime(value) {
-  if (!value) return ''
-  const diff = Math.floor((Date.now() - new Date(value).getTime()) / 1000)
-  if (diff < 3600) return `${Math.max(1, Math.floor(diff / 60))}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  try {
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(value))
-  } catch { return value }
-}
 
 function formatEventSummary(event) {
   const meta = event?.metadata || {}
@@ -107,23 +78,6 @@ function formatEventSummary(event) {
   }
 }
 
-function getRankMoveReason(weeklyDelta, latestEventType) {
-  const delta = Number(weeklyDelta || 0)
-  const reasonByEvent = {
-    repo_star_growth: 'GitHub stars growing', repo_release: 'new release shipped',
-    audience_spike: 'X audience spike', ranking_jump: 'ranking momentum',
-    timeline_ping: 'ecosystem mentions', launch_buzz: 'launch buzz',
-    collab_win: 'new collaboration', daily_boost: 'fresh activity',
-    canon_scene: 'ecosystem milestone', ecosystem_integration: 'new integration',
-    dev_activity: 'developer activity',
-  }
-  const move = delta > 0 ? `↑${delta}` : delta < 0 ? `↓${Math.abs(delta)}` : null
-  const reason = latestEventType ? (reasonByEvent[latestEventType] || null) : null
-  if (move && reason) return `${move} — ${reason}`
-  if (move) return `${move} spots this week`
-  if (reason) return reason
-  return null
-}
 
 function dedupeRows(rows = [], limit = 20) {
   const seen = new Set()
@@ -290,7 +244,7 @@ export default async function Home() {
       archetype: a.archetype || '',
       score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
       weekly_delta: a.weekly_delta || 0,
-      rank_move_reason: getRankMoveReason(a.weekly_delta, trending?.latest_event_type),
+      rank_move_reason: getMovementReason(a.weekly_delta, trending?.latest_event_type),
       latest_event_type: trending?.latest_event_type || null,
     }
   })
@@ -317,7 +271,25 @@ export default async function Home() {
 
   // Content engine: always-populated mixed feed
   const ecosystemFeedRows = buildContentFeed(deduped, recentAgents || [], 30)
-  const activityRows = deduped.slice(0, 10)
+
+  // Right rail: interleave real signals with Mike posts for density
+  const topSignals = deduped.slice(0, 5).map((row) => ({
+    id: `sig-${row.id}`,
+    handle: row.handle,
+    text: `${row.display_name} — ${row.event_label}`,
+    time: formatRelativeTime(row.created_at),
+    isSignal: true,
+  }))
+  const liveRailItems = []
+  let mikeIdx = 0
+  let sigIdx = 0
+  while (liveRailItems.length < 10) {
+    if (sigIdx < topSignals.length && (liveRailItems.length % 3 === 0)) {
+      liveRailItems.push(topSignals[sigIdx++])
+    } else if (mikeIdx < MOCK_ECOSYSTEM_LIVE.length) {
+      liveRailItems.push({ ...MOCK_ECOSYSTEM_LIVE[mikeIdx++], isSignal: false })
+    } else break
+  }
 
   // Archetype counts for sectors bar
   const archetypeCounts = {}
@@ -386,16 +358,13 @@ export default async function Home() {
           </Container>
         </div>
 
-        {/* Hero */}
-        <div className="border-b border-white/[0.06] py-4">
+        {/* Hero — compact, no duplicate logo */}
+        <div className="border-b border-white/[0.06] py-2">
           <Container>
-            <div className="flex items-center gap-4">
-              <Image src="/agentcrush-logo.png" alt="AgentCrush" width={0} height={0}
-                sizes="160px" className="h-10 w-auto shrink-0" style={{ maxWidth: '160px' }} priority />
-              <div className="h-7 w-px bg-white/[0.08] shrink-0" />
+            <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-sm font-semibold text-white md:text-base">The AI Agent Ecosystem Index</h1>
-                <p className="text-[11px] text-white/35">Who&apos;s rising, who&apos;s falling, and why.</p>
+                <h1 className="text-sm font-semibold text-white">The AI Agent Ecosystem Index</h1>
+                <p className="text-[11px] text-white/30">Who&apos;s rising, who&apos;s falling, and why.</p>
               </div>
             </div>
           </Container>
@@ -422,13 +391,13 @@ export default async function Home() {
         {/* Main 3-column dashboard */}
         <main>
           <Container>
-            <div className="py-3 grid grid-cols-12 gap-3" style={{ alignItems: 'stretch' }}>
+            <div className="py-2 grid grid-cols-12 gap-2" style={{ alignItems: 'stretch' }}>
 
-              {/* ── COL 1 (5): Rising Now + Ecosystem Feed ── */}
-              <div className="col-span-12 lg:col-span-5 flex flex-col gap-3">
+              {/* ── COL 1 (5): Rising Now ── */}
+              <div className="col-span-12 lg:col-span-5 flex flex-col gap-2">
 
                 {/* Rising Now */}
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                <div className="flex-1 flex flex-col rounded-lg border border-white/[0.06] bg-white/[0.02] min-h-0">
                   <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2 shrink-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-emerald-400">↑</span>
@@ -445,7 +414,7 @@ export default async function Home() {
                       <Link href="/rankings" className="text-[10px] text-white/35 hover:text-white/55 transition-colors">All →</Link>
                     </div>
                   </div>
-                  <div className="divide-y divide-white/[0.04]">
+                  <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04]">
                     {rankingRows.map((r) => (
                       <Link key={r.id} href={`/agent/${encodeURIComponent(r.handle)}`}
                         className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.025] transition-colors group">
@@ -464,9 +433,9 @@ export default async function Home() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span className="text-xs font-medium text-white group-hover:text-white/90 truncate">{r.display_name}</span>
-                            {r.latest_event_type && REASON_TAGS[r.latest_event_type] ? (
-                              <span className={`hidden sm:inline text-[9px] px-1.5 py-0.5 rounded border shrink-0 leading-none font-medium ${REASON_TAGS[r.latest_event_type].cls}`}>
-                                {REASON_TAGS[r.latest_event_type].label}
+                            {getSignalTag(r.latest_event_type) ? (
+                              <span className={`hidden sm:inline text-[9px] px-1.5 py-0.5 rounded border shrink-0 leading-none font-medium ${getSignalTag(r.latest_event_type).cls}`}>
+                                {getSignalTag(r.latest_event_type).label}
                               </span>
                             ) : r.archetype ? (
                               <span className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-white/[0.05] text-white/25 shrink-0 leading-none">
@@ -475,7 +444,7 @@ export default async function Home() {
                             ) : null}
                           </div>
                           {r.rank_move_reason ? (
-                            <div className={`text-[10px] truncate leading-snug ${r.weekly_delta > 0 ? 'text-emerald-400/60' : r.weekly_delta < 0 ? 'text-red-400/60' : 'text-white/20'}`}>
+                            <div className={`text-[10px] truncate leading-snug ${r.weekly_delta > 0 ? 'text-emerald-400/80' : r.weekly_delta < 0 ? 'text-red-400/75' : 'text-white/30'}`}>
                               {r.rank_move_reason}
                             </div>
                           ) : r.tagline ? (
@@ -496,12 +465,18 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Ecosystem Feed — fills remaining height */}
+              </div>
+
+              {/* ── COL 2 (4): Signal Feed (merged) + Newest Agents ── */}
+              <div className="col-span-12 lg:col-span-4 flex flex-col gap-2">
+
+                {/* Signal Feed — merged Live Activity + Ecosystem Feed */}
                 <div className="flex-1 flex flex-col rounded-lg border border-white/[0.06] bg-white/[0.02] min-h-[200px]">
                   <div className="flex items-center gap-1.5 border-b border-white/[0.06] px-3 py-2 shrink-0">
-                    <span className="text-xs text-sky-400">⚡</span>
-                    <span className="text-xs font-semibold text-white">Ecosystem Feed</span>
-                    <span className="ml-auto text-[10px] text-white/20 tabular-nums">{ecosystemFeedRows.length} signals</span>
+                    <span className="text-xs text-violet-400">⚡</span>
+                    <span className="text-xs font-semibold text-white">Signal Feed</span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse ml-1" />
+                    <span className="ml-auto text-[10px] text-white/20 tabular-nums">{ecosystemFeedRows.length}</span>
                   </div>
                   <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth divide-y divide-white/[0.04]">
                     {ecosystemFeedRows.map((row) => (
@@ -513,13 +488,16 @@ export default async function Home() {
                             <span className="text-[9px] font-bold">{(row.display_name || '?')[0].toUpperCase()}</span>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className={`text-[11px] font-medium ${row.synthetic ? 'text-amber-300/70' : 'text-white/75'}`}>{row.display_name}</span>
-                          <span className="text-[11px] text-white/30"> {row.event_label}</span>
+                        <div className="flex-1 min-w-0 flex items-baseline gap-1">
+                          <Link href={`/agent/${encodeURIComponent(row.handle)}`}
+                            className={`text-[11px] font-medium shrink-0 hover:text-white transition ${row.synthetic ? 'text-amber-300/70' : 'text-white/80'}`}>
+                            {row.display_name}
+                          </Link>
+                          <span className="text-[11px] text-white/30 truncate">{row.event_label}</span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <span className="text-[10px] leading-none">{EVENT_ICON[row.event_type] || '·'}</span>
-                          <span className="text-[10px] text-white/20 whitespace-nowrap">{formatRelativeTime(row.created_at)}</span>
+                          <span className="text-[10px] leading-none">{getEventIcon(row.event_type)}</span>
+                          <span className="text-[10px] text-white/20 whitespace-nowrap tabular-nums">{formatRelativeTime(row.created_at)}</span>
                         </div>
                       </div>
                     ))}
@@ -529,50 +507,9 @@ export default async function Home() {
                   </div>
                 </div>
 
-              </div>
-
-              {/* ── COL 2 (4): Live Activity + Newest Agents ── */}
-              <div className="col-span-12 lg:col-span-4 flex flex-col gap-3">
-
-                {/* Live Activity */}
-                <div className="flex-1 flex flex-col rounded-lg border border-white/[0.06] bg-white/[0.02]">
-                  <div className="flex items-center gap-1.5 border-b border-white/[0.06] px-3 py-2 shrink-0">
-                    <span className="text-xs text-violet-400">📡</span>
-                    <span className="text-xs font-semibold text-white">Live Activity</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse ml-1" />
-                  </div>
-                  <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth divide-y divide-white/[0.04]">
-                    {activityRows.map((row) => (
-                      <div key={row.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.02] transition-colors">
-                        <div className={`h-6 w-6 shrink-0 rounded overflow-hidden border border-white/[0.07] flex items-center justify-center ${!row.avatar_url ? avatarColor(row.handle) : 'bg-white/[0.04]'}`}>
-                          {row.avatar_url ? (
-                            <img src={row.avatar_url} alt={row.display_name} className="h-full w-full object-cover" />
-                          ) : (
-                            <span className="text-[9px] font-bold">{(row.display_name || '?')[0].toUpperCase()}</span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/agent/${encodeURIComponent(row.handle)}`}
-                            className="text-xs font-semibold text-white/90 hover:text-white transition">
-                            {row.display_name}
-                          </Link>
-                          <span className="text-xs text-white/35"> {row.event_label}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-sm leading-none">{EVENT_ICON[row.event_type] || '·'}</span>
-                          <span className="text-[10px] text-white/25 whitespace-nowrap">{formatRelativeTime(row.created_at)}</span>
-                        </div>
-                      </div>
-                    ))}
-                    {activityRows.length === 0 ? (
-                      <div className="px-3 py-5 text-xs text-white/25">No recent activity.</div>
-                    ) : null}
-                  </div>
-                </div>
-
                 {/* Newest Agents */}
                 <div className="rounded-lg border border-white/[0.06] bg-white/[0.02]">
-                  <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
+                  <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-1.5">
                     <div className="flex items-center gap-1.5">
                       <span className="text-amber-400 text-xs">✦</span>
                       <span className="text-xs font-semibold text-white">Newest</span>
@@ -606,7 +543,7 @@ export default async function Home() {
               </div>
 
               {/* ── COL 3 (3): Ecosystem Live + Stats + Submit ── */}
-              <div className="col-span-12 lg:col-span-3 flex flex-col gap-3">
+              <div className="col-span-12 lg:col-span-3 flex flex-col gap-2">
 
                 {/* Ecosystem Live */}
                 <div className="flex-1 flex flex-col rounded-lg border border-white/[0.06] bg-white/[0.02] min-h-[200px]">
@@ -616,25 +553,27 @@ export default async function Home() {
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-auto" />
                   </div>
                   <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth divide-y divide-white/[0.04]">
-                    {MOCK_ECOSYSTEM_LIVE.map((post) => (
-                      <div key={post.id} className="px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <div className={`h-5 w-5 rounded-full shrink-0 border border-white/[0.08] flex items-center justify-center ${avatarColor(post.handle)}`}>
-                            <span className="text-[9px] font-bold">{post.name[0]}</span>
+                    {liveRailItems.map((post) => (
+                      <div key={post.id} className={`px-3 py-1.5 hover:bg-white/[0.02] transition-colors ${post.isSignal ? 'bg-violet-500/[0.02]' : ''}`}>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <div className={`h-4 w-4 rounded-full shrink-0 border border-white/[0.08] flex items-center justify-center ${post.isSignal ? 'bg-violet-500/20 text-violet-300' : avatarColor(post.handle)}`}>
+                            <span className="text-[8px] font-bold">{post.isSignal ? '⚡' : (post.name || post.handle)[0]}</span>
                           </div>
-                          <span className="text-[11px] font-semibold text-white/70 flex-1 min-w-0 truncate">@{post.handle}</span>
-                          <span className="text-[10px] text-white/20 shrink-0">{post.time}</span>
+                          <span className="text-[10px] font-semibold text-white/60 flex-1 min-w-0 truncate">
+                            {post.isSignal ? 'signal' : `@${post.handle}`}
+                          </span>
+                          <span className="text-[10px] text-white/20 shrink-0 tabular-nums">{post.time}</span>
                         </div>
-                        <p className="text-[11px] text-white/50 leading-relaxed pl-6">{post.text}</p>
+                        <p className="text-[11px] text-white/45 leading-snug pl-5">{post.text}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Today Stats */}
-                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
-                  <div className="text-[9px] font-semibold uppercase tracking-widest text-white/20 mb-2">Today</div>
-                  <div className="space-y-1.5">
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                  <div className="text-[9px] font-semibold uppercase tracking-widest text-white/20 mb-1.5">Today</div>
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between gap-2">
                       <Tip label="Total signals processed today across all sources">
                         <span className="text-[11px] text-white/40 underline decoration-dotted decoration-white/15">Signals</span>
@@ -668,7 +607,7 @@ export default async function Home() {
 
                 {/* Submit CTA */}
                 <Link href="/submit"
-                  className="rounded-lg border border-violet-500/40 bg-violet-500/[0.08] px-3 py-2.5 hover:bg-violet-500/[0.14] hover:border-violet-500/60 transition-colors block group">
+                  className="rounded-lg border border-violet-500/40 bg-violet-500/[0.08] px-3 py-2 hover:bg-violet-500/[0.14] hover:border-violet-500/60 transition-colors block group">
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-bold text-violet-200">Submit an Agent</div>
                     <span className="text-violet-400 group-hover:translate-x-0.5 transition-transform">→</span>
