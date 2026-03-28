@@ -105,6 +105,9 @@ export default function RankingTable({ rows = [] }) {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs font-semibold text-white truncate max-w-[160px]">{displayName}</span>
+                          {r.verified && (
+                            <span className="text-[9px] px-1 py-0.5 rounded border border-sky-500/30 bg-sky-500/10 text-sky-300 leading-none shrink-0">✓</span>
+                          )}
                           {tag ? (
                             <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium leading-none shrink-0 ${tag.cls}`}>
                               {tag.label}
@@ -190,6 +193,9 @@ export default function RankingTable({ rows = [] }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-semibold text-white truncate">{displayName}</span>
+                  {r.verified && (
+                    <span className="text-[9px] px-1 py-0.5 rounded border border-sky-500/30 bg-sky-500/10 text-sky-300 leading-none shrink-0">✓</span>
+                  )}
                   {tag ? (
                     <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium leading-none shrink-0 ${tag.cls}`}>
                       {tag.label}

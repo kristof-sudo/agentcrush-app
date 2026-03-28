@@ -47,6 +47,7 @@ export default function SubmitAgentForm() {
     website: '', // honeypot
   })
   const [avatarFile, setAvatarFile] = useState(null)
+  const [claimVerification, setClaimVerification] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')

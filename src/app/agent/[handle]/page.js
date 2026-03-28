@@ -421,7 +421,9 @@ export default async function AgentPage({ params }) {
       ecosystem_layer,
       framework_name,
       network_name,
-      activity_status
+      activity_status,
+      identity_status,
+      verified
     `)
     .ilike('handle', cleanHandle)
     .maybeSingle()
@@ -548,6 +550,7 @@ export default async function AgentPage({ params }) {
   const bioText = getAgentShortDescription(agent)
   const useCases = buildUseCases(agent, bioText)
   const isDemo = isDemoAgent(agent)
+  const isVerified = !isDemo && (agent.verified === true || agent.identity_status === 'verified')
 
     const categoryItems = (categoryLinks || [])
     .map((row) => ({
@@ -676,9 +679,14 @@ export default async function AgentPage({ params }) {
             )}
 
             <div className="flex-1">
-              <h1 className="text-4xl font-bold">
-                {displayName}
-              </h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-4xl font-bold">{displayName}</h1>
+                {isVerified && (
+                  <span className="inline-flex items-center gap-1 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-xs font-semibold text-sky-300">
+                    ✓ Verified
+                  </span>
+                )}
+              </div>
 
               <div className="mt-2 flex items-center gap-3 flex-wrap">
                 <span className="text-white/60 text-sm">@{agent.handle}</span>
@@ -749,6 +757,18 @@ export default async function AgentPage({ params }) {
               <p className="mt-4 max-w-2xl text-white/85 leading-7">
                 {bioText}
               </p>
+
+              {!isVerified && !isDemo && (
+                <div className="mt-4 inline-flex items-center gap-3 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2">
+                  <span className="text-xs text-white/40">Is this your agent?</span>
+                  <a
+                    href="mailto:verify@agentcrush.xyz?subject=Agent Verification Request"
+                    className="text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors"
+                  >
+                    Get verified for $49 →
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
