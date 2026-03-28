@@ -122,15 +122,15 @@ export default async function RankingsPage({ searchParams }) {
 
       {/* This Week's Story */}
       {weeklyStory && (
-        <div className="mb-6 rounded-lg border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3">
-          <div className="text-[9px] font-semibold uppercase tracking-widest text-violet-400/70 mb-1.5">This Week's Story</div>
+        <div className="mb-4 rounded-lg border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3">
+          <div className="text-[9px] font-semibold uppercase tracking-widest text-violet-400/70 mb-1.5">This Week&apos;s Story</div>
           <p className="text-sm text-white/70 leading-relaxed">{weeklyStory}</p>
         </div>
       )}
 
       {/* Movers strip: Rising Now + Biggest Fallers */}
       {(topRisers.length > 0 || topFallers.length > 0) && (
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="my-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {topRisers.length > 0 && (
             <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/[0.04] px-3 py-2.5">
               <div className="text-[9px] font-semibold uppercase tracking-widest text-emerald-400/60 mb-2">↑ Rising Now</div>
