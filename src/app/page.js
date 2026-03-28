@@ -161,6 +161,7 @@ export default async function Home() {
     { data: recentAgents },
     { data: events },
     { data: topMover },
+    { data: topFaller },
     { data: newestAgent },
     { count: eventsTodayCount },
     { count: eventsYesterdayCount },
@@ -183,6 +184,10 @@ export default async function Home() {
     supabase.from('agents')
       .select('id, handle, display_name, weekly_delta')
       .gt('weekly_delta', 0).order('weekly_delta', { ascending: false }).limit(1).maybeSingle(),
+
+    supabase.from('agents')
+      .select('id, handle, display_name, weekly_delta')
+      .lt('weekly_delta', 0).order('weekly_delta', { ascending: true }).limit(1).maybeSingle(),
 
     supabase.from('agents')
       .select('id, handle, display_name, created_at')
@@ -594,11 +599,22 @@ export default async function Home() {
                     {topMover ? (
                       <div className="flex items-center justify-between gap-2">
                         <Tip label="Agent with most rank positions gained this week">
-                          <span className="text-[11px] text-white/40 underline decoration-dotted decoration-white/15 shrink-0">Top mover</span>
+                          <span className="text-[11px] text-white/40 underline decoration-dotted decoration-white/15 shrink-0">↑ Rising</span>
                         </Tip>
                         <Link href={`/agent/${encodeURIComponent(topMover.handle)}`}
                           className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition truncate">
                           +{topMover.weekly_delta} {topMover.display_name || topMover.handle}
+                        </Link>
+                      </div>
+                    ) : null}
+                    {topFaller ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <Tip label="Agent with most rank positions lost this week">
+                          <span className="text-[11px] text-white/40 underline decoration-dotted decoration-white/15 shrink-0">↓ Falling</span>
+                        </Tip>
+                        <Link href={`/agent/${encodeURIComponent(topFaller.handle)}`}
+                          className="text-xs font-bold text-red-400 hover:text-red-300 transition truncate">
+                          {topFaller.weekly_delta} {topFaller.display_name || topFaller.handle}
                         </Link>
                       </div>
                     ) : null}

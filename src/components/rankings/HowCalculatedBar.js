@@ -42,6 +42,7 @@ export default function HowCalculatedBar() {
                 { label: 'Score', desc: 'Total visibility + reputation points' },
                 { label: '7d', desc: 'Change in score over the past 7 days' },
                 { label: '↑↑ / ↓↓', desc: 'Moved more than 5 points this week' },
+                { label: '✓', desc: 'Verified identity confirmed' },
               ].map(({ label, desc }) => (
                 <li key={label} className="flex items-start gap-2 text-[11px] text-white/45">
                   <span className="font-semibold text-white/60 w-8 shrink-0">{label}</span>

@@ -1,6 +1,5 @@
 import SearchableRankings from '@/components/rankings/SearchableRankings'
 import HowCalculatedBar from '@/components/rankings/HowCalculatedBar'
-import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
 import { getMovementReason } from '@/lib/why-moving'
 
@@ -104,13 +103,11 @@ export default async function RankingsPage({ searchParams }) {
     }
   })
 
-  const scoredRows = rows.filter((r) => (r.score_total || 0) > 0)
-  const unscoredCount = rows.length - scoredRows.length
-  const risingCount = scoredRows.filter((r) => (r.weekly_delta || 0) > 0).length
-  const trendingCount = scoredRows.filter((r) => r.trending?.latest_event_type).length
-  const weeklyStory = generateWeeklyStory(scoredRows)
-  const topRisers = scoredRows.filter((r) => (r.weekly_delta || 0) > 0).sort((a, b) => b.weekly_delta - a.weekly_delta).slice(0, 5)
-  const topFallers = scoredRows.filter((r) => (r.weekly_delta || 0) < 0).sort((a, b) => a.weekly_delta - b.weekly_delta).slice(0, 5)
+  const risingCount = rows.filter((r) => (r.weekly_delta || 0) > 0).length
+  const trendingCount = rows.filter((r) => r.trending?.latest_event_type).length
+  const weeklyStory = generateWeeklyStory(rows)
+  const topRisers = rows.filter((r) => (r.weekly_delta || 0) > 0).sort((a, b) => b.weekly_delta - a.weekly_delta).slice(0, 5)
+  const topFallers = rows.filter((r) => (r.weekly_delta || 0) < 0).sort((a, b) => a.weekly_delta - b.weekly_delta).slice(0, 5)
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
@@ -130,8 +127,6 @@ export default async function RankingsPage({ searchParams }) {
           <p className="text-sm text-white/70 leading-relaxed">{weeklyStory}</p>
         </div>
       )}
-
-      <HowCalculatedBar />
 
       {/* Movers strip: Rising Now + Biggest Fallers */}
       {(topRisers.length > 0 || topFallers.length > 0) && (
@@ -171,15 +166,7 @@ export default async function RankingsPage({ searchParams }) {
         </div>
       )}
 
-      <SearchableRankings rows={scoredRows} initialQuery={initialQuery} />
-      {unscoredCount > 0 && (
-        <p className="mt-3 px-1 text-xs text-white/25">
-          +{unscoredCount} more agents being indexed —{' '}
-          <Link href="/categories" className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2">
-            browse by category
-          </Link>
-        </p>
-      )}
+      <SearchableRankings rows={rows} initialQuery={initialQuery} />
     </main>
   )
 }

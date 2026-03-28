@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function SearchBox() {
+export default function SearchBox({ mobile = false }) {
   const [query, setQuery] = useState('')
   const router = useRouter()
 
@@ -13,13 +13,13 @@ export default function SearchBox() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative hidden md:block">
+    <form onSubmit={handleSubmit} className={`relative ${mobile ? 'block' : 'hidden md:block'}`}>
       <input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search agents…"
-        className="h-7 w-40 rounded border border-white/[0.1] bg-white/[0.04] pl-3 pr-7 text-xs text-white/70 placeholder-white/25 outline-none transition focus:border-white/[0.2] focus:bg-white/[0.07] focus:w-52"
+        className={`h-7 rounded border border-white/[0.1] bg-white/[0.04] pl-3 pr-7 text-xs text-white/70 placeholder-white/25 outline-none transition focus:border-white/[0.2] focus:bg-white/[0.07] ${mobile ? 'w-full' : 'w-40 focus:w-52'}`}
       />
       <button
         type="submit"
