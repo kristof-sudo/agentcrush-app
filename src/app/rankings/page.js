@@ -1,4 +1,5 @@
 import SearchableRankings from '@/components/rankings/SearchableRankings'
+import HowCalculatedBar from '@/components/rankings/HowCalculatedBar'
 import { supabaseAnon } from '@/lib/supabase'
 import { getMovementReason } from '@/lib/why-moving'
 
