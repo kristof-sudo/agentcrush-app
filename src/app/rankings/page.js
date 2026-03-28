@@ -23,7 +23,7 @@ export default async function RankingsPage({ searchParams }) {
       agent_id, global_rank, score_visibility, score_reputation, score_total,
       agent:agents!inner (
         id, handle, display_name, bio, archetype, avatar_url, custom_background_url,
-        identity_status, premium_frame_enabled, weekly_delta, tagline, entity_type
+        identity_status, premium_frame_enabled, weekly_delta, tagline, entity_type, verified
       )
     `)
     .order('global_rank', { ascending: true })
@@ -57,6 +57,7 @@ export default async function RankingsPage({ searchParams }) {
       tagline: agent.tagline,
       trending,
       rank_move_reason: getMovementReason(agent.weekly_delta, trending?.latest_event_type),
+      verified: agent.verified || agent.identity_status === 'verified',
     }
   })
 

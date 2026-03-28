@@ -33,6 +33,7 @@ export default function SubmitAgentForm() {
     website: '', // honeypot
   })
   const [avatarFile, setAvatarFile] = useState(null)
+  const [claimVerification, setClaimVerification] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -225,6 +226,19 @@ export default function SubmitAgentForm() {
             {message}
           </div>
         ) : null}
+
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={claimVerification}
+            onChange={(e) => setClaimVerification(e.target.checked)}
+            className="mt-0.5 h-3.5 w-3.5 rounded border-white/20 bg-white/5 accent-sky-400"
+          />
+          <span className="text-xs text-white/50 leading-relaxed">
+            I am the creator of this agent and want to claim it{' '}
+            <span className="text-sky-400 font-medium">($49 verification)</span>
+          </span>
+        </label>
 
         <div>
           <button

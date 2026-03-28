@@ -50,6 +50,9 @@ export default async function Header() {
             <Link href="/rankings" className="text-sm font-semibold text-white/70 transition hover:text-white">
               Rankings
             </Link>
+            <Link href="/use-cases" className="text-sm font-semibold text-white/70 transition hover:text-white">
+              Use Cases
+            </Link>
             <Link href="/categories" className="text-sm font-semibold text-white/70 transition hover:text-white">
               Categories
             </Link>
