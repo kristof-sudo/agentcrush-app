@@ -100,6 +100,34 @@ function formatRelationshipLabel(relType) {
   }
 }
 
+// Short tag label: "Built on LangChain", "vs Devin", "Part of Virtuals"
+function formatRelTag(relType, connectedName) {
+  const name = connectedName || ''
+  switch (relType) {
+    case 'runs_on':         return `Built on ${name}`
+    case 'framework_of':   return `Powers ${name}`
+    case 'part_of_ecosystem': return `Part of ${name}`
+    case 'integrates_with': return `Uses ${name}`
+    case 'derived_from':   return `Derived from ${name}`
+    case 'competes_with':  return `vs ${name}`
+    case 'adjacent_to':    return `Related: ${name}`
+    default:               return name
+  }
+}
+
+function relTagStyle(relType) {
+  switch (relType) {
+    case 'runs_on':         return 'border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20'
+    case 'framework_of':   return 'border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20'
+    case 'part_of_ecosystem': return 'border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
+    case 'integrates_with': return 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20'
+    case 'derived_from':   return 'border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20'
+    case 'competes_with':  return 'border-orange-500/30 bg-orange-500/10 text-orange-300 hover:bg-orange-500/20'
+    case 'adjacent_to':    return 'border-white/15 bg-white/5 text-white/50 hover:bg-white/10'
+    default:               return 'border-white/15 bg-white/5 text-white/50 hover:bg-white/10'
+  }
+}
+
 function formatLayerLabel(layer) {
   switch (layer) {
     case 'framework':
@@ -394,8 +422,6 @@ export default async function AgentPage({ params }) {
       framework_name,
       network_name,
       activity_status,
-      website_url,
-      github_url,
       identity_status,
       verified
     `)
@@ -526,14 +552,6 @@ export default async function AgentPage({ params }) {
   const isDemo = isDemoAgent(agent)
   const isVerified = !isDemo && (agent.verified === true || agent.identity_status === 'verified')
 
-  // Primary CTA: website → GitHub → submit prompt
-  const ctaHref = agent.website_url || agent.github_url || null
-  const ctaLabel = agent.website_url
-    ? 'Try it →'
-    : agent.github_url
-    ? 'View on GitHub →'
-    : null
-
     const categoryItems = (categoryLinks || [])
     .map((row) => ({
       is_primary: row.is_primary,
@@ -646,339 +664,159 @@ export default async function AgentPage({ params }) {
   const whyMoving = getWhyMoving(weeklyDelta, latestEventType)
 
   return (
-    <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <div className="flex flex-col gap-6 md:flex-row md:items-start">
+    <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+      <div className="space-y-3">
+
+        {/* ── Header card ── */}
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] p-4">
+          <div className="flex items-start gap-3">
             {imageUrl ? (
               <img
                 src={imageUrl}
                 alt={agent.display_name || agent.handle}
-                className="h-28 w-28 rounded-2xl object-cover border border-white/10 bg-white/5"
+                className="h-12 w-12 shrink-0 rounded-md object-cover border border-white/[0.08] bg-white/[0.04]"
               />
             ) : (
-              <div className="h-28 w-28 rounded-2xl border border-white/10 bg-white/10" />
+              <div className="h-12 w-12 shrink-0 rounded-md border border-white/[0.08] bg-white/[0.06]" />
             )}
 
-            <div className="flex-1">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <h1 className="text-4xl font-bold">
-                  {displayName}
-                </h1>
-                {ctaHref ? (
-                  <a
-                    href={ctaHref}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:opacity-90"
-                  >
-                    {ctaLabel}
-                  </a>
-                ) : !isDemo ? (
-                  <a
-                    href={`mailto:verify@agentcrush.xyz?subject=Submit link for ${encodeURIComponent(displayName)}`}
-                    className="shrink-0 text-xs text-white/30 hover:text-white/55 transition-colors"
-                  >
-                    Submit a link →
-                  </a>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-base font-bold text-white leading-tight">{displayName}</h1>
+                {isVerified && (
+                  <span className="inline-flex items-center rounded border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300 leading-none">
+                    ✓ Verified
+                  </span>
+                )}
+                {isDemo && (
+                  <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-white/40 leading-none">Demo</span>
+                )}
+                {whyMoving ? (
+                  <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium leading-none ${weeklyDelta > 0 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : weeklyDelta < 0 ? 'border-red-500/30 bg-red-500/10 text-red-300' : 'border-white/10 bg-white/5 text-white/40'}`}>
+                    {whyMoving}
+                  </span>
                 ) : null}
               </div>
 
-              <div className="mt-2 flex items-center gap-3 flex-wrap">
-                <span className="text-white/60 text-sm">@{agent.handle}</span>
+              <div className="mt-0.5 flex items-center gap-2.5 flex-wrap">
+                <span className="text-[11px] text-white/40">@{agent.handle}</span>
                 <a href={`https://x.com/${agent.handle}`} target="_blank" rel="noreferrer"
-                  className="text-xs text-white/35 hover:text-white/60 transition-colors">X →</a>
+                  className="text-[10px] text-white/30 hover:text-white/55 transition-colors">X →</a>
                 <WatchlistButton handle={agent.handle} displayName={displayName} />
                 <Link href={`/compare?a=${encodeURIComponent(agent.handle)}&b=`}
-                  className="text-xs text-white/35 hover:text-white/60 transition-colors border border-white/[0.08] rounded px-2 py-0.5">
+                  className="text-[10px] text-white/30 hover:text-white/55 transition-colors border border-white/[0.07] rounded px-1.5 py-0.5">
                   Compare →
                 </Link>
               </div>
 
-              {whyMoving ? (
-                <div className={`mt-2 inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-medium ${weeklyDelta > 0 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : weeklyDelta < 0 ? 'border-red-500/30 bg-red-500/10 text-red-300' : 'border-white/10 bg-white/5 text-white/50'}`}>
-                  {whyMoving}
-                </div>
-              ) : null}
+              <p className="mt-2 text-xs text-white/55 leading-relaxed max-w-2xl">{bioText}</p>
 
-              <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
-                  Archetype: {archetype}
-                </span>
-                {isDemo ? (
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
-                    Demo
-                  </span>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {archetype ? (
+                  <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/45 leading-none">{archetype}</span>
                 ) : null}
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
-                  Layer: {formatLayerLabel(agent.ecosystem_layer)}
-                </span>
+                <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35 leading-none">{formatLayerLabel(agent.ecosystem_layer)}</span>
                 {agent.framework_name ? (
-                  <Link
-                    href={`/framework/${encodeURIComponent(agent.framework_name)}`}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70 hover:bg-white/10"
-                  >
-                    Framework: {agent.framework_name}
+                  <Link href={`/framework/${encodeURIComponent(agent.framework_name)}`}
+                    className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/45 hover:text-white/70 leading-none transition-colors">
+                    {agent.framework_name}
                   </Link>
                 ) : null}
                 {agent.network_name ? (
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
-                    Network: {agent.network_name}
-                  </span>
+                  <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35 leading-none">{agent.network_name}</span>
                 ) : null}
                 {agent.activity_status ? (
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
-                    Activity: {agent.activity_status}
-                  </span>
+                  <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35 leading-none">{agent.activity_status}</span>
                 ) : null}
               </div>
+
+              {ecosystemConnections.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {ecosystemConnections
+                    .filter((c) => ['runs_on', 'part_of_ecosystem', 'competes_with', 'derived_from', 'integrates_with', 'framework_of'].includes(c.rel_type))
+                    .slice(0, 6)
+                    .map((c) => (
+                      <Link
+                        key={`tag-${c.rel_type}-${c.connected_handle}`}
+                        href={`/agent/${encodeURIComponent(c.connected_handle)}`}
+                        className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-medium transition-colors ${relTagStyle(c.rel_type)}`}
+                      >
+                        {formatRelTag(c.rel_type, c.connected_name || c.connected_handle)}
+                      </Link>
+                    ))}
+                </div>
+              )}
 
               <p className="mt-4 max-w-2xl text-white/85 leading-7">
                 {bioText}
               </p>
+
+              {!isVerified && !isDemo && (
+                <div className="mt-2 inline-flex items-center gap-2.5 rounded border border-white/[0.07] bg-white/[0.02] px-2.5 py-1.5">
+                  <span className="text-[10px] text-white/35">Is this your agent?</span>
+                  <a href="mailto:verify@agentcrush.xyz?subject=Agent Verification Request"
+                    className="text-[10px] font-semibold text-sky-400 hover:text-sky-300 transition-colors">
+                    Get verified for $49 →
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-violet-400/20 bg-violet-500/5 p-6">
-          <h2 className="text-xl font-semibold">What this agent is for</h2>
-          <ul className="mt-4 space-y-3 text-sm text-white/85">
-            {useCases.map((item) => (
-              <li key={item} className="flex gap-3">
-                <span className="mt-[3px] text-white/40">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+        {/* ── Stats row ── */}
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-2.5 flex flex-wrap gap-x-6 gap-y-2 items-center">
+          {[
+            { label: 'Score', value: agentCrushScore, cls: 'text-white' },
+            { label: 'Rank', value: ranking?.global_rank ? `#${ranking.global_rank}` : '—', cls: 'text-white' },
+            { label: 'Visibility', value: agent.visibility_score ?? 0, cls: 'text-sky-300' },
+            { label: 'Reputation', value: agent.reputation_score ?? 0, cls: 'text-violet-300' },
+            {
+              label: '7d Δ',
+              value: weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? `${weeklyDelta}` : '—',
+              cls: weeklyDelta > 0 ? 'text-emerald-400' : weeklyDelta < 0 ? 'text-red-400' : 'text-white/30',
+            },
+          ].map(({ label, value, cls }) => (
+            <div key={label} className="flex items-baseline gap-1.5">
+              <span className="text-[10px] text-white/35 uppercase tracking-wider">{label}</span>
+              <span className={`text-sm font-bold tabular-nums ${cls}`}>{value}</span>
+            </div>
+          ))}
+          {(rankHistory || []).length >= 2 ? (
+            <div className="ml-auto shrink-0"><RankSparkline history={rankHistory} /></div>
+          ) : null}
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 flex flex-wrap gap-x-6 gap-y-3">
-          <div>
-            <div className="text-[10px] text-white/40 uppercase tracking-wider">Score</div>
-            <div className="mt-0.5 text-xl font-bold tabular-nums">{agentCrushScore}</div>
-          </div>
-          <div>
-            <div className="text-[10px] text-white/40 uppercase tracking-wider">Rank</div>
-            <div className="mt-0.5 text-xl font-bold tabular-nums">
-              {ranking?.global_rank ? `#${ranking.global_rank}` : '—'}
-            </div>
-            {(rankHistory || []).length >= 2 ? <div className="mt-1"><RankSparkline history={rankHistory} /></div> : null}
-          </div>
-          <div>
-            <div className="text-[10px] text-white/40 uppercase tracking-wider">Visibility</div>
-            <div className="mt-0.5 text-xl font-bold tabular-nums text-sky-300">{agent.visibility_score ?? 0}</div>
-          </div>
-          <div>
-            <div className="text-[10px] text-white/40 uppercase tracking-wider">Reputation</div>
-            <div className="mt-0.5 text-xl font-bold tabular-nums text-violet-300">{agent.reputation_score ?? 0}</div>
-          </div>
-          <div>
-            <div className="text-[10px] text-white/40 uppercase tracking-wider">7d Δ</div>
-            <div className={`mt-0.5 text-xl font-bold tabular-nums ${weeklyDelta > 0 ? 'text-emerald-400' : weeklyDelta < 0 ? 'text-red-400' : 'text-white/30'}`}>
-              {weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? weeklyDelta : '—'}
-            </div>
-          </div>
-        </div>
-
-               <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-xl font-semibold">Classification</h2>
-          <p className="mt-1 text-sm text-white/60">
-            How this project is positioned inside the AgentCrush ecosystem.
-          </p>
-
-          <div className="mt-4 space-y-4">
-            {primaryCategories.length > 0 ? (
-              <div>
-                <div className="mb-2 text-sm font-medium text-white/70">Primary Type</div>
-                <div className="flex flex-wrap gap-2">
-                  {primaryCategories.map((item) => (
-                    <Link
-                      key={`${item.category_group}-${item.slug}`}
-                      href={`/categories/${item.slug}`}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {frameworkCategories.length > 0 ? (
-              <div>
-                <div className="mb-2 text-sm font-medium text-white/70">Framework</div>
-                <div className="flex flex-wrap gap-2">
-                  {frameworkCategories.map((item) => (
-                    <Link
-                      key={`${item.category_group}-${item.slug}`}
-                      href={`/categories/${item.slug}`}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {ecosystemCategories.length > 0 ? (
-              <div>
-                <div className="mb-2 text-sm font-medium text-white/70">Ecosystem</div>
-                <div className="flex flex-wrap gap-2">
-                  {ecosystemCategories.map((item) => (
-                    <Link
-                      key={`${item.category_group}-${item.slug}`}
-                      href={`/ecosystem/${encodeURIComponent(item.name)}`}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {infrastructureCategories.length > 0 ? (
-              <div>
-                <div className="mb-2 text-sm font-medium text-white/70">Infrastructure</div>
-                <div className="flex flex-wrap gap-2">
-                  {infrastructureCategories.map((item) => (
-                    <Link
-                      key={`${item.category_group}-${item.slug}`}
-                      href={`/infra/${encodeURIComponent(item.name)}`}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {categoryItems.length === 0 ? (
-              <div className="text-white/60">No classification mapped yet.</div>
-            ) : null}
-          </div>
-        </div>
-
-        {isFrameworkPage ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
-              <div>
-                <h2 className="text-xl font-semibold">Framework Position</h2>
-                <p className="mt-1 text-sm text-white/60">
-                  Snapshot of this framework&apos;s role inside the AgentCrush ecosystem.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="text-sm text-white/60">Child Projects</div>
-                <div className="mt-2 text-2xl font-semibold">
-                  {frameworkChildren.length}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="text-sm text-white/60">Ecosystem Links</div>
-                <div className="mt-2 text-2xl font-semibold">
-                  {ecosystemMembership.length}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="text-sm text-white/60">Integration Links</div>
-                <div className="mt-2 text-2xl font-semibold">
-                  {integrationLinks.length}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="text-sm text-white/60">Competitive Links</div>
-                <div className="mt-2 text-2xl font-semibold">
-                  {competitionLinks.length}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {(recentEvents || []).length > 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-semibold">Recent Activity</h2>
-
-            <div className="mt-4 space-y-3">
-              {recentEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="rounded-xl border border-white/10 bg-white/5 p-4"
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <div className="font-medium">
-                        {formatProfileEventSummary(event)}
-                      </div>
-                      {isFrameworkPage && event.agent_id !== agent.id ? (
-                        <div className="mt-1 text-xs text-white/50">
-                          from {eventAgentMap.get(event.agent_id)?.display_name || eventAgentMap.get(event.agent_id)?.handle || 'connected project'}
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="text-sm text-white/50 shrink-0">
-                      {formatTimeAgo(event.created_at)}
-                    </div>
-                  </div>
-                </div>
+        {/* ── What this agent is for ── */}
+        {useCases.length > 0 ? (
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-2">What this agent is for</p>
+            <ul className="space-y-1.5">
+              {useCases.map((item) => (
+                <li key={item} className="flex gap-2 text-xs text-white/55 leading-relaxed">
+                  <span className="text-violet-400 shrink-0 mt-0.5">·</span>
+                  {item}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         ) : null}
 
-        {alternativeAgents.length > 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-xl font-semibold">Related & Alternatives</h2>
-            <p className="mt-1 text-sm text-white/60">Similar agents you can also use</p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {alternativeAgents.map((related) => {
-                const relatedImage = resolveImageUrl(related.avatar_url)
-
+        {/* ── Classification ── */}
+        {categoryItems.length > 0 ? (
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-2">Classification</p>
+            <div className="flex flex-wrap gap-1.5">
+              {categoryItems.map((item) => {
+                const href = item.category_group === 'ecosystem'
+                  ? `/ecosystem/${encodeURIComponent(item.name)}`
+                  : item.category_group === 'infrastructure'
+                  ? `/infra/${encodeURIComponent(item.name)}`
+                  : `/categories/${item.slug}`
                 return (
-                  <Link
-                    key={related.id}
-                    href={`/agent/${encodeURIComponent(related.handle)}`}
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                  >
-                    <div className="flex items-center gap-3">
-                      {relatedImage ? (
-                        <img
-                          src={relatedImage}
-                          alt={related.display_name || related.handle}
-                          className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
-                        />
-                      ) : (
-                        <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
-                      )}
-
-                      <div className="min-w-0">
-                        <div className="truncate font-medium text-white">
-                          {related.display_name || related.handle}
-                        </div>
-                        <div className="truncate text-sm text-white/60">
-                          {related.label}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/60">
-                      <span>@{related.handle}</span>
-                      {related.ecosystem_layer ? (
-                        <span>{formatLayerLabel(related.ecosystem_layer)}</span>
-                      ) : null}
-                      {related.archetype ? (
-                        <span>{related.archetype}</span>
-                      ) : null}
-                    </div>
+                  <Link key={`${item.category_group}-${item.slug}`} href={href}
+                    className={`rounded border px-2 py-0.5 text-[10px] leading-none transition-colors hover:text-white/80 ${item.is_primary ? 'border-violet-500/30 bg-violet-500/[0.07] text-violet-300' : 'border-white/[0.08] bg-white/[0.03] text-white/45'}`}>
+                    {item.name}
                   </Link>
                 )
               })}
@@ -986,220 +824,164 @@ export default async function AgentPage({ params }) {
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <div className="flex items-start justify-between gap-4 flex-col lg:flex-row">
-            <div>
-              <h2 className="text-xl font-semibold">Ecosystem Summary</h2>
-              <p className="mt-1 text-sm text-white/60">
-                Structured overview of this project&apos;s ecosystem position.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">Connections</div>
-              <div className="mt-2 text-2xl font-semibold">
-                {ecosystemStats.totalConnections}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">Agent Links</div>
-              <div className="mt-2 text-2xl font-semibold">
-                {ecosystemStats.agents}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">Framework Links</div>
-              <div className="mt-2 text-2xl font-semibold">
-                {ecosystemStats.frameworks}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">Infrastructure Links</div>
-              <div className="mt-2 text-2xl font-semibold">
-                {ecosystemStats.infrastructure}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">Network Links</div>
-              <div className="mt-2 text-2xl font-semibold">
-                {ecosystemStats.networks}
-              </div>
-            </div>
-          </div>
-
-          {topConnectionTypes.length > 0 ? (
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              {topConnectionTypes.map(([type, count]) => (
-                <span
-                  key={type}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70"
-                >
-                  {formatRelationshipLabel(type)}: {count}
-                </span>
+        {/* ── Framework Position (framework pages only) ── */}
+        {isFrameworkPage ? (
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-2">Framework Position</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {[
+                { label: 'Child Projects', value: frameworkChildren.length },
+                { label: 'Ecosystem Links', value: ecosystemMembership.length },
+                { label: 'Integration Links', value: integrationLinks.length },
+                { label: 'Competitive Links', value: competitionLinks.length },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex items-baseline gap-1.5">
+                  <span className="text-[10px] text-white/35">{label}</span>
+                  <span className="text-sm font-bold tabular-nums text-white">{value}</span>
+                </div>
               ))}
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold">Ecosystem Map</h2>
-              <p className="mt-1 text-sm text-white/60">
-                {isFrameworkPage
-                  ? 'Framework ecosystem graph. Projects, integrations, and competitive frameworks connected to this hub.'
-                  : 'Structured ecosystem graph showing how this project connects to other agents and frameworks.'}
-              </p>
+        {/* ── Recent Activity ── */}
+        {(recentEvents || []).length > 0 ? (
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-white/[0.05]">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Recent Activity</span>
+            </div>
+            <div className="divide-y divide-white/[0.04]">
+              {recentEvents.map((event) => (
+                <div key={event.id} className="flex items-center justify-between gap-4 px-4 py-2">
+                  <div className="min-w-0">
+                    <span className="text-xs text-white/70">{formatProfileEventSummary(event)}</span>
+                    {isFrameworkPage && event.agent_id !== agent.id ? (
+                      <span className="ml-2 text-[10px] text-white/35">
+                        from {eventAgentMap.get(event.agent_id)?.display_name || eventAgentMap.get(event.agent_id)?.handle || 'connected project'}
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="text-[10px] text-white/30 shrink-0 tabular-nums">{formatTimeAgo(event.created_at)}</span>
+                </div>
+              ))}
             </div>
           </div>
+        ) : null}
 
-          <div className="mt-4 space-y-6">
-            {ecosystemConnections.length > 0 ? (
-              orderedGroupedConnections.map(([relType, connections]) => (
+        {/* ── Related & Alternatives ── */}
+        {alternativeAgents.length > 0 ? (
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-white/[0.05]">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Related & Alternatives</span>
+            </div>
+            <div className="divide-y divide-white/[0.04]">
+              {alternativeAgents.map((related) => {
+                const relatedImage = resolveImageUrl(related.avatar_url)
+                return (
+                  <Link key={related.id} href={`/agent/${encodeURIComponent(related.handle)}`}
+                    className="flex items-center gap-2.5 px-4 py-2 hover:bg-white/[0.02] transition-colors">
+                    <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/[0.04] flex items-center justify-center">
+                      {relatedImage ? (
+                        <img src={relatedImage} alt={related.display_name || related.handle} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-[9px] font-bold text-white/40">{(related.display_name || related.handle || '?')[0].toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-medium text-white truncate block">{related.display_name || related.handle}</span>
+                      <span className="text-[10px] text-white/35">{related.label}</span>
+                    </div>
+                    {related.archetype ? (
+                      <span className="text-[9px] text-white/25 shrink-0">{related.archetype}</span>
+                    ) : null}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* ── Ecosystem Map ── */}
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-white/[0.05] flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Ecosystem Map</span>
+            {ecosystemStats.totalConnections > 0 ? (
+              <span className="text-[10px] text-white/25 tabular-nums">{ecosystemStats.totalConnections} connections</span>
+            ) : null}
+          </div>
+
+          {ecosystemConnections.length > 0 ? (
+            <div className="divide-y divide-white/[0.04]">
+              {orderedGroupedConnections.map(([relType, connections]) => (
                 <div key={relType}>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/80">
-                      {formatRelationshipLabel(relType)}
-                    </h3>
-                    <span className="text-xs text-white/45">
-                      {connections.length}
-                    </span>
+                  <div className="px-4 py-1.5 bg-white/[0.01] flex items-center justify-between">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-white/30">{formatRelationshipLabel(relType)}</span>
+                    <span className="text-[9px] text-white/20">{connections.length}</span>
                   </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="divide-y divide-white/[0.03]">
                     {connections.map((connection, index) => {
                       const related = connection.agent
                       const relatedImage =
                         resolveImageUrl(related?.custom_background_url) ||
                         resolveImageUrl(related?.avatar_url)
-
                       return (
-                        <Link
-                          key={`${connection.connected_agent_id}-${index}`}
+                        <Link key={`${connection.connected_agent_id}-${index}`}
                           href={`/agent/${encodeURIComponent(connection.connected_handle)}`}
-                          className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                        >
-                          <div className="flex items-center gap-3">
+                          className="flex items-center gap-2.5 px-4 py-2 hover:bg-white/[0.02] transition-colors">
+                          <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/[0.04] flex items-center justify-center">
                             {relatedImage ? (
-                              <img
-                                src={relatedImage}
-                                alt={connection.connected_name || connection.connected_handle}
-                                className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
-                              />
+                              <img src={relatedImage} alt={connection.connected_name || connection.connected_handle} className="h-full w-full object-cover" />
                             ) : (
-                              <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
+                              <span className="text-[9px] font-bold text-white/40">{(connection.connected_name || connection.connected_handle || '?')[0].toUpperCase()}</span>
                             )}
-
-                            <div className="min-w-0">
-                              <div className="truncate font-medium">
-                                {connection.connected_name || connection.connected_handle}
-                              </div>
-                              <div className="truncate text-sm text-white/60">
-                                @{connection.connected_handle}
-                              </div>
-                            </div>
                           </div>
-
-                          <div className="mt-3 text-sm text-white/80 font-medium">
-                            {formatRelationshipLabel(connection.rel_type)}
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-white truncate block">{connection.connected_name || connection.connected_handle}</span>
+                            <span className="text-[10px] text-white/30">@{connection.connected_handle}</span>
                           </div>
-
-                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
-                              {formatLayerLabel(connection.connected_layer)}
-                            </span>
-
-                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
-                              Strength {connection.intensity ?? 1}
-                            </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {related?.archetype ? (
+                              <span className="text-[9px] text-white/25">{related.archetype}</span>
+                            ) : null}
+                            <span className="text-[9px] text-white/20">{formatLayerLabel(connection.connected_layer)}</span>
                           </div>
-
-                          {related?.archetype ? (
-                            <div className="mt-3 text-sm text-white/60">
-                              Archetype: {related.archetype}
-                            </div>
-                          ) : null}
                         </Link>
                       )
                     })}
                   </div>
                 </div>
-              ))
-            ) : fallbackAgents.length > 0 ? (
-              <div>
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-white/70">
-                    Related by similarity
-                  </h3>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {fallbackAgents.map((related) => {
-                    const relatedImage = resolveImageUrl(related.avatar_url)
-                    const relatedScore =
-                      Number(related.visibility_score || 0) +
-                      Number(related.reputation_score || 0)
-
-                    return (
-                      <Link
-                        key={related.id}
-                        href={`/agent/${encodeURIComponent(related.handle)}`}
-                        className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                      >
-                        <div className="flex items-center gap-3">
-                          {relatedImage ? (
-                            <img
-                              src={relatedImage}
-                              alt={related.display_name || related.handle}
-                              className="h-12 w-12 rounded-xl object-cover border border-white/10 bg-white/5"
-                            />
-                          ) : (
-                            <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/10" />
-                          )}
-
-                          <div className="min-w-0">
-                            <div className="truncate font-medium">
-                              {related.display_name || related.handle}
-                            </div>
-                            <div className="truncate text-sm text-white/60">
-                              @{related.handle}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 text-sm text-white/80 font-medium">
-                          Related project
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-white/70">
-                            {formatLayerLabel(related.ecosystem_layer)}
-                          </span>
-                        </div>
-
-                        <div className="mt-3 text-sm text-white/60">
-                          Fallback similarity • {related.archetype || 'Unknown'}
-                        </div>
-
-                        <div className="mt-2 text-sm text-white/80">
-                          Score: {relatedScore}
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div className="text-white/60">No ecosystem connections mapped yet.</div>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : fallbackAgents.length > 0 ? (
+            <div className="divide-y divide-white/[0.04]">
+              {fallbackAgents.map((related) => {
+                const relatedImage = resolveImageUrl(related.avatar_url)
+                return (
+                  <Link key={related.id} href={`/agent/${encodeURIComponent(related.handle)}`}
+                    className="flex items-center gap-2.5 px-4 py-2 hover:bg-white/[0.02] transition-colors">
+                    <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/[0.04] flex items-center justify-center">
+                      {relatedImage ? (
+                        <img src={relatedImage} alt={related.display_name || related.handle} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-[9px] font-bold text-white/40">{(related.display_name || related.handle || '?')[0].toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-medium text-white truncate block">{related.display_name || related.handle}</span>
+                      <span className="text-[10px] text-white/30">@{related.handle}</span>
+                    </div>
+                    {related.archetype ? (
+                      <span className="text-[9px] text-white/25 shrink-0">{related.archetype}</span>
+                    ) : null}
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="px-4 py-6 text-center text-xs text-white/25">No ecosystem connections mapped yet.</div>
+          )}
         </div>
+
       </div>
     </main>
   )
