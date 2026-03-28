@@ -9,7 +9,6 @@ export default function Footer() {
           <Link href="/rankings" className="text-xs text-white/35 hover:text-white/70 transition-colors">Rankings</Link>
           <Link href="/use-cases" className="text-xs text-white/35 hover:text-white/70 transition-colors">Use Cases</Link>
           <Link href="/submit" className="text-xs text-white/35 hover:text-white/70 transition-colors">Submit Agent</Link>
-          <Link href="/how-it-works" className="text-xs text-white/35 hover:text-white/70 transition-colors">How It Works</Link>
         </nav>
       </div>
     </footer>
