@@ -4,6 +4,7 @@ import {
   getAgentDisplayName,
 } from '@/lib/agent-quality'
 import { getSignalTag } from '@/lib/why-moving'
+import ScoreTooltip from '@/components/ui/ScoreTooltip'
 
 // Deterministic avatar color from handle
 const AVATAR_COLORS = [
@@ -57,7 +58,7 @@ export default function RankingTable({ rows = [] }) {
             <tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-white/25">
               <th className="px-3 py-2 text-left w-[44px]">#</th>
               <th className="px-3 py-2 text-left">Agent</th>
-              <th className="px-3 py-2 text-right w-[60px]">Score</th>
+              <th className="px-3 py-2 text-right w-[60px]">Score<ScoreTooltip /></th>
               <th className="px-3 py-2 text-center w-[52px]">7d</th>
               <th className="px-3 py-2 text-right w-[64px] hidden lg:table-cell">Vis</th>
               <th className="px-3 py-2 text-right w-[64px] hidden lg:table-cell">Rep</th>
