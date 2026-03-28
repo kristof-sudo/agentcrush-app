@@ -633,8 +633,8 @@ export default async function AgentPage({ params }) {
   const whyMoving = getWhyMoving(weeklyDelta, latestEventType)
 
   return (
-    <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
-      <div className="mx-auto max-w-5xl space-y-6">
+    <main className="px-4 py-8 md:px-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="flex flex-col gap-6 md:flex-row md:items-start">
             {imageUrl ? (
@@ -701,7 +701,7 @@ export default async function AgentPage({ params }) {
                 ) : null}
               </div>
 
-              <p className="mt-4 max-w-2xl text-white/85 leading-7">
+              <p className="mt-4 max-w-2xl text-sm text-white/70 leading-relaxed">
                 {bioText}
               </p>
             </div>

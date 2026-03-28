@@ -1,4 +1,6 @@
 import SearchableRankings from '@/components/rankings/SearchableRankings'
+import HowCalculatedBar from '@/components/rankings/HowCalculatedBar'
+import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
 import { getMovementReason } from '@/lib/why-moving'
 
@@ -60,20 +62,33 @@ export default async function RankingsPage({ searchParams }) {
     }
   })
 
-  const risingCount = rows.filter((r) => (r.weekly_delta || 0) > 0).length
-  const trendingCount = rows.filter((r) => r.trending?.latest_event_type).length
+  const scoredRows = rows.filter((r) => (r.score_total || 0) > 0)
+  const unscoredCount = rows.length - scoredRows.length
+  const risingCount = scoredRows.filter((r) => (r.weekly_delta || 0) > 0).length
+  const trendingCount = scoredRows.filter((r) => r.trending?.latest_event_type).length
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-white tracking-tight">Rankings</h1>
         <p className="mt-1 text-sm text-white/45">
-          Live ecosystem standings · {rows.length} agents indexed ·{' '}
+          Live ecosystem standings · {scoredRows.length} agents ranked ·{' '}
           <span className="text-emerald-400">{risingCount} rising</span> ·{' '}
           <span className="text-violet-400">{trendingCount} trending</span>
         </p>
       </div>
-      <SearchableRankings rows={rows} initialQuery={initialQuery} />
+      <div className="space-y-3">
+        <HowCalculatedBar />
+        <SearchableRankings rows={scoredRows} initialQuery={initialQuery} />
+        {unscoredCount > 0 && (
+          <p className="px-1 text-xs text-white/25">
+            +{unscoredCount} more agents being indexed —{' '}
+            <Link href="/categories" className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2">
+              browse by category
+            </Link>
+          </p>
+        )}
+      </div>
     </main>
   )
 }
