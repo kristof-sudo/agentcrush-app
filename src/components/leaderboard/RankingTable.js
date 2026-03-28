@@ -4,6 +4,7 @@ import {
   getAgentDisplayName,
 } from '@/lib/agent-quality'
 import { getSignalTag } from '@/lib/why-moving'
+import ScoreTooltip from '@/components/ui/ScoreTooltip'
 
 // Deterministic avatar color from handle
 const AVATAR_COLORS = [
@@ -57,10 +58,11 @@ export default function RankingTable({ rows = [] }) {
             <tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-white/25">
               <th className="px-3 py-2 text-left w-[44px]">#</th>
               <th className="px-3 py-2 text-left">Agent</th>
-              <th className="px-3 py-2 text-right w-[60px]">Score</th>
+              <th className="px-3 py-2 text-right w-[60px]">Score<ScoreTooltip /></th>
               <th className="px-3 py-2 text-center w-[52px]">7d</th>
               <th className="px-3 py-2 text-right w-[64px] hidden lg:table-cell">Vis</th>
               <th className="px-3 py-2 text-right w-[64px] hidden lg:table-cell">Rep</th>
+              <th className="px-3 py-2 w-[32px]" />
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.04]">
@@ -77,9 +79,16 @@ export default function RankingTable({ rows = [] }) {
                   {/* Rank + trend arrow */}
                   <td className="px-3 py-1.5 align-middle">
                     <div className="flex items-center gap-1">
-                      <span className={`text-xs font-bold tabular-nums w-5 text-right ${rankBadgeStyle(r.global_rank)}`}>
-                        {r.global_rank}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className={`text-xs font-bold tabular-nums w-5 text-right ${rankBadgeStyle(r.global_rank)}`}>
+                          {r.global_rank}
+                        </span>
+                        {delta !== 0 && (
+                          <span className="text-[9px] text-white/20 tabular-nums w-5 text-right leading-none">
+                            #{r.global_rank + delta}
+                          </span>
+                        )}
+                      </div>
                       <DeltaArrow delta={delta} />
                     </div>
                   </td>
@@ -98,6 +107,9 @@ export default function RankingTable({ rows = [] }) {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs font-semibold text-white truncate max-w-[160px]">{displayName}</span>
+                          {r.verified && (
+                            <span className="text-[9px] px-1 py-0.5 rounded border border-sky-500/30 bg-sky-500/10 text-sky-300 leading-none shrink-0">✓</span>
+                          )}
                           {tag ? (
                             <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium leading-none shrink-0 ${tag.cls}`}>
                               {tag.label}
@@ -121,16 +133,16 @@ export default function RankingTable({ rows = [] }) {
                     </Link>
                   </td>
 
-                  {/* Score — dimmed, delta is primary signal */}
+                  {/* Score — de-emphasized */}
                   <td className="px-3 py-1.5 align-middle text-right">
-                    <span className={`text-[11px] font-medium tabular-nums ${scoreColor(r.score_total || 0)}`}>
+                    <span className="text-[10px] tabular-nums text-white/25">
                       {r.score_total || 0}
                     </span>
                   </td>
 
-                  {/* 7d delta — emphasized */}
+                  {/* 7d delta — primary signal, bold */}
                   <td className="px-3 py-1.5 align-middle text-center">
-                    <span className={`text-xs font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
+                    <span className={`text-sm font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
                       {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '—'}
                     </span>
                   </td>
@@ -143,6 +155,24 @@ export default function RankingTable({ rows = [] }) {
                   {/* Reputation */}
                   <td className="px-3 py-1.5 align-middle text-right hidden lg:table-cell">
                     <span className="text-[11px] font-medium text-white/50 tabular-nums">{r.reputation_score ?? '—'}</span>
+                  </td>
+
+                  {/* External link */}
+                  <td className="px-2 py-1.5 align-middle text-right">
+                    {r.external_url ? (
+                      <a
+                        href={r.external_url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center justify-center h-5 w-5 rounded text-white/20 hover:text-white/70 transition-colors"
+                        aria-label="Visit agent"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M2 9L9 2M9 2H4.5M9 2V6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </a>
+                    ) : null}
                   </td>
                 </tr>
               )
@@ -183,6 +213,9 @@ export default function RankingTable({ rows = [] }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-semibold text-white truncate">{displayName}</span>
+                  {r.verified && (
+                    <span className="text-[9px] px-1 py-0.5 rounded border border-sky-500/30 bg-sky-500/10 text-sky-300 leading-none shrink-0">✓</span>
+                  )}
                   {tag ? (
                     <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium leading-none shrink-0 ${tag.cls}`}>
                       {tag.label}
@@ -195,11 +228,27 @@ export default function RankingTable({ rows = [] }) {
                   </div>
                 ) : null}
               </div>
-              <div className="text-right shrink-0">
-                <div className={`text-xs font-bold tabular-nums ${scoreColor(r.score_total || 0)}`}>{r.score_total || 0}</div>
-                <div className={`text-[10px] font-semibold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
-                  {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '—'}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="text-right">
+                  <div className={`text-xs font-bold tabular-nums ${scoreColor(r.score_total || 0)}`}>{r.score_total || 0}</div>
+                  <div className={`text-[10px] font-semibold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
+                    {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '—'}
+                  </div>
                 </div>
+                {r.external_url ? (
+                  <a
+                    href={r.external_url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center justify-center h-6 w-6 rounded text-white/20 hover:text-white/60 transition-colors"
+                    aria-label="Visit agent"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2 9L9 2M9 2H4.5M9 2V6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </a>
+                ) : null}
               </div>
             </Link>
           )
