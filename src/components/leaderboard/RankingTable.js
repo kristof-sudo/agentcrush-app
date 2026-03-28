@@ -77,9 +77,16 @@ export default function RankingTable({ rows = [] }) {
                   {/* Rank + trend arrow */}
                   <td className="px-3 py-1.5 align-middle">
                     <div className="flex items-center gap-1">
-                      <span className={`text-xs font-bold tabular-nums w-5 text-right ${rankBadgeStyle(r.global_rank)}`}>
-                        {r.global_rank}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className={`text-xs font-bold tabular-nums w-5 text-right ${rankBadgeStyle(r.global_rank)}`}>
+                          {r.global_rank}
+                        </span>
+                        {delta !== 0 && (
+                          <span className="text-[9px] text-white/20 tabular-nums w-5 text-right leading-none">
+                            #{r.global_rank + delta}
+                          </span>
+                        )}
+                      </div>
                       <DeltaArrow delta={delta} />
                     </div>
                   </td>
@@ -124,16 +131,16 @@ export default function RankingTable({ rows = [] }) {
                     </Link>
                   </td>
 
-                  {/* Score — dimmed, delta is primary signal */}
+                  {/* Score — de-emphasized */}
                   <td className="px-3 py-1.5 align-middle text-right">
-                    <span className={`text-[11px] font-medium tabular-nums ${scoreColor(r.score_total || 0)}`}>
+                    <span className="text-[10px] tabular-nums text-white/25">
                       {r.score_total || 0}
                     </span>
                   </td>
 
-                  {/* 7d delta — emphasized */}
+                  {/* 7d delta — primary signal, bold */}
                   <td className="px-3 py-1.5 align-middle text-center">
-                    <span className={`text-xs font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
+                    <span className={`text-sm font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
                       {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '—'}
                     </span>
                   </td>
