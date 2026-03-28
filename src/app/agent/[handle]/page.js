@@ -100,6 +100,34 @@ function formatRelationshipLabel(relType) {
   }
 }
 
+// Short tag label: "Built on LangChain", "vs Devin", "Part of Virtuals"
+function formatRelTag(relType, connectedName) {
+  const name = connectedName || ''
+  switch (relType) {
+    case 'runs_on':         return `Built on ${name}`
+    case 'framework_of':   return `Powers ${name}`
+    case 'part_of_ecosystem': return `Part of ${name}`
+    case 'integrates_with': return `Uses ${name}`
+    case 'derived_from':   return `Derived from ${name}`
+    case 'competes_with':  return `vs ${name}`
+    case 'adjacent_to':    return `Related: ${name}`
+    default:               return name
+  }
+}
+
+function relTagStyle(relType) {
+  switch (relType) {
+    case 'runs_on':         return 'border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20'
+    case 'framework_of':   return 'border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20'
+    case 'part_of_ecosystem': return 'border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
+    case 'integrates_with': return 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20'
+    case 'derived_from':   return 'border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20'
+    case 'competes_with':  return 'border-orange-500/30 bg-orange-500/10 text-orange-300 hover:bg-orange-500/20'
+    case 'adjacent_to':    return 'border-white/15 bg-white/5 text-white/50 hover:bg-white/10'
+    default:               return 'border-white/15 bg-white/5 text-white/50 hover:bg-white/10'
+  }
+}
+
 function formatLayerLabel(layer) {
   switch (layer) {
     case 'framework':
@@ -701,6 +729,27 @@ export default async function AgentPage({ params }) {
                   <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35 leading-none">{agent.activity_status}</span>
                 ) : null}
               </div>
+
+              {ecosystemConnections.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {ecosystemConnections
+                    .filter((c) => ['runs_on', 'part_of_ecosystem', 'competes_with', 'derived_from', 'integrates_with', 'framework_of'].includes(c.rel_type))
+                    .slice(0, 6)
+                    .map((c) => (
+                      <Link
+                        key={`tag-${c.rel_type}-${c.connected_handle}`}
+                        href={`/agent/${encodeURIComponent(c.connected_handle)}`}
+                        className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-medium transition-colors ${relTagStyle(c.rel_type)}`}
+                      >
+                        {formatRelTag(c.rel_type, c.connected_name || c.connected_handle)}
+                      </Link>
+                    ))}
+                </div>
+              )}
+
+              <p className="mt-4 max-w-2xl text-white/85 leading-7">
+                {bioText}
+              </p>
 
               {!isVerified && !isDemo && (
                 <div className="mt-2 inline-flex items-center gap-2.5 rounded border border-white/[0.07] bg-white/[0.02] px-2.5 py-1.5">
