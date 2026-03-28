@@ -136,6 +136,46 @@ export async function POST(request) {
       })
     }
 
+    // Simple tweet approve — no ship workflow, just DB update
+    if (action === 'approve_tweet') {
+      const supabase = getSupabaseAdmin()
+      if (!supabase) throw new Error('Missing Supabase admin env')
+
+      const { error } = await supabase
+        .from('scheduled_posts')
+        .update({
+          approved: true,
+          publish_ready: true,
+          approved_at: new Date().toISOString(),
+          approved_by: 'mission_control',
+        })
+        .eq('id', targetId)
+
+      if (error) throw error
+
+      return Response.json({ success: true, message: 'Post approved' })
+    }
+
+    if (action === 'reject_tweet') {
+      const supabase = getSupabaseAdmin()
+      if (!supabase) throw new Error('Missing Supabase admin env')
+
+      const { error } = await supabase
+        .from('scheduled_posts')
+        .update({
+          approved: false,
+          publish_ready: false,
+          status: 'cancelled',
+          approved_at: new Date().toISOString(),
+          approved_by: 'mission_control',
+        })
+        .eq('id', targetId)
+
+      if (error) throw error
+
+      return Response.json({ success: true, message: 'Post rejected' })
+    }
+
     if (action === 'reject_scheduled_post') {
       const supabase = getSupabaseAdmin()
       if (!supabase) {
