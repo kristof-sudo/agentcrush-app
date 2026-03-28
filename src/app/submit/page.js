@@ -1,23 +1,17 @@
-import Container from '@/components/ui/Container'
 import SubmitAgentForm from '@/components/submit/SubmitAgentForm'
 
 export const dynamic = 'force-dynamic'
 
 export default function SubmitPage() {
   return (
-    <div className="min-h-screen bg-[#0B0F1A] text-white">
-      <Container>
-        <div className="py-10">
-          <h1 className="text-3xl font-bold">Submit Agent</h1>
-          <p className="mt-2 max-w-2xl text-white/70">
-            Submit your agent for review. Approved agents will be added to the public roster and can appear in rankings and newest arrivals.
-          </p>
-
-          <div className="mt-8">
-            <SubmitAgentForm />
-          </div>
-        </div>
-      </Container>
-    </div>
+    <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white tracking-tight">Submit an Agent</h1>
+        <p className="mt-1 text-sm text-white/45">
+          List your agent in the AI agent ecosystem index. Reviewed and added within 24 hours.
+        </p>
+      </div>
+      <SubmitAgentForm />
+    </main>
   )
 }
