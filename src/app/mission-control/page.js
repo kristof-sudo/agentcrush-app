@@ -112,21 +112,23 @@ function formatBudapestTime(dateString) {
 
 function extractPostType(row) {
   const p = row?.payload || {}
-  if (typeof p !== 'object') return 'POST'
-  const t = (p.type || p.post_type || p.action || '').toUpperCase()
-  if (t === 'REPOST' || t === 'RETWEET') return 'REPOST'
-  if (t === 'QUOTE' || t === 'QUOTE_TWEET') return 'QUOTE'
-  return 'POST'
+  if (typeof p !== 'object') return 'ORIGINAL'
+  const t = (p.type || p.post_type || p.action_type || '').toLowerCase()
+  if (t === 'x_repost' || t === 'repost' || t === 'retweet') return 'REPOST'
+  if (t === 'x_quote' || t === 'quote' || t === 'quote_tweet') return 'QUOTE'
+  if (t === 'x_reply' || t === 'reply') return 'REPLY'
+  return 'ORIGINAL'
 }
 
 function PostTypeBadge({ type }) {
   const colors = {
-    POST: 'border-violet-500/30 text-violet-300/80',
+    ORIGINAL: 'border-violet-500/30 text-violet-300/80',
     REPOST: 'border-sky-500/30 text-sky-300/80',
     QUOTE: 'border-amber-500/30 text-amber-300/80',
+    REPLY: 'border-emerald-500/30 text-emerald-300/80',
   }
   return (
-    <span className={`shrink-0 rounded border px-1 py-0.5 text-[9px] font-bold tracking-wide ${colors[type] || colors.POST}`}>
+    <span className={`shrink-0 rounded border px-1 py-0.5 text-[9px] font-bold tracking-wide ${colors[type] || colors.ORIGINAL}`}>
       {type}
     </span>
   )
@@ -135,6 +137,8 @@ function PostTypeBadge({ type }) {
 function extractPostText(row) {
   const p = row?.payload || {}
   if (typeof p === 'string') return p
+  // Reposts: show the target tweet text rather than "(no preview)"
+  if (p.target_text) return p.target_text
   return p.text || p.x_text || p.body || p.caption || p.content || '(no preview)'
 }
 
@@ -237,7 +241,7 @@ function PublishingSchedule({ onQueueChange }) {
 
   useEffect(() => {
     load()
-    const dataTimer = setInterval(load, 60_000)
+    const dataTimer = setInterval(load, 15_000)
     const clockTimer = setInterval(() => setTick((t) => t + 1), 30_000)
     return () => { clearInterval(dataTimer); clearInterval(clockTimer) }
   }, [load])
@@ -277,7 +281,12 @@ function PublishingSchedule({ onQueueChange }) {
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
         <span className="text-xs font-semibold text-white">Publishing Schedule</span>
-        <span className="text-[10px] text-white/25">refreshes every 60s</span>
+        <button
+          onClick={load}
+          className="text-[10px] text-white/30 hover:text-white/60 transition-colors"
+        >
+          ↻ Refresh
+        </button>
       </div>
 
       {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
@@ -389,6 +398,71 @@ function PublishingSchedule({ onQueueChange }) {
             )}
           </div>
         </>
+      )}
+    </div>
+  )
+}
+
+// ─── Mike's X Activity ────────────────────────────────────────────────────
+
+function MikeActivity() {
+  const [items, setItems] = useState(null)
+  const [error, setError] = useState(null)
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/mission-control/activity')
+      .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Failed'); setItems(d.items || []) })
+      .catch((e) => setError(e.message))
+    const clockTimer = setInterval(() => setTick((t) => t + 1), 60_000)
+    return () => clearInterval(clockTimer)
+  }, [])
+
+  void tick
+
+  const byType = (items || []).reduce((acc, row) => {
+    const t = extractPostType(row)
+    acc[t] = (acc[t] || 0) + 1
+    return acc
+  }, {})
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <span className="text-xs font-semibold text-white">Mike&apos;s Recent Activity</span>
+        {items && (
+          <span className="text-[10px] text-white/30">
+            {items.length} recent ·{' '}
+            {Object.entries(byType).map(([t, n]) => `${n} ${t.toLowerCase()}`).join(' · ')}
+          </span>
+        )}
+      </div>
+
+      {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
+      {!items && !error && <div className="px-3 py-4 text-xs text-white/30">Loading…</div>}
+      {items && items.length === 0 && (
+        <div className="px-3 py-4 text-xs text-white/30">No published posts yet.</div>
+      )}
+
+      {items && items.length > 0 && (
+        <div className="divide-y divide-white/[0.04]">
+          {items.map((row) => {
+            const type = extractPostType(row)
+            const text = extractPostText(row)
+            const isRepost = type === 'REPOST'
+            return (
+              <div key={row.id} className="flex gap-2.5 px-3 py-2.5">
+                <PostTypeBadge type={type} />
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className={`text-[11px] leading-relaxed truncate ${isRepost ? 'text-white/45 italic' : 'text-white/70'}`}>
+                    {isRepost ? `RT: ${text}` : text}
+                  </p>
+                  <p className="text-[10px] text-white/25">{timeAgo(row.sent_at)}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )
@@ -581,13 +655,16 @@ export default function MissionControl() {
       {/* Section 2 — Publishing schedule */}
       <PublishingSchedule onQueueChange={handleQueueChange} />
 
-      {/* Section 3 — Pipeline health */}
+      {/* Section 3 — Mike's X Activity */}
+      <MikeActivity />
+
+      {/* Section 4 — Pipeline health */}
       <PipelineHealthSection runs={runs} />
 
-      {/* Section 4 — Cost tracker */}
+      {/* Section 5 — Cost tracker */}
       <CostTracker status={status} />
 
-      {/* Section 5 — Worker activity */}
+      {/* Section 6 — Worker activity */}
       <WorkerActivity runs={runs} loading={runsLoading} />
     </div>
   )
