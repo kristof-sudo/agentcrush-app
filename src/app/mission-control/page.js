@@ -94,6 +94,44 @@ function timeUntil(dateString) {
   return `in ${hr}h ${min % 60}m`
 }
 
+const BUD_TZ = 'Europe/Budapest'
+
+function formatBudapestTime(dateString) {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  const now = new Date()
+  const dayFmt = new Intl.DateTimeFormat('en-GB', { timeZone: BUD_TZ, year: 'numeric', month: '2-digit', day: '2-digit' })
+  const timeFmt = new Intl.DateTimeFormat('en-GB', { timeZone: BUD_TZ, hour: '2-digit', minute: '2-digit', hour12: false })
+  const todayStr = dayFmt.format(now)
+  const targetStr = dayFmt.format(date)
+  const tomorrowDate = new Date(now); tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+  const tomorrowStr = dayFmt.format(tomorrowDate)
+  const prefix = targetStr === todayStr ? 'Today' : targetStr === tomorrowStr ? 'Tomorrow' : targetStr
+  return `${prefix} ${timeFmt.format(date)}`
+}
+
+function extractPostType(row) {
+  const p = row?.payload || {}
+  if (typeof p !== 'object') return 'POST'
+  const t = (p.type || p.post_type || p.action || '').toUpperCase()
+  if (t === 'REPOST' || t === 'RETWEET') return 'REPOST'
+  if (t === 'QUOTE' || t === 'QUOTE_TWEET') return 'QUOTE'
+  return 'POST'
+}
+
+function PostTypeBadge({ type }) {
+  const colors = {
+    POST: 'border-violet-500/30 text-violet-300/80',
+    REPOST: 'border-sky-500/30 text-sky-300/80',
+    QUOTE: 'border-amber-500/30 text-amber-300/80',
+  }
+  return (
+    <span className={`shrink-0 rounded border px-1 py-0.5 text-[9px] font-bold tracking-wide ${colors[type] || colors.POST}`}>
+      {type}
+    </span>
+  )
+}
+
 function extractPostText(row) {
   const p = row?.payload || {}
   if (typeof p === 'string') return p
@@ -178,25 +216,31 @@ function StatusBar({ status, loading }) {
   )
 }
 
-// ─── Approval Queue ───────────────────────────────────────────────────────
+// ─── Publishing Schedule ──────────────────────────────────────────────────
 
-function ApprovalQueue({ onQueueChange }) {
-  const [items, setItems] = useState(null)
+function PublishingSchedule({ onQueueChange }) {
+  const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [pendingIds, setPendingIds] = useState(new Set())
+  const [tick, setTick] = useState(0)
 
   const load = useCallback(() => {
-    fetch('/api/mission-control/approvals')
+    fetch('/api/mission-control/schedule')
       .then(async (r) => {
         const d = await r.json()
         if (!r.ok) throw new Error(d.error || 'Failed')
-        setItems(d.items || [])
-        if (onQueueChange) onQueueChange(d.items?.length || 0)
+        setData(d)
+        if (onQueueChange) onQueueChange(d.awaiting?.length || 0)
       })
       .catch((e) => setError(e.message))
   }, [onQueueChange])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+    const dataTimer = setInterval(load, 60_000)
+    const clockTimer = setInterval(() => setTick((t) => t + 1), 30_000)
+    return () => { clearInterval(dataTimer); clearInterval(clockTimer) }
+  }, [load])
 
   async function act(id, action) {
     setPendingIds((s) => new Set([...s, `${id}:${action}`]))
@@ -208,9 +252,12 @@ function ApprovalQueue({ onQueueChange }) {
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error || 'Action failed')
-      // Remove from local list immediately
-      setItems((prev) => (prev || []).filter((i) => i.id !== id))
-      if (onQueueChange) onQueueChange(Math.max(0, (items?.length || 1) - 1))
+      setData((prev) => {
+        if (!prev) return prev
+        const awaiting = (prev.awaiting || []).filter((i) => i.id !== id)
+        if (onQueueChange) onQueueChange(awaiting.length)
+        return { ...prev, awaiting }
+      })
     } catch (e) {
       alert(e.message)
     } finally {
@@ -218,76 +265,130 @@ function ApprovalQueue({ onQueueChange }) {
     }
   }
 
-  const sectionHeader = (
-    <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
-      <span className="text-xs font-semibold text-white">Approval Queue</span>
-      {items != null && (
-        <span className={`text-xs ${items.length > 0 ? 'text-amber-300 font-semibold' : 'text-emerald-400'}`}>
-          {items.length > 0 ? `${items.length} waiting` : 'Queue is clear'}
-        </span>
-      )}
-    </div>
-  )
+  const scheduled = data?.scheduled || []
+  const awaiting = data?.awaiting || []
+  const nextPost = scheduled[0]
+
+  // tick is used to force re-render so relative times update every 30s
+  void tick
 
   return (
     <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
-      {sectionHeader}
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <span className="text-xs font-semibold text-white">Publishing Schedule</span>
+        <span className="text-[10px] text-white/25">refreshes every 60s</span>
+      </div>
 
-      {error && (
-        <div className="px-3 py-3 text-xs text-red-400">{error}</div>
-      )}
+      {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
+      {!data && !error && <div className="px-3 py-4 text-xs text-white/30">Loading…</div>}
 
-      {!items && !error && (
-        <div className="px-3 py-4 text-xs text-white/30">Loading…</div>
-      )}
+      {data && (
+        <>
+          {/* Summary line */}
+          <div className="px-3 py-2 border-b border-white/[0.05] bg-white/[0.015]">
+            <p className="text-[11px] text-white/50">
+              {'Next 24h: '}
+              <span className="text-white/80 font-medium">{scheduled.length} scheduled</span>
+              {' · '}
+              <span className={awaiting.length > 0 ? 'text-amber-300 font-medium' : 'text-white/80 font-medium'}>
+                {awaiting.length} awaiting approval
+              </span>
+              {nextPost && (
+                <>
+                  {' · '}
+                  <span className="text-emerald-400">Next publish {timeUntil(nextPost.run_at)}</span>
+                </>
+              )}
+            </p>
+          </div>
 
-      {items && items.length === 0 && (
-        <div className="px-3 py-4 text-xs text-emerald-400/70">No posts waiting for approval.</div>
-      )}
-
-      {items && items.length > 0 && (
-        <div className="divide-y divide-white/[0.04]">
-          {items.map((row) => {
-            const approvePending = pendingIds.has(`${row.id}:approve_tweet`)
-            const rejectPending = pendingIds.has(`${row.id}:reject_tweet`)
-            const busy = approvePending || rejectPending
-
-            return (
-              <div key={row.id} className="px-3 py-3 space-y-2">
-                {/* Post text */}
-                <p className="text-sm leading-6 text-white/90 whitespace-pre-wrap">
-                  {extractPostText(row)}
-                </p>
-
-                {/* Meta row */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-white/35">
-                  <span>Scheduled: <span className="text-white/55">{timeUntil(row.run_at)}</span></span>
-                  {row.approval_token && (
-                    <span>Token: <span className="font-mono text-white/40">{row.approval_token}</span></span>
-                  )}
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex items-center gap-2 pt-1">
-                  <button
-                    disabled={busy}
-                    onClick={() => act(row.id, 'approve_tweet')}
-                    className="px-3 py-1 rounded border border-emerald-500/40 bg-emerald-500/10 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-40 transition-colors"
-                  >
-                    {approvePending ? 'Approving…' : 'Approve'}
-                  </button>
-                  <button
-                    disabled={busy}
-                    onClick={() => act(row.id, 'reject_tweet')}
-                    className="px-3 py-1 rounded border border-red-500/30 bg-red-500/10 text-xs font-semibold text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
-                  >
-                    {rejectPending ? 'Rejecting…' : 'Reject'}
-                  </button>
-                </div>
+          {/* ── SCHEDULED ─────────────────────────────── */}
+          <div>
+            <div className="px-3 py-1.5 border-b border-white/[0.04]">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400/70">
+                Scheduled
+              </span>
+            </div>
+            {scheduled.length === 0 ? (
+              <div className="px-3 py-3 text-xs text-white/30">No posts scheduled in the next 24h.</div>
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {scheduled.map((row) => {
+                  const text = extractPostText(row)
+                  return (
+                    <div key={row.id} className="flex gap-3 px-3 py-2.5 border-l-2 border-emerald-500/40">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <PostTypeBadge type={extractPostType(row)} />
+                          <span className="text-[11px] text-white/70 truncate">
+                            {text.length > 100 ? text.slice(0, 100) + '…' : text}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-white/35">
+                          {formatBudapestTime(row.run_at)}{' '}
+                          <span className="text-emerald-400/70">({timeUntil(row.run_at)})</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            )
-          })}
-        </div>
+            )}
+          </div>
+
+          {/* ── AWAITING APPROVAL ─────────────────────── */}
+          <div className="border-t border-white/[0.06]">
+            <div className="px-3 py-1.5 border-b border-white/[0.04]">
+              <span className={`text-[10px] font-semibold uppercase tracking-widest ${awaiting.length > 0 ? 'text-amber-400/70' : 'text-white/30'}`}>
+                Awaiting Approval
+              </span>
+            </div>
+            {awaiting.length === 0 ? (
+              <div className="px-3 py-3 text-xs text-emerald-400/70">Queue is clear ✓</div>
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {awaiting.map((row) => {
+                  const approvePending = pendingIds.has(`${row.id}:approve_tweet`)
+                  const rejectPending = pendingIds.has(`${row.id}:reject_tweet`)
+                  const busy = approvePending || rejectPending
+                  return (
+                    <div key={row.id} className="px-3 py-2.5 space-y-2 border-l-2 border-amber-500/40">
+                      <div className="flex items-start gap-2">
+                        <PostTypeBadge type={extractPostType(row)} />
+                        <p className="text-sm leading-relaxed text-white/90 whitespace-pre-wrap flex-1">
+                          {extractPostText(row)}
+                        </p>
+                      </div>
+                      {row.run_at && (
+                        <div className="text-[10px] text-white/35">
+                          {formatBudapestTime(row.run_at)}{' '}
+                          <span className="text-white/50">({timeUntil(row.run_at)})</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <button
+                          disabled={busy}
+                          onClick={() => act(row.id, 'approve_tweet')}
+                          className="px-3 py-1 rounded border border-emerald-500/40 bg-emerald-500/10 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-40 transition-colors"
+                        >
+                          {approvePending ? 'Approving…' : 'Approve'}
+                        </button>
+                        <button
+                          disabled={busy}
+                          onClick={() => act(row.id, 'reject_tweet')}
+                          className="px-3 py-1 rounded border border-red-500/30 bg-red-500/10 text-xs font-semibold text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
+                        >
+                          {rejectPending ? 'Rejecting…' : 'Reject'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   )
@@ -477,8 +578,8 @@ export default function MissionControl() {
       {/* Section 1 — Status bar */}
       <StatusBar status={status} loading={statusLoading} />
 
-      {/* Section 2 — Approval queue */}
-      <ApprovalQueue onQueueChange={handleQueueChange} />
+      {/* Section 2 — Publishing schedule */}
+      <PublishingSchedule onQueueChange={handleQueueChange} />
 
       {/* Section 3 — Pipeline health */}
       <PipelineHealthSection runs={runs} />
