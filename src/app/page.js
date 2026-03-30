@@ -1,4 +1,6 @@
 import Container from '@/components/ui/Container'
+import AgentCard from '@/components/agents/AgentCard'
+import HomepageDigestForm from '@/components/home/HomepageDigestForm'
 import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
 import { getSignalTag, getEventIcon, getMovementReason, formatRelativeTime } from '@/lib/why-moving'
@@ -163,6 +165,7 @@ export default async function Home() {
     { data: topMover },
     { data: topFaller },
     { data: newestAgent },
+    { data: biggestMovers },
     { count: eventsTodayCount },
     { count: eventsYesterdayCount },
     { count: agentCount },
@@ -192,6 +195,12 @@ export default async function Home() {
     supabase.from('agents')
       .select('id, handle, display_name, created_at')
       .order('created_at', { ascending: false }).limit(1).maybeSingle(),
+
+    supabase.from('agents')
+      .select('id, handle, display_name, avatar_url, custom_background_url, weekly_delta, tagline')
+      .gt('weekly_delta', 0)
+      .order('weekly_delta', { ascending: false })
+      .limit(8),
 
     supabase.from('events').select('id', { count: 'exact', head: true })
       .gte('created_at', todayStart.toISOString()),
@@ -251,6 +260,27 @@ export default async function Home() {
       weekly_delta: a.weekly_delta || 0,
       rank_move_reason: getMovementReason(a.weekly_delta, trending?.latest_event_type),
       latest_event_type: trending?.latest_event_type || null,
+    }
+  })
+
+  const moverIds = (biggestMovers || []).map((agent) => agent.id).filter(Boolean)
+  const { data: moverRankings } = moverIds.length
+    ? await supabase
+        .from('rankings')
+        .select('agent_id, global_rank, score_visibility, score_reputation')
+        .in('agent_id', moverIds)
+    : { data: [] }
+  const moverRankingMap = new Map()
+  for (const row of moverRankings || []) {
+    if (!row.agent_id || moverRankingMap.has(row.agent_id)) continue
+    moverRankingMap.set(row.agent_id, row)
+  }
+  const biggestMoverRows = (biggestMovers || []).map((agent) => {
+    const ranking = moverRankingMap.get(agent.id)
+    return {
+      ...agent,
+      global_rank: ranking?.global_rank ?? null,
+      score_total: (ranking?.score_visibility || 0) + (ranking?.score_reputation || 0),
     }
   })
 
@@ -634,6 +664,81 @@ export default async function Home() {
               </div>
 
             </div>
+
+            <div className="pb-2 grid gap-2 lg:grid-cols-2">
+              <section className="rounded-lg border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+                <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">New this week</h2>
+                    <p className="text-[11px] text-white/30">Recently added agents entering the index.</p>
+                  </div>
+                  <span className="text-[10px] text-white/25 tabular-nums">{(recentAgents || []).length} shown</span>
+                </div>
+                <div className="grid gap-2 p-3 sm:grid-cols-2">
+                  {(recentAgents || []).slice(0, 8).map((agent) => (
+                    <AgentCard key={agent.id} agent={agent} />
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+                <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">Biggest movers</h2>
+                    <p className="text-[11px] text-white/30">Largest positive weekly rank change across tracked agents.</p>
+                  </div>
+                  <span className="text-[10px] text-white/25">7d delta</span>
+                </div>
+                <div className="divide-y divide-white/[0.04]">
+                  {biggestMoverRows.map((agent) => (
+                    <Link
+                      key={agent.id}
+                      href={`/agent/${encodeURIComponent(agent.handle)}`}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-white/[0.025] transition-colors"
+                    >
+                      <div className={`h-8 w-8 shrink-0 overflow-hidden rounded-md border border-white/[0.08] flex items-center justify-center ${!(agent.custom_background_url || agent.avatar_url) ? avatarColor(agent.handle) : 'bg-white/[0.04]'}`}>
+                        {toPublicImageUrl(agent.custom_background_url || agent.avatar_url) ? (
+                          <img
+                            src={toPublicImageUrl(agent.custom_background_url || agent.avatar_url)}
+                            alt={agent.display_name || agent.handle}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-[10px] font-bold">{(agent.display_name || agent.handle || '?')[0].toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-white/90">{agent.display_name || agent.handle}</span>
+                          {agent.global_rank ? (
+                            <span className="text-[10px] text-white/25 tabular-nums">#{agent.global_rank}</span>
+                          ) : null}
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-white/35 tabular-nums">
+                          Score {agent.score_total || 0}
+                        </div>
+                      </div>
+                      <span className="shrink-0 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-xs font-bold tabular-nums text-emerald-300">
+                        +{agent.weekly_delta}
+                      </span>
+                    </Link>
+                  ))}
+                  {biggestMoverRows.length === 0 ? (
+                    <div className="px-3 py-6 text-xs text-white/25">No positive movers yet.</div>
+                  ) : null}
+                </div>
+              </section>
+            </div>
+
+            <section className="pb-4">
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-4">
+                <h2 className="text-sm font-semibold text-white">Get the weekly AgentCrush digest</h2>
+                <p className="mt-1 max-w-2xl text-sm text-white/40">
+                  Follow the biggest rank changes, new entrants, and ecosystem movement in one weekly note.
+                </p>
+                <HomepageDigestForm />
+              </div>
+            </section>
           </Container>
         </main>
 

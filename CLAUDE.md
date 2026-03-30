@@ -62,6 +62,7 @@ Runtime operations go through bounded executors on the VPS — never broad shell
 - **X scanner budget** — target $1–2/day, max $3/day; do not increase API volume to compensate for weak synthesis
 - **Telegram approval gate** — must be preserved as the final gate for all social publishing
 - **Evaluate changes** against one of three tests: Mike change test, UI change test, ingestion/ops change test
+- **Mobile-first (non-negotiable)** — every UI change must work correctly at 390px width (iPhone 14) before it is considered done. Primary traffic arrives from Mike's X account — visitors are on mobile phones. If it doesn't work on mobile, it doesn't ship.
 
 ## Key docs
 

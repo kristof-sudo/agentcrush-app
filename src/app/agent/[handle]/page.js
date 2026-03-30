@@ -8,6 +8,9 @@ import {
   isDemoAgent,
 } from '@/lib/agent-quality'
 import WatchlistButton from '@/components/agents/WatchlistButton'
+import AgentComparePanel from '@/components/agents/AgentComparePanel'
+import AgentProfileActions from '@/components/agents/AgentProfileActions'
+import ConfidencePill from '@/components/ui/ConfidencePill'
 import { getWhyMoving } from '@/lib/why-moving'
 
 const supabase = createClient(
@@ -414,6 +417,7 @@ export async function generateMetadata({ params }) {
   const name = agent.display_name || agent.handle
   const description = agent.tagline || agent.bio || `${name} — AI agent profile on AgentCrush`
   const title = `${name} — AI Agent Profile | AgentCrush`
+  const image = 'https://agentcrush.xyz/apple-icon.png'
 
   return {
     title,
@@ -422,11 +426,15 @@ export async function generateMetadata({ params }) {
       title,
       description: description.slice(0, 160),
       type: 'profile',
+      siteName: 'AgentCrush',
+      url: `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
+      images: [{ url: image, width: 512, height: 512, alt: `${name} on AgentCrush` }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description: description.slice(0, 160),
+      images: [image],
     },
   }
 }
@@ -484,6 +492,27 @@ export default async function AgentPage({ params }) {
     .eq('agent_id', agent.id)
     .order('computed_at', { ascending: false })
     .limit(7)
+
+  const { data: compareCandidatesRaw } = await supabase
+    .from('rankings')
+    .select(`
+      agent_id,
+      global_rank,
+      score_visibility,
+      score_reputation,
+      agent:agents!inner (
+        id,
+        handle,
+        display_name,
+        tagline,
+        bio,
+        weekly_delta,
+        visibility_score,
+        reputation_score
+      )
+    `)
+    .order('global_rank', { ascending: true })
+    .limit(14)
 
     const { data: categoryLinks } = await supabase
     .from('agent_categories')
@@ -691,11 +720,34 @@ export default async function AgentPage({ params }) {
     resolveImageUrl(agent.custom_background_url) ||
     resolveImageUrl(agent.avatar_url)
   const alternativeAgents = buildAlternativeAgents(ecosystemConnections, fallbackAgents)
+  const compareCandidates = (compareCandidatesRaw || [])
+    .map((row) => {
+      const compareAgent = row.agent || {}
+      if (!compareAgent.handle || compareAgent.id === agent.id) return null
+      return {
+        id: compareAgent.id || row.agent_id,
+        handle: compareAgent.handle,
+        display_name: compareAgent.display_name || compareAgent.handle,
+        tagline: compareAgent.tagline || '',
+        bio: compareAgent.bio || '',
+        global_rank: row.global_rank ?? null,
+        score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
+        visibility_score: compareAgent.visibility_score ?? row.score_visibility ?? 0,
+        reputation_score: compareAgent.reputation_score ?? row.score_reputation ?? 0,
+        weekly_delta: compareAgent.weekly_delta || 0,
+      }
+    })
+    .filter(Boolean)
 
   // Why trending: derive from most recent event type + weekly_delta
   const latestEventType = recentEvents?.[0]?.event_type || null
   const weeklyDelta = Number(agent.weekly_delta || 0)
   const whyMoving = getWhyMoving(weeklyDelta, latestEventType)
+  const trendingSignals = [
+    'High activity',
+    'Growing attention',
+    'Strong visibility',
+  ]
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
@@ -747,11 +799,29 @@ export default async function AgentPage({ params }) {
                   </a>
                 )}
                 <WatchlistButton handle={agent.handle} displayName={displayName} />
-                <Link href={`/compare?a=${encodeURIComponent(agent.handle)}&b=`}
-                  className="text-[10px] text-white/30 hover:text-white/55 transition-colors border border-white/[0.07] rounded px-1.5 py-0.5">
-                  Compare →
-                </Link>
+                <AgentComparePanel
+                  currentAgent={{
+                    handle: agent.handle,
+                    display_name: displayName,
+                    tagline: agent.tagline || '',
+                    bio: bioText || '',
+                    global_rank: ranking?.global_rank ?? null,
+                    score_total: agentCrushScore,
+                    visibility_score: agent.visibility_score ?? 0,
+                    reputation_score: agent.reputation_score ?? 0,
+                    weekly_delta: weeklyDelta,
+                    latest_event_type: latestEventType,
+                    eventCount: recentEvents?.length || 0,
+                  }}
+                  candidates={compareCandidates}
+                />
               </div>
+
+              <AgentProfileActions
+                agent={agent}
+                score={agentCrushScore}
+                rank={ranking?.global_rank ?? null}
+              />
 
               <p className="mt-2 text-xs text-white/55 leading-relaxed max-w-2xl">{bioText}</p>
 
@@ -826,9 +896,49 @@ export default async function AgentPage({ params }) {
               <span className={`text-sm font-bold tabular-nums ${cls}`}>{value}</span>
             </div>
           ))}
+          <ConfidencePill
+            data={{
+              score_total: agentCrushScore,
+              visibility_score: agent.visibility_score ?? 0,
+              reputation_score: agent.reputation_score ?? 0,
+              weekly_delta: weeklyDelta,
+              global_rank: ranking?.global_rank ?? null,
+              latest_event_type: latestEventType,
+              eventCount: recentEvents?.length || 0,
+            }}
+          />
           {(rankHistory || []).length >= 2 ? (
             <div className="ml-auto shrink-0"><RankSparkline history={rankHistory} /></div>
           ) : null}
+        </div>
+
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Score breakdown</p>
+              <p className="mt-1 text-xs text-white/40">Visible score dimensions only. Presentation layer only, no new methodology.</p>
+            </div>
+            <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] text-white/45">
+              Share tools above
+            </span>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: 'Total score', value: agentCrushScore, cls: 'text-white' },
+              { label: 'Visibility', value: agent.visibility_score ?? 0, cls: 'text-sky-300' },
+              { label: 'Reputation', value: agent.reputation_score ?? 0, cls: 'text-violet-300' },
+              {
+                label: 'Weekly delta',
+                value: weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? `${weeklyDelta}` : '—',
+                cls: weeklyDelta > 0 ? 'text-emerald-400' : weeklyDelta < 0 ? 'text-red-400' : 'text-white/35',
+              },
+            ].map((item) => (
+              <div key={item.label} className="rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-3">
+                <div className="text-[10px] uppercase tracking-wider text-white/35">{item.label}</div>
+                <div className={`mt-1 text-lg font-bold tabular-nums ${item.cls}`}>{item.value}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── What this agent is for ── */}
@@ -845,6 +955,23 @@ export default async function AgentPage({ params }) {
             </ul>
           </div>
         ) : null}
+
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-2">Why this agent is trending</p>
+          <div className="flex flex-wrap gap-2">
+            {trendingSignals.map((signal) => (
+              <span
+                key={signal}
+                className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300/90"
+              >
+                {signal}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-white/40">
+            Placeholder trend signals for now. Real ranking logic and signal attribution stay unchanged.
+          </p>
+        </div>
 
         {/* ── Classification ── */}
         {categoryItems.length > 0 ? (

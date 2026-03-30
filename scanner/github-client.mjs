@@ -21,7 +21,7 @@ async function ghFetch(path, params = {}) {
     'X-GitHub-Api-Version': '2022-11-28',
     'User-Agent': 'AgentCrush-Indexer/1.0',
   }
-  if (GITHUB_TOKEN) headers['Authorization'] = `Bearer ${GITHUB_TOKEN}`
+  if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`
 
   let attempts = 0
   while (attempts < 3) {

@@ -63,6 +63,7 @@ Mike improvement comes AFTER website is solid.
 - Always read files before editing
 - Supabase schema changes must be explicit migrations
 - When in doubt, report and ask — don't guess
+- **Mobile-first (non-negotiable)** — every UI change must work correctly at 390px width (iPhone 14) before it is considered done. Primary traffic arrives from Mike's X account — visitors are on mobile phones. If it doesn't work on mobile, it doesn't ship.
 
 ## What success looks like
 A new visitor understands AgentCrush in 5 seconds.

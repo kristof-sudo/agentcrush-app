@@ -5,6 +5,48 @@ import { getSignalLabel, formatRelativeTime } from '@/lib/why-moving'
 
 export const dynamic = 'force-dynamic'
 
+export async function generateMetadata({ params }) {
+  const { slug } = await params
+  const supabase = supabaseAnon()
+
+  const { data: category } = await supabase
+    .from('categories')
+    .select('name, description, slug')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (!category) {
+    return {
+      title: 'Category — AgentCrush',
+      description: 'Explore AI agent category profiles on AgentCrush.',
+    }
+  }
+
+  const name = category.name || slug
+  const description = (category.description || `Explore ${name} agents, rankings, and momentum on AgentCrush.`).slice(0, 160)
+  const title = `${name} — AI Agent Profile | AgentCrush`
+  const image = 'https://agentcrush.xyz/apple-icon.png'
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      siteName: 'AgentCrush',
+      url: `https://agentcrush.xyz/categories/${encodeURIComponent(category.slug || slug)}`,
+      images: [{ url: image, width: 512, height: 512, alt: `${name} on AgentCrush` }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
+    },
+  }
+}
+
 function toPublicImageUrl(path) {
   if (!path) return null
   if (path.startsWith('http://') || path.startsWith('https://')) return path
@@ -57,7 +99,6 @@ export default async function CategoryPage({ params }) {
   if (error) throw new Error(error.message)
 
   // Build agent list — filter demo agents (P2)
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86400_000).toISOString()
   const agentList = (rows || [])
     .map((row) => {
       const agent = row.agents
@@ -82,7 +123,7 @@ export default async function CategoryPage({ params }) {
       : { data: [] },
     agentIds.length
       ? supabase.from('events').select('id, agent_id, event_type, created_at')
-          .in('agent_id', agentIds).gte('created_at', new Date(Date.now() - 30 * 86400_000).toISOString())
+          .in('agent_id', agentIds)
           .order('created_at', { ascending: false }).limit(50)
       : { data: [] },
   ])
@@ -103,9 +144,19 @@ export default async function CategoryPage({ params }) {
   const risingCount = enriched.filter((a) => (a.weekly_delta || 0) > 0).length
   const trendPct = total > 0 ? Math.round((risingCount / total) * 100) : 0
   const signalCount = recentEvents.length
-  const newEntrants = enriched.filter((a) => a.created_at >= sevenDaysAgo)
+  const newEntrants = [...enriched]
+    .filter((a) => a.created_at)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5)
   const topMovers = [...enriched].filter((a) => (a.weekly_delta || 0) > 0)
     .sort((a, b) => (b.weekly_delta || 0) - (a.weekly_delta || 0)).slice(0, 5)
+  const categorySignals = [
+    `${total} agents tracked`,
+    trendPct >= 45 ? 'Strong recent momentum' : trendPct >= 20 ? 'Steady recent momentum' : 'Selective momentum',
+    topMovers[0]
+      ? `Top mover: ${(topMovers[0].display_name || topMovers[0].handle)} +${topMovers[0].weekly_delta}`
+      : 'No standout mover yet',
+  ]
 
   // Recent signals with agent name
   const agentNameMap = Object.fromEntries(enriched.map((a) => [a.id, a.display_name || a.handle]))
@@ -143,14 +194,35 @@ export default async function CategoryPage({ params }) {
         {[
           { label: 'Agents', value: total, color: 'text-white' },
           { label: 'Rising', value: `${risingCount} (${trendPct}%)`, color: 'text-emerald-400' },
-          { label: 'New (7d)', value: newEntrants.length, color: newEntrants.length > 0 ? 'text-amber-400' : 'text-white/50' },
-          { label: 'Signals (30d)', value: signalCount, color: signalCount > 0 ? 'text-violet-400' : 'text-white/50' },
+          { label: 'Newest', value: newEntrants.length, color: newEntrants.length > 0 ? 'text-amber-400' : 'text-white/50' },
+          { label: 'Signals', value: signalCount, color: signalCount > 0 ? 'text-violet-400' : 'text-white/50' },
         ].map((stat) => (
           <div key={stat.label} className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-3 py-2">
             <div className="text-[10px] text-white/35 uppercase tracking-wider mb-0.5">{stat.label}</div>
             <div className={`text-base font-bold tabular-nums ${stat.color}`}>{stat.value}</div>
           </div>
         ))}
+      </div>
+
+      <div className="mb-6 rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-white">Why this category matters</h2>
+            <p className="mt-1 text-xs text-white/40">
+              Quick context from the category&apos;s visible agent count, momentum, and top mover.
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {categorySignals.map((signal) => (
+            <span
+              key={signal}
+              className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/65"
+            >
+              {signal}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

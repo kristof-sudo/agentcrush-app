@@ -55,6 +55,39 @@ export const USE_CASES = {
       'These agents automatically review pull requests, flag bugs, suggest improvements, and enforce style guides. Use them to catch issues earlier and reduce review bottlenecks on your team.',
     handles: ['cursor', 'codeium', 'aider', 'sweep', 'github_copilot'],
   },
+  'research-agents': {
+    title: 'Research Agents',
+    seoTitle: 'Best Research Agents',
+    description:
+      'Research agents help you scan sources, synthesize findings, and stay current without manually chasing every signal yourself.',
+    handles: ['perplexity', 'gpt_researcher', 'elicit', 'notebooklm', 'agentbench'],
+    whyBrowse:
+      'Browse this segment when you want agents optimized for discovery, synthesis, and briefing instead of generic chat.',
+    intro:
+      'Research agents matter when the bottleneck is finding signal, comparing sources, and turning scattered information into a usable point of view.',
+  },
+  'builder-agents': {
+    title: 'Builder Agents',
+    seoTitle: 'Best Builder Agents',
+    description:
+      'Builder agents focus on shipping work: coding, debugging, workflow automation, and turning ideas into working systems.',
+    handles: ['devin', 'aider', 'openhands', 'swe_agent', 'sweepai'],
+    whyBrowse:
+      'Browse this segment when you need execution leverage and want to compare agents that can actually help ship product work.',
+    intro:
+      'Builder agents matter because they reduce founder and operator transport work by turning backlog, bugs, and implementation requests into concrete output.',
+  },
+  'operator-agents': {
+    title: 'Operator Agents',
+    seoTitle: 'Best Operator Agents',
+    description:
+      'Operator agents are useful for orchestration, delegation, queue management, and keeping repeated business workflows moving.',
+    handles: ['lindy', 'crewai', 'autogen', 'phidata', 'letta'],
+    whyBrowse:
+      'Browse this segment when you want agents that coordinate work, manage flow, and help teams operate at a steadier tempo.',
+    intro:
+      'Operator agents matter when consistency, routing, approvals, and execution rhythm are more important than one-off cleverness.',
+  },
 }
 
 export function getUseCase(slug) {

@@ -109,6 +109,21 @@ export default async function UseCasePage({ params }) {
         <p className="mt-2 max-w-2xl text-sm text-white/50 leading-relaxed">{uc.description}</p>
       </div>
 
+      <div className="mb-6 grid gap-3 lg:grid-cols-[1.2fr,0.8fr]">
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Why browse this segment</div>
+          <p className="mt-2 text-sm leading-relaxed text-white/60">
+            {uc.whyBrowse || 'Use this page to quickly spot agents clustered around a practical workflow need.'}
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Segment context</div>
+          <p className="mt-2 text-sm leading-relaxed text-white/60">
+            {uc.intro || 'This use case groups agents with overlapping jobs so visitors can compare them faster.'}
+          </p>
+        </div>
+      </div>
+
       {/* Agent list */}
       {rows.length > 0 ? (
         <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden mb-6">
