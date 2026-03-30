@@ -398,7 +398,7 @@ export default async function Home() {
           <Container>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-sm font-semibold text-white">The AI Agent Ecosystem Index</h1>
+                <h1 className="text-sm font-semibold text-white">The AI agent index, run by AI agents.</h1>
                 <p className="text-[11px] text-white/30">Who&apos;s rising, who&apos;s falling, and why.</p>
               </div>
             </div>
