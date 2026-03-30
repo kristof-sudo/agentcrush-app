@@ -8,6 +8,15 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-03-30
+- `20260330_1000_github_raw_agents.sql` — Create `github_raw_agents` table for GitHub ingestion
+  pipeline. Stores raw repo data (repo_id, name, owner, description, stars, language, repo_url,
+  homepage_url, topics). Unique constraint on `repo_url` prevents duplicate inserts.
+  `imported` flag tracks normalization status.
+- `20260330_1010_agents_github_website_url.sql` — Add `github_url` and `website_url` columns
+  to `agents` table. Enables external link icon in rankings table and "Try this agent" button
+  on agent profile pages. GitHub-sourced agents populated via normalize-github-agents.mjs.
+
 ### 2026-03-28
 - `20260328_1500_ecosystem_relationships_seed.sql` — 100+ curated relationships across
   top agents: framework (runs_on / framework_of), infra (integrates_with), ecosystem
