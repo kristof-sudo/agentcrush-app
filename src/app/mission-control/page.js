@@ -162,7 +162,7 @@ function StatusBar({ status, loading }) {
     )
   }
 
-  const { mikeStatus, lastPostAt, postsToday, approvalQueueCount } = status || {}
+  const { mikeStatus, lastPostAt, postsToday, approvalQueueCount, agentCount } = status || {}
 
   const mikeDot = mikeStatus === 'POSTING'
     ? 'bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.6)]'
@@ -215,6 +215,14 @@ function StatusBar({ status, loading }) {
         {approvalQueueCount > 0 && (
           <span className="text-xs text-amber-300/60">waiting</span>
         )}
+      </div>
+
+      <div className="h-3 w-px bg-white/10 hidden sm:block" />
+
+      {/* Agent count */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-white/40">Agents indexed</span>
+        <span className="text-xs font-bold text-white">{agentCount ?? '—'}</span>
       </div>
     </div>
   )

@@ -27,7 +27,7 @@ export async function GET() {
   }
 
   try {
-    const [lastPostRes, postsTodayRes, approvalQueueRes, costTodayRes, costMonthRes] =
+    const [lastPostRes, postsTodayRes, approvalQueueRes, costTodayRes, costMonthRes, agentCountRes] =
       await Promise.all([
         // Last published post
         supabase
@@ -64,6 +64,11 @@ export async function GET() {
           .from('copydesk_outputs')
           .select('model_cost_usd')
           .gte('created_at', startOfMonth()),
+
+        // Total indexed agents
+        supabase
+          .from('agents')
+          .select('id', { count: 'exact', head: true }),
       ])
 
     const lastPostAt = lastPostRes.data?.sent_at || null
@@ -95,6 +100,7 @@ export async function GET() {
       approvalQueueCount,
       openaiCostToday: sumCost(costTodayRes.data),
       openaiCostMonth: sumCost(costMonthRes.data),
+      agentCount: agentCountRes.count ?? 0,
     })
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })

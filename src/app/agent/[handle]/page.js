@@ -399,6 +399,38 @@ function formatProfileEventSummary(event) {
   }
 }
 
+export async function generateMetadata({ params }) {
+  const { handle } = await params
+  const cleanHandle = decodeURIComponent(handle)
+
+  const { data: agent } = await supabase
+    .from('agents')
+    .select('display_name, bio, tagline, handle')
+    .ilike('handle', cleanHandle)
+    .maybeSingle()
+
+  if (!agent) return {}
+
+  const name = agent.display_name || agent.handle
+  const description = agent.tagline || agent.bio || `${name} — AI agent profile on AgentCrush`
+  const title = `${name} — AI Agent Profile | AgentCrush`
+
+  return {
+    title,
+    description: description.slice(0, 160),
+    openGraph: {
+      title,
+      description: description.slice(0, 160),
+      type: 'profile',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description: description.slice(0, 160),
+    },
+  }
+}
+
 export default async function AgentPage({ params }) {
   const { handle } = await params
   const cleanHandle = decodeURIComponent(handle)
@@ -423,7 +455,9 @@ export default async function AgentPage({ params }) {
       network_name,
       activity_status,
       identity_status,
-      verified
+      verified,
+      github_url,
+      website_url
     `)
     .ilike('handle', cleanHandle)
     .maybeSingle()
@@ -702,6 +736,16 @@ export default async function AgentPage({ params }) {
                 <span className="text-[11px] text-white/40">@{agent.handle}</span>
                 <a href={`https://x.com/${agent.handle}`} target="_blank" rel="noreferrer"
                   className="text-[10px] text-white/30 hover:text-white/55 transition-colors">X →</a>
+                {(agent.website_url || agent.github_url) && (
+                  <a
+                    href={agent.website_url || agent.github_url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-[10px] text-violet-400/70 hover:text-violet-300 transition-colors border border-violet-500/20 rounded px-1.5 py-0.5"
+                  >
+                    Try this agent ↗
+                  </a>
+                )}
                 <WatchlistButton handle={agent.handle} displayName={displayName} />
                 <Link href={`/compare?a=${encodeURIComponent(agent.handle)}&b=`}
                   className="text-[10px] text-white/30 hover:text-white/55 transition-colors border border-white/[0.07] rounded px-1.5 py-0.5">

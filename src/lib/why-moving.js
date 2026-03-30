@@ -19,7 +19,7 @@ export const SIGNAL_TAGS = {
   ecosystem_integration: { label: 'integration', cls: 'bg-cyan-500/15 text-cyan-300/80 border-cyan-500/25' },
   canon_scene:           { label: 'milestone',   cls: 'bg-indigo-500/15 text-indigo-300/80 border-indigo-500/25' },
   timeline_ping:         { label: 'mentioned',   cls: 'bg-pink-500/15 text-pink-300/80 border-pink-500/25' },
-  daily_boost:           { label: 'active',      cls: 'bg-white/10 text-white/40 border-white/15' },
+  // daily_boost intentionally excluded — too generic to show as a signal tag
 }
 
 // Short inline labels — used in feed rows and dense lists
@@ -34,7 +34,6 @@ export const SIGNAL_LABELS = {
   collab_win:            'collab signal',
   dev_activity:          'dev activity',
   canon_scene:           'milestone',
-  daily_boost:           'active',
 }
 
 // Long-form labels — used in activity feeds and event lists
@@ -46,7 +45,6 @@ export const SIGNAL_LONG = {
   timeline_ping:         'Ecosystem mention',
   launch_buzz:           'Launch buzz',
   collab_win:            'New collaboration',
-  daily_boost:           'Fresh activity',
   canon_scene:           'Ecosystem milestone',
   ecosystem_integration: 'New integration',
   dev_activity:          'Developer activity',
