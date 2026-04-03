@@ -547,7 +547,7 @@ export default async function Home() {
                   <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-1.5">
                     <div className="flex items-center gap-1.5">
                       <span className="text-amber-400 text-xs">✦</span>
-                      <span className="text-xs font-semibold text-white">Newest</span>
+                      <span className="text-xs font-semibold text-white">Just Indexed</span>
                     </div>
                     <Link href="/rankings" className="text-[10px] text-white/35 hover:text-white/55 transition-colors">All →</Link>
                   </div>
@@ -566,7 +566,11 @@ export default async function Home() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-medium text-white truncate">{a.display_name || a.handle}</div>
-                            {a.archetype ? <div className="text-[10px] text-white/25 leading-snug">{a.archetype}</div> : null}
+                            <div className="text-[10px] leading-snug">
+                              {a.archetype
+                                ? <span className="text-white/25">{a.archetype}</span>
+                                : <span className="text-amber-400/40">new to index</span>}
+                            </div>
                           </div>
                           <span className="text-[10px] text-white/20 shrink-0">{formatRelativeTime(a.created_at)}</span>
                         </Link>
@@ -670,7 +674,7 @@ export default async function Home() {
                 <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
                   <div>
                     <h2 className="text-sm font-semibold text-white">New this week</h2>
-                    <p className="text-[11px] text-white/30">Recently added agents entering the index.</p>
+                    <p className="text-[11px] text-white/30">Recently indexed — not yet ranked.</p>
                   </div>
                   <span className="text-[10px] text-white/25 tabular-nums">{(recentAgents || []).length} shown</span>
                 </div>

@@ -21,20 +21,20 @@ export function getConfidenceLevel(input = {}) {
 
   if (score >= 6) {
     return {
-      label: 'High',
+      label: 'Strong signal',
       className: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300',
     }
   }
 
   if (score >= 3) {
     return {
-      label: 'Medium',
+      label: 'Some signal',
       className: 'border-amber-500/25 bg-amber-500/10 text-amber-300',
     }
   }
 
   return {
-    label: 'Low',
+    label: 'Limited data',
     className: 'border-white/10 bg-white/[0.05] text-white/45',
   }
 }

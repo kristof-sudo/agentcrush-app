@@ -47,17 +47,33 @@ export const dynamic = 'force-dynamic'
 export default async function CategoriesPage() {
   const supabase = supabaseAnon()
 
-  const { data: rankingsData, error } = await supabase
-    .from('rankings')
-    .select(`
-      agent_id, global_rank, score_visibility, score_reputation, score_total,
-      agent:agents!inner (
-        id, handle, display_name, archetype, avatar_url, custom_background_url, weekly_delta
-      )
-    `)
-    .order('global_rank', { ascending: true })
+  const [
+    { data: rankingsData, error },
+    { data: allAgentArchetypes },
+  ] = await Promise.all([
+    supabase
+      .from('rankings')
+      .select(`
+        agent_id, global_rank, score_visibility, score_reputation, score_total,
+        agent:agents!inner (
+          id, handle, display_name, archetype, avatar_url, custom_background_url, weekly_delta
+        )
+      `)
+      .order('global_rank', { ascending: true }),
+    supabase
+      .from('agents')
+      .select('archetype')
+      .not('archetype', 'is', null),
+  ])
 
   if (error) throw new Error(error.message)
+
+  // Total agent counts per archetype (includes unranked)
+  const totalByArchetype = {}
+  for (const row of allAgentArchetypes || []) {
+    const key = row.archetype || 'Other'
+    totalByArchetype[key] = (totalByArchetype[key] || 0) + 1
+  }
 
   // Fetch trending data for why-moving badges
   const allAgentIds = (rankingsData || []).map((r) => r.agent?.id).filter(Boolean)
@@ -68,7 +84,7 @@ export default async function CategoriesPage() {
     trendingMap = Object.fromEntries((trendingRows || []).map((r) => [r.agent_id, r.latest_event_type]))
   }
 
-  // Group by archetype — filter demo agents (P2: taxonomy cleanup)
+  // Group ranked agents by archetype — filter demo agents
   const archetypeMap = {}
   for (const row of rankingsData || []) {
     const agent = row.agent || {}
@@ -88,30 +104,36 @@ export default async function CategoriesPage() {
     })
   }
 
-  // Build category stats
-  const categories = Object.entries(archetypeMap).map(([archetype, agents]) => {
-    const risingCount = agents.filter((a) => a.weekly_delta > 0).length
-    const trend = agents.length > 0 ? Math.round((risingCount / agents.length) * 100) : 0
-    const avgDelta = agents.length > 0
-      ? Math.round(agents.reduce((s, a) => s + a.weekly_delta, 0) / agents.length)
-      : 0
+  // Build category stats — use real total from agents table, ranked from rankings
+  const allArchetypeKeys = new Set([
+    ...Object.keys(archetypeMap),
+    ...Object.keys(totalByArchetype),
+  ])
+
+  const categories = Array.from(allArchetypeKeys).map((archetype) => {
+    const rankedAgents = archetypeMap[archetype] || []
+    const totalCount = totalByArchetype[archetype] || rankedAgents.length
+    const risingCount = rankedAgents.filter((a) => a.weekly_delta > 0).length
+    const trend = rankedAgents.length > 0 ? Math.round((risingCount / rankedAgents.length) * 100) : 0
+    const unrankedCount = totalCount - rankedAgents.length
     return {
       archetype,
-      total: agents.length,
+      total: totalCount,
+      rankedCount: rankedAgents.length,
+      unrankedCount: Math.max(0, unrankedCount),
       risingCount,
       trend,
-      avgDelta,
-      top5: agents.slice(0, 5),
+      top5: rankedAgents.slice(0, 5),
     }
   }).sort((a, b) => b.total - a.total)
 
-  // Trending categories = top 5 by risingCount (min 2 agents)
+  // Trending categories = top 5 by risingCount (min 2 ranked agents)
   const hotCategories = [...categories]
-    .filter((c) => c.total >= 2)
+    .filter((c) => c.rankedCount >= 2)
     .sort((a, b) => b.risingCount - a.risingCount || b.trend - a.trend)
     .slice(0, 5)
 
-  const totalAgents = categories.reduce((s, c) => s + c.total, 0)
+  const totalAgents = (allAgentArchetypes || []).length
   const totalRising = categories.reduce((s, c) => s + c.risingCount, 0)
 
   return (
@@ -189,7 +211,7 @@ export default async function CategoriesPage() {
                         ↑ {cat.trend}% rising
                       </span>
                     )}
-                    <span className="text-[10px] text-white/35 tabular-nums">{cat.total} agents</span>
+                    <span className="text-[10px] text-white/35 tabular-nums">{cat.total} indexed</span>
                   </div>
                 </Link>
 
@@ -235,15 +257,22 @@ export default async function CategoriesPage() {
                   })}
                 </div>
 
-                {/* Footer: see all */}
-                {cat.total > 5 && (
-                  <Link
-                    href={`/rankings?q=${encodeURIComponent(cat.archetype)}`}
-                    className="flex items-center justify-center px-3 py-1.5 border-t border-white/[0.04] text-[10px] text-white/25 hover:text-white/50 transition-colors"
-                  >
-                    +{cat.total - 5} more
-                  </Link>
-                )}
+                {/* Footer: see all + unranked count */}
+                <div className="border-t border-white/[0.04] flex items-center justify-between px-3 py-1.5">
+                  {cat.unrankedCount > 0 ? (
+                    <span className="text-[9px] text-white/20 tabular-nums">
+                      +{cat.unrankedCount} not yet ranked
+                    </span>
+                  ) : <span />}
+                  {cat.rankedCount > 5 && (
+                    <Link
+                      href={`/rankings?q=${encodeURIComponent(cat.archetype)}`}
+                      className="text-[10px] text-white/25 hover:text-white/50 transition-colors"
+                    >
+                      +{cat.rankedCount - 5} ranked →
+                    </Link>
+                  )}
+                </div>
               </div>
             )
           })}

@@ -152,5 +152,9 @@ export function getAgentShortDescription(agent) {
     return `${archetype} agent active in ${normalizeWhitespace(agent.network_name)}.`
   }
 
+  if (agent?.github_url) {
+    return `Open-source ${archetype.toLowerCase()} project indexed from GitHub.`
+  }
+
   return `${archetype} agent focused on practical tasks.`
 }

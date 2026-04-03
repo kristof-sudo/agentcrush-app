@@ -4,6 +4,18 @@ import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
 import { getMovementReason } from '@/lib/why-moving'
 
+const AVATAR_COLORS = [
+  'bg-violet-500/25 text-violet-300', 'bg-emerald-500/25 text-emerald-300',
+  'bg-sky-500/25 text-sky-300', 'bg-amber-500/25 text-amber-300',
+  'bg-pink-500/25 text-pink-300', 'bg-cyan-500/25 text-cyan-300',
+]
+function avatarColor(handle) {
+  if (!handle) return AVATAR_COLORS[0]
+  let h = 0
+  for (let i = 0; i < handle.length; i++) h = (h * 31 + handle.charCodeAt(i)) & 0xffff
+  return AVATAR_COLORS[h % AVATAR_COLORS.length]
+}
+
 function toPublicImageUrl(path) {
   if (!path) return '/placeholder.png'
   if (path.startsWith('http://') || path.startsWith('https://')) return path
@@ -20,9 +32,9 @@ function generateWeeklyStory(rows) {
   if (leader) {
     const delta = leader.weekly_delta || 0
     const name = leader.display_name || leader.handle
-    if (delta > 0) sentences.push(`${name} extended its lead at #1 with a +${delta} spot gain this week.`)
-    else if (delta < 0) sentences.push(`${name} holds #1 despite sliding ${Math.abs(delta)} spots from last week.`)
-    else sentences.push(`${name} holds firm at #1 for another week.`)
+    if (delta > 0) sentences.push(`${name} extended its lead at #1, gaining +${delta} spot${delta !== 1 ? 's' : ''} this week.`)
+    else if (delta < 0) sentences.push(`${name} holds #1 despite slipping ${Math.abs(delta)} spot${Math.abs(delta) !== 1 ? 's' : ''} from last week.`)
+    else sentences.push(`${name} holds firm at #1.`)
   }
 
   const top5 = rows.filter((r) => r.global_rank <= 5)
@@ -30,23 +42,23 @@ function generateWeeklyStory(rows) {
     const counts = {}
     for (const r of top5) if (r.archetype) counts[r.archetype] = (counts[r.archetype] || 0) + 1
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-    if (top && top[1] >= 2) sentences.push(`${top[0]} agents claim ${top[1]} of the top 5 spots.`)
+    if (top && top[1] >= 2) sentences.push(`${top[0]}-class agents hold ${top[1]} of the top 5 spots.`)
   }
 
   const biggestGainer = rows
     .filter((r) => (r.weekly_delta || 0) > 0 && r.global_rank !== 1)
     .sort((a, b) => b.weekly_delta - a.weekly_delta)[0]
   if (biggestGainer) {
-    sentences.push(
-      `Biggest mover: ${biggestGainer.display_name || biggestGainer.handle} climbed +${biggestGainer.weekly_delta} to #${biggestGainer.global_rank}.`
-    )
+    const reason = biggestGainer.rank_move_reason
+    const base = `${biggestGainer.display_name || biggestGainer.handle} climbed +${biggestGainer.weekly_delta} to #${biggestGainer.global_rank}`
+    sentences.push(reason ? `${base} — ${reason.replace(/^Rose \d+ spots? — /, '')}.` : `${base}.`)
   }
 
   const newTop15 = rows.filter(
     (r) => r.global_rank <= 15 && r.global_rank + (r.weekly_delta || 0) > 15
   )
   if (newTop15.length === 1) {
-    sentences.push(`${newTop15[0].display_name || newTop15[0].handle} broke into the top 15 for the first time.`)
+    sentences.push(`${newTop15[0].display_name || newTop15[0].handle} entered the top 15 this week.`)
   } else if (newTop15.length > 1) {
     sentences.push(`${newTop15.length} agents broke into the top 15 this week.`)
   }
@@ -107,7 +119,10 @@ export default async function RankingsPage({ searchParams }) {
   })
 
   const scoredRows = rows.filter((r) => (r.score_total || 0) > 0)
-  const unscoredCount = rows.length - scoredRows.length
+  const unscoredRows = rows
+    .filter((r) => (r.score_total || 0) === 0)
+    .sort((a, b) => (b.id || 0) - (a.id || 0))
+    .slice(0, 48)
   const risingCount = scoredRows.filter((r) => (r.weekly_delta || 0) > 0).length
   const trendingCount = scoredRows.filter((r) => r.trending?.latest_event_type).length
   const weeklyStory = generateWeeklyStory(scoredRows)
@@ -175,13 +190,58 @@ export default async function RankingsPage({ searchParams }) {
 
       <SearchableRankings rows={scoredRows} initialQuery={initialQuery} />
 
-      {unscoredCount > 0 && (
-        <p className="mt-3 px-1 text-xs text-white/25">
-          +{unscoredCount} more agents being indexed —{' '}
-          <Link href="/categories" className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2">
-            browse by category
-          </Link>
-        </p>
+      {unscoredRows.length > 0 && (
+        <section className="mt-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Newly Indexed</h2>
+              <p className="text-[11px] text-white/35">In the index — not yet ranked. Signal data is being gathered.</p>
+            </div>
+            <span className="ml-auto text-[11px] text-white/25 tabular-nums shrink-0">{unscoredRows.length} shown</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            {unscoredRows.map((r) => {
+              const displayName = r.display_name || r.handle || '?'
+              return (
+                <Link
+                  key={r.id}
+                  href={`/agent/${encodeURIComponent(r.handle)}`}
+                  className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 hover:bg-white/[0.04] transition-colors min-w-0"
+                >
+                  <div className={`h-6 w-6 shrink-0 rounded overflow-hidden flex items-center justify-center border border-white/[0.07] ${avatarColor(r.handle)}`}>
+                    <span className="text-[9px] font-bold">{displayName[0].toUpperCase()}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] font-medium text-white/75 truncate">{displayName}</div>
+                    <div className="flex items-center gap-1.5">
+                      {r.archetype && (
+                        <span className="text-[9px] text-white/30 truncate">{r.archetype}</span>
+                      )}
+                    </div>
+                  </div>
+                  {r.external_url ? (
+                    <a
+                      href={r.external_url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-white/20 hover:text-white/55 transition-colors shrink-0"
+                      aria-label="View source"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M2 9L9 2M9 2H4.5M9 2V6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </a>
+                  ) : null}
+                </Link>
+              )
+            })}
+          </div>
+          {rows.filter(r => (r.score_total || 0) === 0).length > 48 && (
+            <p className="mt-3 text-[11px] text-white/25">
+              +{rows.filter(r => (r.score_total || 0) === 0).length - 48} more in the index —{' '}
+              <Link href="/categories" className="text-white/35 hover:text-white/55 transition-colors underline underline-offset-2">browse by category</Link>
+            </p>
+          )}
+        </section>
       )}
     </main>
   )
