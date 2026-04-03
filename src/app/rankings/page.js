@@ -72,17 +72,25 @@ export default async function RankingsPage({ searchParams }) {
   const initialQuery = (await searchParams)?.q || ''
   const supabase = supabaseAnon()
 
-  const { data: rankingsData, error: rankingsError } = await supabase
-    .from('rankings')
-    .select(`
-      agent_id, global_rank, score_visibility, score_reputation, score_total,
-      agent:agents!inner (
-        id, handle, display_name, bio, archetype, avatar_url, custom_background_url,
-        identity_status, premium_frame_enabled, weekly_delta, tagline, entity_type, verified,
-        github_url, website_url
-      )
-    `)
-    .order('global_rank', { ascending: true })
+  const [
+    { data: rankingsData, error: rankingsError },
+    { count: totalAgentsCount },
+  ] = await Promise.all([
+    supabase
+      .from('rankings')
+      .select(`
+        agent_id, global_rank, score_visibility, score_reputation, score_total,
+        agent:agents!inner (
+          id, handle, display_name, bio, archetype, avatar_url, custom_background_url,
+          identity_status, premium_frame_enabled, weekly_delta, tagline, entity_type, verified,
+          github_url, website_url
+        )
+      `)
+      .order('global_rank', { ascending: true }),
+    supabase
+      .from('agents')
+      .select('id', { count: 'exact', head: true }),
+  ])
 
   if (rankingsError) throw new Error(rankingsError.message)
 
@@ -134,7 +142,7 @@ export default async function RankingsPage({ searchParams }) {
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-white tracking-tight">Rankings</h1>
         <p className="mt-1 text-sm text-white/45">
-          {scoredRows.length} ranked · {rows.length} indexed ·{' '}
+          {scoredRows.length} ranked · {totalAgentsCount ?? rows.length} indexed ·{' '}
           <span className="text-emerald-400">{risingCount} rising</span> ·{' '}
           <span className="text-violet-400">{trendingCount} trending</span>
         </p>
