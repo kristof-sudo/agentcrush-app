@@ -134,7 +134,7 @@ export default async function RankingsPage({ searchParams }) {
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-white tracking-tight">Rankings</h1>
         <p className="mt-1 text-sm text-white/45">
-          Live ecosystem standings · {scoredRows.length} agents ranked ·{' '}
+          {scoredRows.length} ranked · {rows.length} indexed ·{' '}
           <span className="text-emerald-400">{risingCount} rising</span> ·{' '}
           <span className="text-violet-400">{trendingCount} trending</span>
         </p>
@@ -194,8 +194,8 @@ export default async function RankingsPage({ searchParams }) {
         <section className="mt-8">
           <div className="flex items-center gap-3 mb-3">
             <div>
-              <h2 className="text-sm font-semibold text-white">Newly Indexed</h2>
-              <p className="text-[11px] text-white/35">In the index — not yet ranked. Signal data is being gathered.</p>
+              <h2 className="text-sm font-semibold text-white">Newly Indexed <span className="font-normal text-white/40">(not ranked yet)</span></h2>
+              <p className="text-[11px] text-white/35">These agents are being tracked but don&apos;t have enough data for ranking yet.</p>
             </div>
             <span className="ml-auto text-[11px] text-white/25 tabular-nums shrink-0">{unscoredRows.length} shown</span>
           </div>

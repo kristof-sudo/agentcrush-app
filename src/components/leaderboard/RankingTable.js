@@ -5,7 +5,6 @@ import {
 } from '@/lib/agent-quality'
 import { getSignalTag } from '@/lib/why-moving'
 import ScoreTooltip from '@/components/ui/ScoreTooltip'
-import ConfidencePill from '@/components/ui/ConfidencePill'
 
 // Deterministic avatar color from handle
 const AVATAR_COLORS = [
@@ -121,9 +120,6 @@ export default function RankingTable({ rows = [] }) {
                               {archetype}
                             </span>
                           ) : null}
-                          <span className="hidden xl:inline">
-                            <ConfidencePill data={r} prefix="Confidence" />
-                          </span>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-white/30">@{r.handle}</span>
@@ -225,7 +221,6 @@ export default function RankingTable({ rows = [] }) {
                       {tag.label}
                     </span>
                   ) : null}
-                  <ConfidencePill data={r} prefix="Confidence" />
                 </div>
                 {r.rank_move_reason ? (
                   <div className={`text-[10px] mt-0.5 ${delta > 0 ? 'text-emerald-400/80' : delta < 0 ? 'text-red-400/75' : 'text-white/35'}`}>
