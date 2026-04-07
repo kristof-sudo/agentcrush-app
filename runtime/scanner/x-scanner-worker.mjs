@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
 import { getActivityLevel } from "../state/activity-level.mjs";
-import { checkXApiCap, recordXApiCalls } from "../state/x-api-cost.mjs";
+import { checkScannerCap, recordXApiCalls } from "../state/x-api-cost.mjs";
 
 const {
   SUPABASE_URL,
@@ -200,7 +200,7 @@ function isQuestionText(text) {
 }
 
 async function fetchJSON(url) {
-  const cap = checkXApiCap();
+  const cap = checkScannerCap();
   if (!cap.allowed) {
     // Cap check passed before making any HTTP request — do not record a call
     const err = new Error(`x_api_cap_reached estimated_usd=${cap.estimatedUsd.toFixed(3)}`);
@@ -527,10 +527,10 @@ function recordScanTime() {
 }
 
 async function main() {
-  const capCheck = checkXApiCap();
+  const capCheck = checkScannerCap();
   if (!capCheck.allowed) {
     console.warn(
-      `scanner skip: x_api_cap_reached estimated_usd=${capCheck.estimatedUsd.toFixed(3)} calls=${capCheck.callsToday}`
+      `scanner skip: scanner_cap_reached estimated_usd=${capCheck.estimatedUsd.toFixed(3)} calls=${capCheck.callsToday} reason=${capCheck.reason}`
     );
     try {
       await supabase.from("runs").insert([{
@@ -582,13 +582,13 @@ async function main() {
 
   await scanWatchlist(watchlistSlice);
 
-  if (!checkXApiCap().allowed) {
-    console.warn("scanner: x_api_cap reached after watchlist — skipping search+replies");
+  if (!checkScannerCap().allowed) {
+    console.warn("scanner: scanner_cap reached after watchlist — skipping search+replies");
   } else {
     await scanSearch(searchSlice);
 
-    if (!checkXApiCap().allowed) {
-      console.warn("scanner: x_api_cap reached after search — skipping replies");
+    if (!checkScannerCap().allowed) {
+      console.warn("scanner: scanner_cap reached after search — skipping replies");
     } else {
       await scanIncomingReplies();
     }
@@ -626,7 +626,7 @@ async function main() {
     status: "done",
   });
 
-  const finalCap = checkXApiCap();
+  const finalCap = checkScannerCap();
   try {
     await supabase.from("runs").insert([{
       runner: "x_scanner",
