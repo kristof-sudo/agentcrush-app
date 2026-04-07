@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { getActivityLevel } from "../state/activity-level.mjs";
+import { checkXApiCap } from "../state/x-api-cost.mjs";
 
 const {
   SUPABASE_URL,
@@ -15,11 +17,36 @@ const supabase = createClient(
   { auth: { persistSession: false } }
 );
 
-const DAILY_CAPS = {
+// Phase 3 shadow logging — fail-silent, no pipeline impact
+async function createWorkflow(workflow_id) {
+  try {
+    const { error } = await supabase.from("workflows").insert([{ workflow_id, status: "in_progress" }]);
+    if (error) console.warn("[shadow] createWorkflow failed:", error.message);
+    else console.log("[shadow] workflow created:", workflow_id);
+  } catch (e) {
+    console.warn("[shadow] createWorkflow exception:", e.message);
+  }
+}
+
+async function logWorkflowEvent(event) {
+  try {
+    const { error } = await supabase.from("workflow_events").insert([event]);
+    if (error) console.warn("[shadow] logWorkflowEvent failed:", error.message);
+    else console.log("[shadow] event logged:", event.workflow_id, event.role, event.status);
+  } catch (e) {
+    console.warn("[shadow] logWorkflowEvent exception:", e.message);
+  }
+}
+
+// DAILY_CAPS is loaded dynamically from the activity level in main().
+// Fallback used only if module fails to load.
+// New model: 1 x_post (via canon-enqueuer), 1-2 x_repost_comment, 0 required replies/quotes.
+// x_reply only from reply_incoming events (account has been engaged by author).
+// x_quote blocked — X restricts quoting until account has conversation history.
+const FALLBACK_CAPS = {
   reply: 2,
-  quote: 3,
-  repost: 4,
-  roundup_candidate: 6,
+  repost_comment: 2,
+  roundup_candidate: 3,
 };
 
 const REPLY_DOMAIN_INCLUDE = [
@@ -117,6 +144,58 @@ const WATCHLIST_PRIORITY = new Set([
   "crewaiinc",
   "openinterpreter",
   "autogpt",
+  "llama_index",
+  "yoheinakajima",
+  "hwchase17",
+  "joaomdmoura",
+  "jerryjliu0",
+  "simonw",
+  "swyx",
+  "karpathy",
+  "sama",
+  "gdb",
+  "alexalbert__",
+  "goodside",
+  "_jasonwei",
+  "shayenredford",
+  "ofirpress",
+  "lateinteraction",
+  "drjimfan",
+  "reach_vb",
+  "anthropicai",
+  "openai",
+  "googledeepmind",
+  "e2b_dev",
+  "composio_dev",
+  "lgramatidev",
+  "hermes_agent_ai",
+  "nousresearch",
+  "cursor_ai",
+  "devinai",
+  "kimi_moonshot",
+]);
+
+const TIER2_ACCOUNTS = new Set([
+  "huggingface",
+  "llamaindex",
+  "replicate",
+  "weights_biases",
+  "heliconeai",
+  "dstack_ai",
+  "griptape_ai",
+  "fixie_ai",
+  "modal_labs",
+  "mlflow",
+  "pinecone",
+  "googledeepmind",
+  "mistralai",
+  "a16z",
+  "aiatmeta",
+  "digitalocean",
+  "nvidiagtc",
+  "nvidiaadev",
+  "github",
+  "cloudflare",
 ]);
 
 function safeString(v) {
@@ -259,8 +338,41 @@ function isInDomainReply(post) {
 
   return hasStrongSignal && !hasOffDomainSignal;
 }
+function classifyTopic(text) {
+  const t = lower(text);
+  if (["launched", "shipping", "shipped", "release", "released", "new version", "live now", "announcing"].some(w => t.includes(w))) return "launch";
+  if (["raised", "funding", "seed round", "series a", "series b", "backed by", "investment"].some(w => t.includes(w))) return "funding";
+  if (["framework", "sdk", "library", "runtime", "protocol", "tool use", "orchestration"].some(w => t.includes(w))) return "framework";
+  if (["benchmark", "beats", "outperforms", "compared to", "evaluation", "state of the art", "sota"].some(w => t.includes(w))) return "benchmark";
+  return "opinion";
+}
+
+function looksLikeMemeOrSpam(text) {
+  const t = lower(text);
+  const memeWords = ["gm ", "gn ", "wagmi", "ngmi", "degen", "wen moon", "ser ", "fren ", "alpha leak", "based and", "kek", "cope", "seethe"];
+  const cryptoSpam = ["buy now", "100x", "pump", "to the moon", "ath", "aping", "presale", "rugpull", "honeypot", "dyor"];
+  return memeWords.some(w => t.includes(w)) || cryptoSpam.some(w => t.includes(w));
+}
+
+function detectsMike(text) {
+  const t = lower(text);
+  return t.includes("@mikematsh") || t.includes("mikematsh");
+}
+
+function isDisagreement(text) {
+  const t = lower(text);
+  const disagreeWords = [
+    "disagree", "wrong about", "not true", "incorrect", "actually,", "actually no",
+    "counterpoint", "pushback", "you're wrong", "that's wrong", "that is wrong",
+    "i don't think", "i disagree", "bad take", "hot take but", "unpopular opinion",
+    "respectfully no", "this is wrong", "no, actually",
+  ];
+  return disagreeWords.some(w => t.includes(w));
+}
+
 function detectSignals(post) {
   const text = lower(post.text_content);
+  const sourceQuery = safeString(post.source_query);
   const signals = {
     launch: false,
     milestone: false,
@@ -269,12 +381,17 @@ function detectSignals(post) {
     infrastructure: false,
     agent_specific: false,
     strong_watchlist: false,
+    tier2_source: false,
     dense_signal: false,
     external_embedding: false,
     roundup_worthy: false,
     reply_worthy: false,
     quote_worthy: false,
     repost_worthy: false,
+    meme_or_spam: false,
+    mentions_mike: false,
+    is_disagreement: false,
+    topic_classification: "opinion",
   };
 
   const launchWords = [
@@ -351,7 +468,16 @@ function detectSignals(post) {
   signals.acquisition = acquisitionWords.some((w) => text.includes(w));
   signals.infrastructure = infraWords.some((w) => text.includes(w));
   signals.agent_specific = agentWords.some((w) => text.includes(w));
-  signals.strong_watchlist = WATCHLIST_PRIORITY.has(lower(post.author_handle));
+  signals.strong_watchlist = WATCHLIST_PRIORITY.has(lower(post.author_handle)) ||
+    sourceQuery.startsWith("watchlist_tier1") ||
+    WATCHLIST_PRIORITY.has(lower(sourceQuery));
+  signals.tier2_source = TIER2_ACCOUNTS.has(lower(post.author_handle)) ||
+    sourceQuery.startsWith("watchlist_tier2") ||
+    TIER2_ACCOUNTS.has(lower(sourceQuery));
+  signals.meme_or_spam = looksLikeMemeOrSpam(text);
+  signals.topic_classification = classifyTopic(text);
+  signals.mentions_mike = detectsMike(post.text_content);
+  signals.is_disagreement = isDisagreement(post.text_content);
   const matchedSignalCount = [
     signals.launch,
     signals.milestone,
@@ -389,23 +515,50 @@ function detectSignals(post) {
     (signals.agent_specific && (post.like_count || 0) >= 3) ||
     signals.strong_watchlist;
 
+  const isWithin72Hours = post.observed_at
+    ? (Date.now() - new Date(post.observed_at).getTime()) < 72 * 60 * 60 * 1000
+    : false;
+
   signals.repost_worthy =
-    (signals.strong_watchlist || (signals.agent_specific && signals.dense_signal)) &&
+    isWithin72Hours &&
+    (signals.strong_watchlist || signals.tier2_source) &&
     !signals.funding &&
     !signals.acquisition &&
-    signals.external_embedding &&
-    (Number(post.like_count || 0) >= 5 || Number(post.repost_count || 0) >= 2);
+    !signals.meme_or_spam &&
+    (signals.dense_signal || signals.launch || signals.infrastructure) &&
+    (signals.strong_watchlist
+      ? (Number(post.like_count || 0) >= 5 || Number(post.repost_count || 0) >= 2)
+      : (Number(post.like_count || 0) >= 10 || Number(post.repost_count || 0) >= 4));
+
+  signals.like_worthy =
+    signals.strong_watchlist &&
+    !signals.meme_or_spam &&
+    !isTooShort(post.text_content);
+
+  // Real-world events: acquisition, launch, or funding announcements that have a source tweet.
+  // These should anchor Mike's response to the source (quote or repost+commentary), not standalone.
+  signals.real_world_event = signals.acquisition || signals.launch || signals.funding;
 
   signals.quote_worthy =
-    signals.dense_signal ||
-    signals.roundup_worthy ||
-    (signals.strong_watchlist && (post.like_count || 0) >= 5);
+    !signals.meme_or_spam &&
+    (
+      // Standard path: strong watchlist account with solid engagement
+      (signals.strong_watchlist && (signals.dense_signal || signals.roundup_worthy || (post.like_count || 0) >= 5)) ||
+      // Event path: acquisition/launch/funding → always attach to source if tweet exists
+      (signals.real_world_event && !isTooShort(post.text_content))
+    );
 
   signals.reply_worthy =
-    !signals.roundup_worthy &&
-    signals.agent_specific &&
-    signals.external_embedding &&
-    !looksSpammy(text);
+    !signals.meme_or_spam &&
+    !looksSpammy(text) &&
+    (
+      // Classic reply path: agent topic, in domain
+      (!signals.roundup_worthy && signals.agent_specific && signals.external_embedding) ||
+      // Stage 6: someone mentions Mike
+      signals.mentions_mike ||
+      // Stage 6: disagreement on an agent topic
+      (signals.is_disagreement && signals.agent_specific)
+    );
 
   return signals;
 }
@@ -414,6 +567,7 @@ function computeScore(post, signals) {
   let score = 0;
 
   if (signals.strong_watchlist) score += 4;
+  if (signals.tier2_source) score += 2;
   if (signals.launch) score += 4;
   if (signals.milestone) score += 3;
   if (signals.acquisition) score += 5;
@@ -429,6 +583,7 @@ function computeScore(post, signals) {
 
   if (isTooShort(post.text_content)) score -= 2;
   if (looksSpammy(post.text_content)) score -= 5;
+  if (signals.meme_or_spam) score -= 6;
 
   return score;
 }
@@ -436,6 +591,7 @@ function computeScore(post, signals) {
 async function getTodayCounts() {
   const since = startOfDayUTC();
 
+  // interaction_jobs tracks reply/roundup (x_repost_comment uses copydesk_jobs)
   const { data, error } = await supabase
     .from("interaction_jobs")
     .select("action_type")
@@ -445,24 +601,81 @@ async function getTodayCounts() {
 
   const counts = {
     reply: 0,
-    quote: 0,
-    repost: 0,
+    repost_comment: 0,
     roundup_candidate: 0,
+    like: 0,
   };
 
   for (const row of data || []) {
     const actionType = safeString(row.action_type);
-    const key =
-      actionType === "x_reply" ? "reply" :
-      actionType === "x_quote" ? "quote" :
-      actionType === "x_repost" ? "repost" :
-      actionType === "roundup_candidate" ? "roundup_candidate" :
-      null;
-
-    if (key) counts[key] += 1;
+    if (actionType === "x_reply") counts.reply += 1;
+    if (actionType === "roundup_candidate") counts.roundup_candidate += 1;
   }
 
+  // x_repost_comment stored as x_post with context.mode="x_repost_comment" (enum workaround)
+  const { data: rcJobs } = await supabase
+    .from("copydesk_jobs")
+    .select("id")
+    .eq("job_type", "x_post")
+    .eq("context->>mode", "x_repost_comment")
+    .gte("created_at", since);
+  counts.repost_comment = (rcJobs || []).length;
+
+  // Like count from scheduled_posts
+  const { data: spRows } = await supabase
+    .from("scheduled_posts")
+    .select("payload")
+    .eq("channel", "x")
+    .neq("status", "cancelled")
+    .gte("created_at", since);
+  counts.like = (spRows || []).filter(r => r.payload?.type === "x_like").length;
+
   return counts;
+}
+
+/**
+ * Returns a Map<handle, count> of interactions per author today.
+ * Covers replies + quotes (via interaction_jobs) and reposts + likes (via scheduled_posts).
+ * Used to enforce the max 2 interactions per account per day diversity rule.
+ */
+async function getTodayAccountCounts() {
+  const since = startOfDayUTC();
+  const accountCounts = new Map();
+
+  function inc(handle) {
+    if (!handle) return;
+    const h = String(handle).toLowerCase().replace(/^@/, "");
+    if (!h) return;
+    accountCounts.set(h, (accountCounts.get(h) || 0) + 1);
+  }
+
+  // replies + quotes from interaction_jobs
+  const { data: ijRows } = await supabase
+    .from("interaction_jobs")
+    .select("action_type, target_author_handle")
+    .in("action_type", ["x_reply", "x_quote"])
+    .gte("created_at", since);
+
+  for (const r of ijRows || []) {
+    inc(r.target_author_handle);
+  }
+
+  // reposts + likes from scheduled_posts
+  const { data: spRows } = await supabase
+    .from("scheduled_posts")
+    .select("payload")
+    .eq("channel", "x")
+    .neq("status", "cancelled")
+    .gte("created_at", since);
+
+  for (const r of spRows || []) {
+    const t = r.payload?.type;
+    if (t === "x_repost" || t === "x_like") {
+      inc(r.payload?.target_author_handle);
+    }
+  }
+
+  return accountCounts;
 }
 
 async function getReplyCountLast24Hours() {
@@ -530,8 +743,9 @@ async function fetchCandidates() {
       .select("*")
       .eq("is_processed", false)
       .eq("ignored", false)
+      .order("like_count", { ascending: false })
       .order("observed_at", { ascending: false })
-      .limit(50),
+      .limit(150),
     supabase
       .from("events")
       .select("id, event_type, metadata, created_at")
@@ -574,8 +788,7 @@ async function fetchCandidates() {
       });
     })
     .filter((event) => !existingReplyTweetIds.has(event.tweet_id))
-    .filter((event) => isReplyQuestion(event))
-    .filter((event) => isInDomainReply(event));
+    .filter((event) => !looksSpammy(lower(event.text_content || "")));
 
   return [...replies, ...observed].sort(
     (a, b) => new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime()
@@ -587,7 +800,7 @@ function stylePreferenceFor(post, signals, actionType) {
     return "reaction";
   }
 
-  if (actionType === "roundup_candidate" || actionType === "x_repost") {
+  if (actionType === "roundup_candidate" || actionType === "x_repost" || actionType === "x_repost_comment") {
     return "signal_amplification";
   }
 
@@ -621,6 +834,9 @@ async function insertInteractionJob(post, actionType, contextSummary) {
 }
 
 async function insertCopydeskJob(post, jobType, contextSummary, signals) {
+  // x_repost_comment is not in the copydesk_job_type enum — store as x_post with mode flag.
+  const dbJobType = jobType === "x_repost_comment" ? "x_post" : jobType;
+
   const context = {
     target_author: post.author_handle,
     target_text: post.text_content,
@@ -635,16 +851,17 @@ async function insertCopydeskJob(post, jobType, contextSummary, signals) {
       reposts: Number(post.repost_count || 0),
       replies: Number(post.reply_count || 0),
     },
+    ...(jobType === "x_repost_comment" ? { mode: "x_repost_comment" } : {}),
   };
 
   const payload = {
-    job_type: jobType,
+    job_type: dbJobType,
     status: "queued",
-    priority: 50,
+    priority: 1,
     subject_type: post.candidate_source === "reply_incoming" ? "event" : "x_observed_post",
     subject_id: post.id,
     context,
-    max_chars: jobType === "x_quote" ? 260 : 220,
+    max_chars: jobType === "x_repost_comment" ? 200 : 220,
     schema_version: 1,
   };
 
@@ -654,27 +871,43 @@ async function insertCopydeskJob(post, jobType, contextSummary, signals) {
   if (error) throw error;
 }
 
-async function insertScheduledRepost(post, contextSummary) {
-  const runAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+const DAILY_LIKE_CAP = 30;
 
+async function insertLike(post) {
   const payload = {
-    type: "x_repost",
+    type: "x_like",
     target_tweet_id: post.tweet_id,
-    source_observed_post_id: post.id,
     target_author_handle: post.author_handle,
-    target_author_name: post.author_name,
     target_text: post.text_content,
-    context_summary: contextSummary,
-    text: "",
   };
 
   const { error } = await supabase.from("scheduled_posts").insert([{
     channel: "x",
     status: "queued",
-    run_at: runAt,
+    run_at: new Date().toISOString(),
     payload,
-    approved: false,
-    publish_ready: false,
+    approved: true,
+    publish_ready: true,
+  }]);
+
+  if (error) throw error;
+}
+
+async function insertRepost(post) {
+  const payload = {
+    type: "x_repost",
+    target_tweet_id: post.tweet_id,
+    target_author_handle: post.author_handle,
+    target_text: post.text_content,
+  };
+
+  const { error } = await supabase.from("scheduled_posts").insert([{
+    channel: "x",
+    status: "queued",
+    run_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min out
+    payload,
+    approved: true,
+    publish_ready: true,
   }]);
 
   if (error) throw error;
@@ -720,10 +953,14 @@ function summarizeContext(post, signals, score) {
   if (signals.acquisition) parts.push("acquisition signal");
   if (signals.funding) parts.push("funding signal");
   if (signals.infrastructure) parts.push("infrastructure/framework angle");
-  if (signals.strong_watchlist) parts.push("watchlist account");
+  if (signals.strong_watchlist) parts.push("tier1 watchlist account");
+  if (signals.tier2_source) parts.push("tier2 ecosystem account");
   if (signals.dense_signal) parts.push("multiple ecosystem signals present");
   if (signals.external_embedding) parts.push("strong external ecosystem relevance");
   if (signals.repost_worthy) parts.push("repost candidate");
+  if (signals.topic_classification) parts.push(`topic=${signals.topic_classification}`);
+  if (signals.mentions_mike) parts.push("mentions_mike");
+  if (signals.is_disagreement) parts.push("is_disagreement");
   parts.push(`source=${safeString(post.source_query || "watchlist")}`);
   parts.push(
     `engagement likes=${Number(post.like_count || 0)} reposts=${Number(post.repost_count || 0)} replies=${Number(post.reply_count || 0)}`
@@ -736,8 +973,38 @@ function summarizeContext(post, signals, score) {
 }
 
 async function main() {
+  const workflow_id = "wf_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  console.log(`selector workflow_id=${workflow_id}`);
+  await createWorkflow(workflow_id);
+
+  const capCheck = checkXApiCap();
+  if (!capCheck.allowed) {
+    console.warn(
+      `selector skip: x_api_cap_reached estimated_usd=${capCheck.estimatedUsd.toFixed(3)} reason=${capCheck.reason}`
+    );
+    await logWorkflowEvent({
+      workflow_id,
+      trace_id: "tr_" + Math.random().toString(36).slice(2, 9),
+      role: "selector",
+      task_type: "analysis",
+      input: { reason: "x_api_cap_skip", estimated_usd: capCheck.estimatedUsd },
+      decision: null,
+      output: { skipped: true },
+      status: "done",
+    });
+    await logRun("ok", { msg: "x_api_cap_skip", x_api_cost_usd: capCheck.estimatedUsd, reason: capCheck.reason });
+    return;
+  }
+
+  const activity = getActivityLevel();
+  // Normalize: merge with FALLBACK_CAPS so missing keys (e.g. from cached old activity files) are always defined
+  const DAILY_CAPS = { ...FALLBACK_CAPS, ...activity.caps };
+  console.log(`selector: activity=${activity.label} caps=${JSON.stringify(DAILY_CAPS)}`);
+
   const todayCounts = await getTodayCounts();
   let replyCountLast24Hours = await getReplyCountLast24Hours();
+  const accountCounts = await getTodayAccountCounts();
+  const MAX_INTERACTIONS_PER_ACCOUNT = 2;
   const candidates = await fetchCandidates();
 
   if (!candidates.length) {
@@ -747,8 +1014,8 @@ async function main() {
 
   let processed = 0;
   let queuedReply = 0;
-  let queuedQuote = 0;
-  let queuedRepost = 0;
+  let queuedRepostComment = 0;
+  let queuedLike = 0;
   let markedRoundup = 0;
   let ignored = 0;
 
@@ -762,6 +1029,16 @@ async function main() {
   const selectedSamples = [];
 
   for (const post of candidates) {
+    // Exit early if all daily caps are exhausted
+    if (
+      replyCountLast24Hours >= DAILY_CAPS.reply &&
+      todayCounts.repost_comment >= DAILY_CAPS.repost_comment &&
+      todayCounts.roundup_candidate >= DAILY_CAPS.roundup_candidate
+    ) {
+      console.log("selector: all daily caps reached — exiting early");
+      break;
+    }
+
     try {
       const text = safeString(post.text_content);
 
@@ -784,113 +1061,99 @@ async function main() {
         signals.roundup_worthy = false;
         signals.quote_worthy = false;
         signals.repost_worthy = false;
-        signals.reply_worthy = replyQuestion && inDomainReply && !looksSpammy(text);
+        signals.reply_worthy = !looksSpammy(text);
       }
       const score = computeScore(post, signals);
       const contextSummary = summarizeContext(post, signals, score);
 
+      // PRIORITY ORDER: reply (reply_incoming only) → repost_comment → roundup → like
+      // x_quote blocked — X restricts quoting for accounts without conversation history.
+      // x_reply for observed posts blocked — X restricts replies unless author has engaged us.
+      // checkXApiCap() is called before every action to enforce the daily budget.
+
+      // Account diversity: max MAX_INTERACTIONS_PER_ACCOUNT per author per day.
+      const postHandle = String(post.author_handle || "").toLowerCase().replace(/^@/, "");
+      const accountInteractionsToday = accountCounts.get(postHandle) || 0;
+      if (postHandle && accountInteractionsToday >= MAX_INTERACTIONS_PER_ACCOUNT) {
+        console.log(`selector: diversity cap — skipping @${postHandle} (${accountInteractionsToday}/${MAX_INTERACTIONS_PER_ACCOUNT} interactions today)`);
+        await finalizeCandidate(post, { ignored: true, used_for_job: false, relevance_score: score });
+        ignored += 1;
+        ignoredReasons.daily_cap_blocked += 1;
+        continue;
+      }
+
+      // 1. REPLY — only from reply_incoming events (author has already engaged us)
+      if (
+        post.candidate_source === "reply_incoming" &&
+        signals.reply_worthy &&
+        replyCountLast24Hours < DAILY_CAPS.reply
+      ) {
+        const capNow = checkXApiCap();
+        if (!capNow.allowed) {
+          console.log(`selector: x_api_cap_reached before reply — stopping actions (usd=${capNow.estimatedUsd.toFixed(3)})`);
+          break;
+        }
+        await insertInteractionJob(post, "x_reply", contextSummary);
+        await insertCopydeskJob(post, "x_reply", contextSummary, signals);
+        await finalizeCandidate(post, { ignored: false, used_for_job: true, relevance_score: score });
+        todayCounts.reply += 1;
+        replyCountLast24Hours += 1;
+        queuedReply += 1;
+        processed += 1;
+        accountCounts.set(postHandle, accountInteractionsToday + 1);
+        if (selectedSamples.length < 5) selectedSamples.push({ post_id: post.id, handle: post.author_handle, action: "x_reply", score });
+        continue;
+      }
+
+      // 2. REPOST WITH COMMENT — high-signal posts get Mike commentary via copydesk
+      if (
+        signals.repost_worthy &&
+        todayCounts.repost_comment < DAILY_CAPS.repost_comment
+      ) {
+        const capNow = checkXApiCap();
+        if (!capNow.allowed) {
+          console.log(`selector: x_api_cap_reached before repost_comment — stopping actions (usd=${capNow.estimatedUsd.toFixed(3)})`);
+          break;
+        }
+        await insertCopydeskJob(post, "x_repost_comment", contextSummary, signals);
+        await finalizeCandidate(post, { ignored: false, used_for_job: true, relevance_score: score });
+        todayCounts.repost_comment = (todayCounts.repost_comment || 0) + 1;
+        queuedRepostComment += 1;
+        processed += 1;
+        accountCounts.set(postHandle, accountInteractionsToday + 1);
+        if (selectedSamples.length < 5) selectedSamples.push({ post_id: post.id, handle: post.author_handle, action: "x_repost_comment", score });
+        continue;
+      }
+
+      // 4. ROUNDUP CANDIDATE (fourth priority — no diversity cap; low-cost signal tagging)
       if (
         signals.roundup_worthy &&
         todayCounts.roundup_candidate < DAILY_CAPS.roundup_candidate
       ) {
         await insertInteractionJob(post, "roundup_candidate", contextSummary);
-        await finalizeCandidate(post, {
-          ignored: false,
-          used_for_job: true,
-          relevance_score: score,
-        });
+        await finalizeCandidate(post, { ignored: false, used_for_job: true, relevance_score: score });
         todayCounts.roundup_candidate += 1;
         markedRoundup += 1;
         processed += 1;
-
-        if (selectedSamples.length < 5) {
-          selectedSamples.push({
-            post_id: post.id,
-            handle: post.author_handle,
-            action: "roundup_candidate",
-            score,
-          });
-        }
+        if (selectedSamples.length < 5) selectedSamples.push({ post_id: post.id, handle: post.author_handle, action: "roundup_candidate", score });
         continue;
       }
 
+      // 5. LIKE (lowest priority)
       if (
-        signals.repost_worthy &&
-        todayCounts.repost < DAILY_CAPS.repost
+        signals.like_worthy &&
+        score >= 6 &&
+        todayCounts.like < DAILY_LIKE_CAP &&
+        post.candidate_source === "x_observed_post"
       ) {
-        await insertInteractionJob(post, "x_repost", contextSummary);
-        await insertScheduledRepost(post, contextSummary);
-        await finalizeCandidate(post, {
-          ignored: false,
-          used_for_job: true,
-          relevance_score: score,
-        });
-        todayCounts.repost += 1;
-        queuedRepost += 1;
+        await insertLike(post);
+        await finalizeCandidate(post, { ignored: false, used_for_job: true, relevance_score: score });
+        todayCounts.like += 1;
+        queuedLike += 1;
         processed += 1;
-
+        accountCounts.set(postHandle, accountInteractionsToday + 1);
         if (selectedSamples.length < 5) {
-          selectedSamples.push({
-            post_id: post.id,
-            handle: post.author_handle,
-            action: "x_repost",
-            score,
-          });
-        }
-        continue;
-      }
-
-      if (
-        signals.quote_worthy &&
-        todayCounts.quote < DAILY_CAPS.quote
-      ) {
-        await insertInteractionJob(post, "x_quote", contextSummary);
-        await insertCopydeskJob(post, "x_quote", contextSummary, signals);
-        await finalizeCandidate(post, {
-          ignored: false,
-          used_for_job: true,
-          relevance_score: score,
-        });
-        todayCounts.quote += 1;
-        queuedQuote += 1;
-        processed += 1;
-
-        if (selectedSamples.length < 5) {
-          selectedSamples.push({
-            post_id: post.id,
-            handle: post.author_handle,
-            action: "x_quote",
-            score,
-          });
-        }
-        continue;
-      }
-
-      if (
-        signals.reply_worthy &&
-        replyQuestion &&
-        inDomainReply &&
-        replyCountLast24Hours < DAILY_CAPS.reply
-      ) {
-        await insertInteractionJob(post, "x_reply", contextSummary);
-        await insertCopydeskJob(post, "x_reply", contextSummary, signals);
-        await finalizeCandidate(post, {
-          ignored: false,
-          used_for_job: true,
-          relevance_score: score,
-        });
-        todayCounts.reply += 1;
-        replyCountLast24Hours += 1;
-        queuedReply += 1;
-        processed += 1;
-
-        if (selectedSamples.length < 5) {
-          selectedSamples.push({
-            post_id: post.id,
-            handle: post.author_handle,
-            action: "x_reply",
-            score,
-          });
+          selectedSamples.push({ post_id: post.id, handle: post.author_handle, action: "x_like", score });
         }
         continue;
       }
@@ -900,9 +1163,9 @@ async function main() {
 
       const capBlocked =
         (signals.roundup_worthy && todayCounts.roundup_candidate >= DAILY_CAPS.roundup_candidate) ||
-        (signals.repost_worthy && todayCounts.repost >= DAILY_CAPS.repost) ||
-        (signals.quote_worthy && todayCounts.quote >= DAILY_CAPS.quote) ||
-        (signals.reply_worthy && replyQuestion && inDomainReply && replyCountLast24Hours >= DAILY_CAPS.reply);
+        (signals.repost_worthy && todayCounts.repost_comment >= DAILY_CAPS.repost_comment) ||
+        (signals.reply_worthy && replyCountLast24Hours >= DAILY_CAPS.reply) ||
+        (signals.like_worthy && todayCounts.like >= DAILY_LIKE_CAP);
 
       await finalizeCandidate(post, {
         ignored: true,
@@ -924,11 +1187,23 @@ async function main() {
     }
   }
 
+  await logWorkflowEvent({
+    workflow_id,
+    trace_id: "tr_" + Math.random().toString(36).slice(2, 9),
+    role: "selector",
+    task_type: "analysis",
+    input: { candidates_fetched: candidates.length, activity: activity.label },
+    decision: { queued_reply: queuedReply, queued_repost_comment: queuedRepostComment, roundup: markedRoundup, liked: queuedLike },
+    output: { processed, ignored, ignored_reasons: ignoredReasons },
+    status: "done",
+  });
+
   await logRun("ok", {
+    activity_level: activity.label,
     processed,
     queuedReply,
-    queuedQuote,
-    queuedRepost,
+    queuedRepostComment,
+    queuedLike,
     markedRoundup,
     ignored,
     ignoredReasons,
@@ -936,6 +1211,11 @@ async function main() {
     candidatesFetched: candidates.length,
     todayCounts,
     replyCountLast24Hours,
+    dailySummary: {
+      replies: queuedReply,
+      repost_comments: queuedRepostComment,
+      originals: 0, // tracked in canon-enqueuer runs
+    },
   });
 }
 
