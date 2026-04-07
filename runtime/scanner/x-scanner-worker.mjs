@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
+import { getActivityLevel } from "../state/activity-level.mjs";
+import { checkXApiCap, recordXApiCalls } from "../state/x-api-cost.mjs";
 
 const {
   SUPABASE_URL,
@@ -21,26 +23,139 @@ const supabase = createClient(
   { auth: { persistSession: false } }
 );
 
+// Phase 3 shadow logging — fail-silent, no pipeline impact
+async function createWorkflow(workflow_id) {
+  try {
+    const { error } = await supabase.from("workflows").insert([{ workflow_id, status: "in_progress" }]);
+    if (error) console.warn("[shadow] createWorkflow failed:", error.message);
+    else console.log("[shadow] workflow created:", workflow_id);
+  } catch (e) {
+    console.warn("[shadow] createWorkflow exception:", e.message);
+  }
+}
+
+async function logWorkflowEvent(event) {
+  try {
+    const { error } = await supabase.from("workflow_events").insert([event]);
+    if (error) console.warn("[shadow] logWorkflowEvent failed:", error.message);
+    else console.log("[shadow] event logged:", event.workflow_id, event.role, event.status);
+  } catch (e) {
+    console.warn("[shadow] logWorkflowEvent exception:", e.message);
+  }
+}
+
 const X_API = "https://api.twitter.com/2";
 const USER_CACHE_PATH = "/opt/agentcrush/scanner/watchlist-user-cache.json";
+const ROTATION_STATE_PATH = "/opt/agentcrush/state/scanner_rotation.json";
 const MIKE_HANDLE = "MikeMatshAI";
 
-const WATCHLIST = [
+// Per-run limits — keeps each run to ~23 API calls (~$0.18 at $0.0077/call).
+// Breakdown: 10 watchlist fetches + 2 search queries + scanIncomingReplies (1 + up to 10 per Mike tweet).
+// Full watchlist rotation every ~6 runs; full search rotation every ~6 runs.
+const WATCHLIST_SCAN_LIMIT = 10;  // out of ~60 total; full rotation every 6 runs
+const SEARCH_QUERY_LIMIT = 2;     // out of 11 total; full rotation every 6 runs
+
+// Tier 1: framework founders, key builders, must-watch AI agent accounts
+const TIER1_WATCHLIST = [
+  // Platform / product
   "bankrbot",
   "moltbook",
   "openclaw",
   "KellyClaudeAI",
+  "fetch_ai",
+  "virtuals_io",
+  "blockrunai",
+  "mattprd",
+  // Frameworks & tooling
   "LangChainAI",
   "crewAIInc",
   "OpenInterpreter",
-  "AutoGPT"
+  "AutoGPT",
+  "llama_index",
+  // Founders & researchers
+  "yoheinakajima",
+  "hwchase17",
+  "joaomdmoura",
+  "jerryjliu0",
+  "simonw",
+  "swyx",
+  "karpathy",
+  "sama",
+  "gdb",
+  "alexalbert__",
+  "goodside",
+  "_jasonwei",
+  "ShayneRedford",
+  "OfirPress",
+  "lateinteraction",
+  "DrJimFan",
+  "reach_vb",
+  // Orgs
+  "AnthropicAI",
+  "openai",
+  "GoogleDeepMind",
+  // Ecosystem
+  "e2b_dev",
+  "composio_dev",
+  "lgramatidev",
+  // AI agents & tools
+  "hermes_agent_ai",
+  "NousResearch",
+  "cursor_ai",
+  "DevinAI",
+  "Kimi_Moonshot",
 ];
 
+// Tier 2: AI infra, tooling, crypto-agent crossover
+const TIER2_WATCHLIST = [
+  "huggingface",
+  "LlamaIndex",
+  "replicate",
+  "weights_biases",
+  "heliconeai",
+  "dstack_ai",
+  "griptape_ai",
+  "fixie_ai",
+  "modal_labs",
+  "mlflow",
+  "pinecone",
+  "MistralAI",
+  "a16z",
+  "AIatMeta",
+  // Infra & platforms
+  "digitalocean",
+  "NVIDIAGTC",
+  "NVIDIAAIDev",
+  "github",
+  "Cloudflare",
+];
+
+// Keep combined for backward-compat
+const WATCHLIST = [...new Set([...TIER1_WATCHLIST, ...TIER2_WATCHLIST])];
+
+const TIER1_SET = new Set(TIER1_WATCHLIST.map(h => h.toLowerCase()));
+const TIER2_SET = new Set(TIER2_WATCHLIST.map(h => h.toLowerCase()));
+
+function sourceTierFor(username) {
+  const key = String(username || "").toLowerCase();
+  if (TIER1_SET.has(key)) return "watchlist_tier1";
+  if (TIER2_SET.has(key)) return "watchlist_tier2";
+  return "watchlist";
+}
+
+// 5 highest-signal search queries. @MikeMatshAI is free via the mentions/reply scan.
 const SEARCH_QUERIES = [
-  '"AI agent launch"',
+  '"AI agent"',
+  '"autonomous agent"',
   '"agent framework"',
-  '"agent protocol"',
-  '"multi agent system"'
+  '"multi-agent"',
+  '"agentic"',
+  '"Hermes agent"',
+  '"Obsidian Claude"',
+  '"Claude Code"',
+  '"Cursor AI"',
+  '"Nous Research"',
+  '"DevinAI"',
 ];
 
 const stats = {
@@ -55,7 +170,8 @@ const stats = {
   reply_scan_hard: 0,
   tweets_stored: 0,
   replies_stored: 0,
-  insert_errors: 0
+  insert_errors: 0,
+  x_api_calls: 0,
 };
 
 class XApiError extends Error {
@@ -84,11 +200,24 @@ function isQuestionText(text) {
 }
 
 async function fetchJSON(url) {
+  const cap = checkXApiCap();
+  if (!cap.allowed) {
+    // Cap check passed before making any HTTP request — do not record a call
+    const err = new Error(`x_api_cap_reached estimated_usd=${cap.estimatedUsd.toFixed(3)}`);
+    err.isCapReached = true;
+    throw err;
+  }
+
   const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${X_BEARER_TOKEN}`
     }
   });
+
+  // Record the call regardless of response status — the HTTP request was made
+  // and X counts it against usage whether it succeeded or failed.
+  recordXApiCalls(1);
+  stats.x_api_calls += 1;
 
   if (!res.ok) {
     const text = await res.text();
@@ -98,17 +227,28 @@ async function fetchJSON(url) {
   return res.json();
 }
 
+const TWEET_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 async function storeTweet(tweet, sourceType, source) {
+  // Skip tweets older than 7 days
+  if (tweet.created_at) {
+    const ageMs = Date.now() - new Date(tweet.created_at).getTime();
+    if (ageMs > TWEET_MAX_AGE_MS) {
+      console.log(`scanner: skipping stale tweet ${tweet.id} (created ${tweet.created_at})`);
+      return;
+    }
+  }
+
   const payload = {
     tweet_id: tweet.id,
     text_content: tweet.text,
-    author_handle: null,
+    author_handle: sourceType.startsWith("watchlist") ? source : null,
     author_name: null,
     like_count: tweet.public_metrics?.like_count ?? 0,
     reply_count: tweet.public_metrics?.reply_count ?? 0,
     repost_count: tweet.public_metrics?.retweet_count ?? 0,
     observed_at: new Date().toISOString(),
-    source_query: source,
+    source_query: sourceType,
     is_processed: false,
     ignored: false
   };
@@ -169,6 +309,22 @@ async function storeIncomingReply(tweet, authorMap = new Map()) {
   stats.replies_stored += 1;
 }
 
+function loadRotation() {
+  try {
+    return JSON.parse(fs.readFileSync(ROTATION_STATE_PATH, "utf8"));
+  } catch {
+    return { watchlist_offset: 0, search_offset: 0 };
+  }
+}
+
+function saveRotation(state) {
+  try {
+    fs.writeFileSync(ROTATION_STATE_PATH, JSON.stringify(state, null, 2));
+  } catch (err) {
+    console.error("scanner: failed to write rotation state", err.message);
+  }
+}
+
 function loadUserCache() {
   try {
     return JSON.parse(fs.readFileSync(USER_CACHE_PATH, "utf8"));
@@ -200,10 +356,10 @@ async function resolveUserId(username, cache) {
   return id;
 }
 
-async function scanWatchlist() {
+async function scanWatchlist(accountSlice) {
   const cache = loadUserCache();
 
-  for (const username of WATCHLIST) {
+  for (const username of accountSlice) {
     try {
       const id = await resolveUserId(username, cache);
       if (!id) {
@@ -221,13 +377,19 @@ async function scanWatchlist() {
         continue;
       }
 
+      const tier = sourceTierFor(username);
       for (const tweet of tweets.data) {
-        await storeTweet(tweet, "watchlist", username);
+        await storeTweet(tweet, tier, username);
       }
 
       stats.watchlist_ok += 1;
-      console.log(`scanner: watchlist ${username} ok`);
+      console.log(`scanner: watchlist ${username} ok (${tier})`);
     } catch (err) {
+      if (err.isCapReached) {
+        console.warn(`scanner watchlist: x_api_cap reached mid-run at ${username} — stopping watchlist scan`);
+        return;
+      }
+
       if (isTransientXError(err)) {
         stats.watchlist_transient += 1;
         console.warn(
@@ -242,8 +404,8 @@ async function scanWatchlist() {
   }
 }
 
-async function scanSearch() {
-  for (const q of SEARCH_QUERIES) {
+async function scanSearch(querySlice) {
+  for (const q of querySlice) {
     try {
       const url =
         `${X_API}/tweets/search/recent?` +
@@ -264,6 +426,11 @@ async function scanSearch() {
       stats.query_ok += 1;
       console.log(`scanner: query "${q}" ok`);
     } catch (err) {
+      if (err.isCapReached) {
+        console.warn(`scanner search: x_api_cap reached mid-run at query "${q}" — stopping search scan`);
+        return;
+      }
+
       if (isTransientXError(err)) {
         stats.query_transient += 1;
         console.warn(
@@ -319,6 +486,11 @@ async function scanIncomingReplies() {
     stats.reply_scan_ok += 1;
     console.log(`scanner: incoming replies ${MIKE_HANDLE} ok`);
   } catch (err) {
+    if (err.isCapReached) {
+      console.warn(`scanner incoming replies: x_api_cap reached — skipping replies`);
+      return;
+    }
+
     if (isTransientXError(err)) {
       stats.reply_scan_transient += 1;
       console.warn(
@@ -332,12 +504,95 @@ async function scanIncomingReplies() {
   }
 }
 
-async function main() {
-  console.log("scanner start");
+const SCANNER_LAST_RUN_PATH = "/opt/agentcrush/state/scanner_last_run.json";
 
-  await scanWatchlist();
-  await scanSearch();
-  await scanIncomingReplies();
+function getLastScanTime() {
+  try {
+    const raw = fs.readFileSync(SCANNER_LAST_RUN_PATH, "utf8");
+    return new Date(JSON.parse(raw).last_run).getTime();
+  } catch {
+    return 0;
+  }
+}
+
+function recordScanTime() {
+  try {
+    fs.writeFileSync(
+      SCANNER_LAST_RUN_PATH,
+      JSON.stringify({ last_run: new Date().toISOString() }, null, 2)
+    );
+  } catch (err) {
+    console.error("scanner: failed to write last_run state", err.message);
+  }
+}
+
+async function main() {
+  const capCheck = checkXApiCap();
+  if (!capCheck.allowed) {
+    console.warn(
+      `scanner skip: x_api_cap_reached estimated_usd=${capCheck.estimatedUsd.toFixed(3)} calls=${capCheck.callsToday}`
+    );
+    try {
+      await supabase.from("runs").insert([{
+        runner: "x_scanner",
+        job: "scan",
+        status: "skipped",
+        meta: { reason: "x_api_cap", x_api_cost_usd: capCheck.estimatedUsd, x_api_calls: capCheck.callsToday },
+        error: null,
+      }]);
+    } catch {}
+    return;
+  }
+
+  const activity = getActivityLevel();
+  const intervalMs = activity.scanner_interval_min * 60 * 1000;
+  const lastRun = getLastScanTime();
+  const msSinceLastRun = Date.now() - lastRun;
+
+  if (msSinceLastRun < intervalMs) {
+    const waitMin = Math.round((intervalMs - msSinceLastRun) / 60000);
+    console.log(
+      `scanner skip: activity=${activity.label} interval=${activity.scanner_interval_min}min ` +
+      `last_run=${Math.round(msSinceLastRun / 60000)}min ago, wait ${waitMin}min more`
+    );
+    return;
+  }
+
+  // Compute per-run slices via rotating offset so all accounts/queries cycle over time
+  const rotation = loadRotation();
+  const watchlistOffset = rotation.watchlist_offset ?? 0;
+  const searchOffset = rotation.search_offset ?? 0;
+
+  const watchlistSlice = WATCHLIST.slice(watchlistOffset, watchlistOffset + WATCHLIST_SCAN_LIMIT);
+  const searchSlice = SEARCH_QUERIES.slice(searchOffset, searchOffset + SEARCH_QUERY_LIMIT);
+
+  rotation.watchlist_offset = (watchlistOffset + WATCHLIST_SCAN_LIMIT) % WATCHLIST.length;
+  rotation.search_offset = (searchOffset + SEARCH_QUERY_LIMIT) % SEARCH_QUERIES.length;
+  saveRotation(rotation);
+
+  const workflow_id = "wf_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  console.log(`scanner workflow_id=${workflow_id}`);
+  await createWorkflow(workflow_id);
+
+  console.log(
+    `scanner start activity=${activity.label} interval=${activity.scanner_interval_min}min ` +
+    `watchlist_slice=[${watchlistOffset}..${watchlistOffset + watchlistSlice.length - 1}]/${WATCHLIST.length} ` +
+    `search_slice=[${searchOffset}..${searchOffset + searchSlice.length - 1}]/${SEARCH_QUERIES.length}`
+  );
+
+  await scanWatchlist(watchlistSlice);
+
+  if (!checkXApiCap().allowed) {
+    console.warn("scanner: x_api_cap reached after watchlist — skipping search+replies");
+  } else {
+    await scanSearch(searchSlice);
+
+    if (!checkXApiCap().allowed) {
+      console.warn("scanner: x_api_cap reached after search — skipping replies");
+    } else {
+      await scanIncomingReplies();
+    }
+  }
 
   console.log(
     "scanner summary",
@@ -357,10 +612,53 @@ async function main() {
     })
   );
 
+  recordScanTime();
   console.log("scanner complete");
+
+  await logWorkflowEvent({
+    workflow_id,
+    trace_id: "tr_" + Math.random().toString(36).slice(2, 9),
+    role: "scanner",
+    task_type: "analysis",
+    input: { accounts_scanned: watchlistSlice.length, queries_scanned: searchSlice.length, activity: activity.label },
+    decision: null,
+    output: { tweets_stored: stats.tweets_stored, replies_stored: stats.replies_stored, insert_errors: stats.insert_errors },
+    status: "done",
+  });
+
+  const finalCap = checkXApiCap();
+  try {
+    await supabase.from("runs").insert([{
+      runner: "x_scanner",
+      job: "scan",
+      status: "ok",
+      meta: {
+        activity: activity.label,
+        tweets_stored: stats.tweets_stored,
+        replies_stored: stats.replies_stored,
+        watchlist_ok: stats.watchlist_ok,
+        query_ok: stats.query_ok,
+        insert_errors: stats.insert_errors,
+        x_api_calls: stats.x_api_calls,
+        x_api_cost_usd: +(stats.x_api_calls * 0.0033).toFixed(4),
+        x_api_calls_today: finalCap.callsToday,
+        x_api_cost_today_usd: +finalCap.estimatedUsd.toFixed(4),
+      },
+      error: null,
+    }]);
+  } catch {}
 }
 
-main().catch(err => {
+main().catch(async (err) => {
   console.error("scanner fatal", err);
+  try {
+    await supabase.from("runs").insert([{
+      runner: "x_scanner",
+      job: "scan",
+      status: "error",
+      meta: { fatal: true },
+      error: String(err?.message || err),
+    }]);
+  } catch {}
   process.exit(1);
 });
