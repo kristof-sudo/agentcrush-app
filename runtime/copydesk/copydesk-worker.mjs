@@ -55,6 +55,19 @@ async function logWorkflowEvent(event) {
   }
 }
 
+async function closeWorkflow(workflow_id, finalStatus = "completed") {
+  if (!workflow_id) return;
+  try {
+    const { error } = await supabase.from("workflows").update({ status: finalStatus, updated_at: new Date().toISOString() }).eq("workflow_id", workflow_id);
+    if (error) console.warn("[shadow] closeWorkflow failed:", error.message);
+    else console.log("[shadow] workflow closed:", workflow_id, finalStatus);
+  } catch (e) {
+    console.warn("[shadow] closeWorkflow exception:", e.message);
+  }
+}
+
+let _activeWorkflowId = null;
+
 const X_POST_SCHEMA = {
   name: "copydesk_x_post_v2",
   strict: true,
@@ -1155,6 +1168,7 @@ async function sendCopydeskCapAlert() {
 
 async function main() {
   const workflow_id = "wf_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  _activeWorkflowId = workflow_id;
   console.log(`copydesk workflow_id=${workflow_id}`);
   await createWorkflow(workflow_id);
 
@@ -1168,6 +1182,17 @@ async function main() {
       writeCopydeskDailyState(copydeskDailyState);
     }
     console.log(`copydesk: daily cap reached (${jobsProcessedToday}/${COPYDESK_DAILY_CAP}), skipping`);
+    await logWorkflowEvent({
+      workflow_id,
+      trace_id: "tr_" + Math.random().toString(36).slice(2, 9),
+      role: "copydesk",
+      task_type: "publish",
+      input: { reason: "daily_cap_reached", jobs_today: jobsProcessedToday },
+      decision: null,
+      output: { skipped: true },
+      status: "done",
+    });
+    await closeWorkflow(workflow_id, "completed");
     await logRun("ok", { msg: "daily_cap_reached", jobs_today: jobsProcessedToday });
     return;
   }
@@ -1201,6 +1226,7 @@ async function main() {
       output: { skipped: true },
       status: "done",
     });
+    await closeWorkflow(workflow_id, "completed");
     await logRun("ok", { msg: "no_jobs" });
     return;
   }
@@ -1441,9 +1467,22 @@ if (obj.type === "x_post" || obj.type === "x_reply" || obj.type === "x_quote" ||
       continue;
     }
   }
+
+  await logWorkflowEvent({
+    workflow_id,
+    trace_id: "tr_" + Math.random().toString(36).slice(2, 9),
+    role: "copydesk",
+    task_type: "publish",
+    input: { jobs_processed: jobs.length },
+    decision: null,
+    output: { completed: true },
+    status: "done",
+  });
+  await closeWorkflow(workflow_id, "completed");
 }
 
 main().catch(async (e) => {
+  await closeWorkflow(_activeWorkflowId, "failed");
   await logRun("error", { fatal: true }, String(e?.message || e));
   process.exit(1);
 });

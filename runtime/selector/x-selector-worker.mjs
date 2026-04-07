@@ -38,6 +38,19 @@ async function logWorkflowEvent(event) {
   }
 }
 
+async function closeWorkflow(workflow_id, finalStatus = "completed") {
+  if (!workflow_id) return;
+  try {
+    const { error } = await supabase.from("workflows").update({ status: finalStatus, updated_at: new Date().toISOString() }).eq("workflow_id", workflow_id);
+    if (error) console.warn("[shadow] closeWorkflow failed:", error.message);
+    else console.log("[shadow] workflow closed:", workflow_id, finalStatus);
+  } catch (e) {
+    console.warn("[shadow] closeWorkflow exception:", e.message);
+  }
+}
+
+let _activeWorkflowId = null;
+
 // DAILY_CAPS is loaded dynamically from the activity level in main().
 // Fallback used only if module fails to load.
 // New model: 1 x_post (via canon-enqueuer), 1-2 x_repost_comment, 0 required replies/quotes.
@@ -974,6 +987,7 @@ function summarizeContext(post, signals, score) {
 
 async function main() {
   const workflow_id = "wf_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  _activeWorkflowId = workflow_id;
   console.log(`selector workflow_id=${workflow_id}`);
   await createWorkflow(workflow_id);
 
@@ -992,6 +1006,7 @@ async function main() {
       output: { skipped: true },
       status: "done",
     });
+    await closeWorkflow(workflow_id, "completed");
     await logRun("ok", { msg: "x_api_cap_skip", x_api_cost_usd: capCheck.estimatedUsd, reason: capCheck.reason });
     return;
   }
@@ -1008,6 +1023,17 @@ async function main() {
   const candidates = await fetchCandidates();
 
   if (!candidates.length) {
+    await logWorkflowEvent({
+      workflow_id,
+      trace_id: "tr_" + Math.random().toString(36).slice(2, 9),
+      role: "selector",
+      task_type: "analysis",
+      input: { reason: "no_candidates" },
+      decision: null,
+      output: { skipped: true },
+      status: "done",
+    });
+    await closeWorkflow(workflow_id, "completed");
     await logRun("ok", { msg: "no_candidates" });
     return;
   }
@@ -1197,6 +1223,7 @@ async function main() {
     output: { processed, ignored, ignored_reasons: ignoredReasons },
     status: "done",
   });
+  await closeWorkflow(workflow_id, "completed");
 
   await logRun("ok", {
     activity_level: activity.label,
@@ -1220,6 +1247,7 @@ async function main() {
 }
 
 main().catch(async (e) => {
+  await closeWorkflow(_activeWorkflowId, "failed");
   await logRun("error", { fatal: true }, String(e?.message || e));
   process.exit(1);
 });
