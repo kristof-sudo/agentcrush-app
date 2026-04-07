@@ -56,6 +56,23 @@ async function closeWorkflow(workflow_id, finalStatus = "completed") {
   }
 }
 
+async function logWorkflowCost(workflow_id, estimatedCost) {
+  if (!workflow_id || estimatedCost <= 0) return;
+  console.log("[cost] logWorkflowCost attempt:", workflow_id, "x_api", estimatedCost.toFixed(4));
+  try {
+    const { error } = await supabase.from("workflow_costs").insert([{
+      workflow_id,
+      cost_type: "x_api",
+      estimated_cost: +estimatedCost.toFixed(4),
+      actual_cost: null,
+    }]);
+    if (error) console.warn("[cost] logWorkflowCost failed:", error.message);
+    else console.log("[cost] logWorkflowCost success:", workflow_id, estimatedCost.toFixed(4));
+  } catch (e) {
+    console.warn("[cost] logWorkflowCost exception:", e.message);
+  }
+}
+
 let _activeWorkflowId = null;
 
 const X_API = "https://api.twitter.com/2";
@@ -588,6 +605,7 @@ async function main() {
   _activeWorkflowId = workflow_id;
   console.log(`scanner workflow_id=${workflow_id}`);
   await createWorkflow(workflow_id);
+  const preScanUsd = checkScannerCap().estimatedUsd;
 
   console.log(
     `scanner start activity=${activity.label} interval=${activity.scanner_interval_min}min ` +
@@ -643,6 +661,8 @@ async function main() {
   await closeWorkflow(workflow_id, "completed");
 
   const finalCap = checkScannerCap();
+  const runCostUsd = Math.max(0, finalCap.estimatedUsd - preScanUsd);
+  await logWorkflowCost(workflow_id, runCostUsd);
   try {
     await supabase.from("runs").insert([{
       runner: "x_scanner",
