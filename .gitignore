@@ -47,6 +47,7 @@ runtime/**/approval_listener_offset.json
 runtime/**/telegram_offset.txt
 runtime/**/watchlist-user-cache.json
 runtime/state/
+!runtime/state/*.mjs
 
 # Local ops logs
 ops/logs/
