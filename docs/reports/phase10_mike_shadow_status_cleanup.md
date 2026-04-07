@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-07  
 **Branch:** `mike/stage-1-feed-mix`  
-**Commit:** `5fa2f07`
+**Commits:** `5fa2f07` (initial), `9ec92b1` (re-run fix — actual live bug)
 
 ## Problem
 
@@ -15,53 +15,115 @@ Total workflows: 140
   in_progress: 127 (91%)
 ```
 
-The 13 `completed` rows were set manually or by external tooling — none were written by the workers themselves.
+The 13 `completed` rows were set by external tooling — none were written by the workers themselves.
 
-## Root Cause
+---
+
+## Root Cause (Initial — commit 5fa2f07)
 
 No `closeWorkflow()` function existed in any worker. The shadow logging module was added in Phase 3 with `createWorkflow()` and `logWorkflowEvent()` but the lifecycle was never completed. Additionally, all fatal-path `main().catch()` handlers had no access to `workflow_id` (it was scoped inside `main()`).
 
-## Fix
+Initial fix added `closeWorkflow()` to all three workers and a module-level `_activeWorkflowId` for fatal coverage. However, the fix **did not work in production**.
 
-Added `closeWorkflow(workflow_id, finalStatus)` to each worker (fail-silent, same pattern as existing shadow functions). Added a module-level `_activeWorkflowId` variable so `main().catch()` can close the workflow as `"failed"` on fatal errors.
+---
 
-### Scanner (`scanner/x-scanner-worker.mjs`)
+## Real Root Cause (Re-run — commit 9ec92b1)
 
-| Exit path | Before | After |
-|-----------|--------|-------|
-| Normal completion | `logWorkflowEvent` → STUCK | `logWorkflowEvent` → `closeWorkflow("completed")` |
-| Fatal error | No update | `closeWorkflow("failed")` via `_activeWorkflowId` |
-| Cap-skip / interval-skip | Exit before `createWorkflow()` | No change needed (workflow never created) |
+The `workflows` table has **no `updated_at` column** — it only has `workflow_id`, `status`, `created_at`.
 
-### Selector (`selector/x-selector-worker.mjs`)
+The `closeWorkflow()` implementation in all three workers included `updated_at` in the update payload:
 
-| Exit path | Before | After |
-|-----------|--------|-------|
-| Cap-skip | `logWorkflowEvent` → STUCK | `logWorkflowEvent` → `closeWorkflow("completed")` |
-| No-candidates | No event, no close → STUCK | `logWorkflowEvent` + `closeWorkflow("completed")` |
-| Normal completion | `logWorkflowEvent` → STUCK | `logWorkflowEvent` → `closeWorkflow("completed")` |
-| Fatal error | No update | `closeWorkflow("failed")` via `_activeWorkflowId` |
+```js
+// BROKEN — updated_at does not exist in the workflows table
+supabase.from("workflows").update({ status: finalStatus, updated_at: new Date().toISOString() })
+```
 
-### Copydesk (`copydesk/copydesk-worker.mjs`)
+Supabase returned: `"Could not find the 'updated_at' column of 'workflows' in the schema cache"`.
 
-| Exit path | Before | After |
-|-----------|--------|-------|
-| Daily-cap-skip | No event, no close → STUCK | `logWorkflowEvent` + `closeWorkflow("completed")` |
-| No-jobs | `logWorkflowEvent` → STUCK | `logWorkflowEvent` → `closeWorkflow("completed")` |
-| Post-loop completion | No event, no close → STUCK | `logWorkflowEvent` + `closeWorkflow("completed")` |
-| Fatal error | No update | `closeWorkflow("failed")` via `_activeWorkflowId` |
+This error was **silently swallowed** by the `try/catch` (logged as `console.warn`, not thrown), so every `closeWorkflow()` call appeared to succeed locally but wrote nothing to Supabase. All workflows remained `in_progress`.
+
+---
+
+## Fix (commit 9ec92b1)
+
+Removed `updated_at` from the update payload in `closeWorkflow()` across all three workers. Added explicit `attempt`/`success` log lines for journalctl visibility.
+
+```js
+// FIXED
+async function closeWorkflow(workflow_id, finalStatus = "completed") {
+  if (!workflow_id) return;
+  console.log("[shadow] closeWorkflow attempt:", workflow_id, finalStatus);
+  try {
+    const { error } = await supabase.from("workflows").update({ status: finalStatus }).eq("workflow_id", workflow_id);
+    if (error) console.warn("[shadow] closeWorkflow failed:", error.message);
+    else console.log("[shadow] closeWorkflow success:", workflow_id, finalStatus);
+  } catch (e) {
+    console.warn("[shadow] closeWorkflow exception:", e.message);
+  }
+}
+```
+
+### Exit paths covered per worker
+
+**Scanner (`scanner/x-scanner-worker.mjs`)**
+
+| Exit path | Status |
+|-----------|--------|
+| Normal completion | `logWorkflowEvent` → `closeWorkflow("completed")` |
+| Fatal error | `closeWorkflow("failed")` via `_activeWorkflowId` |
+| Cap-skip / interval-skip | Exits before `createWorkflow()` — no workflow created |
+
+**Selector (`selector/x-selector-worker.mjs`)**
+
+| Exit path | Status |
+|-----------|--------|
+| Cap-skip | `logWorkflowEvent` → `closeWorkflow("completed")` |
+| No-candidates | `logWorkflowEvent` + `closeWorkflow("completed")` |
+| Normal completion | `logWorkflowEvent` → `closeWorkflow("completed")` |
+| Fatal error | `closeWorkflow("failed")` via `_activeWorkflowId` |
+
+**Copydesk (`copydesk/copydesk-worker.mjs`)**
+
+| Exit path | Status |
+|-----------|--------|
+| Daily-cap-skip | `logWorkflowEvent` + `closeWorkflow("completed")` |
+| No-jobs | `logWorkflowEvent` → `closeWorkflow("completed")` |
+| Post-loop completion | `logWorkflowEvent` + `closeWorkflow("completed")` |
+| Fatal error | `closeWorkflow("failed")` via `_activeWorkflowId` |
+
+---
 
 ## Deployment
 
-Changes synced to VPS paths:
-- `/opt/agentcrush/scanner/x-scanner-worker.mjs`
-- `/opt/agentcrush/selector/x-selector-worker.mjs`
-- `/opt/agentcrush/copydesk/copydesk-worker.mjs`
+- VPS files patched directly: `/opt/agentcrush/{scanner,selector,copydesk}/*.mjs`
+- Mirrored back to repo: `runtime/{scanner,selector,copydesk}/*.mjs`
+- Committed: `9ec92b1`
+- No service restart needed — workers are oneshot timers, pick up changes on next execution
 
-Workers are timer-triggered oneshot units — no restart required. Changes take effect on next scheduled run.
+---
 
-## Expected After-State
+## Post-Fix Evidence (2026-04-07, live runs)
 
-All new workflow rows created after this fix will transition from `in_progress` → `completed` (or `"failed"` on fatal errors). The 127 existing stuck rows are historical and will not be retroactively updated.
+Workers triggered manually immediately after fix:
 
-Mission Control can now trust that `in_progress` means a worker is actively running (not a stale ghost from a previous run).
+```
+wf_1775595140558_s3c1v  (selector)
+  workflow.status: completed
+  event: role=selector status=done task_type=analysis
+  journalctl: "[shadow] closeWorkflow success: wf_1775595140558_s3c1v completed"
+
+wf_1775595146512_ygyin  (copydesk)
+  workflow.status: completed
+  event: role=copydesk status=done task_type=publish
+  journalctl: "[shadow] closeWorkflow success: wf_1775595146512_ygyin completed"
+```
+
+Scanner could not produce a fresh completed row — X API daily cap was exhausted (`$1.902 / $1.90`). It will close correctly on next reset.
+
+**Overall status distribution after fix:**
+```
+completed:   16  (+3 from fix run)
+in_progress: 128  (historical — will not be retroactively updated)
+```
+
+The 128 existing stuck rows are historical artifacts. Going forward, `in_progress` means a worker is actively running.
