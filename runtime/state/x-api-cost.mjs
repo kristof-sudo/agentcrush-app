@@ -13,7 +13,8 @@ import fs from "node:fs";
 
 const COST_FILE = "/opt/agentcrush/state/x_api_cost.json";
 const COST_PER_CALL_USD = 0.0077;
-const BUFFER_CAP_USD = 1.90;  // stop new calls here
+const SCANNER_CAP_USD = 1.40; // scanner stops here — reserves $0.50 for output
+const BUFFER_CAP_USD = 1.90;  // total safety net (all workers)
 const HARD_CAP_USD = 2.00;    // accounting ceiling
 
 function todayUTC() {
@@ -37,6 +38,33 @@ function save(state) {
   } catch (err) {
     console.error("x-api-cost: write failed", err.message);
   }
+}
+
+/**
+ * Scanner-specific sub-cap check.
+ * Scanner must stop here so the remaining $0.50 stays available for output workers.
+ * Returns { allowed, callsToday, estimatedUsd, reason? }
+ */
+export function checkScannerCap() {
+  const s = load();
+  if (s.paused || s.estimated_usd >= SCANNER_CAP_USD) {
+    return { allowed: false, callsToday: s.calls_today, estimatedUsd: s.estimated_usd, reason: `scanner_cap_$${SCANNER_CAP_USD}` };
+  }
+  return { allowed: true, callsToday: s.calls_today, estimatedUsd: s.estimated_usd };
+}
+
+/** Returns a budget split summary for status / daily summary display. */
+export function getCapSummary() {
+  const s = load();
+  return {
+    scanner_spend_usd:    +s.estimated_usd.toFixed(4),
+    scanner_cap_usd:      SCANNER_CAP_USD,
+    scanner_remaining_usd: +Math.max(0, SCANNER_CAP_USD - s.estimated_usd).toFixed(4),
+    output_reserved_usd:  +(BUFFER_CAP_USD - SCANNER_CAP_USD).toFixed(2),
+    total_cap_usd:        BUFFER_CAP_USD,
+    calls_today:          s.calls_today,
+    scanner_paused:       s.estimated_usd >= SCANNER_CAP_USD || !!s.paused,
+  };
 }
 
 /** Returns { allowed, callsToday, estimatedUsd, reason? } */
