@@ -40,10 +40,11 @@ async function logWorkflowEvent(event) {
 
 async function closeWorkflow(workflow_id, finalStatus = "completed") {
   if (!workflow_id) return;
+  console.log("[shadow] closeWorkflow attempt:", workflow_id, finalStatus);
   try {
-    const { error } = await supabase.from("workflows").update({ status: finalStatus, updated_at: new Date().toISOString() }).eq("workflow_id", workflow_id);
+    const { error } = await supabase.from("workflows").update({ status: finalStatus }).eq("workflow_id", workflow_id);
     if (error) console.warn("[shadow] closeWorkflow failed:", error.message);
-    else console.log("[shadow] workflow closed:", workflow_id, finalStatus);
+    else console.log("[shadow] closeWorkflow success:", workflow_id, finalStatus);
   } catch (e) {
     console.warn("[shadow] closeWorkflow exception:", e.message);
   }
