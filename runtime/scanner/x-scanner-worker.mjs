@@ -44,6 +44,19 @@ async function logWorkflowEvent(event) {
   }
 }
 
+async function closeWorkflow(workflow_id, finalStatus = "completed") {
+  if (!workflow_id) return;
+  try {
+    const { error } = await supabase.from("workflows").update({ status: finalStatus, updated_at: new Date().toISOString() }).eq("workflow_id", workflow_id);
+    if (error) console.warn("[shadow] closeWorkflow failed:", error.message);
+    else console.log("[shadow] workflow closed:", workflow_id, finalStatus);
+  } catch (e) {
+    console.warn("[shadow] closeWorkflow exception:", e.message);
+  }
+}
+
+let _activeWorkflowId = null;
+
 const X_API = "https://api.twitter.com/2";
 const USER_CACHE_PATH = "/opt/agentcrush/scanner/watchlist-user-cache.json";
 const ROTATION_STATE_PATH = "/opt/agentcrush/state/scanner_rotation.json";
@@ -571,6 +584,7 @@ async function main() {
   saveRotation(rotation);
 
   const workflow_id = "wf_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  _activeWorkflowId = workflow_id;
   console.log(`scanner workflow_id=${workflow_id}`);
   await createWorkflow(workflow_id);
 
@@ -625,6 +639,7 @@ async function main() {
     output: { tweets_stored: stats.tweets_stored, replies_stored: stats.replies_stored, insert_errors: stats.insert_errors },
     status: "done",
   });
+  await closeWorkflow(workflow_id, "completed");
 
   const finalCap = checkScannerCap();
   try {
@@ -651,6 +666,7 @@ async function main() {
 
 main().catch(async (err) => {
   console.error("scanner fatal", err);
+  await closeWorkflow(_activeWorkflowId, "failed");
   try {
     await supabase.from("runs").insert([{
       runner: "x_scanner",
