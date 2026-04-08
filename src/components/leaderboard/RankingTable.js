@@ -3,7 +3,7 @@ import {
   getAgentArchetype,
   getAgentDisplayName,
 } from '@/lib/agent-quality'
-import { getSignalTag } from '@/lib/why-moving'
+import { getSignalTag, getRowExplanation } from '@/lib/why-moving'
 import ScoreTooltip from '@/components/ui/ScoreTooltip'
 
 // Deterministic avatar color from handle
@@ -71,6 +71,7 @@ export default function RankingTable({ rows = [] }) {
               const archetype = getAgentArchetype(r)
               const delta = r.weekly_delta || 0
               const tag = getSignalTag(r.trending?.latest_event_type)
+              const explanation = getRowExplanation(delta, r.trending?.latest_event_type)
 
               return (
                 <tr key={r.id || r.agent_id || r.handle}
@@ -123,9 +124,9 @@ export default function RankingTable({ rows = [] }) {
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-white/30">@{r.handle}</span>
-                          {r.rank_move_reason ? (
+                          {explanation ? (
                             <span className={`text-[10px] truncate max-w-[220px] ${delta > 0 ? 'text-emerald-400/80' : delta < 0 ? 'text-red-400/75' : 'text-white/35'}`}>
-                              {r.rank_move_reason}
+                              {explanation}
                             </span>
                           ) : null}
                         </div>
@@ -194,6 +195,7 @@ export default function RankingTable({ rows = [] }) {
           const displayName = getAgentDisplayName(r)
           const delta = r.weekly_delta || 0
           const tag = getSignalTag(r.trending?.latest_event_type)
+          const explanation = getRowExplanation(delta, r.trending?.latest_event_type)
 
           return (
             <Link key={r.id || r.agent_id || r.handle}
@@ -222,9 +224,9 @@ export default function RankingTable({ rows = [] }) {
                     </span>
                   ) : null}
                 </div>
-                {r.rank_move_reason ? (
+                {explanation ? (
                   <div className={`text-[10px] mt-0.5 ${delta > 0 ? 'text-emerald-400/80' : delta < 0 ? 'text-red-400/75' : 'text-white/35'}`}>
-                    {r.rank_move_reason}
+                    {explanation}
                   </div>
                 ) : null}
               </div>

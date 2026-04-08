@@ -119,6 +119,49 @@ export function getMovementReason(weeklyDelta, eventType) {
   return null
 }
 
+// Directional phrases for ranking row explanations
+const WHY_MOVED_PHRASE = {
+  repo_star_growth:      'Repo growth',
+  audience_spike:        'Mentions spike',
+  launch_buzz:           'New launch buzz',
+  ranking_jump:          'Ranking jump',
+  repo_release:          'New release',
+  timeline_ping:         'Ecosystem mentions',
+  ecosystem_integration: 'New integration',
+  collab_win:            'Collaboration signal',
+  dev_activity:          'Active development',
+  canon_scene:           'Milestone event',
+}
+
+// Fallback phrases when no event signal is available
+const DELTA_FALLBACK = {
+  strong_up:   'Strong upward move',
+  up:          'Gaining ground',
+  strong_down: 'Notable drop',
+  down:        'Momentum slipping',
+}
+
+/**
+ * Short directional explanation for ranking rows.
+ * Format: "↑ Repo growth", "↓ Momentum slipping", or null.
+ * Used in RankingTable per-row display.
+ */
+export function getRowExplanation(weeklyDelta, eventType) {
+  const delta = Number(weeklyDelta || 0)
+  const phrase = eventType ? (WHY_MOVED_PHRASE[eventType] ?? null) : null
+
+  if (delta > 0 && phrase) return `↑ ${phrase}`
+  if (delta < 0 && phrase) return `↓ ${phrase}`
+  if (delta === 0 && phrase) return phrase
+
+  // Fallback: direction only
+  if (delta > 5) return `↑ ${DELTA_FALLBACK.strong_up}`
+  if (delta > 0) return `↑ ${DELTA_FALLBACK.up}`
+  if (delta < -5) return `↓ ${DELTA_FALLBACK.strong_down}`
+  if (delta < 0) return `↓ ${DELTA_FALLBACK.down}`
+  return null
+}
+
 /**
  * Positive / rising event types — for trend direction calculations
  */
