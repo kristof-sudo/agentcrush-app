@@ -2,7 +2,7 @@ import SearchableRankings from '@/components/rankings/SearchableRankings'
 import HowCalculatedBar from '@/components/rankings/HowCalculatedBar'
 import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
-import { getMovementReason } from '@/lib/why-moving'
+import { getMovementReason, formatRelativeTime } from '@/lib/why-moving'
 
 const AVATAR_COLORS = [
   'bg-violet-500/25 text-violet-300', 'bg-emerald-500/25 text-emerald-300',
@@ -75,6 +75,7 @@ export default async function RankingsPage({ searchParams }) {
   const [
     { data: rankingsData, error: rankingsError },
     { count: totalAgentsCount },
+    { data: latestRanking },
   ] = await Promise.all([
     supabase
       .from('rankings')
@@ -90,6 +91,12 @@ export default async function RankingsPage({ searchParams }) {
     supabase
       .from('agents')
       .select('id', { count: 'exact', head: true }),
+    supabase
+      .from('rankings')
+      .select('computed_at')
+      .order('computed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   if (rankingsError) throw new Error(rankingsError.message)
@@ -145,6 +152,9 @@ export default async function RankingsPage({ searchParams }) {
           {scoredRows.length} ranked · {totalAgentsCount ?? rows.length} indexed ·{' '}
           <span className="text-emerald-400">{risingCount} rising</span> ·{' '}
           <span className="text-violet-400">{trendingCount} trending</span>
+          {latestRanking?.computed_at ? (
+            <> · <span className="text-white/30">updated {formatRelativeTime(latestRanking.computed_at)}</span></>
+          ) : null}
         </p>
       </div>
 

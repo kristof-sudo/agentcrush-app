@@ -72,6 +72,7 @@ export default function RankingTable({ rows = [] }) {
               const delta = r.weekly_delta || 0
               const tag = getSignalTag(r.trending?.latest_event_type)
               const explanation = getRowExplanation(delta, r.trending?.latest_event_type)
+              const isHot = (delta >= 3 && !!tag) || delta >= 7
 
               return (
                 <tr key={r.id || r.agent_id || r.handle}
@@ -108,6 +109,9 @@ export default function RankingTable({ rows = [] }) {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs font-semibold text-white truncate max-w-[160px]">{displayName}</span>
+                          {isHot && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 opacity-90" title="Moving fast this week" />
+                          )}
                           {r.verified && (
                             <span className="text-[9px] px-1 py-0.5 rounded border border-sky-500/30 bg-sky-500/10 text-sky-300 leading-none shrink-0">✓</span>
                           )}
@@ -196,6 +200,7 @@ export default function RankingTable({ rows = [] }) {
           const delta = r.weekly_delta || 0
           const tag = getSignalTag(r.trending?.latest_event_type)
           const explanation = getRowExplanation(delta, r.trending?.latest_event_type)
+          const isHot = (delta >= 3 && !!tag) || delta >= 7
 
           return (
             <Link key={r.id || r.agent_id || r.handle}
@@ -215,6 +220,9 @@ export default function RankingTable({ rows = [] }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-semibold text-white truncate">{displayName}</span>
+                  {isHot && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 opacity-90" title="Moving fast this week" />
+                  )}
                   {r.verified && (
                     <span className="text-[9px] px-1 py-0.5 rounded border border-sky-500/30 bg-sky-500/10 text-sky-300 leading-none shrink-0">✓</span>
                   )}
