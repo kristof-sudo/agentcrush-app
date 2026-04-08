@@ -562,6 +562,7 @@ function detectSignals(post) {
       (signals.real_world_event && !isTooShort(post.text_content))
     );
 
+  const authorHandleNorm = String(post.author_handle || "").toLowerCase().replace(/^@/, "");
   signals.reply_worthy =
     !signals.meme_or_spam &&
     !looksSpammy(text) &&
@@ -571,7 +572,9 @@ function detectSignals(post) {
       // Stage 6: someone mentions Mike
       signals.mentions_mike ||
       // Stage 6: disagreement on an agent topic
-      (signals.is_disagreement && signals.agent_specific)
+      (signals.is_disagreement && signals.agent_specific) ||
+      // Proactive: Tier 1 watchlist accounts posting agent-related content
+      (WATCHLIST_PRIORITY.has(authorHandleNorm) && signals.agent_specific && !signals.roundup_worthy)
     );
 
   return signals;
@@ -1109,9 +1112,9 @@ async function main() {
         continue;
       }
 
-      // 1. REPLY — only from reply_incoming events (author has already engaged us)
+      // 1. REPLY — from reply_incoming events, or proactively for Tier 1 watchlist accounts
       if (
-        post.candidate_source === "reply_incoming" &&
+        (post.candidate_source === "reply_incoming" || WATCHLIST_PRIORITY.has(postHandle)) &&
         signals.reply_worthy &&
         replyCountLast24Hours < DAILY_CAPS.reply
       ) {

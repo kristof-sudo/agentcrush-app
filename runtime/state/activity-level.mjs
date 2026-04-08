@@ -12,29 +12,29 @@ import fs from "node:fs";
 
 const ACTIVITY_FILE = "/opt/agentcrush/state/daily_activity.json";
 
-// Target action mix (early-stage account — X blocks outbound replies/quotes until engagement history exists):
-//   repost_comment: 1–3/day  |  reply from incoming: 0–2/day  |  original posts: max 1/day
-// Priority order: reply (incoming only) → repost_comment → roundup → like
-// Original-post cap is enforced separately in canon-enqueuer (hard limit: 1/day).
-// x_reply only when reply_incoming event (author has already engaged us).
+// Target action mix (engagement-first bootstrap strategy):
+//   reply: 8–10/day (proactive to Tier 1 watchlist + reply_incoming)
+//   repost_comment: 4–5/day  |  like: 25–30/day (free, builds graph)
+//   original posts: max 2–3/day (casual, question-asking, not analytical)
+// Priority order: reply → repost_comment → roundup → like
 // x_quote: blocked — X rejects quotes from accounts without conversation history.
 const LEVEL_DEFS = {
   HIGH: {
-    caps: { reply: 3, repost_comment: 3, roundup_candidate: 3 },
+    caps: { reply: 10, repost_comment: 5, roundup_candidate: 3 },
     scanner_interval_min: 60,
   },
   // Weekend NORMAL — full interaction allocation
   NORMAL: {
-    caps: { reply: 2, repost_comment: 2, roundup_candidate: 3 },
+    caps: { reply: 8, repost_comment: 5, roundup_candidate: 3 },
     scanner_interval_min: 60,
   },
   // Weekday NORMAL — targets lower end of range to stay within $2/day cap
   NORMAL_WEEKDAY: {
-    caps: { reply: 2, repost_comment: 2, roundup_candidate: 2 },
+    caps: { reply: 8, repost_comment: 4, roundup_candidate: 2 },
     scanner_interval_min: 120,
   },
   QUIET: {
-    caps: { reply: 1, repost_comment: 2, roundup_candidate: 2 },
+    caps: { reply: 5, repost_comment: 3, roundup_candidate: 2 },
     scanner_interval_min: 90,
   },
 };
