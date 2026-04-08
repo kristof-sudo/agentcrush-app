@@ -10,6 +10,7 @@ import {
 import WatchlistButton from '@/components/agents/WatchlistButton'
 import AgentComparePanel from '@/components/agents/AgentComparePanel'
 import AgentProfileActions from '@/components/agents/AgentProfileActions'
+import ClaimProfileButton from '@/components/agents/ClaimProfileButton'
 import ConfidencePill from '@/components/ui/ConfidencePill'
 import { getWhyMoving } from '@/lib/why-moving'
 
@@ -465,7 +466,15 @@ export default async function AgentPage({ params }) {
       identity_status,
       verified,
       github_url,
-      website_url
+      website_url,
+      claimed_by,
+      claim_status,
+      verified_source,
+      identity_type,
+      builder_attribution,
+      framework,
+      runtime,
+      dependencies
     `)
     .ilike('handle', cleanHandle)
     .maybeSingle()
@@ -844,6 +853,32 @@ export default async function AgentPage({ params }) {
                 ) : null}
               </div>
 
+              {/* Trust state */}
+              {(agent.claim_status && agent.claim_status !== 'unclaimed') || agent.verified_source || agent.claimed_by ? (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {agent.claim_status && (
+                    <span className={`rounded border px-1.5 py-0.5 text-[10px] leading-none ${
+                      agent.claim_status === 'verified'
+                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                        : agent.claim_status === 'verification_requested'
+                        ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                        : 'border-white/10 bg-white/5 text-white/40'
+                    }`}>
+                      {agent.claim_status === 'unclaimed' && 'Unclaimed'}
+                      {agent.claim_status === 'claimed' && 'Claimed'}
+                      {agent.claim_status === 'verification_requested' && 'Verification requested'}
+                      {agent.claim_status === 'verified' && 'Verified'}
+                    </span>
+                  )}
+                  {agent.verified_source && (
+                    <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300 leading-none">Verified source</span>
+                  )}
+                  {agent.claimed_by && (
+                    <span className="text-[10px] text-white/35">Claimed by: {agent.claimed_by}</span>
+                  )}
+                </div>
+              ) : null}
+
               {ecosystemConnections.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {ecosystemConnections
@@ -866,13 +901,7 @@ export default async function AgentPage({ params }) {
               </p>
 
               {!isVerified && !isDemo && (
-                <div className="mt-2 inline-flex items-center gap-2.5 rounded border border-white/[0.07] bg-white/[0.02] px-2.5 py-1.5">
-                  <span className="text-[10px] text-white/35">Is this your agent?</span>
-                  <a href="mailto:verify@agentcrush.xyz?subject=Agent Verification Request"
-                    className="text-[10px] font-semibold text-sky-400 hover:text-sky-300 transition-colors">
-                    Get verified for $49 →
-                  </a>
-                </div>
+                <ClaimProfileButton handle={agent.handle} claimStatus={agent.claim_status} />
               )}
             </div>
           </div>
@@ -991,6 +1020,51 @@ export default async function AgentPage({ params }) {
                   </Link>
                 )
               })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* ── Identity / Stack ── */}
+        {(agent.identity_type || agent.builder_attribution || agent.framework || agent.runtime || (Array.isArray(agent.dependencies) && agent.dependencies.length > 0)) ? (
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-3">Identity / Stack</p>
+            <div className="space-y-2">
+              {agent.identity_type && (
+                <div className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 text-[10px] text-white/30">Type</span>
+                  <span className="text-xs text-white/70 capitalize">{agent.identity_type}</span>
+                </div>
+              )}
+              {agent.builder_attribution && (
+                <div className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 text-[10px] text-white/30">Builder</span>
+                  <span className="text-xs text-white/70">{agent.builder_attribution}</span>
+                </div>
+              )}
+              {agent.framework && (
+                <div className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 text-[10px] text-white/30">Framework</span>
+                  <span className="text-xs text-white/70">{agent.framework}</span>
+                </div>
+              )}
+              {agent.runtime && (
+                <div className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 text-[10px] text-white/30">Runtime</span>
+                  <span className="text-xs text-white/70">{agent.runtime}</span>
+                </div>
+              )}
+              {Array.isArray(agent.dependencies) && agent.dependencies.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <span className="w-24 shrink-0 text-[10px] text-white/30 mt-0.5">Dependencies</span>
+                  <div className="flex flex-wrap gap-1">
+                    {agent.dependencies.map((dep) => (
+                      <span key={dep} className="rounded border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-white/50 leading-none">
+                        {dep}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : null}

@@ -623,6 +623,488 @@ function WorkerActivity({ runs, loading }) {
   )
 }
 
+// ─── Scout/Judge Trigger ──────────────────────────────────────────────────
+
+function ScoutJudgeTrigger() {
+  const [running, setRunning] = useState(false)
+  const [result, setResult] = useState(null)
+
+  async function run() {
+    setRunning(true)
+    setResult(null)
+    try {
+      const r = await fetch('/api/mission-control/run-scout-judge', { method: 'POST' })
+      const d = await r.json()
+      setResult(d)
+    } catch (e) {
+      setResult({ ok: false, error: e.message })
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <span className="text-xs font-semibold text-white">Orchestration</span>
+        <span className="text-[10px] text-white/25">manual triggers</span>
+      </div>
+
+      <div className="px-3 py-3 space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={run}
+            disabled={running}
+            className="px-3 py-1.5 rounded border border-violet-500/40 bg-violet-500/10 text-xs font-semibold text-violet-300 hover:bg-violet-500/20 disabled:opacity-40 transition-colors"
+          >
+            {running ? 'Running…' : 'Run Scout/Judge Test'}
+          </button>
+          <span className="text-[9px] text-white/25 uppercase tracking-wide">SYNTHETIC_TEST · fixed candidate pool</span>
+          {running && (
+            <span className="text-[10px] text-white/30">executing runner…</span>
+          )}
+        </div>
+
+        {result && (
+          <div className={`rounded border px-3 py-2 space-y-1 ${result.ok ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-red-500/20 bg-red-500/5'}`}>
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-bold ${result.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+                {result.ok ? '✓ Success' : '✗ Failed'}
+              </span>
+              {result.workflow_id && (
+                <span className="text-[10px] font-mono text-white/50">{result.workflow_id}</span>
+              )}
+            </div>
+            {!result.ok && result.error && (
+              <p className="text-[10px] text-red-400/80 break-all">{result.error}</p>
+            )}
+            {result.ok && result.stdout && (
+              <pre className="text-[9px] text-white/30 whitespace-pre-wrap break-all max-h-32 overflow-y-auto leading-relaxed">
+                {result.stdout}
+              </pre>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Workflow Traces ──────────────────────────────────────────────────────
+
+const STATUS_STYLE = {
+  completed:        'text-emerald-400',
+  approved:         'text-emerald-400',
+  in_progress:      'text-sky-400',
+  review_required:  'text-amber-400',
+  created:          'text-white/50',
+  rejected:         'text-red-400',
+  failed:           'text-red-400',
+}
+
+function statusStyle(s) {
+  return STATUS_STYLE[s] || 'text-white/40'
+}
+
+const DATA_REALITY_STYLE = {
+  REAL_RUNTIME:      'border-sky-500/30 text-sky-400/80',
+  REAL_PRODUCT_STATE:'border-emerald-500/30 text-emerald-400/80',
+  SYNTHETIC_TEST:    'border-white/15 text-white/30',
+  MIXED:             'border-amber-500/30 text-amber-400/80',
+  UNKNOWN:           'border-white/10 text-white/20',
+}
+
+function DataRealityBadge({ reality }) {
+  if (!reality) return null
+  const style = DATA_REALITY_STYLE[reality] || DATA_REALITY_STYLE.UNKNOWN
+  const label = reality === 'REAL_RUNTIME' ? 'runtime' : reality === 'REAL_PRODUCT_STATE' ? 'product' : reality === 'SYNTHETIC_TEST' ? 'synthetic' : reality === 'MIXED' ? 'mixed' : '?'
+  return (
+    <span className={`shrink-0 rounded border px-1 py-0.5 text-[9px] font-bold tracking-wide uppercase ${style}`}>
+      {label}
+    </span>
+  )
+}
+
+function WorkflowTraces() {
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(() => {
+    fetch('/api/mission-control/workflow-traces')
+      .then(async (r) => {
+        const d = await r.json()
+        if (!r.ok) throw new Error(d.error || 'Failed')
+        setData(d)
+      })
+      .catch((e) => setError(e.message))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const workflows = data?.workflows || []
+  const eventsByWorkflow = (data?.events || []).reduce((acc, ev) => {
+    if (!acc[ev.workflow_id]) acc[ev.workflow_id] = []
+    acc[ev.workflow_id].push(ev)
+    return acc
+  }, {})
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <span className="text-xs font-semibold text-white">Workflow Traces</span>
+        <button onClick={load} className="text-[10px] text-white/30 hover:text-white/60 transition-colors">
+          ↻ Refresh
+        </button>
+      </div>
+
+      {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
+      {!data && !error && <div className="px-3 py-4 text-xs text-white/30">Loading…</div>}
+
+      {data && workflows.length === 0 && (
+        <div className="px-3 py-4 text-xs text-white/30">No workflow traces yet.</div>
+      )}
+
+      {data && workflows.length > 0 && (
+        <div className="divide-y divide-white/[0.04]">
+          {workflows.map((wf) => {
+            const events = eventsByWorkflow[wf.workflow_id] || []
+            return (
+              <div key={wf.workflow_id} className="px-3 py-2.5 space-y-1.5">
+                {/* Workflow row */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DataRealityBadge reality={wf.data_reality} />
+                  <span className="text-[11px] font-mono text-white/70 truncate">{wf.workflow_id}</span>
+                  <span className={`text-[10px] font-semibold shrink-0 ${statusStyle(wf.status)}`}>{wf.status}</span>
+                  <span className="text-[10px] text-white/25 ml-auto shrink-0">{timeAgo(wf.created_at)}</span>
+                </div>
+
+                {/* Status note: runtime ran but VPS did not update workflow status */}
+                {wf.events_all_done && wf.data_reality === 'REAL_RUNTIME' && (
+                  <div className="ml-0 text-[9px] text-amber-400/50 leading-tight">
+                    runtime events done · workflow status not updated by VPS
+                  </div>
+                )}
+
+                {/* Events */}
+                {events.length > 0 && (
+                  <div className="ml-3 space-y-1 border-l border-white/[0.06] pl-3">
+                    {events.map((ev, i) => (
+                      <div key={i} className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono text-white/35">{ev.trace_id}</span>
+                        <span className="text-[10px] text-white/50">{ev.role}</span>
+                        <span className="text-[10px] text-white/35">{ev.task_type}</span>
+                        <span className={`text-[10px] font-medium ${statusStyle(ev.status)}`}>{ev.status}</span>
+                        <span className="text-[10px] text-white/20 ml-auto shrink-0">{timeAgo(ev.created_at)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Reviews & Outcomes ───────────────────────────────────────────────────
+
+function ReviewsAndOutcomes() {
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(() => {
+    fetch('/api/mission-control/reviews-outcomes')
+      .then(async (r) => {
+        const d = await r.json()
+        if (!r.ok) throw new Error(d.error || 'Failed')
+        setData(d)
+      })
+      .catch((e) => setError(e.message))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const reviews = data?.reviews || []
+  const outcomes = data?.outcomes || []
+  const allSynthetic = data?.all_synthetic ?? false
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <span className="text-xs font-semibold text-white">Reviews &amp; Outcomes</span>
+        <button onClick={load} className="text-[10px] text-white/30 hover:text-white/60 transition-colors">
+          ↻ Refresh
+        </button>
+      </div>
+
+      {/* Panel-level data reality warning */}
+      {data && allSynthetic && (
+        <div className="px-3 py-1.5 border-b border-white/[0.06] bg-white/[0.01]">
+          <span className="text-[9px] text-white/30 uppercase tracking-wide">All entries are </span>
+          <span className="text-[9px] font-bold text-white/40 uppercase tracking-wide">SYNTHETIC_TEST</span>
+          <span className="text-[9px] text-white/30"> — validation runs and gate tests only. No real build reviews exist yet.</span>
+        </div>
+      )}
+
+      {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
+      {!data && !error && <div className="px-3 py-4 text-xs text-white/30">Loading…</div>}
+
+      {data && (
+        <>
+          {/* Reviews */}
+          <div className="border-b border-white/[0.06]">
+            <div className="px-3 py-1.5 border-b border-white/[0.04]">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-white/40">Reviews</span>
+            </div>
+            {reviews.length === 0 ? (
+              <div className="px-3 py-3 text-xs text-white/30">No reviews yet.</div>
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {reviews.map((r) => (
+                  <div key={r.review_id} className="flex items-center gap-2 px-3 py-2 flex-wrap">
+                    <DataRealityBadge reality={r.data_reality} />
+                    <span className={`text-[10px] font-bold shrink-0 ${r.review_status === 'approved' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {r.review_status === 'approved' ? '✓' : '✗'} {r.review_status}
+                    </span>
+                    <span className="text-[10px] font-mono text-white/40 truncate">{r.workflow_id}</span>
+                    <span className="text-[10px] font-mono text-white/30 shrink-0">{r.trace_id}</span>
+                    <span className="text-[10px] text-white/25 shrink-0">{r.reviewer_role}</span>
+                    <span className="text-[10px] text-white/20 ml-auto shrink-0">{timeAgo(r.created_at)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Outcomes */}
+          <div>
+            <div className="px-3 py-1.5 border-b border-white/[0.04]">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-white/40">Outcomes</span>
+            </div>
+            {outcomes.length === 0 ? (
+              <div className="px-3 py-3 text-xs text-white/30">No outcomes yet.</div>
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {outcomes.map((o, i) => (
+                  <div key={i} className="px-3 py-2 space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <DataRealityBadge reality={o.data_reality} />
+                      <span className="text-[10px] font-mono text-white/40 truncate">{o.workflow_id}</span>
+                      <span className="text-[10px] text-white/20 ml-auto shrink-0">{timeAgo(o.created_at)}</span>
+                    </div>
+                    <div className="text-[10px] text-white/50 font-mono break-all">
+                      {JSON.stringify(o.outcome)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Exception Queue ──────────────────────────────────────────────────────
+
+function ExceptionQueue() {
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(() => {
+    fetch('/api/mission-control/exception-queue')
+      .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Failed'); setData(d) })
+      .catch((e) => setError(e.message))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const items = data?.items || []
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-white">Exception Queue</span>
+          {data && items.length > 0 && (
+            <span className="rounded border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-bold text-red-400 leading-none">
+              {items.length}
+            </span>
+          )}
+        </div>
+        <button onClick={load} className="text-[10px] text-white/30 hover:text-white/60 transition-colors">↻ Refresh</button>
+      </div>
+
+      {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
+      {!data && !error && <div className="px-3 py-4 text-xs text-white/30">Loading…</div>}
+      {data && items.length === 0 && (
+        <div className="px-3 py-3 flex items-center gap-2">
+          <span className="text-xs text-emerald-400/70">No exceptions ✓</span>
+          <span className="text-[9px] text-white/20 uppercase tracking-wide ml-auto">REAL_PRODUCT_STATE</span>
+        </div>
+      )}
+
+      {data && items.length > 0 && (
+        <div className="divide-y divide-white/[0.04]">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2 flex-wrap border-l-2 border-red-500/30">
+              <span className="text-[10px] rounded border border-white/10 bg-white/5 px-1 py-0.5 text-white/40 leading-none shrink-0">
+                {item.type}
+              </span>
+              <span className="text-[10px] font-mono text-white/55 truncate">{item.workflow_id}</span>
+              {item.trace_id && (
+                <span className="text-[10px] font-mono text-white/30 shrink-0">{item.trace_id}</span>
+              )}
+              <span className="text-[10px] font-bold text-red-400 shrink-0">{item.status}</span>
+              <span className="text-[10px] text-white/20 ml-auto shrink-0">{timeAgo(item.created_at)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Approvals Visibility ─────────────────────────────────────────────────
+
+const APPROVAL_STATUS_STYLE = {
+  pending:  'text-amber-400',
+  approved: 'text-emerald-400',
+  merged:   'text-emerald-400',
+  shipped:  'text-emerald-400',
+  failed:   'text-red-400',
+  rejected: 'text-red-400',
+}
+
+function BuildApprovals() {
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(() => {
+    fetch('/api/mission-control/build-approvals')
+      .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Failed'); setData(d) })
+      .catch((e) => setError(e.message))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const approvals = data?.approvals || []
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <span className="text-xs font-semibold text-white">Build Approvals</span>
+        <button onClick={load} className="text-[10px] text-white/30 hover:text-white/60 transition-colors">↻ Refresh</button>
+      </div>
+
+      {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
+      {!data && !error && <div className="px-3 py-4 text-xs text-white/30">Loading…</div>}
+      {data && approvals.length === 0 && <div className="px-3 py-3 text-xs text-white/30">No build approvals yet.</div>}
+      {data && approvals.length > 0 && (
+        <div className="px-3 py-1.5 border-b border-white/[0.04] bg-white/[0.01]">
+          <span className="text-[9px] text-white/25">REAL_PRODUCT_STATE · last activity {approvals[0] ? timeAgo(approvals[0].created_at) : '—'} — no new approvals since Phase 4 deploy</span>
+        </div>
+      )}
+
+      {data && approvals.length > 0 && (
+        <div className="divide-y divide-white/[0.04]">
+          {approvals.map((row) => {
+            const workflowId = `wf_ba_${row.id}`
+            const style = APPROVAL_STATUS_STYLE[row.status] || 'text-white/40'
+            return (
+              <div key={row.id} className="px-3 py-2 space-y-0.5">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className={`text-[10px] font-bold shrink-0 ${style}`}>{row.status}</span>
+                  <span className="text-[10px] text-white/50 truncate">{row.repo}{row.branch ? ` · ${row.branch}` : ''}</span>
+                  <span className="text-[10px] text-white/20 ml-auto shrink-0">{timeAgo(row.created_at)}</span>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-[10px] font-mono text-white/25">{workflowId}</span>
+                  {row.commit_sha && (
+                    <span className="text-[10px] font-mono text-white/20">{row.commit_sha.slice(0, 7)}</span>
+                  )}
+                  {row.approved_by && (
+                    <span className="text-[10px] text-white/30">by {row.approved_by}</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Claim Requests ───────────────────────────────────────────────────────
+
+function ClaimRequests() {
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(() => {
+    fetch('/api/mission-control/claim-requests')
+      .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Failed'); setData(d) })
+      .catch((e) => setError(e.message))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const requests = data?.requests || []
+  const pending = requests.filter((r) => r.status === 'pending')
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-white">Claim Requests</span>
+          {data && pending.length > 0 && (
+            <span className="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 leading-none">
+              {pending.length} pending
+            </span>
+          )}
+        </div>
+        <button onClick={load} className="text-[10px] text-white/30 hover:text-white/60 transition-colors">↻ Refresh</button>
+      </div>
+
+      {data?.migration_pending && (
+        <div className="px-3 py-2 border-b border-white/[0.04]">
+          <span className="text-[10px] text-amber-400/60">Migration pending — apply 20260408_1000_claim_requests.sql to activate</span>
+        </div>
+      )}
+
+      {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
+      {!data && !error && <div className="px-3 py-4 text-xs text-white/30">Loading…</div>}
+      {data && requests.length === 0 && !data.migration_pending && (
+        <div className="px-3 py-3 text-xs text-white/30">No claim requests yet.</div>
+      )}
+
+      {data && requests.length > 0 && (
+        <div className="divide-y divide-white/[0.04]">
+          {requests.map((req) => (
+            <div key={req.id} className="px-3 py-2 space-y-0.5">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className={`text-[10px] font-bold shrink-0 ${req.status === 'pending' ? 'text-amber-400' : req.status === 'approved' ? 'text-emerald-400' : 'text-white/30'}`}>
+                  {req.status}
+                </span>
+                <span className="text-[10px] font-mono text-white/60">{req.agent_handle}</span>
+                <span className="text-[10px] text-white/50 truncate">{req.contact}</span>
+                <span className="text-[10px] text-white/20 ml-auto shrink-0">{timeAgo(req.created_at)}</span>
+              </div>
+              {req.note && (
+                <div className="text-[10px] text-white/35 pl-0 truncate">{req.note}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────
 
 export default function MissionControl() {
@@ -674,6 +1156,24 @@ export default function MissionControl() {
 
       {/* Section 6 — Worker activity */}
       <WorkerActivity runs={runs} loading={runsLoading} />
+
+      {/* Section 7 — Orchestration trigger */}
+      <ScoutJudgeTrigger />
+
+      {/* Section 8 — Workflow traces */}
+      <WorkflowTraces />
+
+      {/* Section 9 — Reviews & Outcomes */}
+      <ReviewsAndOutcomes />
+
+      {/* Section 10 — Exception Queue */}
+      <ExceptionQueue />
+
+      {/* Section 11 — Build Approvals */}
+      <BuildApprovals />
+
+      {/* Section 12 — Claim Requests */}
+      <ClaimRequests />
     </div>
   )
 }

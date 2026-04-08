@@ -71,6 +71,43 @@ export async function POST(req) {
       );
     }
 
+    // Phase 4: open workflow record at review_required
+    const workflowId = `wf_ba_${data.id}`
+    const traceId = `tr_${workflowId}_01`
+
+    const { error: wfInsertErr } = await supabase
+      .from('workflows')
+      .insert({ workflow_id: workflowId, status: 'review_required' })
+    if (wfInsertErr) {
+      console.error('[workflow] workflows insert failed:', wfInsertErr.message)
+      return NextResponse.json(
+        { ok: false, error: `Workflow record creation failed: ${wfInsertErr.message}` },
+        { status: 500 }
+      )
+    }
+
+    const { error: wfEventErr } = await supabase
+      .from('workflow_events')
+      .insert({
+        workflow_id: workflowId,
+        trace_id: traceId,
+        role: 'product_executor',
+        task_type: 'code_change',
+        input: {
+          build_approval_id: data.id,
+          commit_sha: data.commit_sha ?? null,
+          request_text: data.request_text ?? null,
+        },
+        status: 'review_required',
+      })
+    if (wfEventErr) {
+      console.error('[workflow] workflow_events insert failed:', wfEventErr.message)
+      return NextResponse.json(
+        { ok: false, error: `Workflow event creation failed: ${wfEventErr.message}` },
+        { status: 500 }
+      )
+    }
+
     let telegram_sent = false;
     let telegram_error = null;
 
@@ -85,6 +122,7 @@ export async function POST(req) {
       ok: true,
       id: data.id,
       status: data.status,
+      workflow_id: workflowId,
       telegram_sent,
       telegram_error,
     });

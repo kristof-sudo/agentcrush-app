@@ -8,6 +8,20 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-04-08
+- `20260408_1000_claim_requests.sql` — Create `claim_requests` table for builder profile claim
+  flow. Stores: agent_handle, agent_id, contact (email/X handle), note, status (pending →
+  approved/rejected/duplicate), created_at. Indexed on agent_handle and (status, created_at).
+  Powers the "Claim this profile" button on agent pages and the Claim Requests panel in
+  Mission Control. **STATUS: Written, requires manual apply via Supabase dashboard.**
+
+### 2026-04-07
+- `20260407_1600_add_platform_identity_type.sql` — Expand `agents.identity_type` check
+  constraint to include `platform`. Discovered during Phase 9 identity/composition validation
+  when enriching 20 agents: 7 failed with constraint violation because ecosystem platforms
+  (AgentOps, Virtuals Protocol, Fetch.ai, AI Arena, Superagent) don't fit the existing 5-value
+  enum. **STATUS: Written, requires manual apply via Supabase dashboard.**
+
 ### 2026-03-30
 - `20260330_1000_github_raw_agents.sql` — Create `github_raw_agents` table for GitHub ingestion
   pipeline. Stores raw repo data (repo_id, name, owner, description, stars, language, repo_url,

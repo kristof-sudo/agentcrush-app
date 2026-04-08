@@ -82,6 +82,41 @@ export async function POST(request) {
       )
     }
 
+    // Phase 4: hard gate — require an approved workflow_review for the exact step
+    // trace_id is deterministic: same formula used in create and approve routes
+    const workflowId = `wf_ba_${id}`
+    const traceId = `tr_${workflowId}_01`
+
+    const { data: reviews, error: reviewErr } = await supabase
+      .from('workflow_reviews')
+      .select('review_id, review_status')
+      .eq('workflow_id', workflowId)
+      .eq('trace_id', traceId)
+      .eq('review_status', 'approved')
+
+    // Fail closed on any error or ambiguity
+    if (reviewErr) {
+      console.error('[workflow] review gate query failed:', reviewErr.message)
+      return Response.json(
+        { error: 'Review gate query failed. Deploy blocked.' },
+        { status: 500 }
+      )
+    }
+    if (!reviews || reviews.length === 0) {
+      return Response.json(
+        { error: 'No approved review for this step. Deploy blocked.' },
+        { status: 400 }
+      )
+    }
+    if (reviews.length > 1) {
+      console.error('[workflow] ambiguous review state: multiple approved reviews for', workflowId, traceId)
+      return Response.json(
+        { error: 'Ambiguous review state. Deploy blocked.' },
+        { status: 400 }
+      )
+    }
+    // reviews[0] is the single approved review — event linkage is guaranteed by FK in schema
+
 if (!row?.repo) {
   return Response.json(
     { error: 'Build approval is missing repo' },
@@ -119,6 +154,16 @@ if (!row?.pr_number) {
     .single()
 
   if (error) throw error
+
+  // Phase 4: mark workflow completed
+  try {
+    await supabase
+      .from('workflows')
+      .update({ status: 'completed' })
+      .eq('workflow_id', workflowId)
+  } catch (wfErr) {
+    console.error('[workflow] complete failed:', wfErr?.message ?? wfErr)
+  }
 
   return Response.json(data)
 }

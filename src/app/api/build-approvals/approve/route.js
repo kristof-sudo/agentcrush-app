@@ -33,6 +33,38 @@ export async function POST(request) {
 
     if (error) throw error
 
+    // Phase 4: record review decision and advance workflow
+    const workflowId = `wf_ba_${id}`
+    const traceId = `tr_${workflowId}_01`
+
+    const { error: wfReviewErr } = await supabase.from('workflow_reviews').insert({
+      review_id: `rv_${traceId}`,
+      workflow_id: workflowId,
+      trace_id: traceId,
+      reviewer_role: 'reviewer',
+      review_status: 'approved',
+      review_notes: approved_by ? `Approved by ${approved_by}` : 'Approved',
+    })
+    if (wfReviewErr) {
+      console.error('[workflow] workflow_reviews insert failed:', wfReviewErr.message)
+      return Response.json(
+        { error: `Workflow review creation failed: ${wfReviewErr.message}` },
+        { status: 500 }
+      )
+    }
+
+    const { error: wfStatusErr } = await supabase
+      .from('workflows')
+      .update({ status: 'approved' })
+      .eq('workflow_id', workflowId)
+    if (wfStatusErr) {
+      console.error('[workflow] workflows status update failed:', wfStatusErr.message)
+      return Response.json(
+        { error: `Workflow status update failed: ${wfStatusErr.message}` },
+        { status: 500 }
+      )
+    }
+
     return Response.json(data)
   } catch (err) {
     return Response.json(
