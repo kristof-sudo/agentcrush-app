@@ -1152,6 +1152,122 @@ function ClaimRequests() {
   )
 }
 
+// ─── Competitor Intelligence ───────────────────────────────────────────────
+
+const REC_STYLE = {
+  copy:    'border-amber-500/30 bg-amber-500/10 text-amber-300',
+  explore: 'border-sky-500/30 bg-sky-500/10 text-sky-300',
+  watch:   'border-violet-500/30 bg-violet-500/10 text-violet-300',
+  ignore:  'border-white/10 bg-white/[0.02] text-white/25',
+}
+
+function CompetitorIntel() {
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(() => {
+    fetch('/api/mission-control/competitor-scans')
+      .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Failed'); setData(d) })
+      .catch((e) => setError(e.message))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const watchlist = data?.watchlist || []
+  const latest = data?.latest_by_competitor || {}
+  const recentScans = (data?.scans || []).slice(0, 8)
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+        <span className="text-xs font-semibold text-white">Competitor Intelligence</span>
+        <button onClick={load} className="text-[10px] text-white/30 hover:text-white/60 transition-colors">↻ Refresh</button>
+      </div>
+
+      {data?.migration_pending && (
+        <div className="px-3 py-2 border-b border-white/[0.04]">
+          <span className="text-[10px] text-amber-400/60">Migration pending — apply 20260408_1500_competitor_scans.sql, then run: <code className="font-mono">node tools/competitor-scan.mjs</code></span>
+        </div>
+      )}
+
+      {error && <div className="px-3 py-3 text-xs text-red-400">{error}</div>}
+      {!data && !error && <div className="px-3 py-4 text-xs text-white/30">Loading…</div>}
+
+      {data && (
+        <>
+          {/* Watchlist status */}
+          <div className="px-3 py-2 border-b border-white/[0.05]">
+            <div className="text-[9px] uppercase tracking-widest text-white/25 mb-1.5">Watchlist</div>
+            <div className="space-y-1">
+              {watchlist.map((c) => {
+                const scan = latest[c.name]
+                return (
+                  <div key={c.name} className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-mono text-white/50 shrink-0">{c.name}</span>
+                    {scan ? (
+                      <>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-semibold leading-none shrink-0 ${REC_STYLE[scan.recommendation] || REC_STYLE.watch}`}>
+                          {scan.recommendation}
+                        </span>
+                        <span className="text-[9px] text-white/20 ml-auto shrink-0">{timeAgo(scan.created_at)}</span>
+                      </>
+                    ) : (
+                      <span className="text-[9px] text-white/20 ml-auto">not scanned</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Recent scans */}
+          {recentScans.length > 0 ? (
+            <div className="divide-y divide-white/[0.04]">
+              {recentScans.map((scan) => (
+                <div key={scan.id} className="px-3 py-2 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-mono text-white/60 shrink-0">{scan.competitor}</span>
+                    {scan.recommendation && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded border font-semibold leading-none shrink-0 ${REC_STYLE[scan.recommendation] || REC_STYLE.watch}`}>
+                        {scan.recommendation}
+                      </span>
+                    )}
+                    <span className="text-[9px] text-white/20 ml-auto shrink-0">{scan.scan_date}</span>
+                  </div>
+                  {scan.changes?.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {scan.changes.slice(0, 4).map((c, i) => (
+                        <span key={i} className="text-[9px] rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 text-white/40">{c}</span>
+                      ))}
+                      {scan.changes.length > 4 && (
+                        <span className="text-[9px] text-white/20">+{scan.changes.length - 4} more</span>
+                      )}
+                    </div>
+                  )}
+                  {scan.signals?.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {scan.signals.map((s, i) => (
+                        <span key={i} className="text-[9px] rounded border border-violet-500/20 bg-violet-500/[0.06] px-1.5 py-0.5 text-violet-400/70">{s}</span>
+                      ))}
+                    </div>
+                  )}
+                  {scan.notes && (
+                    <div className="text-[9px] text-white/30 truncate">{scan.notes}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : !data.migration_pending ? (
+            <div className="px-3 py-3 text-[10px] text-white/25">
+              No scans yet. Run: <code className="font-mono text-white/40">node tools/competitor-scan.mjs</code>
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────
 
 export default function MissionControl() {
@@ -1221,6 +1337,9 @@ export default function MissionControl() {
 
       {/* Section 12 — Claim Requests */}
       <ClaimRequests />
+
+      {/* Section 13 — Competitor Intelligence */}
+      <CompetitorIntel />
     </div>
   )
 }
