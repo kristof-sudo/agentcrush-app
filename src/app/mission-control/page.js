@@ -1044,6 +1044,7 @@ function BuildApprovals() {
 function ClaimRequests() {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
+  const [acting, setActing] = useState({}) // id → 'approving' | 'rejecting'
 
   const load = useCallback(() => {
     fetch('/api/mission-control/claim-requests')
@@ -1052,6 +1053,34 @@ function ClaimRequests() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  async function act(id, action) {
+    setActing((prev) => ({ ...prev, [id]: action }))
+    try {
+      const res = await fetch(`/api/claim-requests/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        alert(d.error || `${action} failed`)
+        setActing((prev) => ({ ...prev, [id]: null }))
+      } else {
+        // Optimistically update row status
+        setData((prev) => ({
+          ...prev,
+          requests: prev.requests.map((r) =>
+            r.id === id ? { ...r, status: action === 'approve' ? 'approved' : 'rejected' } : r
+          ),
+        }))
+        setActing((prev) => ({ ...prev, [id]: null }))
+      }
+    } catch {
+      alert('Network error')
+      setActing((prev) => ({ ...prev, [id]: null }))
+    }
+  }
 
   const requests = data?.requests || []
   const pending = requests.filter((r) => r.status === 'pending')
@@ -1085,7 +1114,7 @@ function ClaimRequests() {
       {data && requests.length > 0 && (
         <div className="divide-y divide-white/[0.04]">
           {requests.map((req) => (
-            <div key={req.id} className="px-3 py-2 space-y-0.5">
+            <div key={req.id} className="px-3 py-2 space-y-1">
               <div className="flex items-center gap-3 flex-wrap">
                 <span className={`text-[10px] font-bold shrink-0 ${req.status === 'pending' ? 'text-amber-400' : req.status === 'approved' ? 'text-emerald-400' : 'text-white/30'}`}>
                   {req.status}
@@ -1095,7 +1124,25 @@ function ClaimRequests() {
                 <span className="text-[10px] text-white/20 ml-auto shrink-0">{timeAgo(req.created_at)}</span>
               </div>
               {req.note && (
-                <div className="text-[10px] text-white/35 pl-0 truncate">{req.note}</div>
+                <div className="text-[10px] text-white/35 truncate">{req.note}</div>
+              )}
+              {req.status === 'pending' && (
+                <div className="flex items-center gap-2 pt-0.5">
+                  <button
+                    disabled={!!acting[req.id]}
+                    onClick={() => act(req.id, 'approve')}
+                    className="px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-[10px] font-semibold text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-40 transition-colors"
+                  >
+                    {acting[req.id] === 'approve' ? 'Approving…' : 'Approve'}
+                  </button>
+                  <button
+                    disabled={!!acting[req.id]}
+                    onClick={() => act(req.id, 'reject')}
+                    className="px-2 py-0.5 rounded border border-red-500/20 bg-red-500/5 text-[10px] font-semibold text-red-400/70 hover:bg-red-500/15 disabled:opacity-40 transition-colors"
+                  >
+                    {acting[req.id] === 'reject' ? 'Rejecting…' : 'Reject'}
+                  </button>
+                </div>
               )}
             </div>
           ))}
