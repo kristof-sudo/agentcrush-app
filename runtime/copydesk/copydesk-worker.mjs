@@ -1427,14 +1427,17 @@ if (obj.type === "x_post" || obj.type === "x_reply" || obj.type === "x_quote" ||
         updated_at: new Date().toISOString(),
       });
 
-      // Update topic memory after successful generation
-      if (jobSucceeded && job.job_type === "x_post" && x_text) {
+      // Update topic memory after successful generation.
+      // Only genuine original x_posts (not repost_comments) update topic keywords —
+      // repost_comments were poisoning the 48h dedup by continuously refreshing
+      // last_posted_at for "orchestration"/"rag" clusters, permanently blocking originals.
+      if (jobSucceeded && job.job_type === "x_post" && !isRepostComment && x_text) {
         const keywords = extractTopicKeywords(x_text, job.context);
         const authorHandle = safeString(job.context?.target_author || job.context?.agent_a?.handle);
         const firstWord = x_text.trim().split(/\s+/)[0] || null;
         const isNative = job.context?.source === "agentcrush_native";
         updateRecentTopics(keywords, authorHandle, job.job_type, firstWord, isNative);
-      } else if (jobSucceeded && (job.job_type === "x_quote" || job.job_type === "x_reply" || isRepostComment) && x_text) {
+      } else if (jobSucceeded && (isRepostComment || job.job_type === "x_quote" || job.job_type === "x_reply") && x_text) {
         const authorHandle = safeString(job.context?.target_author);
         updateRecentTopics([], authorHandle, isRepostComment ? "x_repost_comment" : job.job_type, null, false);
       }
