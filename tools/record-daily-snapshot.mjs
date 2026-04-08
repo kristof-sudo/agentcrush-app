@@ -1,0 +1,135 @@
+/**
+ * record-daily-snapshot.mjs — daily historical truth recorder.
+ *
+ * Reads all active agents + their current rankings and writes one snapshot
+ * row per agent to agent_snapshots for today's date.
+ *
+ * Idempotent: skips any agent that already has a snapshot for today.
+ * Append-only: never modifies existing rows.
+ * No external API calls: reads only from existing Supabase state.
+ *
+ * Usage:
+ *   node tools/record-daily-snapshot.mjs
+ *
+ * Scheduling (VPS cron, run once daily at 02:00 UTC):
+ *   0 2 * * * cd /opt/agentcrush && node tools/record-daily-snapshot.mjs >> /var/log/agentcrush/snapshots.log 2>&1
+ *
+ * Requires: agent_snapshots table (apply supabase/migrations/20260408_1600_agent_snapshots.sql)
+ */
+
+import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_URL = 'https://hwkvkfjnffxrfirhkitj.supabase.co'
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3a3ZrZmpuZmZ4cmZpcmhraXRqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjQzNDYyNywiZXhwIjoyMDg4MDEwNjI3fQ.G2TrTNZcYltQyln8U03_TKF4_Cs072nKit-20zqj2Ck'
+
+const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+const TODAY = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+
+console.log(`[snapshot] date=${TODAY}`)
+
+// ── 1. Load all agents ─────────────────────────────────────────────────────
+
+const { data: agents, error: agentsErr } = await db
+  .from('agents')
+  .select('id, visibility_score, reputation_score, weekly_delta, claim_status, identity_type, github_stars, github_forks, follower_count')
+  .order('id', { ascending: true })
+
+if (agentsErr) {
+  console.error('[snapshot] Failed to load agents:', agentsErr.message)
+  process.exit(1)
+}
+
+console.log(`[snapshot] agents loaded: ${agents.length}`)
+
+// ── 2. Load latest ranking per agent ──────────────────────────────────────
+
+// Pull all rankings and keep the highest-ranked (lowest global_rank) per agent.
+// This avoids a per-agent query loop.
+const { data: rankings, error: rankingsErr } = await db
+  .from('rankings')
+  .select('agent_id, global_rank, score_total, score_visibility, score_reputation')
+  .order('global_rank', { ascending: true })
+
+if (rankingsErr) {
+  console.error('[snapshot] Failed to load rankings:', rankingsErr.message)
+  process.exit(1)
+}
+
+const rankByAgent = {}
+for (const r of (rankings || [])) {
+  // First occurrence = best rank (already sorted ascending)
+  if (!rankByAgent[r.agent_id]) rankByAgent[r.agent_id] = r
+}
+
+console.log(`[snapshot] rankings loaded: ${rankings.length} rows, ${Object.keys(rankByAgent).length} agents ranked`)
+
+// ── 3. Check which agents already have a snapshot today ───────────────────
+
+const { data: existing, error: existingErr } = await db
+  .from('agent_snapshots')
+  .select('agent_id')
+  .eq('snapshot_date', TODAY)
+
+if (existingErr) {
+  console.error('[snapshot] Failed to check existing snapshots:', existingErr.message)
+  process.exit(1)
+}
+
+const alreadySnapshotted = new Set((existing || []).map((r) => r.agent_id))
+console.log(`[snapshot] already snapshotted today: ${alreadySnapshotted.size}`)
+
+// ── 4. Build snapshot rows ─────────────────────────────────────────────────
+
+const rows = []
+
+for (const agent of agents) {
+  if (alreadySnapshotted.has(agent.id)) continue
+
+  const ranking = rankByAgent[agent.id] || null
+
+  rows.push({
+    agent_id:      agent.id,
+    snapshot_date: TODAY,
+
+    score:         ranking?.score_total      ?? null,
+    rank:          ranking?.global_rank      ?? null,
+    visibility:    ranking?.score_visibility ?? agent.visibility_score ?? null,
+    reputation:    ranking?.score_reputation ?? agent.reputation_score ?? null,
+    weekly_delta:  agent.weekly_delta        ?? null,
+
+    github_stars:  agent.github_stars        ?? null,
+    github_forks:  agent.github_forks        ?? null,
+    follower_count: agent.follower_count     ?? null,
+
+    claim_status:  agent.claim_status        ?? null,
+    identity_type: agent.identity_type       ?? null,
+  })
+}
+
+if (rows.length === 0) {
+  console.log('[snapshot] nothing to write — all agents already snapshotted today')
+  process.exit(0)
+}
+
+// ── 5. Insert in batches of 100 ───────────────────────────────────────────
+
+const BATCH = 100
+let written = 0
+
+for (let i = 0; i < rows.length; i += BATCH) {
+  const batch = rows.slice(i, i + BATCH)
+  const { error: insertErr } = await db
+    .from('agent_snapshots')
+    .insert(batch)
+
+  if (insertErr) {
+    console.error(`[snapshot] Insert error (batch ${i / BATCH + 1}):`, insertErr.message)
+    process.exit(1)
+  }
+
+  written += batch.length
+  console.log(`[snapshot] wrote ${written}/${rows.length}`)
+}
+
+console.log(`[snapshot] done. ${written} snapshots written for ${TODAY}`)
