@@ -617,12 +617,38 @@ export default async function AgentPage({ params }) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
 
+  // Check for pending claim request (to show "Claim requested" state)
+  let hasPendingClaim = false
+  try {
+    const serviceDb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+    const { count } = await serviceDb
+      .from('claim_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('agent_handle', agent.handle)
+      .eq('status', 'pending')
+    hasPendingClaim = (count || 0) > 0
+  } catch {
+    // claim_requests table may not be migrated yet — safe to ignore
+  }
+
   const displayName = getAgentDisplayName(agent)
   const archetype = getAgentArchetype(agent)
   const bioText = getAgentShortDescription(agent)
   const useCases = buildUseCases(agent, bioText)
   const isDemo = isDemoAgent(agent)
-  const isVerified = !isDemo && (agent.verified === true || agent.identity_status === 'verified')
+  const isVerified = !isDemo && (agent.verified === true || agent.identity_status === 'verified' || agent.claim_status === 'verified')
+
+  // Trust state: single source of truth for the trust badge row
+  const trustState = isVerified
+    ? 'verified'
+    : agent.claim_status === 'claimed'
+    ? 'claimed'
+    : hasPendingClaim
+    ? 'claim_requested'
+    : 'unclaimed'
 
     const categoryItems = (categoryLinks || [])
     .map((row) => ({
@@ -853,31 +879,27 @@ export default async function AgentPage({ params }) {
                 ) : null}
               </div>
 
-              {/* Trust state */}
-              {(agent.claim_status && agent.claim_status !== 'unclaimed') || agent.verified_source || agent.claimed_by ? (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  {agent.claim_status && (
-                    <span className={`rounded border px-1.5 py-0.5 text-[10px] leading-none ${
-                      agent.claim_status === 'verified'
-                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                        : agent.claim_status === 'verification_requested'
-                        ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
-                        : 'border-white/10 bg-white/5 text-white/40'
-                    }`}>
-                      {agent.claim_status === 'unclaimed' && 'Unclaimed'}
-                      {agent.claim_status === 'claimed' && 'Claimed'}
-                      {agent.claim_status === 'verification_requested' && 'Verification requested'}
-                      {agent.claim_status === 'verified' && 'Verified'}
-                    </span>
-                  )}
-                  {agent.verified_source && (
-                    <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300 leading-none">Verified source</span>
-                  )}
-                  {agent.claimed_by && (
-                    <span className="text-[10px] text-white/35">Claimed by: {agent.claimed_by}</span>
-                  )}
-                </div>
-              ) : null}
+              {/* Trust state — always visible */}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {trustState === 'verified' && (
+                  <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 leading-none">✓ Verified</span>
+                )}
+                {trustState === 'claimed' && (
+                  <span className="rounded border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300 leading-none">Claimed</span>
+                )}
+                {trustState === 'claim_requested' && (
+                  <span className="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300 leading-none">Claim requested</span>
+                )}
+                {trustState === 'unclaimed' && (
+                  <span className="rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-white/30 leading-none">Unclaimed</span>
+                )}
+                {agent.verified_source && (
+                  <span className="rounded border border-emerald-500/20 bg-emerald-500/[0.06] px-1.5 py-0.5 text-[10px] text-emerald-400/70 leading-none">Verified source</span>
+                )}
+                {agent.claimed_by && trustState !== 'unclaimed' && trustState !== 'claim_requested' && (
+                  <span className="text-[10px] text-white/35">by {agent.claimed_by}</span>
+                )}
+              </div>
 
               {ecosystemConnections.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -900,7 +922,7 @@ export default async function AgentPage({ params }) {
                 {bioText}
               </p>
 
-              {!isVerified && !isDemo && (
+              {!isVerified && !isDemo && trustState === 'unclaimed' && (
                 <ClaimProfileButton handle={agent.handle} claimStatus={agent.claim_status} />
               )}
             </div>
