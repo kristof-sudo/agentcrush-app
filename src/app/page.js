@@ -1,6 +1,5 @@
 import Container from '@/components/ui/Container'
 import AgentCard from '@/components/agents/AgentCard'
-import HomepageDigestForm from '@/components/home/HomepageDigestForm'
 import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
 import { getSignalTag, getEventIcon, getMovementReason, formatRelativeTime } from '@/lib/why-moving'
@@ -736,11 +735,30 @@ export default async function Home() {
 
             <section className="pb-4">
               <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-4">
-                <h2 className="text-sm font-semibold text-white">Get the weekly AgentCrush digest</h2>
+                <h2 className="text-sm font-semibold text-white">Follow the ecosystem</h2>
                 <p className="mt-1 max-w-2xl text-sm text-white/40">
-                  Follow the biggest rank changes, new entrants, and ecosystem movement in one weekly note.
+                  Mike posts ecosystem signals, rank moves, and agent intel weekly. Follow to stay current.
                 </p>
-                <HomepageDigestForm />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <a
+                    href="https://x.com/MikeMatshAI"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex items-center gap-1.5 rounded border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs text-white/70 hover:bg-white/[0.08] hover:text-white transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+                    Mike on X
+                  </a>
+                  <a
+                    href="https://warpcast.com/agentcrush"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex items-center gap-1.5 rounded border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs text-white/70 hover:bg-white/[0.08] hover:text-white transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2C6.25 2 2 6.25 2 11.5S6.25 21 11.5 21 21 16.75 21 11.5 16.75 2 11.5 2zm-1 13.5v-8l6 4-6 4z"/></svg>
+                    AgentCrush on Farcaster
+                  </a>
+                </div>
               </div>
             </section>
           </Container>
