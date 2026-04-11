@@ -12,7 +12,7 @@ import AgentComparePanel from '@/components/agents/AgentComparePanel'
 import AgentProfileActions from '@/components/agents/AgentProfileActions'
 import ClaimProfileButton from '@/components/agents/ClaimProfileButton'
 import ConfidencePill from '@/components/ui/ConfidencePill'
-import { getWhyMoving } from '@/lib/why-moving'
+import { getWhyMoving, getArchetypeStyle } from '@/lib/why-moving'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -862,7 +862,7 @@ export default async function AgentPage({ params }) {
 
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {archetype ? (
-                  <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/45 leading-none">{archetype}</span>
+                  <span className={`rounded border px-2 py-0.5 text-[10px] leading-none ${getArchetypeStyle(archetype)}`}>{archetype}</span>
                 ) : null}
                 <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35 leading-none">{formatLayerLabel(agent.ecosystem_layer)}</span>
                 {agent.framework_name ? (

@@ -160,9 +160,12 @@ export default async function RankingsPage({ searchParams }) {
 
       {/* This Week's Story */}
       {weeklyStory && (
-        <div className="mb-4 rounded-lg border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3">
-          <div className="text-[9px] font-semibold uppercase tracking-widest text-violet-400/70 mb-1.5">This Week&apos;s Story</div>
-          <p className="text-sm text-white/70 leading-relaxed">{weeklyStory}</p>
+        <div className="mb-4 rounded-lg border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3 pl-4" style={{borderLeft: '2px solid rgba(236,72,153,0.4)'}}>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-pink-500/70 shrink-0" />
+            <div className="text-[9px] font-semibold uppercase tracking-widest text-violet-400/70">This Week&apos;s Story</div>
+          </div>
+          <p className="text-base text-white/90 leading-relaxed">{weeklyStory}</p>
         </div>
       )}
 

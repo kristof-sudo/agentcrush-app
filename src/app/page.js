@@ -3,7 +3,6 @@ import AgentCard from '@/components/agents/AgentCard'
 import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
 import { getSignalTag, getEventIcon, getMovementReason, formatRelativeTime } from '@/lib/why-moving'
-import TwitterTimeline from '@/components/home/TwitterTimeline'
 
 // Deterministic color from handle string
 const AVATAR_COLORS = [
@@ -297,6 +296,14 @@ export default async function Home() {
   // Content engine: always-populated mixed feed
   const ecosystemFeedRows = buildContentFeed(deduped, recentAgents || [], 30)
 
+  // Mike's latest posts
+  const { data: mikePosts } = await supabase
+    .from('mike_posts')
+    .select('id, content, published_at, tweet_url')
+    .order('published_at', { ascending: false })
+    .limit(8)
+    .catch(() => ({ data: [] }))
+
   // Archetype counts for sectors bar
   const archetypeCounts = {}
   for (const r of (archetypeRows || [])) {
@@ -305,15 +312,41 @@ export default async function Home() {
   const topSectors = Object.entries(archetypeCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
 
   return (
-    <div className="min-h-screen bg-[#08080f] overflow-x-hidden">
+    <div className="min-h-screen bg-[#08080f] overflow-x-hidden" style={{backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '24px 24px'}}>
       <div className="fixed inset-0 bg-gradient-to-b from-[#0c0c1a] via-[#08080f] to-[#0a0812] pointer-events-none" />
+      <div className="fixed inset-0 pointer-events-none" style={{background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(236,72,153,0.05) 0%, transparent 60%)'}} />
 
       <div className="relative">
 
         {/* Market summary bar */}
         <div className="border-b border-white/[0.06] bg-white/[0.01]">
+          {/* Mobile: scrolling ticker */}
+          <div className="sm:hidden overflow-hidden py-1.5">
+            <div className="flex whitespace-nowrap" style={{animation: 'ticker-scroll 28s linear infinite', width: 'max-content'}}>
+              {[0, 1].map((i) => (
+                <div key={i} className="flex items-center gap-4 px-4 shrink-0">
+                  <span className="text-[11px] text-white/50">● <span className="text-white font-bold tabular-nums">{agentCount ?? 0}</span> <span className="text-white/30">Agents</span></span>
+                  <span className="text-white/15">·</span>
+                  <span className="text-[11px] text-white/50">⚡ <span className="text-white font-bold tabular-nums">{signalsToday}</span> <span className="text-white/30">Signals</span></span>
+                  {topMover ? (
+                    <>
+                      <span className="text-white/15">·</span>
+                      <span className="text-[11px] text-white/50">🔥 <span className="text-white/30">Top Mover:</span> <span className="text-emerald-400 font-semibold">{topMover.display_name || topMover.handle} +{topMover.weekly_delta}</span></span>
+                    </>
+                  ) : null}
+                  {newestAgent ? (
+                    <>
+                      <span className="text-white/15">·</span>
+                      <span className="text-[11px] text-white/50">✦ <span className="text-white/30">Just Added:</span> <span className="text-white/70">{newestAgent.display_name || newestAgent.handle}</span></span>
+                    </>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Desktop: static flex row */}
           <Container>
-            <div className="flex items-center justify-between py-1.5">
+            <div className="hidden sm:flex items-center justify-between py-1.5">
               <div className="flex items-center gap-5 overflow-x-auto">
                 <div className="flex items-center gap-1.5 shrink-0">
                   <Tip label="Total AI agents currently indexed on AgentCrush">
@@ -357,7 +390,10 @@ export default async function Home() {
                 ) : null}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="relative flex h-2 w-2 items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/40 animate-ping" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                </span>
                 <span className="text-[11px] text-white/35">Live</span>
               </div>
             </div>
@@ -555,15 +591,66 @@ export default async function Home() {
               {/* ── COL 3 (3): Ecosystem Live + Stats + Submit ── */}
               <div className="col-span-12 lg:col-span-3 flex flex-col gap-2">
 
-                {/* Ecosystem Live — Mike's X feed */}
+                {/* Mike's Latest — native post feed */}
                 <div className="flex-1 flex flex-col rounded-lg border border-white/[0.06] bg-white/[0.02] min-h-[200px] overflow-hidden">
                   <div className="flex items-center gap-1.5 border-b border-white/[0.06] px-3 py-2 shrink-0">
-                    <span className="text-xs">🧭</span>
-                    <span className="text-xs font-semibold text-white">Ecosystem Live</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-auto" />
+                    <svg className="w-3 h-3 text-white/60 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/>
+                    </svg>
+                    <span className="text-xs font-semibold text-white">Mike&apos;s Latest</span>
+                    <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer noopener"
+                      className="ml-auto text-[10px] text-white/25 hover:text-white/50 transition-colors">
+                      @MikeMatshAI
+                    </a>
                   </div>
-                  <div className="flex-1 min-h-0 overflow-y-auto">
-                    <TwitterTimeline />
+                  <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2">
+                    {(mikePosts && mikePosts.length > 0) ? mikePosts.map((post) => (
+                      <div key={post.id} className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-6 w-6 rounded-full bg-violet-500/30 flex items-center justify-center shrink-0">
+                            <span className="text-[10px] font-bold text-violet-300">M</span>
+                          </div>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className="text-[11px] font-semibold text-white/80">Mike</span>
+                            <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer noopener"
+                              className="text-[10px] text-white/30 hover:text-white/50 transition-colors">
+                              @MikeMatshAI
+                            </a>
+                          </div>
+                          <span className="ml-auto text-[10px] text-white/25 shrink-0 tabular-nums">
+                            {formatRelativeTime(post.published_at)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-white/80 leading-relaxed break-words">
+                          {post.content.length > 280 ? post.content.slice(0, 277) + '…' : post.content}
+                        </p>
+                        {post.tweet_url ? (
+                          <a href={post.tweet_url} target="_blank" rel="noreferrer noopener"
+                            className="mt-2 inline-flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors">
+                            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/>
+                            </svg>
+                            View on X
+                          </a>
+                        ) : null}
+                      </div>
+                    )) : (
+                      <div className="flex flex-col items-center justify-center h-full py-8 px-3 text-center">
+                        <div className="h-8 w-8 rounded-full bg-violet-500/20 flex items-center justify-center mb-3">
+                          <span className="text-sm font-bold text-violet-300">M</span>
+                        </div>
+                        <p className="text-[11px] text-white/40 leading-relaxed mb-3">
+                          Mike posts daily insights about the AI agent ecosystem. Follow to stay current.
+                        </p>
+                        <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer noopener"
+                          className="inline-flex items-center gap-1.5 rounded border border-white/[0.12] bg-white/[0.04] px-3 py-1.5 text-[11px] text-white/60 hover:bg-white/[0.08] hover:text-white/80 transition-colors">
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/>
+                          </svg>
+                          Follow @MikeMatshAI
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
 

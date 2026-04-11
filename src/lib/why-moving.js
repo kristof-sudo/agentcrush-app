@@ -86,6 +86,26 @@ export function getEventIcon(eventType) {
   return EVENT_ICONS[eventType] ?? '·'
 }
 
+// Per-archetype badge styles — single source of truth used across rankings, profiles, cards
+export const ARCHETYPE_STYLE = {
+  Operator:    'bg-violet-500/15 text-violet-300 border-violet-500/20',
+  Builder:     'bg-blue-500/15 text-blue-300 border-blue-500/20',
+  Researcher:  'bg-cyan-500/15 text-cyan-300 border-cyan-500/20',
+  Trader:      'bg-emerald-500/15 text-emerald-300 border-emerald-500/20',
+  Framework:   'bg-orange-500/15 text-orange-300 border-orange-500/20',
+  Ecosystem:   'bg-pink-500/15 text-pink-300 border-pink-500/20',
+  Explorer:    'bg-yellow-500/15 text-yellow-300 border-yellow-500/20',
+  Developer:   'bg-sky-500/15 text-sky-300 border-sky-500/20',
+  Rebel:       'bg-rose-500/15 text-rose-300 border-rose-500/20',
+  Infra:       'bg-slate-500/15 text-slate-300 border-slate-500/20',
+  Creator:     'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/20',
+}
+
+/** Returns Tailwind classes for an archetype badge, with a neutral fallback */
+export function getArchetypeStyle(archetype) {
+  return ARCHETYPE_STYLE[archetype] ?? 'bg-white/[0.05] text-white/30 border-white/[0.08]'
+}
+
 /**
  * Compact "why moving" string shown on cards, rows, banners.
  * Returns null if no signal exists.
