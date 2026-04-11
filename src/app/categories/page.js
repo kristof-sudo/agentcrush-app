@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
 import { isDemoAgent } from '@/lib/agent-quality'
-import { getSignalTag } from '@/lib/why-moving'
+import TrendingCard from '@/components/categories/TrendingCard'
+import CategoryCard from '@/components/categories/CategoryCard'
 
 function toPublicImageUrl(path) {
   if (!path) return null
@@ -11,35 +11,30 @@ function toPublicImageUrl(path) {
   return `${base}/storage/v1/object/public/${path}`
 }
 
-const AVATAR_COLORS = [
-  'bg-violet-500/25 text-violet-300', 'bg-emerald-500/25 text-emerald-300',
-  'bg-sky-500/25 text-sky-300', 'bg-amber-500/25 text-amber-300',
-  'bg-pink-500/25 text-pink-300', 'bg-cyan-500/25 text-cyan-300',
-]
-function avatarColor(handle) {
-  if (!handle) return AVATAR_COLORS[0]
-  let h = 0
-  for (let i = 0; i < handle.length; i++) h = (h * 31 + handle.charCodeAt(i)) & 0xffff
-  return AVATAR_COLORS[h % AVATAR_COLORS.length]
+// ── Category visual styles — matches RankingTable.js CATEGORY_STYLES ─────────
+const CATEGORY_STYLE = {
+  Operator:   { color: '#a78bfa', glowColor: 'rgba(167,139,250,0.4)', icon: '◎' },
+  Builder:    { color: '#60a5fa', glowColor: 'rgba(96,165,250,0.4)',  icon: '⌨' },
+  Researcher: { color: '#22d3ee', glowColor: 'rgba(34,211,238,0.4)',  icon: '⌬' },
+  Trader:     { color: '#4ade80', glowColor: 'rgba(74,222,128,0.4)',  icon: '◆' },
+  Framework:  { color: '#facc15', glowColor: 'rgba(250,204,21,0.4)',  icon: '◇' },
+  Ecosystem:  { color: '#f472b6', glowColor: 'rgba(244,114,182,0.4)', icon: '❋' },
+  Explorer:   { color: '#2dd4bf', glowColor: 'rgba(45,212,191,0.4)',  icon: '◉' },
+  Crypto:     { color: '#34d399', glowColor: 'rgba(52,211,153,0.4)',  icon: '⬡' },
+  Developer:  { color: '#818cf8', glowColor: 'rgba(129,140,248,0.4)', icon: '⟨⟩' },
+  Infra:      { color: '#f87171', glowColor: 'rgba(248,113,113,0.4)', icon: '⬡' },
+  Creator:    { color: '#e879f9', glowColor: 'rgba(232,121,249,0.4)', icon: '◈' },
+  Rebel:      { color: '#fb923c', glowColor: 'rgba(251,146,60,0.4)',  icon: '✦' },
+  Finance:    { color: '#facc15', glowColor: 'rgba(250,204,21,0.4)',  icon: '↗' },
+  Socialite:  { color: '#f472b6', glowColor: 'rgba(244,114,182,0.4)', icon: '◉' },
+  Corporate:  { color: '#94a3b8', glowColor: 'rgba(148,163,184,0.4)', icon: '▦' },
+  Fitness:    { color: '#22d3ee', glowColor: 'rgba(34,211,238,0.4)',  icon: '◆' },
+  Mystic:     { color: '#818cf8', glowColor: 'rgba(129,140,248,0.4)', icon: '✧' },
 }
+const DEFAULT_STYLE = { color: '#94a3b8', glowColor: 'rgba(148,163,184,0.4)', icon: '◆' }
 
-const ARCHETYPE_META = {
-  Builder:    { icon: '⌨', color: 'text-violet-300',  bg: 'bg-violet-500/10 border-violet-500/20' },
-  Researcher: { icon: '⌬', color: 'text-sky-300',     bg: 'bg-sky-500/10 border-sky-500/20' },
-  Crypto:     { icon: '⬡', color: 'text-emerald-300', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  Finance:    { icon: '↗', color: 'text-yellow-300',  bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  Operator:   { icon: '◎', color: 'text-amber-300',   bg: 'bg-amber-500/10 border-amber-500/20' },
-  Creator:    { icon: '◈', color: 'text-pink-300',    bg: 'bg-pink-500/10 border-pink-500/20' },
-  Socialite:  { icon: '◉', color: 'text-rose-300',    bg: 'bg-rose-500/10 border-rose-500/20' },
-  Corporate:  { icon: '▦', color: 'text-slate-300',   bg: 'bg-slate-500/10 border-slate-500/20' },
-  Fitness:    { icon: '◆', color: 'text-cyan-300',    bg: 'bg-cyan-500/10 border-cyan-500/20' },
-  Rebel:      { icon: '✦', color: 'text-red-300',     bg: 'bg-red-500/10 border-red-500/20' },
-  Mystic:     { icon: '✧', color: 'text-indigo-300',  bg: 'bg-indigo-500/10 border-indigo-500/20' },
-}
-
-
-function getArchetypeMeta(archetype) {
-  return ARCHETYPE_META[archetype] || { icon: '◆', color: 'text-white/60', bg: 'bg-white/[0.05] border-white/[0.08]' }
+function getCategoryStyle(archetype) {
+  return CATEGORY_STYLE[archetype] || DEFAULT_STYLE
 }
 
 export const dynamic = 'force-dynamic'
@@ -75,7 +70,7 @@ export default async function CategoriesPage() {
     totalByArchetype[key] = (totalByArchetype[key] || 0) + 1
   }
 
-  // Fetch trending data for why-moving badges
+  // Fetch trending data for signal badges
   const allAgentIds = (rankingsData || []).map((r) => r.agent?.id).filter(Boolean)
   let trendingMap = {}
   if (allAgentIds.length > 0) {
@@ -116,169 +111,143 @@ export default async function CategoriesPage() {
     const risingCount = rankedAgents.filter((a) => a.weekly_delta > 0).length
     const trend = rankedAgents.length > 0 ? Math.round((risingCount / rankedAgents.length) * 100) : 0
     const unrankedCount = totalCount - rankedAgents.length
+    const style = getCategoryStyle(archetype)
     return {
-      archetype,
-      total: totalCount,
+      id: archetype.toLowerCase().replace(/\s+/g, '-'),
+      name: archetype,
+      icon: style.icon,
+      color: style.color,
+      glowColor: style.glowColor,
+      agentCount: totalCount,
+      indexed: totalCount,
+      risingPct: trend,
       rankedCount: rankedAgents.length,
       unrankedCount: Math.max(0, unrankedCount),
-      risingCount,
-      trend,
-      top5: rankedAgents.slice(0, 5),
+      agents: rankedAgents.slice(0, 5).map((a) => ({
+        name: a.display_name || a.handle || '?',
+        handle: a.handle || '',
+        delta: a.weekly_delta || 0,
+        avatarLetter: (a.display_name || a.handle || '?')[0].toUpperCase(),
+        avatar_url: a.avatar_url,
+        avatarBg: style.color + '30', // category color at ~19% opacity
+      })),
     }
-  }).sort((a, b) => b.total - a.total)
+  }).sort((a, b) => b.agentCount - a.agentCount)
 
-  // Trending categories = top 5 by risingCount (min 2 ranked agents)
+  // Trending = top 5 by risingCount among categories with ≥2 ranked agents
   const hotCategories = [...categories]
     .filter((c) => c.rankedCount >= 2)
-    .sort((a, b) => b.risingCount - a.risingCount || b.trend - a.trend)
+    .sort((a, b) => {
+      const aRising = archetypeMap[a.name]?.filter((x) => x.weekly_delta > 0).length || 0
+      const bRising = archetypeMap[b.name]?.filter((x) => x.weekly_delta > 0).length || 0
+      return bRising - aRising || b.risingPct - a.risingPct
+    })
     .slice(0, 5)
 
   const totalAgents = (allAgentArchetypes || []).length
-  const totalRising = categories.reduce((s, c) => s + c.risingCount, 0)
+  const totalRising = categories.reduce((s, c) => {
+    const rankedAgents = archetypeMap[c.name] || []
+    return s + rankedAgents.filter((a) => a.weekly_delta > 0).length
+  }, 0)
+
+  const divider = (
+    <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)', marginLeft: 8 }} />
+  )
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      {/* Page header */}
-      <div className="mb-6">
-        <h1 className="font-display text-2xl text-white tracking-tight">Categories</h1>
-        <p className="mt-1 text-sm text-white/45">
-          AI agent ecosystem by type · {totalAgents} agents tracked ·{' '}
-          <span className="text-emerald-400">{totalRising} gaining this week</span>{' '}
-          <span title="Agents with a positive 7-day rank change" className="text-white/30 cursor-help text-xs">ⓘ</span>
-        </p>
-      </div>
+    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
 
-      {/* Hot categories row */}
+      {/* PAGE HEADER */}
+      <header style={{ marginBottom: 32 }}>
+        <h1 style={{
+          fontFamily: 'monospace',
+          fontSize: 30,
+          fontWeight: 700,
+          letterSpacing: '-0.03em',
+          color: '#ffffff',
+          margin: '0 0 6px',
+        }}>
+          Categories
+        </h1>
+        <p style={{ fontFamily: 'monospace', fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+          AI agent ecosystem by type · {totalAgents} agents tracked ·{' '}
+          <span style={{ color: '#4ade80', textShadow: '0 0 10px rgba(74,222,128,0.7)' }}>
+            {totalRising} gaining this week
+          </span>{' '}
+          <span title="Agents with a positive 7-day rank change" style={{ color: 'rgba(255,255,255,0.3)', cursor: 'help', fontSize: 12 }}>ⓘ</span>
+        </p>
+      </header>
+
+      {/* TRENDING CATEGORIES */}
       {hotCategories.length > 0 && (
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">Trending Categories</span>
-            <span className="h-px flex-1 bg-white/[0.06]" />
+        <section style={{ marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>
+              Trending Categories
+            </span>
+            {divider}
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
-            {hotCategories.map((cat) => {
-              const meta = getArchetypeMeta(cat.archetype)
-              return (
-                <Link
-                  key={cat.archetype}
-                  href={`/rankings?q=${encodeURIComponent(cat.archetype)}`}
-                  className={`rounded-lg border p-3 transition hover:brightness-110 ${meta.bg}`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-base ${meta.color}`}>{meta.icon}</span>
-                    <span className={`text-xs font-bold ${meta.color}`}>{cat.archetype}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-white/50">{cat.total} agents</span>
-                    {cat.trend > 0 ? (
-                      <span className="text-[11px] font-semibold text-emerald-400">+{cat.trend}% gaining</span>
-                    ) : null}
-                  </div>
-                </Link>
-              )
-            })}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            {hotCategories.map((cat, idx) => (
+              <TrendingCard key={cat.id} category={cat} isActive={idx === 0} />
+            ))}
           </div>
         </section>
       )}
 
-      {/* All categories — mini leaderboard cards */}
+      {/* ALL CATEGORIES GRID */}
       <section>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">All Categories</span>
-          <span className="h-px flex-1 bg-white/[0.06]" />
-          <span className="text-[11px] text-white/30">{categories.length} categories</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>
+              All Categories
+            </span>
+            {divider}
+          </div>
+          <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.25)', flexShrink: 0, marginLeft: 8 }}>
+            {categories.length} categories
+          </span>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {categories.map((cat) => {
-            const meta = getArchetypeMeta(cat.archetype)
-            return (
-              <div
-                key={cat.archetype}
-                className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden"
-              >
-                {/* Card header */}
-                <Link
-                  href={`/rankings?q=${encodeURIComponent(cat.archetype)}`}
-                  className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06] hover:bg-white/[0.025] transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm ${meta.color}`}>{meta.icon}</span>
-                    <span className="text-xs font-semibold text-white">{cat.archetype}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-white/35 tabular-nums">{cat.total} tracked</span>
-                    {cat.risingCount > 0 && (
-                      <span className="text-[10px] font-semibold text-emerald-400">
-                        · {cat.trend}% gaining momentum
-                      </span>
-                    )}
-                  </div>
-                </Link>
-
-                {/* Top 5 mini-leaderboard */}
-                <div className="divide-y divide-white/[0.04]">
-                  {cat.top5.map((agent, i) => {
-                    const displayName = agent.display_name || agent.handle || '?'
-                    const delta = agent.weekly_delta || 0
-                    return (
-                      <Link
-                        key={agent.id || agent.handle}
-                        href={`/agent/${encodeURIComponent(agent.handle)}`}
-                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.025] transition-colors group"
-                      >
-                        {/* Rank */}
-                        <span className="text-[10px] tabular-nums text-white/25 w-3 shrink-0 text-right">{i + 1}</span>
-
-                        {/* Avatar */}
-                        <div className={`h-5 w-5 shrink-0 rounded overflow-hidden flex items-center justify-center border border-white/[0.07] ${!agent.avatar_url ? avatarColor(agent.handle) : 'bg-white/[0.04]'}`}>
-                          {agent.avatar_url ? (
-                            <img src={agent.avatar_url} alt={displayName} className="h-full w-full object-cover" />
-                          ) : (
-                            <span className="text-[7px] font-bold">{(displayName)[0].toUpperCase()}</span>
-                          )}
-                        </div>
-
-                        {/* Name + why-trending tag */}
-                        <div className="flex-1 min-w-0 flex items-center gap-1">
-                          <span className="text-[11px] text-white/80 truncate">{displayName}</span>
-                          {getSignalTag(agent.latest_event_type) ? (
-                            <span className={`text-[9px] px-1 py-0.5 rounded border leading-none shrink-0 ${getSignalTag(agent.latest_event_type).cls}`}>
-                              {getSignalTag(agent.latest_event_type).label}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {/* Delta */}
-                        <span className={`text-[10px] font-semibold tabular-nums shrink-0 ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-white/20'}`}>
-                          {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '—'}
-                        </span>
-                      </Link>
-                    )
-                  })}
-                </div>
-
-                {/* Footer: see all + unranked count */}
-                <div className="border-t border-white/[0.04] flex items-center justify-between px-3 py-1.5">
-                  {cat.unrankedCount > 0 ? (
-                    <span className="text-[9px] text-white/20 tabular-nums">
-                      +{cat.unrankedCount} not yet ranked
-                    </span>
-                  ) : <span />}
-                  {cat.rankedCount > 5 && (
-                    <Link
-                      href={`/rankings?q=${encodeURIComponent(cat.archetype)}`}
-                      className="text-[10px] text-white/25 hover:text-white/50 transition-colors"
-                    >
-                      +{cat.rankedCount - 5} ranked →
-                    </Link>
-                  )}
-                </div>
-              </div>
-            )
-          })}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          {categories.map((cat) => (
+            <CategoryCard key={cat.id} category={cat} />
+          ))}
         </div>
       </section>
+
+      {/* FOOTER */}
+      <footer style={{
+        marginTop: 64,
+        paddingTop: 24,
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+      }}>
+        <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>
+          © {new Date().getFullYear()} AgentCrush
+        </span>
+        <div style={{ display: 'flex', gap: 16 }}>
+          {[
+            { label: 'Rankings', href: '/rankings' },
+            { label: 'Use Cases', href: '/use-cases' },
+            { label: 'Submit Agent', href: '/submit' },
+          ].map(({ label, href }) => (
+            <a key={label} href={href} style={{
+              fontFamily: 'monospace',
+              fontSize: 12,
+              color: 'rgba(255,255,255,0.25)',
+              textDecoration: 'none',
+              transition: 'color 0.15s',
+            }}>
+              {label}
+            </a>
+          ))}
+        </div>
+      </footer>
     </main>
   )
 }
