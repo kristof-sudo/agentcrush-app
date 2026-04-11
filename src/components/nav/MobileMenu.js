@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { href: '/use-cases', label: 'Use Cases' },
   { href: '/categories', label: 'Categories' },
   { href: '/submit', label: 'Submit' },
-  { href: '/watchlist', label: 'Watchlist' },
 ]
 
 export default function MobileMenu() {
