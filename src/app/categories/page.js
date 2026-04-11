@@ -142,8 +142,9 @@ export default async function CategoriesPage() {
       <div className="mb-6">
         <h1 className="font-display text-2xl text-white tracking-tight">Categories</h1>
         <p className="mt-1 text-sm text-white/45">
-          AI agent ecosystem by type · {totalAgents} agents indexed ·{' '}
-          <span className="text-emerald-400">{totalRising} rising</span>
+          AI agent ecosystem by type · {totalAgents} agents tracked ·{' '}
+          <span className="text-emerald-400">{totalRising} gaining this week</span>{' '}
+          <span title="Agents with a positive 7-day rank change" className="text-white/30 cursor-help text-xs">ⓘ</span>
         </p>
       </div>
 
@@ -170,7 +171,7 @@ export default async function CategoriesPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-white/50">{cat.total} agents</span>
                     {cat.trend > 0 ? (
-                      <span className="text-[11px] font-semibold text-emerald-400">+{cat.trend}%</span>
+                      <span className="text-[11px] font-semibold text-emerald-400">+{cat.trend}% gaining</span>
                     ) : null}
                   </div>
                 </Link>
@@ -206,12 +207,12 @@ export default async function CategoriesPage() {
                     <span className="text-xs font-semibold text-white">{cat.archetype}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-white/35 tabular-nums">{cat.total} tracked</span>
                     {cat.risingCount > 0 && (
                       <span className="text-[10px] font-semibold text-emerald-400">
-                        ↑ {cat.trend}% rising
+                        · {cat.trend}% gaining momentum
                       </span>
                     )}
-                    <span className="text-[10px] text-white/35 tabular-nums">{cat.total} indexed</span>
                   </div>
                 </Link>
 
