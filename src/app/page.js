@@ -297,12 +297,17 @@ export default async function Home() {
   const ecosystemFeedRows = buildContentFeed(deduped, recentAgents || [], 30)
 
   // Mike's latest posts
-  const { data: mikePosts } = await supabase
-    .from('mike_posts')
-    .select('id, content, published_at, tweet_url')
-    .order('published_at', { ascending: false })
-    .limit(8)
-    .catch(() => ({ data: [] }))
+  let mikePosts = []
+  try {
+    const { data } = await supabase
+      .from('mike_posts')
+      .select('id, content, published_at, tweet_url')
+      .order('published_at', { ascending: false })
+      .limit(8)
+    mikePosts = data ?? []
+  } catch {
+    mikePosts = []
+  }
 
   // Archetype counts for sectors bar
   const archetypeCounts = {}
