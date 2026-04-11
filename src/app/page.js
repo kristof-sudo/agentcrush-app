@@ -254,9 +254,12 @@ export default async function Home() {
       tagline: a.tagline || '',
       archetype: a.archetype || '',
       score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
+      score_visibility: row.score_visibility || 0,
+      score_reputation: row.score_reputation || 0,
       weekly_delta: a.weekly_delta || 0,
       rank_move_reason: getMovementReason(a.weekly_delta, trending?.latest_event_type),
       latest_event_type: trending?.latest_event_type || null,
+      trending: { latest_event_type: trending?.latest_event_type || null },
     }
   })
 
