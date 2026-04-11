@@ -18,7 +18,7 @@ const MOCK_INTEL = [
   {
     id: 3,
     source: 'The Information',
-    headline: 'OpenAI's agent runtime sees 10x usage spike in 30 days',
+    headline: "OpenAI's agent runtime sees 10x usage spike in 30 days",
     time: '9h ago',
   },
   {
