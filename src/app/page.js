@@ -1,6 +1,7 @@
 import Container from '@/components/ui/Container'
 import AgentCard from '@/components/agents/AgentCard'
 import SectorTabsAndTable from '@/components/home/SectorTabsAndTable'
+import AgentIntelBar from '@/components/home/AgentIntelBar'
 import { supabaseAnon } from '@/lib/supabase'
 import Link from 'next/link'
 import { getSignalTag, getEventIcon, getMovementReason, formatRelativeTime } from '@/lib/why-moving'
@@ -177,7 +178,7 @@ export default async function Home() {
 
     supabase.from('agents')
       .select('id, handle, display_name, avatar_url, custom_background_url, tagline, archetype, created_at')
-      .order('created_at', { ascending: false }).limit(8),
+      .order('created_at', { ascending: false }).limit(12),
 
     supabase.from('events')
       .select('id, agent_id, event_type, delta_visibility, metadata, created_at')
@@ -445,7 +446,12 @@ export default async function Home() {
         {/* ── MAIN CONTENT ─────────────────────────────────────────────────── */}
         <main>
           <Container>
-            <div className="py-3 grid grid-cols-12 gap-3" style={{alignItems: 'start'}}>
+            {/* Agent Intel news bar */}
+            <div className="pt-3">
+              <AgentIntelBar />
+            </div>
+
+            <div className="pb-3 grid grid-cols-12 gap-3" style={{alignItems: 'start'}}>
 
               {/* ── LEFT COL (8): Sector Tabs + RankingTable ── */}
               <div className="col-span-12 lg:col-span-8 flex flex-col gap-3">
@@ -481,7 +487,7 @@ export default async function Home() {
                       <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">All →</Link>
                     </div>
                     <div className="grid grid-cols-2 gap-1.5 p-2">
-                      {(recentAgents || []).slice(0, 8).map((a) => {
+                      {(recentAgents || []).slice(0, 12).map((a) => {
                         const avatarUrl = toPublicImageUrl(a.custom_background_url || a.avatar_url)
                         const displayName = a.display_name || a.handle || '?'
                         return (
@@ -503,6 +509,12 @@ export default async function Home() {
                           </Link>
                         )
                       })}
+                      {Array.from({ length: Math.max(0, 12 - (recentAgents || []).slice(0, 12).length) }).map((_, i) => (
+                        <Link key={`placeholder-${i}`} href="/submit"
+                          className="flex items-center justify-center gap-1 rounded border border-dashed border-white/[0.06] bg-transparent px-2 py-1.5 hover:border-white/[0.12] hover:bg-white/[0.02] transition-colors min-w-0">
+                          <span className="font-mono text-[9px] text-white/20">+ Submit an agent →</span>
+                        </Link>
+                      ))}
                     </div>
                     <div className="border-t border-white/[0.04] px-3 py-1">
                       <span className="font-mono text-[10px] text-white/20">
@@ -557,7 +569,7 @@ export default async function Home() {
               </div>
 
               {/* ── RIGHT COL (4): Signal Feed + Mike's Latest ── */}
-              <div className="col-span-12 lg:col-span-4 flex flex-col gap-3">
+              <div className="col-span-12 lg:col-span-4 flex flex-col gap-3" style={{alignSelf:'start'}}>
 
                 {/* Signal Feed */}
                 <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden flex flex-col" style={{minHeight: 280}}>

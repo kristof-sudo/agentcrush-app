@@ -43,7 +43,14 @@ export default function SectorTabsAndTable({ rows = [], sectors = [] }) {
         </div>
       )}
 
-      <RankingTable rows={filtered} />
+      <div style={{maxHeight: '600px', overflowY: 'auto'}}>
+        <RankingTable rows={filtered} />
+      </div>
+      <div className="mt-2 text-right">
+        <a href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
+          View Full Rankings →
+        </a>
+      </div>
     </div>
   )
 }
