@@ -3,4 +3,221 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* Cyberpunk color palette */
+  --color-cyber-base: #08080f;
+  --color-cyber-surface: #0d0d16;
+  --color-cyber-surface-elevated: #12121c;
+  --color-cyber-border: rgba(255, 255, 255, 0.06);
+  --color-cyber-border-bright: rgba(255, 255, 255, 0.12);
+  
+  --color-neon-pink: #e879f9;
+  --color-neon-pink-glow: rgba(232, 121, 249, 0.4);
+  --color-neon-green: #4ade80;
+  --color-neon-green-glow: rgba(74, 222, 128, 0.5);
+  --color-neon-red: #f87171;
+  
+  --color-gold: #fbbf24;
+  --color-silver: #94a3b8;
+  --color-bronze: #d97706;
+  
+  --color-text-primary: rgba(255, 255, 255, 0.92);
+  --color-text-secondary: rgba(255, 255, 255, 0.55);
+  --color-text-muted: rgba(255, 255, 255, 0.35);
+  --color-text-dim: rgba(255, 255, 255, 0.20);
+}
+
+/* Neon glow animations */
+@keyframes neon-pulse {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 4px currentColor);
+  }
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor);
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.neon-text-green {
+  color: var(--color-neon-green);
+  text-shadow: 
+    0 0 4px var(--color-neon-green-glow),
+    0 0 8px var(--color-neon-green-glow),
+    0 0 16px var(--color-neon-green-glow);
+}
+
+.neon-text-green-intense {
+  color: #22ff66;
+  text-shadow: 
+    0 0 4px #4ade80,
+    0 0 8px #4ade80,
+    0 0 16px rgba(74, 222, 128, 0.8),
+    0 0 32px rgba(74, 222, 128, 0.6),
+    0 0 48px rgba(74, 222, 128, 0.4),
+    0 0 64px rgba(74, 222, 128, 0.3);
+  animation: neon-pulse 2s ease-in-out infinite, neon-flicker 4s linear infinite;
+}
+
+.neon-text-red {
+  color: var(--color-neon-red);
+  text-shadow: 
+    0 0 4px rgba(248, 113, 113, 0.5),
+    0 0 8px rgba(248, 113, 113, 0.4),
+    0 0 16px rgba(248, 113, 113, 0.3);
+}
+
+.neon-text-pink {
+  color: var(--color-neon-pink);
+  text-shadow: 
+    0 0 4px var(--color-neon-pink-glow),
+    0 0 8px var(--color-neon-pink-glow),
+    0 0 16px var(--color-neon-pink-glow);
+}
+
+.cyber-glow-left {
+  position: relative;
+}
+
+.cyber-glow-left::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-neon-pink);
+  opacity: 0;
+  box-shadow: 
+    0 0 8px var(--color-neon-pink-glow),
+    0 0 16px var(--color-neon-pink-glow),
+    0 0 24px var(--color-neon-pink-glow);
+  transition: opacity 0.3s ease;
+}
+
+.cyber-row:hover .cyber-glow-left::before {
+  opacity: 1;
+}
+
+/* Rank badge glow effects */
+.rank-gold {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: 
+    0 0 8px rgba(251, 191, 36, 0.4),
+    0 0 16px rgba(251, 191, 36, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: #0d0d16;
+}
+
+.rank-silver {
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+  box-shadow: 
+    0 0 8px rgba(148, 163, 184, 0.3),
+    0 0 16px rgba(148, 163, 184, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  color: #0d0d16;
+}
+
+.rank-bronze {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 
+    0 0 8px rgba(217, 119, 6, 0.3),
+    0 0 16px rgba(217, 119, 6, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: #0d0d16;
+}
+
+/* Scan line effect for hover */
+.cyber-scanline {
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-scanline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-neon-pink-glow), transparent);
+  opacity: 0;
+  transform: translateY(-100%);
+}
+
+.cyber-row:hover .cyber-scanline::after {
+  opacity: 0.6;
+  animation: scan-line 1.5s linear infinite;
+}
+
+/* Glitch effect for extreme values */
+@keyframes glitch {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-2px);
+  }
+  20% {
+    transform: translateX(2px);
+  }
+  30% {
+    transform: translateX(-1px);
+  }
+  40% {
+    transform: translateX(1px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+}
+
+.neon-glitch {
+  animation: glitch 3s infinite;
+}
+
+/* Data cell subtle glow */
+.data-cell {
+  position: relative;
+}
+
+.data-cell::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(ellipse at center, rgba(232, 121, 249, 0.05) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.cyber-row:hover .data-cell::before {
+  opacity: 1;
+}
+
+/* Terminal-style blinking cursor effect */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.terminal-cursor::after {
+  content: '_';
+  animation: blink 1s step-end infinite;
+  color: var(--color-neon-green);
 }
