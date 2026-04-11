@@ -23,8 +23,8 @@ export default function UseCasesPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white tracking-tight">Use Cases</h1>
-        <p className="mt-1 text-sm text-white/45">
+        <h1 className="font-mono text-2xl font-bold text-white tracking-tight">Use Cases</h1>
+        <p className="mt-1 font-mono text-xs text-white/40">
           Find the right agent for your workflow. {entries.length} use cases indexed.
         </p>
       </div>
@@ -34,18 +34,24 @@ export default function UseCasesPage() {
           <Link
             key={slug}
             href={`/use-cases/${slug}`}
-            className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3 hover:bg-white/[0.05] hover:border-white/[0.12] transition-colors group"
+            className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] px-4 py-3 overflow-hidden transition-all hover:border-[rgba(232,121,249,0.4)] hover:shadow-[0_0_20px_rgba(232,121,249,0.12)] group block"
           >
+            {/* Corner accents */}
+            <span className="pointer-events-none absolute top-0 left-0 w-2 h-2 border-t border-l border-[rgba(232,121,249,0.35)]" />
+            <span className="pointer-events-none absolute top-0 right-0 w-2 h-2 border-t border-r border-[rgba(232,121,249,0.35)]" />
+            <span className="pointer-events-none absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[rgba(232,121,249,0.35)]" />
+            <span className="pointer-events-none absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[rgba(232,121,249,0.35)]" />
+
             <div className="flex items-center gap-2.5 mb-2">
               <span className="text-lg">{USE_CASE_ICONS[slug]}</span>
-              <span className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
+              <span className="font-mono font-bold text-white text-sm">
                 {uc.title}
               </span>
             </div>
-            <p className="text-[11px] text-white/40 leading-relaxed line-clamp-2">
+            <p className="font-mono text-xs text-white/50 leading-relaxed line-clamp-2">
               {uc.description}
             </p>
-            <div className="mt-2 text-[10px] text-white/25">
+            <div className="mt-2 font-mono text-xs text-[#e879f9]">
               {uc.handles.length} agents →
             </div>
           </Link>
