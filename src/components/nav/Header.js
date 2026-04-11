@@ -25,9 +25,9 @@ export default async function Header() {
   const trending = await getTrendingAgent()
 
   return (
-    <header className="sticky top-0 z-50 relative border-b border-white/[0.12] bg-[linear-gradient(180deg,rgba(13,16,32,0.86)_0%,rgba(11,14,27,0.82)_100%)] backdrop-blur-xl shadow-[0_1px_0_0_rgba(139,92,246,0.14)]">
+    <header className="sticky top-0 z-50 border-b border-[rgba(232,121,249,0.12)] bg-[#08080f]/90 backdrop-blur-xl">
       <Container>
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3 md:py-4">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-2.5 md:py-3">
 
           {/* Logo */}
           <Link
@@ -40,44 +40,45 @@ export default async function Header() {
               width={0}
               height={0}
               sizes="200px"
-              className="h-10 w-auto"
-              style={{ maxWidth: '220px' }}
+              className="h-9 w-auto"
+              style={{ maxWidth: '200px' }}
               priority
             />
           </Link>
 
           {/* Desktop nav links + search */}
-          <nav className="hidden items-center justify-center gap-6 sm:flex">
-            <Link href="/rankings" className="text-sm font-semibold text-white/70 transition hover:text-white">
-              Rankings
-            </Link>
-            <Link href="/use-cases" className="text-sm font-semibold text-white/70 transition hover:text-white">
-              Use Cases
-            </Link>
-            <Link href="/categories" className="text-sm font-semibold text-white/70 transition hover:text-white">
-              Categories
-            </Link>
-            <Link href="/submit" className="text-sm font-semibold text-white/70 transition hover:text-white">
-              Submit
-            </Link>
-            <Link href="/watchlist" className="text-sm font-semibold text-white/70 transition hover:text-white">
-              Watchlist
-            </Link>
+          <nav className="hidden items-center justify-center gap-5 sm:flex">
+            {[
+              { href: '/rankings', label: 'Rankings' },
+              { href: '/use-cases', label: 'Use Cases' },
+              { href: '/categories', label: 'Categories' },
+              { href: '/submit', label: 'Submit' },
+              { href: '/watchlist', label: 'Watchlist' },
+            ].map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="relative font-mono text-[12px] font-semibold text-white/50 transition hover:text-white group"
+              >
+                {label}
+                <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-[#e879f9] transition-all group-hover:w-full" />
+              </Link>
+            ))}
             <SearchBox />
           </nav>
 
-          {/* Right side: trending (desktop only) + hamburger (mobile) */}
+          {/* Right side: trending badge (desktop) + hamburger (mobile) */}
           <div className="flex items-center gap-3">
             {trending ? (
               <Link
                 href={`/agent/${encodeURIComponent(trending.handle)}`}
-                className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-[13px] transition hover:bg-emerald-500/20 lg:flex"
+                className="hidden items-center gap-1.5 rounded border border-[rgba(57,255,20,0.25)] bg-[rgba(57,255,20,0.06)] px-3 py-1.5 font-mono text-[11px] transition hover:bg-[rgba(57,255,20,0.12)] lg:flex"
               >
-                <span className="font-medium text-emerald-300">↑ Trending</span>
-                <span className="max-w-[140px] truncate text-white/80">
+                <span className="font-semibold" style={{color:'#39ff14'}}>↑</span>
+                <span className="max-w-[120px] truncate text-white/70">
                   {trending.display_name || trending.handle}
                 </span>
-                <span className="font-semibold text-emerald-400">+{trending.weekly_delta}</span>
+                <span className="font-bold tabular-nums" style={{color:'#39ff14'}}>+{trending.weekly_delta}</span>
               </Link>
             ) : null}
 
