@@ -147,7 +147,7 @@ export default async function RankingsPage({ searchParams }) {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-white tracking-tight">Rankings</h1>
+        <h1 className="font-display text-2xl text-white tracking-tight">Rankings</h1>
         <p className="mt-1 text-sm text-white/45">
           {scoredRows.length} ranked · {totalAgentsCount ?? rows.length} indexed ·{' '}
           <span className="text-emerald-400">{risingCount} rising</span> ·{' '}

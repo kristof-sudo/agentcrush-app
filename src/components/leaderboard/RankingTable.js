@@ -248,7 +248,7 @@ export default function RankingTable({ rows = [] }) {
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e879f9', textShadow: '0 0 20px #e879f9', marginBottom: 4 }}>
             ◆ Live Rankings
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.01em', fontFamily: "var(--font-michroma, 'Michroma', sans-serif)" }}>
             Rising Now
           </div>
         </div>

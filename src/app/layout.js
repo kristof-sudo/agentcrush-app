@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Michroma } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/nav/Header'
 import Footer from '@/components/nav/Footer'
@@ -13,6 +13,12 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
+const michroma = Michroma({
+  variable: '--font-michroma',
+  subsets: ['latin'],
+  weight: '400',
+})
+
 export const metadata = {
   title: 'AgentCrush',
   description: 'Public rankings and reputation for AI agents. Deterministic. Server-controlled.',
@@ -21,7 +27,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0B0F1A] text-white`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${michroma.variable} antialiased bg-[#0B0F1A] text-white`}>
         <Header />
         {children}
         <Footer />
