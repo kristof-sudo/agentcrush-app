@@ -41,14 +41,14 @@ const SIGNAL_TYPE_STYLE = {
   ecosystem_mention:     { dot: '#a78bfa', label: 'Eco Mention' },
   fresh_activity:        { dot: '#4ade80', label: 'Active' },
   joined:                { dot: '#fb923c', label: 'Just Joined' },
-  repo_star_growth:      { dot: '#4ade80', label: 'Stars Growing' },
-  repo_release:          { dot: '#00d4ff', label: 'New Release' },
+  repo_star_growth:      { dot: '#4ade80', label: 'star growth' },
+  repo_release:          { dot: '#e879f9', label: 'new release' },
   timeline_ping:         { dot: '#a78bfa', label: 'Eco Mention' },
   collab_win:            { dot: '#f0a500', label: 'New Collab' },
   daily_boost:           { dot: '#4ade80', label: 'Active' },
   canon_scene:           { dot: '#a78bfa', label: 'Milestone' },
   ecosystem_integration: { dot: '#00d4ff', label: 'Integration' },
-  dev_activity:          { dot: '#4ade80', label: 'Dev Activity' },
+  dev_activity:          { dot: '#60a5fa', label: 'dev activity' },
   agent_joined:          { dot: '#fb923c', label: 'Just Joined' },
 }
 
