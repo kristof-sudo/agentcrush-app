@@ -7,12 +7,8 @@ import {
   getAgentShortDescription,
   isDemoAgent,
 } from '@/lib/agent-quality'
-import WatchlistButton from '@/components/agents/WatchlistButton'
-import AgentComparePanel from '@/components/agents/AgentComparePanel'
-import AgentProfileActions from '@/components/agents/AgentProfileActions'
-import ClaimProfileButton from '@/components/agents/ClaimProfileButton'
-import ConfidencePill from '@/components/ui/ConfidencePill'
 import { getWhyMoving, getArchetypeStyle } from '@/lib/why-moving'
+import AgentHeader from '@/components/agent/AgentHeader'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -403,6 +399,74 @@ function formatProfileEventSummary(event) {
   }
 }
 
+const EVENT_DOT_COLORS = {
+  repo_star_growth:     '#4ade80',
+  repo_release:         '#e879f9',
+  dev_activity:         '#60a5fa',
+  ranking_jump:         '#fbbf24',
+  audience_spike:       '#00e5ff',
+  timeline_ping:        '#00e5ff',
+  launch_buzz:          '#4ade80',
+  collab_win:           '#34d399',
+  daily_boost:          '#4ade80',
+  canon_scene:          '#fbbf24',
+  ecosystem_integration:'#00e5ff',
+  reputation_hit:       '#f87171',
+  reputation_recovery:  '#4ade80',
+  spotlight_pick:       '#e879f9',
+  profile_upgrade:      '#818cf8',
+  rumor_wave:           '#facc15',
+}
+
+const CAT_COLORS_SERVER = {
+  ECOSYSTEM:  { bg: 'rgba(0,229,255,0.12)',   text: '#00e5ff', glow: '#00e5ff' },
+  TRADER:     { bg: 'rgba(255,64,200,0.12)',  text: '#ff40c8', glow: '#ff40c8' },
+  RESEARCHER: { bg: 'rgba(147,51,234,0.18)',  text: '#c084fc', glow: '#c084fc' },
+  REBEL:      { bg: 'rgba(255,100,50,0.12)',  text: '#ff6432', glow: '#ff6432' },
+  OPERATOR:   { bg: 'rgba(250,204,21,0.12)',  text: '#facc15', glow: '#facc15' },
+  BUILDER:    { bg: 'rgba(52,211,153,0.12)',  text: '#34d399', glow: '#34d399' },
+  FRAMEWORK:  { bg: 'rgba(99,102,241,0.14)',  text: '#818cf8', glow: '#818cf8' },
+  AGENT:      { bg: 'rgba(0,229,255,0.09)',   text: '#67e8f9', glow: '#67e8f9' },
+  CREATOR:    { bg: 'rgba(232,121,249,0.12)', text: '#e879f9', glow: '#e879f9' },
+  FINANCE:    { bg: 'rgba(250,204,21,0.12)',  text: '#facc15', glow: '#facc15' },
+  CRYPTO:     { bg: 'rgba(52,211,153,0.12)',  text: '#34d399', glow: '#34d399' },
+  DEVELOPER:  { bg: 'rgba(129,140,248,0.14)', text: '#818cf8', glow: '#818cf8' },
+  INFRA:      { bg: 'rgba(248,113,113,0.12)', text: '#f87171', glow: '#f87171' },
+  SOCIALITE:  { bg: 'rgba(244,114,182,0.12)', text: '#f472b6', glow: '#f472b6' },
+  CORPORATE:  { bg: 'rgba(148,163,184,0.12)', text: '#94a3b8', glow: '#94a3b8' },
+  EXPLORER:   { bg: 'rgba(45,212,191,0.12)',  text: '#2dd4bf', glow: '#2dd4bf' },
+  MYSTIC:     { bg: 'rgba(129,140,248,0.14)', text: '#818cf8', glow: '#818cf8' },
+  FITNESS:    { bg: 'rgba(34,211,238,0.12)',  text: '#22d3ee', glow: '#22d3ee' },
+}
+
+function getCatColor(archetype) {
+  return CAT_COLORS_SERVER[(archetype || '').toUpperCase()] || { bg: 'rgba(0,229,255,0.09)', text: '#67e8f9', glow: '#67e8f9' }
+}
+
+function CornerAccentsServer({ color }) {
+  const s = { position: 'absolute', width: 12, height: 12, pointerEvents: 'none', opacity: 0.7 }
+  return (
+    <>
+      <span style={{ ...s, top: 0, left: 0, borderTop: `1.5px solid ${color}`, borderLeft: `1.5px solid ${color}` }} />
+      <span style={{ ...s, top: 0, right: 0, borderTop: `1.5px solid ${color}`, borderRight: `1.5px solid ${color}` }} />
+      <span style={{ ...s, bottom: 0, left: 0, borderBottom: `1.5px solid ${color}`, borderLeft: `1.5px solid ${color}` }} />
+      <span style={{ ...s, bottom: 0, right: 0, borderBottom: `1.5px solid ${color}`, borderRight: `1.5px solid ${color}` }} />
+    </>
+  )
+}
+
+function NeonBar({ value, max = 100, color }) {
+  const pct = Math.min(100, Math.round((Math.abs(value) / Math.max(max, 1)) * 100))
+  return (
+    <div style={{ width: '100%', height: 3, borderRadius: 9999, marginTop: 4, background: 'rgba(255,255,255,0.07)' }}>
+      <div style={{ height: '100%', borderRadius: 9999, width: `${pct}%`, background: color, boxShadow: `0 0 6px ${color}`, transition: 'all 0.3s' }} />
+    </div>
+  )
+}
+
+const PANEL = { position: 'relative', borderRadius: 2, padding: 12, background: '#0a0a14', border: '1px solid rgba(255,255,255,0.07)' }
+const LABEL_STYLE = { fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(226,232,240,0.35)' }
+
 export async function generateMetadata({ params }) {
   const { handle } = await params
   const cleanHandle = decodeURIComponent(handle)
@@ -724,6 +788,14 @@ export default async function AgentPage({ params }) {
     .order('created_at', { ascending: false })
     .limit(8)
 
+  const { data: maxScoreRow } = await supabase
+    .from('rankings')
+    .select('score_total')
+    .order('score_total', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const maxScore = maxScoreRow?.score_total || 100
+
   let fallbackAgents = []
 
   if (!ecosystemConnections.length) {
@@ -784,303 +856,121 @@ export default async function AgentPage({ params }) {
     'Strong visibility',
   ]
 
+  const catColor = getCatColor(archetype)
+  const headerTags = [
+    ...(agent.github_url ? ['GitHub'] : []),
+    ...(agent.activity_status === 'active' || agent.status === 'active' ? ['Active'] : []),
+  ]
+
+  // Ecosystem sections for the V0 map panel
+  const ecoSections = [
+    { key: 'integrates_with', label: 'Integrates with' },
+    { key: 'runs_on',         label: 'Runs on' },
+    { key: 'framework_of',   label: 'Framework of' },
+    { key: 'part_of_ecosystem', label: 'Part of ecosystem' },
+  ].filter((s) => groupedConnections[s.key]?.length > 0)
+
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      <div className="space-y-3">
+    <main style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', color: '#e2e8f0' }}>
+      <div style={{ position: 'relative', maxWidth: 860, margin: '0 auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {/* ── Header card ── */}
-        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] p-4">
-          <div className="flex items-start gap-3">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={agent.display_name || agent.handle}
-                className="h-12 w-12 shrink-0 rounded-md object-cover border border-white/[0.08] bg-white/[0.04]"
-              />
-            ) : (
-              <div className="h-12 w-12 shrink-0 rounded-md border border-white/[0.08] bg-white/[0.06]" />
-            )}
+        {/* ── 1. AGENT HEADER (client — Watch button) ─────────────────── */}
+        <AgentHeader
+          displayName={displayName}
+          handle={agent.handle}
+          imageUrl={imageUrl}
+          tagline={agent.tagline || bioText || ''}
+          archetype={archetype}
+          delta7d={weeklyDelta}
+          trustState={trustState}
+          claimHandle={agent.handle}
+          externalUrl={agent.website_url || agent.github_url || null}
+          tags={headerTags}
+        />
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-base font-bold text-white leading-tight">{displayName}</h1>
-                {isVerified && (
-                  <span className="inline-flex items-center rounded border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300 leading-none">
-                    ✓ Verified
-                  </span>
-                )}
-                {isDemo && (
-                  <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-white/40 leading-none">Demo</span>
-                )}
-                {whyMoving ? (
-                  <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium leading-none ${weeklyDelta > 0 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : weeklyDelta < 0 ? 'border-red-500/30 bg-red-500/10 text-red-300' : 'border-white/10 bg-white/5 text-white/40'}`}>
-                    {whyMoving}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="mt-0.5 flex items-center gap-2.5 flex-wrap">
-                <span className="text-[11px] text-white/40">@{agent.handle}</span>
-                <a href={`https://x.com/${agent.handle}`} target="_blank" rel="noreferrer"
-                  className="text-[10px] text-white/30 hover:text-white/55 transition-colors">X →</a>
-                {(agent.website_url || agent.github_url) && (
-                  <a
-                    href={agent.website_url || agent.github_url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="text-[10px] text-violet-400/70 hover:text-violet-300 transition-colors border border-violet-500/20 rounded px-1.5 py-0.5"
-                  >
-                    Try this agent ↗
-                  </a>
-                )}
-                <WatchlistButton handle={agent.handle} displayName={displayName} />
-                <AgentComparePanel
-                  currentAgent={{
-                    handle: agent.handle,
-                    display_name: displayName,
-                    tagline: agent.tagline || '',
-                    bio: bioText || '',
-                    global_rank: ranking?.global_rank ?? null,
-                    score_total: agentCrushScore,
-                    visibility_score: agent.visibility_score ?? 0,
-                    reputation_score: agent.reputation_score ?? 0,
-                    weekly_delta: weeklyDelta,
-                    latest_event_type: latestEventType,
-                    eventCount: recentEvents?.length || 0,
-                  }}
-                  candidates={compareCandidates}
-                />
-              </div>
-
-              <AgentProfileActions
-                agent={agent}
-                score={agentCrushScore}
-                rank={ranking?.global_rank ?? null}
-              />
-
-              <p className="mt-2 text-xs text-white/55 leading-relaxed max-w-2xl">{bioText}</p>
-
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {archetype ? (
-                  <span className={`rounded border px-2 py-0.5 text-[10px] leading-none ${getArchetypeStyle(archetype)}`}>{archetype}</span>
-                ) : null}
-                <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35 leading-none">{formatLayerLabel(agent.ecosystem_layer)}</span>
-                {agent.framework_name ? (
-                  <Link href={`/framework/${encodeURIComponent(agent.framework_name)}`}
-                    className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/45 hover:text-white/70 leading-none transition-colors">
-                    {agent.framework_name}
-                  </Link>
-                ) : null}
-                {agent.network_name ? (
-                  <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35 leading-none">{agent.network_name}</span>
-                ) : null}
-                {agent.activity_status ? (
-                  <span className="rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35 leading-none">{agent.activity_status}</span>
-                ) : null}
-              </div>
-
-              {/* Trust state — always visible */}
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {trustState === 'verified' && (
-                  <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 leading-none">✓ Verified</span>
-                )}
-                {trustState === 'claimed' && (
-                  <span className="rounded border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300 leading-none">Claimed</span>
-                )}
-                {trustState === 'claim_requested' && (
-                  <span className="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300 leading-none">Claim requested</span>
-                )}
-                {trustState === 'unclaimed' && (
-                  <span className="rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-white/30 leading-none">Unclaimed</span>
-                )}
-                {agent.verified_source && (
-                  <span className="rounded border border-emerald-500/20 bg-emerald-500/[0.06] px-1.5 py-0.5 text-[10px] text-emerald-400/70 leading-none">Verified source</span>
-                )}
-                {agent.claimed_by && trustState !== 'unclaimed' && trustState !== 'claim_requested' && (
-                  <span className="text-[10px] text-white/35">by {agent.claimed_by}</span>
-                )}
-              </div>
-
-              {ecosystemConnections.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {ecosystemConnections
-                    .filter((c) => ['runs_on', 'part_of_ecosystem', 'competes_with', 'derived_from', 'integrates_with', 'framework_of'].includes(c.rel_type))
-                    .slice(0, 6)
-                    .map((c) => (
-                      <Link
-                        key={`tag-${c.rel_type}-${c.connected_handle}`}
-                        href={`/agent/${encodeURIComponent(c.connected_handle)}`}
-                        className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-medium transition-colors ${relTagStyle(c.rel_type)}`}
-                      >
-                        {formatRelTag(c.rel_type, c.connected_name || c.connected_handle)}
-                      </Link>
-                    ))}
-                </div>
-              )}
-
-              <p className="mt-4 max-w-2xl text-white/85 leading-7">
-                {bioText}
-              </p>
-
-              {!isVerified && !isDemo && trustState === 'unclaimed' && (
-                <ClaimProfileButton handle={agent.handle} claimStatus={agent.claim_status} />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Stats row ── */}
-        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-2.5 flex flex-wrap gap-x-6 gap-y-2 items-center">
-          {[
-            { label: 'Score', value: agentCrushScore, cls: 'text-white' },
-            { label: 'Rank', value: ranking?.global_rank ? `#${ranking.global_rank}` : '—', cls: 'text-white' },
-            { label: 'Visibility', value: agent.visibility_score ?? 0, cls: 'text-sky-300' },
-            { label: 'Reputation', value: agent.reputation_score ?? 0, cls: 'text-violet-300' },
-            {
-              label: '7d Δ',
-              value: weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? `${weeklyDelta}` : '—',
-              cls: weeklyDelta > 0 ? 'text-emerald-400' : weeklyDelta < 0 ? 'text-red-400' : 'text-white/30',
-            },
-          ].map(({ label, value, cls }) => (
-            <div key={label} className="flex items-baseline gap-1.5">
-              <span className="text-[10px] text-white/35 uppercase tracking-wider">{label}</span>
-              <span className={`text-sm font-bold tabular-nums ${cls}`}>{value}</span>
-            </div>
-          ))}
-          <ConfidencePill
-            data={{
-              score_total: agentCrushScore,
-              visibility_score: agent.visibility_score ?? 0,
-              reputation_score: agent.reputation_score ?? 0,
-              weekly_delta: weeklyDelta,
-              global_rank: ranking?.global_rank ?? null,
-              latest_event_type: latestEventType,
-              eventCount: recentEvents?.length || 0,
-            }}
-          />
-          {(rankHistory || []).length >= 2 ? (
-            <div className="ml-auto shrink-0"><RankSparkline history={rankHistory} /></div>
-          ) : null}
-        </div>
-
-        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Score breakdown</p>
-              <p className="mt-1 text-xs text-white/40">Visible score dimensions only. Presentation layer only, no new methodology.</p>
-            </div>
-            <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] text-white/45">
-              Share tools above
-            </span>
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {/* ── 2. SCORE STRIP ───────────────────────────────────────────── */}
+        <div style={{ ...PANEL, padding: 0 }}>
+          <CornerAccentsServer color="#00e5ff" />
+          <div style={{ display: 'flex', alignItems: 'stretch' }}>
             {[
-              { label: 'Total score', value: agentCrushScore, cls: 'text-white' },
-              { label: 'Visibility', value: agent.visibility_score ?? 0, cls: 'text-sky-300' },
-              { label: 'Reputation', value: agent.reputation_score ?? 0, cls: 'text-violet-300' },
-              {
-                label: 'Weekly delta',
-                value: weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? `${weeklyDelta}` : '—',
-                cls: weeklyDelta > 0 ? 'text-emerald-400' : weeklyDelta < 0 ? 'text-red-400' : 'text-white/35',
-              },
-            ].map((item) => (
-              <div key={item.label} className="rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-3">
-                <div className="text-[10px] uppercase tracking-wider text-white/35">{item.label}</div>
-                <div className={`mt-1 text-lg font-bold tabular-nums ${item.cls}`}>{item.value}</div>
+              { label: 'SCORE', value: agentCrushScore ? agentCrushScore.toLocaleString() : '—', color: '#f0f4ff', glow: undefined },
+              { label: 'RANK',  value: ranking?.global_rank ? `#${ranking.global_rank}` : '—', color: '#fbbf24', glow: '0 0 10px rgba(251,191,36,0.6)' },
+              { label: 'VIS',   value: String(agent.visibility_score ?? 0), color: '#00e5ff', glow: '0 0 8px rgba(0,229,255,0.5)' },
+              { label: 'REP',   value: String(agent.reputation_score ?? 0), color: '#c084fc', glow: '0 0 8px rgba(192,132,252,0.5)' },
+              { label: '7D',    value: weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? `${weeklyDelta}` : '—', color: weeklyDelta >= 0 ? '#4ade80' : '#f87171', glow: weeklyDelta >= 0 ? '0 0 10px rgba(74,222,128,0.5)' : '0 0 10px rgba(248,113,113,0.5)' },
+            ].map((stat, i, arr) => (
+              <div key={stat.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 0', gap: 2, borderRight: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
+                <span style={LABEL_STYLE}>{stat.label}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: stat.color, textShadow: stat.glow }}>{stat.value}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── What this agent is for ── */}
-        {useCases.length > 0 ? (
-          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-2">What this agent is for</p>
-            <ul className="space-y-1.5">
-              {useCases.map((item) => (
-                <li key={item} className="flex gap-2 text-xs text-white/55 leading-relaxed">
-                  <span className="text-violet-400 shrink-0 mt-0.5">·</span>
-                  {item}
+        {/* ── 3. SCORE BREAKDOWN ───────────────────────────────────────── */}
+        <div style={{ ...PANEL, padding: 0, overflow: 'hidden' }}>
+          <CornerAccentsServer color="#ff40c8" />
+          <div style={{ padding: '8px 12px 4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={LABEL_STYLE}>Score breakdown</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+            {[
+              { label: 'Total Score',   value: agentCrushScore, display: agentCrushScore ? agentCrushScore.toLocaleString() : '—', max: maxScore, color: '#f0f4ff', suffix: '' },
+              { label: 'Visibility',    value: agent.visibility_score ?? 0, display: String(agent.visibility_score ?? 0), max: 100, color: '#00e5ff', suffix: '/100' },
+              { label: 'Reputation',    value: agent.reputation_score ?? 0, display: String(agent.reputation_score ?? 0), max: 100, color: '#c084fc', suffix: '/100' },
+              { label: 'Weekly Delta',  value: Math.abs(weeklyDelta), display: weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? `${weeklyDelta}` : '—', max: 50, color: weeklyDelta >= 0 ? '#4ade80' : '#f87171', suffix: '' },
+            ].map((item, i) => (
+              <div key={item.label} style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 4, borderRight: i % 2 === 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
+                <span style={LABEL_STYLE}>{item.label}</span>
+                <span style={{ fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: item.color, textShadow: `0 0 12px ${item.color}66` }}>
+                  {item.display}
+                  {item.suffix && <span style={{ fontSize: 14, fontWeight: 400, opacity: 0.4 }}>{item.suffix}</span>}
+                </span>
+                <NeonBar value={item.value} max={item.max} color={item.color} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 4. WHAT THIS AGENT IS FOR ────────────────────────────────── */}
+        {useCases.length > 0 && (
+          <div style={{ ...PANEL, borderLeft: `2px solid ${catColor.glow}` }}>
+            <CornerAccentsServer color={catColor.glow} />
+            <div style={{ ...LABEL_STYLE, marginBottom: 8 }}>What this agent does</div>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: 0, padding: 0, listStyle: 'none' }}>
+              {useCases.map((b) => (
+                <li key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, lineHeight: 1.6, color: 'rgba(226,232,240,0.75)' }}>
+                  <span style={{ color: catColor.text, flexShrink: 0, marginTop: 1 }}>▸</span>
+                  {b}
                 </li>
               ))}
             </ul>
           </div>
-        ) : null}
+        )}
 
-        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-2">Why this agent is trending</p>
-          <div className="flex flex-wrap gap-2">
-            {trendingSignals.map((signal) => (
-              <span
-                key={signal}
-                className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300/90"
-              >
-                {signal}
-              </span>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-white/40">
-            Placeholder trend signals for now. Real ranking logic and signal attribution stay unchanged.
-          </p>
-        </div>
-
-        {/* ── Classification ── */}
-        {categoryItems.length > 0 ? (
-          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-2">Classification</p>
-            <div className="flex flex-wrap gap-1.5">
-              {categoryItems.map((item) => {
-                const href = item.category_group === 'ecosystem'
-                  ? `/ecosystem/${encodeURIComponent(item.name)}`
-                  : item.category_group === 'infrastructure'
-                  ? `/infra/${encodeURIComponent(item.name)}`
-                  : `/categories/${item.slug}`
-                return (
-                  <Link key={`${item.category_group}-${item.slug}`} href={href}
-                    className={`rounded border px-2 py-0.5 text-[10px] leading-none transition-colors hover:text-white/80 ${item.is_primary ? 'border-violet-500/30 bg-violet-500/[0.07] text-violet-300' : 'border-white/[0.08] bg-white/[0.03] text-white/45'}`}>
-                    {item.name}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        {/* ── Identity / Stack ── */}
-        {(agent.identity_type || agent.builder_attribution || agent.framework || agent.runtime || (Array.isArray(agent.dependencies) && agent.dependencies.length > 0)) ? (
-          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-3">Identity / Stack</p>
-            <div className="space-y-2">
-              {agent.identity_type && (
-                <div className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 text-[10px] text-white/30">Type</span>
-                  <span className="text-xs text-white/70 capitalize">{agent.identity_type}</span>
+        {/* ── 5. IDENTITY / STACK ──────────────────────────────────────── */}
+        {(agent.identity_type || agent.builder_attribution || agent.framework || agent.runtime || (Array.isArray(agent.dependencies) && agent.dependencies.length > 0)) && (
+          <div style={PANEL}>
+            <CornerAccentsServer color="#818cf8" />
+            <div style={{ ...LABEL_STYLE, marginBottom: 8 }}>Identity / Stack</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px' }}>
+              {[
+                { label: 'Type',    value: agent.identity_type },
+                { label: 'Builder', value: agent.builder_attribution },
+                { label: 'Runtime', value: agent.runtime },
+                { label: 'Framework', value: agent.framework },
+              ].filter((r) => r.value).map((row) => (
+                <div key={row.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={LABEL_STYLE}>{row.label}</span>
+                  <span style={{ fontSize: 12, color: '#e2e8f0' }}>{row.value}</span>
                 </div>
-              )}
-              {agent.builder_attribution && (
-                <div className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 text-[10px] text-white/30">Builder</span>
-                  <span className="text-xs text-white/70">{agent.builder_attribution}</span>
-                </div>
-              )}
-              {agent.framework && (
-                <div className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 text-[10px] text-white/30">Framework</span>
-                  <span className="text-xs text-white/70">{agent.framework}</span>
-                </div>
-              )}
-              {agent.runtime && (
-                <div className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 text-[10px] text-white/30">Runtime</span>
-                  <span className="text-xs text-white/70">{agent.runtime}</span>
-                </div>
-              )}
+              ))}
               {Array.isArray(agent.dependencies) && agent.dependencies.length > 0 && (
-                <div className="flex items-start gap-3">
-                  <span className="w-24 shrink-0 text-[10px] text-white/30 mt-0.5">Dependencies</span>
-                  <div className="flex flex-wrap gap-1">
+                <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 }}>
+                  <span style={LABEL_STYLE}>Dependencies</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                     {agent.dependencies.map((dep) => (
-                      <span key={dep} className="rounded border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-white/50 leading-none">
+                      <span key={dep} style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontFamily: 'monospace', background: 'rgba(129,140,248,0.12)', color: '#818cf8', border: '1px solid rgba(129,140,248,0.2)' }}>
                         {dep}
                       </span>
                     ))}
@@ -1089,167 +979,109 @@ export default async function AgentPage({ params }) {
               )}
             </div>
           </div>
-        ) : null}
+        )}
 
-        {/* ── Framework Position (framework pages only) ── */}
-        {isFrameworkPage ? (
-          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35 mb-2">Framework Position</p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {[
-                { label: 'Child Projects', value: frameworkChildren.length },
-                { label: 'Ecosystem Links', value: ecosystemMembership.length },
-                { label: 'Integration Links', value: integrationLinks.length },
-                { label: 'Competitive Links', value: competitionLinks.length },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-baseline gap-1.5">
-                  <span className="text-[10px] text-white/35">{label}</span>
-                  <span className="text-sm font-bold tabular-nums text-white">{value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {/* ── Recent Activity ── */}
-        {(recentEvents || []).length > 0 ? (
-          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-white/[0.05]">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Recent Activity</span>
-            </div>
-            <div className="divide-y divide-white/[0.04]">
-              {recentEvents.map((event) => (
-                <div key={event.id} className="flex items-center justify-between gap-4 px-4 py-2">
-                  <div className="min-w-0">
-                    <span className="text-xs text-white/70">{formatProfileEventSummary(event)}</span>
-                    {isFrameworkPage && event.agent_id !== agent.id ? (
-                      <span className="ml-2 text-[10px] text-white/35">
-                        from {eventAgentMap.get(event.agent_id)?.display_name || eventAgentMap.get(event.agent_id)?.handle || 'connected project'}
-                      </span>
-                    ) : null}
-                  </div>
-                  <span className="text-[10px] text-white/30 shrink-0 tabular-nums">{formatTimeAgo(event.created_at)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {/* ── Related & Alternatives ── */}
-        {alternativeAgents.length > 0 ? (
-          <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-white/[0.05]">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Related & Alternatives</span>
-            </div>
-            <div className="divide-y divide-white/[0.04]">
-              {alternativeAgents.map((related) => {
-                const relatedImage = resolveImageUrl(related.avatar_url)
+        {/* ── 6. ACTIVITY TIMELINE ─────────────────────────────────────── */}
+        {(recentEvents || []).length > 0 && (
+          <div style={PANEL}>
+            <CornerAccentsServer color="#34d399" />
+            <div style={{ ...LABEL_STYLE, marginBottom: 8 }}>Activity</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {recentEvents.slice(0, 5).map((event) => {
+                const dot = EVENT_DOT_COLORS[event.event_type] || '#818cf8'
                 return (
-                  <Link key={related.id} href={`/agent/${encodeURIComponent(related.handle)}`}
-                    className="flex items-center gap-2.5 px-4 py-2 hover:bg-white/[0.02] transition-colors">
-                    <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/[0.04] flex items-center justify-center">
-                      {relatedImage ? (
-                        <img src={relatedImage} alt={related.display_name || related.handle} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-[9px] font-bold text-white/40">{(related.display_name || related.handle || '?')[0].toUpperCase()}</span>
-                      )}
+                  <div key={event.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 11, lineHeight: 1.5 }}>
+                    <span style={{ flexShrink: 0, marginTop: 3, width: 6, height: 6, borderRadius: '50%', background: dot, boxShadow: `0 0 6px ${dot}` }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ color: 'rgba(226,232,240,0.75)' }}>{formatProfileEventSummary(event)}</span>
+                      <br />
+                      <span style={{ color: 'rgba(226,232,240,0.35)', fontSize: 10 }}>{formatTimeAgo(event.created_at)}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs font-medium text-white truncate block">{related.display_name || related.handle}</span>
-                      <span className="text-[10px] text-white/35">{related.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── 7. ECOSYSTEM MAP ─────────────────────────────────────────── */}
+        {(ecoSections.length > 0 || ecosystemConnections.length > 0) && (
+          <div style={PANEL}>
+            <CornerAccentsServer color="#00e5ff" />
+            <div style={{ ...LABEL_STYLE, marginBottom: 12 }}>Ecosystem Map</div>
+            {ecoSections.length > 0 ? (
+              ecoSections.map((section, sIdx) => {
+                const conns = groupedConnections[section.key] || []
+                return (
+                  <div key={section.key} style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: sIdx < ecoSections.length - 1 ? 12 : 0 }}>
+                    <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(226,232,240,0.4)' }}>{section.label}</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {conns.slice(0, 6).map((conn, i) => {
+                        const itemCat = getCatColor(conn.agent?.archetype)
+                        const name = conn.connected_name || conn.connected_handle || '?'
+                        const letter = name[0].toUpperCase()
+                        const imgUrl = resolveImageUrl(conn.agent?.custom_background_url) || resolveImageUrl(conn.agent?.avatar_url)
+                        return (
+                          <Link
+                            key={`${conn.connected_handle}-${i}`}
+                            href={`/agent/${encodeURIComponent(conn.connected_handle)}`}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 4, background: itemCat.bg, border: `1px solid ${itemCat.glow}33`, fontSize: 10, fontWeight: 600, textDecoration: 'none' }}
+                          >
+                            <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, background: `${itemCat.glow}22`, color: itemCat.text, border: `1px solid ${itemCat.glow}55`, overflow: 'hidden', flexShrink: 0 }}>
+                              {imgUrl ? <img src={imgUrl} alt={name} style={{ width: 22, height: 22, objectFit: 'cover' }} /> : letter}
+                            </span>
+                            <span style={{ color: itemCat.text }}>{name}</span>
+                          </Link>
+                        )
+                      })}
                     </div>
-                    {related.archetype ? (
-                      <span className="text-[9px] text-white/25 shrink-0">{related.archetype}</span>
-                    ) : null}
+                  </div>
+                )
+              })
+            ) : (
+              <div style={{ fontSize: 11, color: 'rgba(226,232,240,0.25)' }}>No ecosystem connections mapped yet.</div>
+            )}
+          </div>
+        )}
+
+        {/* ── 8. RELATED AGENTS ────────────────────────────────────────── */}
+        {alternativeAgents.length > 0 && (
+          <div style={PANEL}>
+            <CornerAccentsServer color="#ff40c8" />
+            <div style={{ ...LABEL_STYLE, marginBottom: 8 }}>Also Trending</div>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+              {alternativeAgents.map((rel) => {
+                const relCat = getCatColor(rel.archetype)
+                const relImg = resolveImageUrl(rel.avatar_url)
+                const relName = rel.display_name || rel.handle || '?'
+                return (
+                  <Link
+                    key={rel.id}
+                    href={`/agent/${encodeURIComponent(rel.handle)}`}
+                    style={{ flexShrink: 0, width: 140, padding: 10, borderRadius: 4, background: 'rgba(255,255,255,0.03)', border: `1px solid ${relCat.glow}33`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+                  >
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: relCat.bg, border: `2px solid ${relCat.glow}`, boxShadow: `0 0 10px ${relCat.glow}55`, color: relCat.text, overflow: 'hidden', flexShrink: 0 }}>
+                      {relImg ? <img src={relImg} alt={relName} style={{ width: 40, height: 40, objectFit: 'cover' }} /> : relName[0].toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, textAlign: 'center', color: '#e2e8f0' }}>{relName}</span>
+                    <span style={{ fontSize: 10, color: 'rgba(226,232,240,0.4)' }}>{rel.label || rel.archetype || ''}</span>
                   </Link>
                 )
               })}
             </div>
           </div>
-        ) : null}
+        )}
 
-        {/* ── Ecosystem Map ── */}
-        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-white/[0.05] flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Ecosystem Map</span>
-            {ecosystemStats.totalConnections > 0 ? (
-              <span className="text-[10px] text-white/25 tabular-nums">{ecosystemStats.totalConnections} connections</span>
-            ) : null}
-          </div>
-
-          {ecosystemConnections.length > 0 ? (
-            <div className="divide-y divide-white/[0.04]">
-              {orderedGroupedConnections.map(([relType, connections]) => (
-                <div key={relType}>
-                  <div className="px-4 py-1.5 bg-white/[0.01] flex items-center justify-between">
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-white/30">{formatRelationshipLabel(relType)}</span>
-                    <span className="text-[9px] text-white/20">{connections.length}</span>
-                  </div>
-                  <div className="divide-y divide-white/[0.03]">
-                    {connections.map((connection, index) => {
-                      const related = connection.agent
-                      const relatedImage =
-                        resolveImageUrl(related?.custom_background_url) ||
-                        resolveImageUrl(related?.avatar_url)
-                      return (
-                        <Link key={`${connection.connected_agent_id}-${index}`}
-                          href={`/agent/${encodeURIComponent(connection.connected_handle)}`}
-                          className="flex items-center gap-2.5 px-4 py-2 hover:bg-white/[0.02] transition-colors">
-                          <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/[0.04] flex items-center justify-center">
-                            {relatedImage ? (
-                              <img src={relatedImage} alt={connection.connected_name || connection.connected_handle} className="h-full w-full object-cover" />
-                            ) : (
-                              <span className="text-[9px] font-bold text-white/40">{(connection.connected_name || connection.connected_handle || '?')[0].toUpperCase()}</span>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-xs font-medium text-white truncate block">{connection.connected_name || connection.connected_handle}</span>
-                            <span className="text-[10px] text-white/30">@{connection.connected_handle}</span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {related?.archetype ? (
-                              <span className="text-[9px] text-white/25">{related.archetype}</span>
-                            ) : null}
-                            <span className="text-[9px] text-white/20">{formatLayerLabel(connection.connected_layer)}</span>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : fallbackAgents.length > 0 ? (
-            <div className="divide-y divide-white/[0.04]">
-              {fallbackAgents.map((related) => {
-                const relatedImage = resolveImageUrl(related.avatar_url)
-                return (
-                  <Link key={related.id} href={`/agent/${encodeURIComponent(related.handle)}`}
-                    className="flex items-center gap-2.5 px-4 py-2 hover:bg-white/[0.02] transition-colors">
-                    <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-white/[0.04] flex items-center justify-center">
-                      {relatedImage ? (
-                        <img src={relatedImage} alt={related.display_name || related.handle} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-[9px] font-bold text-white/40">{(related.display_name || related.handle || '?')[0].toUpperCase()}</span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs font-medium text-white truncate block">{related.display_name || related.handle}</span>
-                      <span className="text-[10px] text-white/30">@{related.handle}</span>
-                    </div>
-                    {related.archetype ? (
-                      <span className="text-[9px] text-white/25 shrink-0">{related.archetype}</span>
-                    ) : null}
-                  </Link>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="px-4 py-6 text-center text-xs text-white/25">No ecosystem connections mapped yet.</div>
-          )}
-        </div>
-
+        <div style={{ height: 20 }} />
       </div>
+
+      <style>{`
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        *::-webkit-scrollbar { width: 6px; height: 6px; }
+        *::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        *::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.2); border-radius: 3px; }
+        *::-webkit-scrollbar-thumb:hover { background: rgba(0,229,255,0.4); }
+      `}</style>
     </main>
   )
 }
