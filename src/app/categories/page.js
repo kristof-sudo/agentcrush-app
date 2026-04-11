@@ -132,7 +132,12 @@ export default async function CategoriesPage() {
         avatarBg: style.color + '30', // category color at ~19% opacity
       })),
     }
-  }).sort((a, b) => b.agentCount - a.agentCount)
+  }).sort((a, b) => {
+    // Categories with no gaining agents sink to the bottom
+    if (a.risingPct === 0 && b.risingPct > 0) return 1
+    if (b.risingPct === 0 && a.risingPct > 0) return -1
+    return b.agentCount - a.agentCount
+  })
 
   // Trending = top 5 by risingCount among categories with ≥2 ranked agents
   const hotCategories = [...categories]
@@ -173,8 +178,7 @@ export default async function CategoriesPage() {
           AI agent ecosystem by type · {totalAgents} agents tracked ·{' '}
           <span style={{ color: '#4ade80', textShadow: '0 0 10px rgba(74,222,128,0.7)' }}>
             {totalRising} gaining this week
-          </span>{' '}
-          <span title="Agents with a positive 7-day rank change" style={{ color: 'rgba(255,255,255,0.3)', cursor: 'help', fontSize: 12 }}>ⓘ</span>
+          </span>
         </p>
       </header>
 

@@ -6,14 +6,14 @@ export default function HowCalculatedBar() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+    <div className="rounded-lg border border-white/[0.08] bg-[#0a0a14] overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-2.5 text-left transition hover:bg-white/[0.03]"
       >
-        <span className="text-xs text-white/45 font-medium">How are these rankings calculated?</span>
-        <span className={`text-white/30 text-xs transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
+        <span className="font-mono text-xs text-white/45">How is the score calculated?</span>
+        <span className={`font-mono text-white/40 text-xs transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
 
       {open && (

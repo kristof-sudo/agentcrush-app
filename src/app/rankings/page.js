@@ -66,6 +66,17 @@ function generateWeeklyStory(rows) {
   return sentences.slice(0, 4).join(' ') || null
 }
 
+function CornerAccent() {
+  return (
+    <>
+      <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(232,121,249,0.35)]" />
+      <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(232,121,249,0.35)]" />
+      <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(232,121,249,0.35)]" />
+      <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(232,121,249,0.35)]" />
+    </>
+  )
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function RankingsPage({ searchParams }) {
@@ -147,25 +158,25 @@ export default async function RankingsPage({ searchParams }) {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
       <div className="mb-4">
-        <h1 className="font-display text-2xl text-white tracking-tight">Rankings</h1>
-        <p className="mt-1 text-sm text-white/45">
+        <h1 className="font-mono text-2xl font-bold text-white tracking-tight">Rankings</h1>
+        <p className="mt-1 font-mono text-xs text-white/40">
           {scoredRows.length} ranked · {totalAgentsCount ?? rows.length} indexed ·{' '}
-          <span className="text-emerald-400">{risingCount} rising</span> ·{' '}
-          <span className="text-violet-400">{trendingCount} trending</span>
+          <span style={{color:'#4ade80', textShadow:'0 0 10px rgba(74,222,128,0.6)'}}>{risingCount} rising</span> ·{' '}
+          <span className="text-white/30">{trendingCount} trending</span>
           {latestRanking?.computed_at ? (
             <> · <span className="text-white/30">updated {formatRelativeTime(latestRanking.computed_at)}</span></>
           ) : null}
         </p>
       </div>
 
-      {/* This Week's Story */}
+      {/* Weekly Narrative */}
       {weeklyStory && (
-        <div className="mb-4 rounded-lg border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3 pl-4" style={{borderLeft: '2px solid rgba(236,72,153,0.4)'}}>
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-pink-500/70 shrink-0" />
-            <div className="text-[9px] font-semibold uppercase tracking-widest text-violet-400/70">This Week&apos;s Story</div>
+        <div className="mb-4 relative rounded-lg bg-[#0a0a14] border border-white/[0.08] px-4 py-3 overflow-hidden">
+          <CornerAccent />
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest" style={{color:'#e879f9'}}>◆ WEEKLY NARRATIVE</span>
           </div>
-          <p className="text-base text-white/90 leading-relaxed">{weeklyStory}</p>
+          <p className="font-mono text-sm text-white/80 leading-relaxed">{weeklyStory}</p>
         </div>
       )}
 
@@ -175,32 +186,34 @@ export default async function RankingsPage({ searchParams }) {
       {(topRisers.length > 0 || topFallers.length > 0) && (
         <div className="my-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {topRisers.length > 0 && (
-            <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/[0.04] px-3 py-2.5">
-              <div className="text-[9px] font-semibold uppercase tracking-widest text-emerald-400/60 mb-2">↑ Rising Now</div>
+            <div className="relative rounded-lg bg-[#0a0a14] border border-white/[0.08] px-3 py-2.5 overflow-hidden">
+              <CornerAccent />
+              <div className="font-mono text-[9px] font-bold uppercase tracking-widest mb-2" style={{color:'#e879f9'}}>↑ RISING NOW</div>
               <div className="space-y-1.5">
                 {topRisers.map((r) => (
                   <div key={r.handle} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[10px] text-white/25 tabular-nums w-4 text-right shrink-0">#{r.global_rank}</span>
-                      <span className="text-[11px] text-white/70 truncate">{r.display_name || r.handle}</span>
+                      <span className="font-mono text-[10px] text-white/30 tabular-nums w-4 text-right shrink-0">#{r.global_rank}</span>
+                      <span className="font-mono text-sm text-white/70 truncate">{r.display_name || r.handle}</span>
                     </div>
-                    <span className="text-[11px] font-bold text-emerald-400 tabular-nums shrink-0">+{r.weekly_delta}</span>
+                    <span className="font-mono text-sm font-bold tabular-nums shrink-0" style={{color:'#4ade80', textShadow:'0 0 8px rgba(74,222,128,0.6)'}}>+{r.weekly_delta}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
           {topFallers.length > 0 && (
-            <div className="rounded-lg border border-red-500/15 bg-red-500/[0.04] px-3 py-2.5">
-              <div className="text-[9px] font-semibold uppercase tracking-widest text-red-400/60 mb-2">↓ Biggest Fallers</div>
+            <div className="relative rounded-lg bg-[#0a0a14] border border-white/[0.08] px-3 py-2.5 overflow-hidden">
+              <CornerAccent />
+              <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-red-400/60 mb-2">↓ BIGGEST FALLERS</div>
               <div className="space-y-1.5">
                 {topFallers.map((r) => (
                   <div key={r.handle} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[10px] text-white/25 tabular-nums w-4 text-right shrink-0">#{r.global_rank}</span>
-                      <span className="text-[11px] text-white/70 truncate">{r.display_name || r.handle}</span>
+                      <span className="font-mono text-[10px] text-white/30 tabular-nums w-4 text-right shrink-0">#{r.global_rank}</span>
+                      <span className="font-mono text-sm text-white/70 truncate">{r.display_name || r.handle}</span>
                     </div>
-                    <span className="text-[11px] font-bold text-red-400 tabular-nums shrink-0">{r.weekly_delta}</span>
+                    <span className="font-mono text-sm font-bold text-red-400 tabular-nums shrink-0">{r.weekly_delta}</span>
                   </div>
                 ))}
               </div>
