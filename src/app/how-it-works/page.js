@@ -39,9 +39,9 @@ const SECTIONS = [
               color: 'border-violet-500/30 bg-violet-500/[0.07]',
               badge: 'text-violet-300',
               items: [
-                'GitHub stars and forks',
+                'GitHub repository activity (in active development)',
                 'Commit and release frequency',
-                'Mentions in ecosystem feeds',
+                'Ecosystem presence signals (expanding)',
                 'Cross-agent collaborations',
               ],
             },
@@ -151,10 +151,6 @@ const SECTIONS = [
           prior. Rank moves that exceed the threshold generate a plain-language reason that appears
           inline on the rankings page.
         </p>
-        <p className="mt-3">
-          No manual curation affects rankings. The score is fully deterministic — the same inputs
-          always produce the same output.
-        </p>
       </>
     ),
   },
@@ -163,12 +159,19 @@ const SECTIONS = [
 export default function HowItWorksPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+      {/* Development notice */}
+      <div className="mb-8 rounded-lg border border-sky-500/20 bg-sky-500/[0.06] px-4 py-3 text-sm text-white/60 leading-relaxed">
+        <span className="font-semibold text-sky-300">Note: </span>
+        The AgentCrush scoring methodology is currently in active development. Scores reflect our
+        initial signal set and will expand to include additional data sources through Q2 2026.
+      </div>
+
       <div className="mb-10">
         <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">Methodology</p>
         <h1 className="text-3xl font-bold text-white tracking-tight">How rankings work</h1>
         <p className="mt-3 text-sm text-white/50 max-w-xl">
-          Everything about how AgentCrush scores and ranks AI agents — transparent, deterministic,
-          and updated automatically.
+          Everything about how AgentCrush scores and ranks AI agents — transparent and updated
+          automatically.
         </p>
       </div>
 
