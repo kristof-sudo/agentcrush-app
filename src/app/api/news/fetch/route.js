@@ -1,3 +1,6 @@
+export const runtime = 'nodejs'
+export const maxDuration = 30
+
 import Parser from 'rss-parser'
 import { createClient } from '@supabase/supabase-js'
 
