@@ -89,13 +89,14 @@ function CornerAccent() {
 }
 
 // items: real news_items rows from Supabase, or [] to use mock data
+// featured: single featured news_items row, or null
+// items: non-featured news_items rows, or []
 // updatedAt: ISO string of most recent item's created_at, or null
-export default function AgentIntelBar({ items = [], updatedAt = null }) {
-  const useReal = items.length > 0
-  const feed = useReal ? items : MOCK_INTEL
+export default function AgentIntelBar({ featured = null, items = [], updatedAt = null }) {
+  const useReal = featured !== null || items.length > 0
 
-  const featured = feed.find((i) => i.is_featured) || feed[0]
-  const headlines = feed.filter((i) => i !== featured).slice(0, 4)
+  const featuredItem = featured || (useReal ? null : MOCK_INTEL[0])
+  const headlines = useReal ? items.slice(0, 4) : MOCK_INTEL.slice(1, 5)
 
   const updatedLabel = updatedAt ? timeAgo(updatedAt) : useReal ? 'just now' : '4h ago'
 
@@ -120,6 +121,8 @@ export default function AgentIntelBar({ items = [], updatedAt = null }) {
 
         {/* LEFT: Featured article (38%) */}
         {(() => {
+          const item = featuredItem
+          if (!item) return null
           const featuredInner = (
             <>
               <div className="relative rounded overflow-hidden mb-2" style={{ height: 120 }}>
@@ -136,17 +139,17 @@ export default function AgentIntelBar({ items = [], updatedAt = null }) {
                 </span>
               </div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <SourceBadge source={featured.source} />
+                <SourceBadge source={item.source} />
               </div>
-              <p className="font-mono text-[11px] text-white/80 leading-snug mb-1">{featured.headline}</p>
+              <p className="font-mono text-[11px] text-white/80 leading-snug mb-1">{item.headline}</p>
               <span className="font-mono text-[10px] text-white/25">
-                {featured.published_at ? timeAgo(featured.published_at) : featured.time || ''}
+                {item.published_at ? timeAgo(item.published_at) : item.time || ''}
               </span>
             </>
           )
-          return featured.url ? (
+          return item.url ? (
             <a
-              href={featured.url}
+              href={item.url}
               target="_blank"
               rel="noopener noreferrer"
               className="sm:w-[38%] p-2 border-b sm:border-b-0 sm:border-r border-white/[0.05] hover:bg-white/[0.02] transition-colors"

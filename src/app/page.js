@@ -219,11 +219,19 @@ export default async function Home() {
     safeCount(supabase, 'scheduled_posts', (q) => q.gte('created_at', todayStart.toISOString())),
   ])
 
+  const { data: featuredNews } = await supabase
+    .from('news_items')
+    .select('id, source, headline, url, summary, published_at, is_featured, created_at')
+    .eq('is_featured', true)
+    .limit(1)
+    .single()
+
   const { data: newsItems } = await supabase
     .from('news_items')
     .select('id, source, headline, url, summary, published_at, is_featured, created_at')
+    .eq('is_featured', false)
     .order('published_at', { ascending: false })
-    .limit(8)
+    .limit(5)
 
   let signalsToday = (eventsTodayCount || 0) + xPostsToday + scheduledToday
   const signalsYesterday = (eventsYesterdayCount || 0)
@@ -458,6 +466,7 @@ export default async function Home() {
             {/* Agent Intel news bar */}
             <div className="pt-3">
               <AgentIntelBar
+                featured={featuredNews || null}
                 items={newsItems || []}
                 updatedAt={newsItems?.[0]?.created_at || null}
               />
