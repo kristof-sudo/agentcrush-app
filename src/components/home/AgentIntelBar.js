@@ -123,10 +123,15 @@ export default function AgentIntelBar({ featured = null, items = [], updatedAt =
         {(() => {
           const item = featuredItem
           if (!item) return null
+          const displayTime = item.published_at ? timeAgo(item.published_at) : item.time || ''
+          const hasImage = Boolean(item.image_url)
           const featuredInner = (
             <>
-              <div style={{ position: 'relative', width: '100%', height: 160, overflow: 'hidden', borderRadius: 4, marginBottom: 8 }}>
-                {item.image_url ? (
+              <div
+                className="relative mb-2 overflow-hidden rounded-[4px] border border-white/[0.06]"
+                style={{ position: 'relative', width: '100%', height: 160 }}
+              >
+                {hasImage ? (
                   <img
                     src={item.image_url}
                     alt={item.headline}
@@ -134,24 +139,61 @@ export default function AgentIntelBar({ featured = null, items = [], updatedAt =
                     onError={(e) => { e.target.style.display = 'none' }}
                   />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #3d0066 0%, #0f001a 100%)' }}>
+                  <div
+                    className="relative h-full w-full"
+                    style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #3d0066 0%, #0f001a 100%)' }}
+                  >
                     <div
                       className="absolute inset-0 opacity-20"
                       style={{ backgroundImage: 'radial-gradient(circle, rgba(232,121,249,0.4) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
                     />
+                    <div
+                      className="absolute -right-6 top-4 h-20 w-20 rounded-full blur-2xl"
+                      style={{ background: 'rgba(0,212,255,0.18)' }}
+                    />
+                    <div
+                      className="absolute -left-6 bottom-1 h-24 w-24 rounded-full blur-2xl"
+                      style={{ background: 'rgba(232,121,249,0.22)' }}
+                    />
+                    <div
+                      className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#08080f] to-transparent"
+                      style={{ opacity: 0.92 }}
+                    />
+                    <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-mono text-[9px] uppercase tracking-[0.24em] text-[rgba(0,212,255,0.68)]">
+                          Signal Snapshot
+                        </div>
+                        <div className="mt-1 font-display text-lg text-white tracking-tight">
+                          Agent ecosystem watch
+                        </div>
+                      </div>
+                      <div className="mb-0.5 h-9 w-9 shrink-0 rounded-full border border-[rgba(0,212,255,0.28)] bg-[rgba(0,212,255,0.08)] flex items-center justify-center text-[rgba(0,212,255,0.82)] shadow-[0_0_18px_rgba(0,212,255,0.14)]">
+                        ✦
+                      </div>
+                    </div>
                   </div>
                 )}
                 <span className="absolute top-2 left-2 font-mono text-[8px] font-bold tracking-widest text-[rgba(0,212,255,0.9)] bg-[rgba(0,0,0,0.6)] px-1.5 py-0.5 rounded border border-[rgba(0,212,255,0.3)]">
                   FEATURED
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 mb-1.5">
+              <div className="mb-2 flex items-center gap-2">
                 <SourceBadge source={item.source} />
+                {displayTime ? (
+                  <span className="inline-flex items-center rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[9px] font-medium text-white/45 tabular-nums">
+                    {displayTime}
+                  </span>
+                ) : null}
               </div>
-              <p className="font-mono text-[11px] text-white/80 leading-snug mb-1">{item.headline}</p>
-              <span className="font-mono text-[10px] text-white/25">
-                {item.published_at ? timeAgo(item.published_at) : item.time || ''}
-              </span>
+              <p className="font-mono text-[12px] font-semibold tracking-[-0.01em] text-white/88 leading-snug">
+                {item.headline}
+              </p>
+              {!hasImage ? (
+                <p className="mt-1.5 font-mono text-[10px] leading-relaxed text-white/38">
+                  Featured source tracking, even when the preview image is unavailable.
+                </p>
+              ) : null}
             </>
           )
           return item.url ? (

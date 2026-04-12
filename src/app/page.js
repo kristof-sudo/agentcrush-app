@@ -94,6 +94,23 @@ function dedupeRows(rows = [], limit = 20) {
   return out
 }
 
+function getIndexedFreshnessMeta(value) {
+  if (!value) return null
+  const ts = new Date(value).getTime()
+  if (Number.isNaN(ts)) return null
+  const diffHours = (Date.now() - ts) / 3600000
+  if (diffHours <= 48) {
+    return {
+      label: `${formatRelativeTime(value)} · latest`,
+      isStale: false,
+    }
+  }
+  return {
+    label: `Latest added ${new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(value))}`,
+    isStale: true,
+  }
+}
+
 function buildContentFeed(signalRows = [], newAgents = [], maxItems = 24) {
   const feed = [...signalRows]
   const toPublic = (path) => {
@@ -144,6 +161,36 @@ function CornerAccent() {
       <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(232,121,249,0.4)]" />
       <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(232,121,249,0.4)]" />
     </>
+  )
+}
+
+function FollowEcosystemPanel({ className = '' }) {
+  return (
+    <section className={className}>
+      <div className="relative rounded-lg border border-white/[0.05] bg-[#0a0a14] px-4 py-4 overflow-hidden">
+        <CornerAccent />
+        <h2 className="font-mono text-sm font-bold text-white">Follow the ecosystem</h2>
+        <p className="font-mono mt-1 max-w-xl text-[11px] text-white/35">
+          Mike posts ecosystem signals, rank moves, and agent intel weekly.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer noopener"
+            className="inline-flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white hover:border-white/[0.15] transition-colors">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            Mike on X
+          </a>
+          <a href="https://warpcast.com/agentcrush" target="_blank" rel="noreferrer noopener"
+            className="inline-flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white hover:border-white/[0.15] transition-colors">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.24.24H5.76C2.5789.24 0 2.8188 0 6v12c0 3.1811 2.5789 5.76 5.76 5.76h12.48c3.1812 0 5.76-2.5789 5.76-5.76V6C24 2.8188 21.4212.24 18.24.24m.8155 17.1662v.504c.2868-.0256.5458.1905.5439.479v.5688h-5.1437v-.5688c-.0019-.2885.2576-.5047.5443-.479v-.504c0-.22.1525-.402.358-.458l-.0095-4.3645c-.1589-1.7366-1.6402-3.0979-3.4435-3.0979-1.8038 0-3.2846 1.3613-3.4435 3.0979l-.0096 4.3578c.2276.0424.5318.2083.5395.4648v.504c.2863-.0256.5457.1905.5438.479v.5688H4.3915v-.5688c-.0019-.2885.2575-.5047.5438-.479v-.504c0-.2529.2011-.4548.4536-.4724v-7.895h-.4905L4.2898 7.008l2.6405-.0005V5.0419h9.9495v1.9656h2.8219l-.6091 2.0314h-.4901v7.8949c.2519.0177.453.2195.453.4724"/></svg>
+            AgentCrush on Farcaster
+          </a>
+          <Link href="/categories"
+            className="inline-flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white hover:border-white/[0.15] transition-colors">
+            Browse Categories →
+          </Link>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -354,6 +401,7 @@ export default async function Home() {
   const intelNews = []
 
   const rankedCount = rankingRows.filter((r) => r.score_total > 0).length
+  const indexedFreshness = getIndexedFreshnessMeta(recentAgents?.[0]?.created_at)
 
   return (
     <div className="min-h-screen bg-[#08080f] overflow-x-hidden" style={{backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '24px 24px'}}>
@@ -512,7 +560,7 @@ export default async function Home() {
                     <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono text-[10px] text-amber-400">✦</span>
-                        <span className="font-mono text-xs font-bold text-white">JUST INDEXED</span>
+                        <span className="font-mono text-xs font-bold text-white">RECENTLY INDEXED</span>
                       </div>
                       <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">All →</Link>
                     </div>
@@ -547,9 +595,11 @@ export default async function Home() {
                       ))}
                     </div>
                     <div className="border-t border-white/[0.04] px-3 py-1">
-                      <span className="font-mono text-[10px] text-white/20">
-                        {formatRelativeTime(recentAgents?.[0]?.created_at)} · latest
-                      </span>
+                      {indexedFreshness ? (
+                        <span className={`font-mono text-[10px] ${indexedFreshness.isStale ? 'text-white/[0.28]' : 'text-white/20'}`}>
+                          {indexedFreshness.label}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
 
@@ -640,7 +690,7 @@ export default async function Home() {
                 </div>
 
                 {/* Mike's Latest */}
-                <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden flex flex-col" style={{minHeight: 200}}>
+                <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden flex flex-col lg:flex-1" style={{minHeight: 260}}>
                   <CornerAccent />
                   <div className="flex items-center gap-1.5 border-b border-white/[0.06] px-3 py-2 shrink-0">
                     <svg className="w-3 h-3 text-white/50 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -652,8 +702,8 @@ export default async function Home() {
                       @MikeMatshAI
                     </a>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-2 space-y-2" style={{maxHeight: 340}}>
-                    {mikePosts.length > 0 ? mikePosts.map((post) => (
+                  <div className="flex-1 overflow-y-auto p-2 space-y-2" style={{maxHeight: 520}}>
+                    {mikePosts.length > 0 ? mikePosts.slice(0, 5).map((post) => (
                       <div key={post.id} className="rounded border border-white/[0.06] bg-white/[0.02] p-2.5">
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <div className="h-5 w-5 rounded-full bg-[rgba(232,121,249,0.2)] flex items-center justify-center shrink-0">
@@ -705,36 +755,14 @@ export default async function Home() {
                   <div className="font-mono text-[10px] text-white/30 mt-0.5">List your agent in the index. Free.</div>
                 </Link>
 
+                <FollowEcosystemPanel className="hidden lg:block" />
+
               </div>
 
             </div>
 
             {/* ── FOLLOW FOOTER ─────────────────────────────────────────── */}
-            <section className="pb-4">
-              <div className="relative rounded-lg border border-white/[0.05] bg-[#0a0a14] px-4 py-4 overflow-hidden">
-                <CornerAccent />
-                <h2 className="font-mono text-sm font-bold text-white">Follow the ecosystem</h2>
-                <p className="font-mono mt-1 max-w-xl text-[11px] text-white/35">
-                  Mike posts ecosystem signals, rank moves, and agent intel weekly.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer noopener"
-                    className="inline-flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white hover:border-white/[0.15] transition-colors">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-                    Mike on X
-                  </a>
-                  <a href="https://warpcast.com/agentcrush" target="_blank" rel="noreferrer noopener"
-                    className="inline-flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white hover:border-white/[0.15] transition-colors">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.24.24H5.76C2.5789.24 0 2.8188 0 6v12c0 3.1811 2.5789 5.76 5.76 5.76h12.48c3.1812 0 5.76-2.5789 5.76-5.76V6C24 2.8188 21.4212.24 18.24.24m.8155 17.1662v.504c.2868-.0256.5458.1905.5439.479v.5688h-5.1437v-.5688c-.0019-.2885.2576-.5047.5443-.479v-.504c0-.22.1525-.402.358-.458l-.0095-4.3645c-.1589-1.7366-1.6402-3.0979-3.4435-3.0979-1.8038 0-3.2846 1.3613-3.4435 3.0979l-.0096 4.3578c.2276.0424.5318.2083.5395.4648v.504c.2863-.0256.5457.1905.5438.479v.5688H4.3915v-.5688c-.0019-.2885.2575-.5047.5438-.479v-.504c0-.2529.2011-.4548.4536-.4724v-7.895h-.4905L4.2898 7.008l2.6405-.0005V5.0419h9.9495v1.9656h2.8219l-.6091 2.0314h-.4901v7.8949c.2519.0177.453.2195.453.4724"/></svg>
-                    AgentCrush on Farcaster
-                  </a>
-                  <Link href="/categories"
-                    className="inline-flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white hover:border-white/[0.15] transition-colors">
-                    Browse Categories →
-                  </Link>
-                </div>
-              </div>
-            </section>
+            <FollowEcosystemPanel className="pb-4 lg:hidden" />
 
           </Container>
         </main>
