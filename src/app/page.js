@@ -2,7 +2,7 @@ import Container from '@/components/ui/Container'
 import AgentCard from '@/components/agents/AgentCard'
 import SectorTabsAndTable from '@/components/home/SectorTabsAndTable'
 import AgentIntelBar from '@/components/home/AgentIntelBar'
-import { supabaseAnon } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { getSignalTag, getEventIcon, getMovementReason, formatRelativeTime } from '@/lib/why-moving'
 
@@ -150,7 +150,16 @@ function CornerAccent() {
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const supabase = supabaseAnon()
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      global: {
+        fetch: (url, options = {}) =>
+          fetch(url, { ...options, cache: 'no-store' }),
+      },
+    }
+  )
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
   const yesterdayStart = new Date(todayStart)
