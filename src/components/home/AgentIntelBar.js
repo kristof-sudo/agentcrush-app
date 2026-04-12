@@ -50,8 +50,7 @@ const SOURCE_COLORS = {
   'The Rundown': { bg: 'rgba(96,165,250,0.12)',  text: '#60a5fa' },
   'AI News':     { bg: 'rgba(45,212,191,0.12)',  text: '#2dd4bf' },
   'Import AI':   { bg: 'rgba(251,146,60,0.12)',  text: '#fb923c' },
-  // legacy keys kept for backwards compat
-  TechCrunch:    { bg: 'rgba(251,146,60,0.18)',  text: '#fb923c' },
+  TechCrunch:    { bg: 'rgba(255,80,80,0.12)',   text: '#ff5050' },
   'The Information': { bg: 'rgba(0,212,255,0.14)', text: '#00d4ff' },
   Wired:         { bg: 'rgba(74,222,128,0.15)',  text: '#4ade80' },
   Reuters:       { bg: 'rgba(232,121,249,0.15)', text: '#e879f9' },
