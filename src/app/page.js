@@ -219,6 +219,12 @@ export default async function Home() {
     safeCount(supabase, 'scheduled_posts', (q) => q.gte('created_at', todayStart.toISOString())),
   ])
 
+  const { data: newsItems } = await supabase
+    .from('news_items')
+    .select('id, source, headline, url, summary, published_at, is_featured, created_at')
+    .order('published_at', { ascending: false })
+    .limit(8)
+
   let signalsToday = (eventsTodayCount || 0) + xPostsToday + scheduledToday
   const signalsYesterday = (eventsYesterdayCount || 0)
 
@@ -451,7 +457,10 @@ export default async function Home() {
           <Container>
             {/* Agent Intel news bar */}
             <div className="pt-3">
-              <AgentIntelBar />
+              <AgentIntelBar
+                items={newsItems || []}
+                updatedAt={newsItems?.[0]?.created_at || null}
+              />
             </div>
 
             <div className="pb-3 grid grid-cols-12 gap-3" style={{alignItems: 'start'}}>

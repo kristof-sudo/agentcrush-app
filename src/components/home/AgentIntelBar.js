@@ -1,46 +1,69 @@
 'use client'
 
-// TODO: replace mock data with real news_items Supabase query when Phase 3 RSS backend is built
 const MOCK_INTEL = [
   {
     id: 1,
     source: 'VentureBeat',
     headline: 'Autonomous agents are taking over enterprise workflows faster than predicted',
+    url: null,
+    published_at: null,
     time: '4h ago',
-    featured: true,
+    is_featured: true,
   },
   {
     id: 2,
     source: 'TechCrunch',
     headline: 'New wave of agentic startups raises $2.4B in Q1 2026',
+    url: null,
+    published_at: null,
     time: '6h ago',
   },
   {
     id: 3,
-    source: 'The Information',
+    source: 'The Rundown',
     headline: "OpenAI's agent runtime sees 10x usage spike in 30 days",
+    url: null,
+    published_at: null,
     time: '9h ago',
   },
   {
     id: 4,
-    source: 'Wired',
+    source: 'AI News',
     headline: 'Agent-to-agent communication protocols emerge as new battleground',
+    url: null,
+    published_at: null,
     time: '12h ago',
   },
   {
     id: 5,
-    source: 'Reuters',
+    source: 'Import AI',
     headline: 'Financial regulators begin monitoring autonomous trading agents',
+    url: null,
+    published_at: null,
     time: '1d ago',
   },
 ]
 
 const SOURCE_COLORS = {
-  VentureBeat: { bg: 'rgba(167,139,250,0.18)', text: '#a78bfa' },
-  TechCrunch:  { bg: 'rgba(251,146,60,0.18)',  text: '#fb923c' },
+  VentureBeat:   { bg: 'rgba(192,132,252,0.12)', text: '#c084fc' },
+  HuggingFace:   { bg: 'rgba(250,204,21,0.12)',  text: '#facc15' },
+  'The Rundown': { bg: 'rgba(96,165,250,0.12)',  text: '#60a5fa' },
+  'AI News':     { bg: 'rgba(45,212,191,0.12)',  text: '#2dd4bf' },
+  'Import AI':   { bg: 'rgba(251,146,60,0.12)',  text: '#fb923c' },
+  // legacy keys kept for backwards compat
+  TechCrunch:    { bg: 'rgba(251,146,60,0.18)',  text: '#fb923c' },
   'The Information': { bg: 'rgba(0,212,255,0.14)', text: '#00d4ff' },
-  Wired:       { bg: 'rgba(74,222,128,0.15)',  text: '#4ade80' },
-  Reuters:     { bg: 'rgba(232,121,249,0.15)', text: '#e879f9' },
+  Wired:         { bg: 'rgba(74,222,128,0.15)',  text: '#4ade80' },
+  Reuters:       { bg: 'rgba(232,121,249,0.15)', text: '#e879f9' },
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return ''
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const h = Math.floor(diff / 3600000)
+  if (h < 1) return 'just now'
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
 }
 
 function SourceBadge({ source }) {
@@ -66,9 +89,16 @@ function CornerAccent() {
   )
 }
 
-export default function AgentIntelBar() {
-  const featured = MOCK_INTEL[0]
-  const headlines = MOCK_INTEL.slice(1, 5)
+// items: real news_items rows from Supabase, or [] to use mock data
+// updatedAt: ISO string of most recent item's created_at, or null
+export default function AgentIntelBar({ items = [], updatedAt = null }) {
+  const useReal = items.length > 0
+  const feed = useReal ? items : MOCK_INTEL
+
+  const featured = feed.find((i) => i.is_featured) || feed[0]
+  const headlines = feed.filter((i) => i !== featured).slice(0, 4)
+
+  const updatedLabel = updatedAt ? timeAgo(updatedAt) : useReal ? 'just now' : '4h ago'
 
   return (
     <div className="relative rounded-lg border border-[rgba(0,212,255,0.12)] bg-[#0a0a14] overflow-hidden mb-3">
@@ -79,8 +109,11 @@ export default function AgentIntelBar() {
         <div className="flex items-center gap-1.5">
           <span className="font-mono text-[10px] text-[rgba(0,212,255,0.7)]">⚡</span>
           <span className="font-mono text-xs font-bold text-white tracking-wide">AGENT INTEL</span>
+          {useReal && (
+            <span className="font-mono text-[9px] text-[rgba(0,212,255,0.5)] ml-1">· live</span>
+          )}
         </div>
-        <span className="font-mono text-[10px] text-white/25">Updated 4h ago</span>
+        <span className="font-mono text-[10px] text-white/25">Updated {updatedLabel}</span>
       </div>
 
       {/* Body: two columns */}
@@ -88,18 +121,15 @@ export default function AgentIntelBar() {
 
         {/* LEFT: Featured article (38%) */}
         <div className="sm:w-[38%] p-2 border-b sm:border-b-0 sm:border-r border-white/[0.05]">
-          <div className="relative rounded overflow-hidden mb-2" style={{height: 120}}>
-            {/* Gradient placeholder image */}
+          <div className="relative rounded overflow-hidden mb-2" style={{ height: 120 }}>
             <div
               className="absolute inset-0"
-              style={{background: 'linear-gradient(135deg, #3d0066 0%, #0f001a 100%)'}}
+              style={{ background: 'linear-gradient(135deg, #3d0066 0%, #0f001a 100%)' }}
             />
-            {/* Grid overlay for cyberpunk texture */}
             <div
               className="absolute inset-0 opacity-20"
-              style={{backgroundImage: 'radial-gradient(circle, rgba(232,121,249,0.4) 1px, transparent 1px)', backgroundSize: '16px 16px'}}
+              style={{ backgroundImage: 'radial-gradient(circle, rgba(232,121,249,0.4) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
             />
-            {/* FEATURED badge */}
             <span className="absolute top-2 left-2 font-mono text-[8px] font-bold tracking-widest text-[rgba(0,212,255,0.9)] bg-[rgba(0,0,0,0.6)] px-1.5 py-0.5 rounded border border-[rgba(0,212,255,0.3)]">
               FEATURED
             </span>
@@ -107,29 +137,54 @@ export default function AgentIntelBar() {
           <div className="flex items-center gap-1.5 mb-1.5">
             <SourceBadge source={featured.source} />
           </div>
-          <p className="font-mono text-[11px] text-white/80 leading-snug mb-1">{featured.headline}</p>
-          <span className="font-mono text-[10px] text-white/25">{featured.time}</span>
+          {featured.url ? (
+            <a href={featured.url} target="_blank" rel="noreferrer noopener" className="block group">
+              <p className="font-mono text-[11px] text-white/80 leading-snug mb-1 group-hover:text-[#e879f9] transition-colors">{featured.headline}</p>
+            </a>
+          ) : (
+            <p className="font-mono text-[11px] text-white/80 leading-snug mb-1">{featured.headline}</p>
+          )}
+          <span className="font-mono text-[10px] text-white/25">
+            {featured.published_at ? timeAgo(featured.published_at) : featured.time || ''}
+          </span>
         </div>
 
         {/* RIGHT: 4 headlines (62%) */}
         <div className="flex-1 divide-y divide-white/[0.04]">
-          {headlines.map((item) => (
-            <div
-              key={item.id}
-              className="group flex items-start gap-2 px-3 py-2 hover:bg-white/[0.02] transition-colors cursor-default"
-            >
-              <div className="flex-1 min-w-0">
+          {headlines.map((item) => {
+            const displayTime = item.published_at ? timeAgo(item.published_at) : item.time || ''
+            const content = (
+              <>
                 <div className="flex items-center gap-1.5 mb-1">
                   <SourceBadge source={item.source} />
-                  <span className="font-mono text-[9px] text-white/20 tabular-nums">{item.time}</span>
+                  <span className="font-mono text-[9px] text-white/20 tabular-nums">{displayTime}</span>
                 </div>
                 <p className="font-mono text-[11px] text-white/65 leading-snug group-hover:text-[#e879f9] transition-colors">
                   {item.headline}
                 </p>
+              </>
+            )
+            return item.url ? (
+              <a
+                key={item.id}
+                href={item.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="group flex items-start gap-2 px-3 py-2 hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="flex-1 min-w-0">{content}</div>
+                <span className="font-mono text-[10px] text-white/15 shrink-0 mt-1">›</span>
+              </a>
+            ) : (
+              <div
+                key={item.id}
+                className="group flex items-start gap-2 px-3 py-2 hover:bg-white/[0.02] transition-colors cursor-default"
+              >
+                <div className="flex-1 min-w-0">{content}</div>
+                <span className="font-mono text-[10px] text-white/15 shrink-0 mt-1">›</span>
               </div>
-              <span className="font-mono text-[10px] text-white/15 shrink-0 mt-1">›</span>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
       </div>
