@@ -1,3 +1,5 @@
+// ALTER TABLE news_items ADD COLUMN IF NOT EXISTS image_url text;
+
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
@@ -41,6 +43,23 @@ function extractAllItems(xml) {
   return items
 }
 
+async function fetchOgImage(url) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'AgentCrush/1.0' },
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!res.ok) return null
+    const html = await res.text()
+    const match =
+      html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i)
+    return match ? match[1] : null
+  } catch {
+    return null
+  }
+}
+
 async function fetchFeed(feed) {
   try {
     const res = await fetch(feed.url, {
@@ -66,6 +85,7 @@ async function fetchFeed(feed) {
         summary: description?.slice(0, 300) || null,
         published_at: pubDate ? new Date(pubDate).toISOString() : null,
         is_featured: false,
+        image_url: null,
       })
     }
     return results
@@ -94,6 +114,11 @@ export async function GET() {
 
   const top20 = allItems.slice(0, 20)
   top20[0].is_featured = true
+
+  // Fetch og:image for top 3 items only
+  for (let i = 0; i < Math.min(3, top20.length); i++) {
+    top20[i].image_url = await fetchOgImage(top20[i].url)
+  }
 
   const { data, error } = await supabase
     .from('news_items')

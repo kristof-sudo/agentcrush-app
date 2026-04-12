@@ -221,7 +221,7 @@ export default async function Home() {
 
   const { data: featuredNews } = await supabase
     .from('news_items')
-    .select('id, source, headline, url, summary, published_at, is_featured, created_at')
+    .select('id, source, headline, url, summary, published_at, is_featured, image_url, created_at')
     .eq('is_featured', true)
     .limit(1)
     .single()

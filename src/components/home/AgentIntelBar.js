@@ -128,12 +128,18 @@ export default function AgentIntelBar({ featured = null, items = [], updatedAt =
               <div className="relative rounded overflow-hidden mb-2" style={{ height: 120 }}>
                 <div
                   className="absolute inset-0"
-                  style={{ background: 'linear-gradient(135deg, #3d0066 0%, #0f001a 100%)' }}
+                  style={
+                    item.image_url
+                      ? { backgroundImage: `url(${item.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                      : { background: 'linear-gradient(135deg, #3d0066 0%, #0f001a 100%)' }
+                  }
                 />
-                <div
-                  className="absolute inset-0 opacity-20"
-                  style={{ backgroundImage: 'radial-gradient(circle, rgba(232,121,249,0.4) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
-                />
+                {!item.image_url && (
+                  <div
+                    className="absolute inset-0 opacity-20"
+                    style={{ backgroundImage: 'radial-gradient(circle, rgba(232,121,249,0.4) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
+                  />
+                )}
                 <span className="absolute top-2 left-2 font-mono text-[8px] font-bold tracking-widest text-[rgba(0,212,255,0.9)] bg-[rgba(0,0,0,0.6)] px-1.5 py-0.5 rounded border border-[rgba(0,212,255,0.3)]">
                   FEATURED
                 </span>
