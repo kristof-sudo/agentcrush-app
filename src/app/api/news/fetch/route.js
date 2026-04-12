@@ -1,7 +1,6 @@
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
-import Parser from 'rss-parser'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -19,8 +18,7 @@ const RSS_FEEDS = [
 
 const AGENT_KEYWORDS = [
   'agent', 'agentic', 'autonomous', 'multi-agent',
-  'llm agent', 'ai agent', 'tool use', 'function calling',
-  'mcp', 'model context',
+  'llm agent', 'ai agent', 'tool use', 'mcp', 'model context',
 ]
 
 function isAgentRelevant(text) {
@@ -28,37 +26,66 @@ function isAgentRelevant(text) {
   return AGENT_KEYWORDS.some((kw) => lower.includes(kw))
 }
 
-export async function GET() {
-  const parser = new Parser({ timeout: 10000 })
-  const allItems = []
+function extractTag(xml, tag) {
+  const match = xml.match(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)<\\/' + tag + '>', 'i'))
+  return match ? match[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim() : ''
+}
 
-  for (const feed of RSS_FEEDS) {
-    try {
-      const parsed = await parser.parseURL(feed.url)
-      for (const item of parsed.items.slice(0, 20)) {
-        const text = (item.title || '') + ' ' + (item.contentSnippet || '')
-        if (!isAgentRelevant(text)) continue
-        if (!item.link) continue
+function extractAllItems(xml) {
+  const items = []
+  const itemRegex = /<item>([\s\S]*?)<\/item>/gi
+  let match
+  while ((match = itemRegex.exec(xml)) !== null) {
+    items.push(match[1])
+  }
+  return items
+}
 
-        allItems.push({
-          source: feed.source,
-          headline: item.title?.trim().slice(0, 200) || '',
-          url: item.link,
-          summary: item.contentSnippet?.trim().slice(0, 300) || null,
-          published_at: item.pubDate ? new Date(item.pubDate).toISOString() : null,
-          is_featured: false,
-        })
-      }
-    } catch (err) {
-      console.error(`RSS fetch failed for ${feed.source}:`, err.message)
+async function fetchFeed(feed) {
+  try {
+    const res = await fetch(feed.url, {
+      headers: { 'User-Agent': 'AgentCrush/1.0 RSS Reader' },
+      signal: AbortSignal.timeout(8000),
+    })
+    if (!res.ok) return []
+    const xml = await res.text()
+    const items = extractAllItems(xml)
+    const results = []
+    for (const itemXml of items.slice(0, 20)) {
+      const title = extractTag(itemXml, 'title')
+      const link = extractTag(itemXml, 'link') || extractTag(itemXml, 'guid')
+      const pubDate = extractTag(itemXml, 'pubDate')
+      const description = extractTag(itemXml, 'description')
+      if (!title || !link) continue
+      if (!isAgentRelevant(title + ' ' + description)) continue
+      if (!link.startsWith('http')) continue
+      results.push({
+        source: feed.source,
+        headline: title.slice(0, 200),
+        url: link,
+        summary: description?.slice(0, 300) || null,
+        published_at: pubDate ? new Date(pubDate).toISOString() : null,
+        is_featured: false,
+      })
     }
+    return results
+  } catch (err) {
+    console.error('Feed failed ' + feed.source + ':', err.message)
+    return []
+  }
+}
+
+export async function GET() {
+  const allItems = []
+  for (const feed of RSS_FEEDS) {
+    const items = await fetchFeed(feed)
+    allItems.push(...items)
   }
 
   if (allItems.length === 0) {
     return Response.json({ inserted: 0, message: 'No agent-relevant items found' })
   }
 
-  // Sort by published_at desc, take top 20
   allItems.sort((a, b) => {
     if (!a.published_at) return 1
     if (!b.published_at) return -1
@@ -66,23 +93,22 @@ export async function GET() {
   })
 
   const top20 = allItems.slice(0, 20)
-
-  // Mark first item as featured
   top20[0].is_featured = true
 
-  // Upsert — skip duplicates by url
   const { data, error } = await supabase
     .from('news_items')
     .upsert(top20, { onConflict: 'url', ignoreDuplicates: true })
     .select('id')
 
   if (error) {
-    console.error('news_items upsert error:', error)
+    console.error('upsert error:', error)
     return Response.json({ error: error.message }, { status: 500 })
   }
 
-  // Keep only 50 most recent items to avoid table bloat
   await supabase.rpc('cleanup_old_news')
 
-  return Response.json({ inserted: data?.length ?? 0, total_found: allItems.length })
+  return Response.json({
+    inserted: data?.length ?? 0,
+    total_found: allItems.length,
+  })
 }
