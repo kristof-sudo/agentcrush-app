@@ -120,67 +120,77 @@ export default function AgentIntelBar({ items = [], updatedAt = null }) {
       <div className="flex flex-col sm:flex-row gap-0">
 
         {/* LEFT: Featured article (38%) */}
-        <div className="sm:w-[38%] p-2 border-b sm:border-b-0 sm:border-r border-white/[0.05]">
-          <div className="relative rounded overflow-hidden mb-2" style={{ height: 120 }}>
-            <div
-              className="absolute inset-0"
-              style={{ background: 'linear-gradient(135deg, #3d0066 0%, #0f001a 100%)' }}
-            />
-            <div
-              className="absolute inset-0 opacity-20"
-              style={{ backgroundImage: 'radial-gradient(circle, rgba(232,121,249,0.4) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
-            />
-            <span className="absolute top-2 left-2 font-mono text-[8px] font-bold tracking-widest text-[rgba(0,212,255,0.9)] bg-[rgba(0,0,0,0.6)] px-1.5 py-0.5 rounded border border-[rgba(0,212,255,0.3)]">
-              FEATURED
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <SourceBadge source={featured.source} />
-          </div>
-          {featured.url ? (
-            <a href={featured.url} target="_blank" rel="noreferrer noopener" className="block group">
-              <p className="font-mono text-[11px] text-white/80 leading-snug mb-1 group-hover:text-[#e879f9] transition-colors">{featured.headline}</p>
+        {(() => {
+          const featuredInner = (
+            <>
+              <div className="relative rounded overflow-hidden mb-2" style={{ height: 120 }}>
+                <div
+                  className="absolute inset-0"
+                  style={{ background: 'linear-gradient(135deg, #3d0066 0%, #0f001a 100%)' }}
+                />
+                <div
+                  className="absolute inset-0 opacity-20"
+                  style={{ backgroundImage: 'radial-gradient(circle, rgba(232,121,249,0.4) 1px, transparent 1px)', backgroundSize: '16px 16px' }}
+                />
+                <span className="absolute top-2 left-2 font-mono text-[8px] font-bold tracking-widest text-[rgba(0,212,255,0.9)] bg-[rgba(0,0,0,0.6)] px-1.5 py-0.5 rounded border border-[rgba(0,212,255,0.3)]">
+                  FEATURED
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <SourceBadge source={featured.source} />
+              </div>
+              <p className="font-mono text-[11px] text-white/80 leading-snug mb-1">{featured.headline}</p>
+              <span className="font-mono text-[10px] text-white/25">
+                {featured.published_at ? timeAgo(featured.published_at) : featured.time || ''}
+              </span>
+            </>
+          )
+          return featured.url ? (
+            <a
+              href={featured.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sm:w-[38%] p-2 border-b sm:border-b-0 sm:border-r border-white/[0.05] hover:bg-white/[0.02] transition-colors"
+              style={{ display: 'block', cursor: 'pointer', textDecoration: 'none' }}
+            >
+              {featuredInner}
             </a>
           ) : (
-            <p className="font-mono text-[11px] text-white/80 leading-snug mb-1">{featured.headline}</p>
-          )}
-          <span className="font-mono text-[10px] text-white/25">
-            {featured.published_at ? timeAgo(featured.published_at) : featured.time || ''}
-          </span>
-        </div>
+            <div className="sm:w-[38%] p-2 border-b sm:border-b-0 sm:border-r border-white/[0.05]">
+              {featuredInner}
+            </div>
+          )
+        })()}
 
         {/* RIGHT: 4 headlines (62%) */}
         <div className="flex-1 divide-y divide-white/[0.04]">
           {headlines.map((item) => {
             const displayTime = item.published_at ? timeAgo(item.published_at) : item.time || ''
-            const content = (
-              <>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <SourceBadge source={item.source} />
-                  <span className="font-mono text-[9px] text-white/20 tabular-nums">{displayTime}</span>
-                </div>
-                <p className="font-mono text-[11px] text-white/65 leading-snug group-hover:text-[#e879f9] transition-colors">
-                  {item.headline}
-                </p>
-              </>
-            )
-            return item.url ? (
-              <a
-                key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="group flex items-start gap-2 px-3 py-2 hover:bg-white/[0.02] transition-colors"
-              >
-                <div className="flex-1 min-w-0">{content}</div>
-                <span className="font-mono text-[10px] text-white/15 shrink-0 mt-1">›</span>
-              </a>
-            ) : (
+            return (
               <div
                 key={item.id}
-                className="group flex items-start gap-2 px-3 py-2 hover:bg-white/[0.02] transition-colors cursor-default"
+                className="group flex items-start gap-2 px-3 py-2 hover:bg-white/[0.02] transition-colors"
+                style={{ cursor: item.url ? 'pointer' : 'default' }}
               >
-                <div className="flex-1 min-w-0">{content}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <SourceBadge source={item.source} />
+                    <span className="font-mono text-[9px] text-white/20 tabular-nums">{displayTime}</span>
+                  </div>
+                  {item.url ? (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-[11px] text-white/65 leading-snug hover:text-[#e879f9] hover:underline transition-colors"
+                      style={{ color: 'inherit', textDecoration: 'none' }}
+                    >
+                      {item.headline}
+                    </a>
+                  ) : (
+                    <p className="font-mono text-[11px] text-white/65 leading-snug">{item.headline}</p>
+                  )}
+                </div>
                 <span className="font-mono text-[10px] text-white/15 shrink-0 mt-1">›</span>
               </div>
             )
