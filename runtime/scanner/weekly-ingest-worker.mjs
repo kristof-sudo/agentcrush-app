@@ -71,16 +71,22 @@ async function loadEnvFiles(paths) {
 // ── Skip filter (mirrors github-indexer-worker.mjs, min stars raised to 10) ──
 
 const SKIP_KEYWORDS = [
-  'tutorial', 'awesome-list', 'awesome list', 'collection', 'cheatsheet',
+  'tutorial', 'for-beginners', 'beginners', 'learn-', 'learn', 'hello-agents',
+  'awesome-list', 'awesome list', 'collection', 'cheatsheet',
   'cheat sheet', 'course', 'bootcamp', 'learning', 'book', 'reading',
   'notes', 'template', 'boilerplate', 'starter kit', 'sample', 'example',
   'demo', 'playground', 'study', 'exercises', 'interview', 'quiz',
   'dataset', 'benchmark', 'survey', 'paper', 'arxiv',
+  'chattts', 'tts', 'text-to-speech',
+  'fine-tuning', 'fine_tuning', 'training', 'chinese',
 ];
+
+const MAX_STARS = 200_000;
 
 function shouldSkip(repo) {
   if (!repo.description || repo.description.length < 10) return true;
   if (repo.stars < MIN_STARS) return true;
+  if (repo.stars > MAX_STARS) return true;
   const desc = repo.description.toLowerCase();
   const name = repo.name.toLowerCase();
   for (const kw of SKIP_KEYWORDS) {
@@ -193,15 +199,25 @@ async function main() {
   // ── Step 2: Select weekly batch ────────────────────────────────────────────
 
   console.log('── Step 2: Select weekly batch ──');
-  const { data: batch, error: batchErr } = await supabase
+  // Fetch a wide pool so we can re-apply shouldSkip() against the full table —
+  // older rows inserted by github-indexer-worker.mjs used looser filters and
+  // didn't go through shouldSkip(), so they need a second pass here.
+  const { data: pool, error: batchErr } = await supabase
     .from('github_raw_agents')
     .select('*')
     .eq('imported', false)
     .order('stars', { ascending: false })
-    .limit(BATCH_LIMIT);
+    .limit(BATCH_LIMIT * 10);
 
   if (batchErr) throw new Error(`Failed to fetch batch: ${batchErr.message}`);
-  console.log(`Selected ${batch.length} unimported candidates (top ${BATCH_LIMIT} by stars)\n`);
+
+  const batch = pool.filter(raw => !shouldSkip({
+    description: raw.description,
+    stars:       raw.stars,
+    name:        raw.name,
+  })).slice(0, BATCH_LIMIT);
+
+  console.log(`Pool: ${pool.length} unimported rows — after re-filter: ${batch.length} candidates\n`);
 
   // ── Dry run exit ───────────────────────────────────────────────────────────
 
