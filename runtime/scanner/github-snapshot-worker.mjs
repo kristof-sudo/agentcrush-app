@@ -152,12 +152,133 @@ async function main() {
     console.log('signals emitted:', signalResult);
   }
 
+  const { data: xSignalResult, error: xSignalError } =
+    await supabase.rpc('process_x_signals');
+
+  if (xSignalError) {
+    console.error('x signal processing failed', xSignalError);
+  } else {
+    console.log('x signals emitted:', xSignalResult);
+  }
+
+  const { data: relSignalResult, error: relSignalError } =
+    await supabase.rpc('process_relationship_signals');
+
+  if (relSignalError) {
+    console.error('relationship signal processing failed', relSignalError);
+  } else {
+    console.log('relationship signals emitted:', relSignalResult);
+  }
+
   const { error: rankingError } = await supabase.rpc('recalc_rankings');
 
   if (rankingError) {
     console.error('ranking refresh failed', rankingError);
   } else {
     console.log('rankings refreshed');
+
+    // --- CHANGE 1: Write per-agent daily snapshot ---
+    // Reads the freshly-computed rankings table and upserts one row per agent
+    // into agent_daily_snapshots keyed on (agent_id, snapshot_date).
+    // Idempotent: reruns within the same UTC day overwrite scores in place.
+    const todayDate = new Date().toISOString().split('T')[0];
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().split('T')[0];
+
+    const { data: rankingRows, error: rankFetchError } = await supabase
+      .from('rankings')
+      .select('agent_id, score_total, score_visibility, score_reputation, global_rank');
+
+    if (rankFetchError) {
+      console.error('snapshot: failed to fetch rankings', rankFetchError);
+    } else {
+      const snapshotRows = (rankingRows || []).map(r => ({
+        agent_id:         r.agent_id,
+        snapshot_date:    todayDate,
+        score_total:      r.score_total,
+        score_visibility: r.score_visibility,
+        score_reputation: r.score_reputation,
+        global_rank:      r.global_rank,
+      }));
+
+      const { error: snapshotUpsertError } = await supabase
+        .from('agent_daily_snapshots')
+        .upsert(snapshotRows, { onConflict: 'agent_id,snapshot_date' });
+
+      if (snapshotUpsertError) {
+        console.error('snapshot write failed', snapshotUpsertError);
+      } else {
+        console.log(`snapshots written: ${snapshotRows.length}`);
+
+        // --- CHANGE 2: Compute and write weekly_delta ---
+        // Strategy (3 queries total, not N):
+        //   1. Batch-fetch 7-day-ago snapshots for all agents.
+        //   2. For agents missing a 7d row, batch-fetch their oldest prior
+        //      snapshot as a fallback baseline (so new agents still show delta).
+        //   3. Loop: compute delta, UPDATE agents.weekly_delta per agent.
+        // Agents with zero historical snapshots are skipped (weekly_delta stays null).
+        const agentIds = snapshotRows.map(r => r.agent_id);
+        const todayScoreById = new Map(
+          snapshotRows.map(r => [r.agent_id, r.score_total ?? 0])
+        );
+
+        // Query 1: 7-day-ago snapshots (one round-trip for all agents)
+        const { data: snaps7d } = await supabase
+          .from('agent_daily_snapshots')
+          .select('agent_id, score_total')
+          .eq('snapshot_date', sevenDaysAgo)
+          .in('agent_id', agentIds);
+
+        const snap7dById = new Map(
+          (snaps7d || []).map(s => [s.agent_id, s.score_total ?? 0])
+        );
+
+        // Query 2: oldest prior snapshot for agents missing a 7d row
+        const missingIds = agentIds.filter(id => !snap7dById.has(id));
+        const oldestById = new Map();
+
+        if (missingIds.length > 0) {
+          const { data: oldestSnaps } = await supabase
+            .from('agent_daily_snapshots')
+            .select('agent_id, score_total, snapshot_date')
+            .in('agent_id', missingIds)
+            .lt('snapshot_date', todayDate)
+            .order('snapshot_date', { ascending: true });
+
+          for (const snap of (oldestSnaps || [])) {
+            if (!oldestById.has(snap.agent_id)) {
+              oldestById.set(snap.agent_id, snap.score_total ?? 0);
+            }
+          }
+        }
+
+        // Compute deltas and write back to agents.weekly_delta
+        let updatedCount = 0;
+        let noBaselineCount = 0;
+
+        for (const agentId of agentIds) {
+          const todayScore = todayScoreById.get(agentId) ?? 0;
+          const baseline = snap7dById.has(agentId)
+            ? snap7dById.get(agentId)
+            : oldestById.get(agentId) ?? null;
+
+          if (baseline === null) {
+            noBaselineCount++;
+            continue;
+          }
+
+          const delta = todayScore - baseline;
+
+          const { error: deltaError } = await supabase
+            .from('agents')
+            .update({ weekly_delta: delta })
+            .eq('id', agentId);
+
+          if (!deltaError) updatedCount++;
+        }
+
+        console.log(`weekly_delta updated: ${updatedCount} agents, ${noBaselineCount} had no historical baseline`);
+      }
+    }
   }
 }
 
