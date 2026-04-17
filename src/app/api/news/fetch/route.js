@@ -113,7 +113,6 @@ export async function GET() {
   })
 
   const top20 = allItems.slice(0, 20)
-  top20[0].is_featured = true
 
   // Fetch og:image for top 3 items only
   for (let i = 0; i < Math.min(3, top20.length); i++) {
@@ -130,10 +129,23 @@ export async function GET() {
     return Response.json({ error: error.message }, { status: 500 })
   }
 
+  // Auto-select featured: unfeature all, then feature the most recent article
+  await supabase.from('news_items').update({ is_featured: false }).eq('is_featured', true)
+  const { data: newest } = await supabase
+    .from('news_items')
+    .select('id')
+    .order('published_at', { ascending: false })
+    .limit(1)
+    .single()
+  if (newest?.id) {
+    await supabase.from('news_items').update({ is_featured: true }).eq('id', newest.id)
+  }
+
   await supabase.rpc('cleanup_old_news')
 
   return Response.json({
     inserted: data?.length ?? 0,
     total_found: allItems.length,
+    featured_id: newest?.id ?? null,
   })
 }
