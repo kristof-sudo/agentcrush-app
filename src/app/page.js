@@ -282,12 +282,20 @@ export default async function Home() {
     .limit(1)
     .single()
 
-  const { data: newsItems } = await supabase
+  const { data: rawNewsItems } = await supabase
     .from('news_items')
     .select('id, source, headline, url, summary, published_at, is_featured, created_at')
     .eq('is_featured', false)
     .order('published_at', { ascending: false })
-    .limit(5)
+    .limit(25)
+
+  // Deduplicate to max 1 item per source so no single outlet dominates
+  const _seenSources = new Set()
+  const newsItems = (rawNewsItems || []).filter((item) => {
+    if (_seenSources.has(item.source)) return false
+    _seenSources.add(item.source)
+    return true
+  }).slice(0, 5)
 
   let signalsToday = (eventsTodayCount || 0) + xPostsToday + scheduledToday
   const signalsYesterday = (eventsYesterdayCount || 0)
