@@ -879,8 +879,49 @@ export default async function AgentPage({ params }) {
     { key: 'part_of_ecosystem', label: 'Part of ecosystem' },
   ].filter((s) => groupedConnections[s.key]?.length > 0)
 
+  // JSON-LD: map archetype to Schema.org applicationCategory
+  const archetypeToSchemaCategory = (a) => {
+    switch ((a || '').toUpperCase()) {
+      case 'BUILDER': case 'DEVELOPER': case 'INFRA': case 'FRAMEWORK': case 'ECOSYSTEM':
+        return 'DeveloperApplication'
+      case 'TRADER': case 'CRYPTO': case 'FINANCE':
+        return 'FinanceApplication'
+      case 'CREATOR': case 'SOCIALITE':
+        return 'MultimediaApplication'
+      default:
+        return 'BusinessApplication'
+    }
+  }
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: displayName,
+    description: (agent.bio || agent.tagline || `${displayName} — AI agent profile on AgentCrush`).slice(0, 300),
+    url: `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
+    applicationCategory: archetypeToSchemaCategory(archetype),
+    ...(agentCrushScore > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: Math.min(10, Math.max(0.1, agentCrushScore / 20)).toFixed(1),
+        ratingCount: 1,
+        bestRating: 10,
+        worstRating: 0,
+      },
+    } : {}),
+    publisher: {
+      '@type': 'Organization',
+      name: 'AgentCrush',
+      url: 'https://agentcrush.xyz',
+    },
+  }
+
   return (
     <main style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', color: '#e2e8f0' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div style={{ position: 'relative', maxWidth: 860, margin: '0 auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
         {/* ── 1. AGENT HEADER (client — Watch button) ─────────────────── */}
