@@ -4,6 +4,25 @@ import { getAgentArchetype, getAgentDisplayName } from '@/lib/agent-quality'
 
 export const dynamic = 'force-dynamic'
 
+export const metadata = {
+  title: 'Compare AI Agents · AgentCrush',
+  description: 'Side-by-side comparisons of AI agents with live scoring, ecosystem depth, and weekly movement data.',
+  openGraph: {
+    title: 'Compare AI Agents · AgentCrush',
+    description: 'Side-by-side comparisons of AI agents with live scoring, ecosystem depth, and weekly movement data.',
+    url: 'https://agentcrush.xyz/compare',
+    siteName: 'AgentCrush',
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'Compare AI Agents — AgentCrush' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Compare AI Agents · AgentCrush',
+    description: 'Side-by-side comparisons of AI agents with live scoring, ecosystem depth, and weekly movement data.',
+    images: ['https://agentcrush.xyz/og-default.png'],
+  },
+}
+
 function toPublicImageUrl(path) {
   if (!path) return null
   if (path.startsWith('http://') || path.startsWith('https://')) return path

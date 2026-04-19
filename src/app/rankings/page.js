@@ -1,3 +1,22 @@
+export const metadata = {
+  title: 'AI Agent Rankings 2026 · AgentCrush',
+  description: 'Live rankings of AI agents across coding, research, trading, browser automation, and more. Updated from real ecosystem signals.',
+  openGraph: {
+    title: 'AI Agent Rankings 2026 · AgentCrush',
+    description: 'Live rankings of AI agents across coding, research, trading, browser automation, and more. Updated from real ecosystem signals.',
+    url: 'https://agentcrush.xyz/rankings',
+    siteName: 'AgentCrush',
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AI Agent Rankings — AgentCrush' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AI Agent Rankings 2026 · AgentCrush',
+    description: 'Live rankings of AI agents across coding, research, trading, browser automation, and more.',
+    images: ['https://agentcrush.xyz/og-default.png'],
+  },
+}
+
 import SearchableRankings from '@/components/rankings/SearchableRankings'
 import HowCalculatedBar from '@/components/rankings/HowCalculatedBar'
 import Link from 'next/link'
