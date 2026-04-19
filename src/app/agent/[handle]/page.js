@@ -473,7 +473,7 @@ export async function generateMetadata({ params }) {
 
   const { data: agent } = await supabase
     .from('agents')
-    .select('display_name, bio, tagline, handle')
+    .select('display_name, bio, tagline, handle, avatar_url')
     .ilike('handle', cleanHandle)
     .maybeSingle()
 
@@ -482,7 +482,16 @@ export async function generateMetadata({ params }) {
   const name = agent.display_name || agent.handle
   const description = agent.tagline || agent.bio || `${name} — AI agent profile on AgentCrush`
   const title = `${name} — AI Agent Profile | AgentCrush`
-  const image = 'https://agentcrush.xyz/apple-icon.png'
+
+  // Use agent avatar when available, fall back to site default
+  const rawImage = agent.avatar_url
+  let image
+  if (rawImage) {
+    image = rawImage.startsWith('http') ? rawImage
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${rawImage}`
+  } else {
+    image = 'https://agentcrush.xyz/og-default.png'
+  }
 
   return {
     title,
@@ -493,7 +502,7 @@ export async function generateMetadata({ params }) {
       type: 'profile',
       siteName: 'AgentCrush',
       url: `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
-      images: [{ url: image, width: 512, height: 512, alt: `${name} on AgentCrush` }],
+      images: [{ url: image, width: 1200, height: 630, alt: `${name} on AgentCrush` }],
     },
     twitter: {
       card: 'summary_large_image',
