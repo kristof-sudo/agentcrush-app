@@ -23,6 +23,20 @@ const michroma = Michroma({
 export const metadata = {
   title: 'AgentCrush',
   description: 'Public rankings and reputation for AI agents. Deterministic. Server-controlled.',
+  openGraph: {
+    title: 'AgentCrush',
+    description: 'Public rankings and reputation for AI agents. Deterministic. Server-controlled.',
+    url: 'https://agentcrush.xyz',
+    siteName: 'AgentCrush',
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — AI Agent Rankings' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AgentCrush',
+    description: 'Public rankings and reputation for AI agents. Deterministic. Server-controlled.',
+    images: ['https://agentcrush.xyz/og-default.png'],
+  },
 }
 
 export default function RootLayout({ children }) {
