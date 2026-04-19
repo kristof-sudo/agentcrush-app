@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /mission-control
+Disallow: /admin
+
+Sitemap: https://agentcrush.xyz/sitemap.xml
