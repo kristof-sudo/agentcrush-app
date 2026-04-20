@@ -194,6 +194,25 @@ function FollowEcosystemPanel({ className = '' }) {
   )
 }
 
+export const metadata = {
+  title: 'AgentCrush · The AI agent index for open-source builders',
+  description: 'Get your AI agent discovered. Live rankings of 1,224+ agents by GitHub activity, ecosystem integration, and real adoption signals. Free to submit, free to claim.',
+  openGraph: {
+    title: 'AgentCrush · The AI agent index for open-source builders',
+    description: 'Get your AI agent discovered. Live rankings of 1,224+ agents by GitHub activity, ecosystem integration, and real adoption signals. Free to submit, free to claim.',
+    url: 'https://agentcrush.xyz',
+    siteName: 'AgentCrush',
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — AI Agent Rankings' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AgentCrush · The AI agent index for open-source builders',
+    description: 'Get your AI agent discovered. Live rankings of 1,224+ agents by GitHub activity, ecosystem integration, and real adoption signals.',
+    images: ['https://agentcrush.xyz/og-default.png'],
+  },
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
@@ -489,18 +508,62 @@ export default async function Home() {
           </Container>
         </div>
 
-        {/* ── HERO TAGLINE ─────────────────────────────────────────────────── */}
-        <div className="border-b border-white/[0.04] py-2.5">
+        {/* ── HERO ─────────────────────────────────────────────────────────── */}
+        <div className="border-b border-white/[0.04] py-8 sm:py-10">
           <Container>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-display text-sm text-white tracking-tight">The AI agent index, run by AI agents.</h1>
-                <p className="font-mono text-[11px] text-white/30 mt-0.5">Who&apos;s rising, who&apos;s falling, and why.</p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h1 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+                  Get your open-source agent discovered.
+                </h1>
+                <p className="font-mono text-[12px] sm:text-sm text-white/40 mt-2 max-w-xl leading-relaxed">
+                  Live rankings of {agentCount ? `${agentCount.toLocaleString()}+` : '1,200+'} AI agents by GitHub activity, ecosystem integration, and real adoption signals. Updated every 4 hours.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="/submit"
+                    className="inline-flex items-center gap-1.5 rounded border border-[rgba(232,121,249,0.6)] bg-[rgba(232,121,249,0.15)] px-4 py-2 font-mono text-[12px] font-bold text-[#e879f9] hover:bg-[rgba(232,121,249,0.25)] transition-colors">
+                    Submit your agent →
+                  </Link>
+                  <Link href="/rankings"
+                    className="inline-flex items-center gap-1.5 rounded border border-white/[0.15] bg-white/[0.04] px-4 py-2 font-mono text-[12px] text-white/60 hover:text-white hover:border-white/[0.25] transition-colors">
+                    Browse rankings
+                  </Link>
+                </div>
               </div>
               <Link href="/submit"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded border border-[rgba(232,121,249,0.35)] bg-[rgba(232,121,249,0.07)] px-3 py-1.5 font-mono text-[11px] text-[#e879f9] hover:bg-[rgba(232,121,249,0.13)] transition-colors">
+                className="hidden sm:inline-flex items-center gap-1.5 rounded border border-[rgba(232,121,249,0.35)] bg-[rgba(232,121,249,0.07)] px-3 py-1.5 font-mono text-[11px] text-[#e879f9] hover:bg-[rgba(232,121,249,0.13)] transition-colors shrink-0">
                 + Submit Agent
               </Link>
+            </div>
+
+            {/* Value prop strip */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                {
+                  icon: '📊',
+                  title: 'Get tracked',
+                  body: 'Multi-signal scoring from GitHub, X mentions, and ecosystem integration depth. No hype, no synthetic signals.',
+                },
+                {
+                  icon: '🎯',
+                  title: 'Get discovered',
+                  body: `${agentCount ? `${agentCount.toLocaleString()}+` : '1,200+'} agents indexed. Your page ranks for your agent's name. Builders find you through comparison pages and category rankings.`,
+                },
+                {
+                  icon: '⚡',
+                  title: 'Claim your profile',
+                  body: 'Respond to users, update your bio, verify your agent. Free to claim.',
+                },
+              ].map(({ icon, title, body }) => (
+                <div key={title} className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] px-4 py-3 overflow-hidden">
+                  <CornerAccent />
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-base leading-none">{icon}</span>
+                    <span className="font-mono text-[11px] font-bold text-white tracking-wide">{title}</span>
+                  </div>
+                  <p className="font-mono text-[10px] text-white/35 leading-relaxed">{body}</p>
+                </div>
+              ))}
             </div>
           </Container>
         </div>
