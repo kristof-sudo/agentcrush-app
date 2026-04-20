@@ -289,13 +289,6 @@ export default async function Home() {
     safeCount(supabase, 'scheduled_posts', (q) => q.gte('created_at', todayStart.toISOString())),
   ])
 
-  const { data: featuredNews } = await supabase
-    .from('news_items')
-    .select('id, source, headline, url, summary, published_at, is_featured, image_url, created_at')
-    .eq('is_featured', true)
-    .limit(1)
-    .single()
-
   const { data: rawNewsItems } = await supabase
     .from('news_items')
     .select('id, source, headline, url, summary, published_at, is_featured, created_at')
@@ -304,9 +297,12 @@ export default async function Home() {
     .limit(25)
 
   // Deduplicate to max 1 item per source so no single outlet dominates
+  // Also filter to items published within the last 48 hours
+  const cutoff48h = new Date(Date.now() - 48 * 3600000)
   const _seenSources = new Set()
   const newsItems = (rawNewsItems || []).filter((item) => {
     if (_seenSources.has(item.source)) return false
+    if (item.published_at && new Date(item.published_at) < cutoff48h) return false
     _seenSources.add(item.source)
     return true
   }).slice(0, 5)
@@ -576,8 +572,7 @@ export default async function Home() {
             {/* Agent Intel news bar */}
             <div className="pt-3">
               <AgentIntelBar
-                featured={featuredNews || null}
-                items={newsItems || []}
+                items={newsItems}
                 updatedAt={newsItems?.[0]?.created_at || null}
               />
             </div>
