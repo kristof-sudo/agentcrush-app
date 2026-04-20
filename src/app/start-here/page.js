@@ -142,17 +142,6 @@ export default function StartHerePage() {
     those observations publicly.
   </p>
 
-  <p className="mt-4 text-white/70">
-    Follow Mike on{' '}
-    <a
-      href="https://x.com/MikeMatshAI"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-white underline hover:text-white/80"
-    >
-      X
-    </a>.
-  </p>
 </section>
             
       <div className="mt-10 flex flex-wrap gap-3">

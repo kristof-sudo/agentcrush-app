@@ -171,14 +171,9 @@ function FollowEcosystemPanel({ className = '' }) {
         <CornerAccent />
         <h2 className="font-mono text-sm font-bold text-white">Follow the ecosystem</h2>
         <p className="font-mono mt-1 max-w-xl text-[11px] text-white/35">
-          Mike posts ecosystem signals, rank moves, and agent intel weekly.
+          Track the AI agent ecosystem — rank moves, new launches, and signal intelligence.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer noopener"
-            className="inline-flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white hover:border-white/[0.15] transition-colors">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-            Mike on X
-          </a>
           <a href="https://warpcast.com/agentcrush" target="_blank" rel="noreferrer noopener"
             className="inline-flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:text-white hover:border-white/[0.15] transition-colors">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.24.24H5.76C2.5789.24 0 2.8188 0 6v12c0 3.1811 2.5789 5.76 5.76 5.76h12.48c3.1812 0 5.76-2.5789 5.76-5.76V6C24 2.8188 21.4212.24 18.24.24m.8155 17.1662v.504c.2868-.0256.5458.1905.5439.479v.5688h-5.1437v-.5688c-.0019-.2885.2576-.5047.5443-.479v-.504c0-.22.1525-.402.358-.458l-.0095-4.3645c-.1589-1.7366-1.6402-3.0979-3.4435-3.0979-1.8038 0-3.2846 1.3613-3.4435 3.0979l-.0096 4.3578c.2276.0424.5318.2083.5395.4648v.504c.2863-.0256.5457.1905.5438.479v.5688H4.3915v-.5688c-.0019-.2885.2575-.5047.5438-.479v-.504c0-.2529.2011-.4548.4536-.4724v-7.895h-.4905L4.2898 7.008l2.6405-.0005V5.0419h9.9495v1.9656h2.8219l-.6091 2.0314h-.4901v7.8949c.2519.0177.453.2195.453.4724"/></svg>
@@ -402,19 +397,6 @@ export default async function Home() {
   )
 
   const ecosystemFeedRows = buildContentFeed(deduped, recentAgents || [], 30)
-
-  // Mike's latest posts
-  let mikePosts = []
-  try {
-    const { data } = await supabase
-      .from('mike_posts')
-      .select('id, content, published_at, tweet_url')
-      .order('published_at', { ascending: false })
-      .limit(8)
-    mikePosts = data ?? []
-  } catch {
-    mikePosts = []
-  }
 
   // Archetype counts for sectors
   const archetypeCounts = {}
@@ -719,7 +701,7 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* ── RIGHT COL (4): Signal Feed + Mike's Latest ── */}
+              {/* ── RIGHT COL (4): Signal Feed + Submit CTA + Follow ── */}
               <div className="col-span-12 lg:col-span-4 flex flex-col gap-3" style={{alignSelf:'start'}}>
 
                 {/* Signal Feed */}
@@ -760,61 +742,6 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Mike's Latest */}
-                <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden flex flex-col lg:flex-1" style={{minHeight: 260}}>
-                  <CornerAccent />
-                  <div className="flex items-center gap-1.5 border-b border-white/[0.06] px-3 py-2 shrink-0">
-                    <svg className="w-3 h-3 text-white/50 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/>
-                    </svg>
-                    <span className="font-mono text-xs font-bold text-white">MIKE&apos;S LATEST</span>
-                    <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer noopener"
-                      className="ml-auto font-mono text-[10px] text-white/25 hover:text-white/50 transition-colors">
-                      @MikeMatshAI
-                    </a>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-2 space-y-2" style={{maxHeight: 520}}>
-                    {mikePosts.length > 0 ? mikePosts.slice(0, 5).map((post) => (
-                      <div key={post.id} className="rounded border border-white/[0.06] bg-white/[0.02] p-2.5">
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <div className="h-5 w-5 rounded-full bg-[rgba(232,121,249,0.2)] flex items-center justify-center shrink-0">
-                            <span className="font-mono text-[9px] font-bold text-[#e879f9]">M</span>
-                          </div>
-                          <span className="font-mono text-[10px] font-semibold text-white/70">Mike</span>
-                          <span className="ml-auto font-mono text-[9px] text-white/25 tabular-nums shrink-0">
-                            {formatRelativeTime(post.published_at)}
-                          </span>
-                        </div>
-                        <p className="font-mono text-[11px] text-white/70 leading-relaxed break-words">
-                          {post.content.length > 240 ? post.content.slice(0, 237) + '…' : post.content}
-                        </p>
-                        {post.tweet_url ? (
-                          <a href={post.tweet_url} target="_blank" rel="noreferrer noopener"
-                            className="mt-1.5 inline-flex items-center gap-1 font-mono text-[9px] text-white/25 hover:text-white/50 transition-colors">
-                            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/>
-                            </svg>
-                            View on X
-                          </a>
-                        ) : null}
-                      </div>
-                    )) : (
-                      <div className="flex flex-col items-center justify-center py-8 px-3 text-center">
-                        <div className="h-8 w-8 rounded-full bg-[rgba(232,121,249,0.15)] flex items-center justify-center mb-3">
-                          <span className="font-mono text-sm font-bold text-[#e879f9]">M</span>
-                        </div>
-                        <p className="font-mono text-[11px] text-white/35 leading-relaxed mb-3">
-                          Mike posts daily insights about the AI agent ecosystem.
-                        </p>
-                        <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer noopener"
-                          className="inline-flex items-center gap-1.5 rounded border border-white/[0.1] bg-white/[0.03] px-3 py-1.5 font-mono text-[10px] text-white/50 hover:text-white/80 transition-colors">
-                          Follow @MikeMatshAI
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 {/* Submit CTA */}
                 <Link href="/submit"
                   className="relative rounded-lg border border-[rgba(232,121,249,0.35)] bg-[rgba(232,121,249,0.06)] px-3 py-2.5 hover:bg-[rgba(232,121,249,0.12)] transition-colors block group overflow-hidden">
@@ -846,7 +773,6 @@ export default async function Home() {
               <div className="mt-1 flex justify-center gap-5">
                 <a href="/about" className="font-mono text-[10px] text-white/20 hover:text-white/40 transition-colors">About</a>
                 <a href="/terms" className="font-mono text-[10px] text-white/20 hover:text-white/40 transition-colors">Terms</a>
-                <a href="https://x.com/MikeMatshAI" target="_blank" rel="noreferrer" className="font-mono text-[10px] text-white/20 hover:text-white/40 transition-colors">Mike on X</a>
               </div>
             </div>
           </Container>
