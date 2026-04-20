@@ -900,15 +900,20 @@ export default async function AgentPage({ params }) {
     description: (agent.bio || agent.tagline || `${displayName} — AI agent profile on AgentCrush`).slice(0, 300),
     url: `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
     applicationCategory: archetypeToSchemaCategory(archetype),
-    ...(agentCrushScore > 0 ? {
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: Math.min(10, Math.max(0.1, agentCrushScore / 20)).toFixed(1),
-        ratingCount: 1,
-        bestRating: 10,
-        worstRating: 0,
-      },
-    } : {}),
+    ...(agentCrushScore > 0 ? (() => {
+      const ratingValue = Math.min(10, Math.max(1,
+        Math.round((Math.log10(agentCrushScore / 14) * 2.8) * 10) / 10
+      ))
+      return {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: ratingValue.toFixed(1),
+          ratingCount: 1,
+          bestRating: 10,
+          worstRating: 1,
+        },
+      }
+    })() : {}),
     publisher: {
       '@type': 'Organization',
       name: 'AgentCrush',
