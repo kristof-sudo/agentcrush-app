@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getAgentArchetype, getAgentDisplayName } from '@/lib/agent-quality'
@@ -30,9 +30,9 @@ function catStyle(archetype) {
 
 // ── Rank badge styles (top 3 only) ─────────────────────────────────────────
 const RANK_STYLES = {
-  1: { border: '#f0a500', bg: 'rgba(240,165,0,0.055)',  glow: '#f0a500', color: '#f0a500', badgeBg: 'rgba(240,165,0,0.25)' },
-  2: { border: '#c0c0c0', bg: 'rgba(192,192,192,0.04)', glow: '#c0c0c0', color: '#e8e8e8', badgeBg: 'rgba(192,192,192,0.2)' },
-  3: { border: '#cd7f32', bg: 'rgba(205,127,50,0.05)',  glow: '#cd7f32', color: '#e09050', badgeBg: 'rgba(205,127,50,0.22)' },
+  1: { border: '#e879f9', bg: 'rgba(232,121,249,0.055)', glow: '#e879f9', color: '#e879f9', badgeBg: 'rgba(232,121,249,0.2)',  leftBorder: '2px solid #e879f9' },
+  2: { border: '#39ff14', bg: 'rgba(57,255,20,0.04)',    glow: '#39ff14', color: '#39ff14', badgeBg: 'rgba(57,255,20,0.15)',   leftBorder: '2px solid rgba(57,255,20,0.5)' },
+  3: { border: '#00d4ff', bg: 'rgba(0,212,255,0.04)',    glow: '#00d4ff', color: '#00d4ff', badgeBg: 'rgba(0,212,255,0.15)',   leftBorder: '2px solid rgba(0,212,255,0.4)' },
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
@@ -56,18 +56,22 @@ function CategoryPill({ archetype }) {
   )
 }
 
-function AgentAvatar({ name, archetype, avatarUrl }) {
+function AgentAvatar({ name, archetype, avatarUrl, rank }) {
   const s = catStyle(archetype)
   const initial = (name || '?').charAt(0).toUpperCase()
+  const rankStyle = RANK_STYLES[rank]
+  const glowShadow = rankStyle
+    ? `0 0 12px ${rankStyle.color}44`
+    : `0 0 10px ${s.glow}33`
   if (avatarUrl && avatarUrl !== '/placeholder.png') {
     return (
-      <div style={{ width: 36, height: 36, borderRadius: '50%', border: `1.5px solid ${s.border}`, overflow: 'hidden', flexShrink: 0, boxShadow: `0 0 10px ${s.glow}33` }}>
+      <div style={{ width: 32, height: 32, borderRadius: 5, border: `1px solid rgba(255,255,255,0.1)`, overflow: 'hidden', flexShrink: 0, boxShadow: glowShadow }}>
         <img src={avatarUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
     )
   }
   return (
-    <div style={{ width: 36, height: 36, borderRadius: '50%', background: s.bg, border: `1.5px solid ${s.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 14, fontWeight: 700, color: s.text, boxShadow: `0 0 10px ${s.glow}33`, flexShrink: 0 }}>
+    <div style={{ width: 32, height: 32, borderRadius: 5, background: s.bg, border: `1px solid rgba(255,255,255,0.1)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 12, fontWeight: 700, color: 'white', boxShadow: glowShadow, flexShrink: 0 }}>
       {initial}
     </div>
   )
@@ -77,13 +81,13 @@ function RankBadge({ rank }) {
   const s = RANK_STYLES[rank]
   if (s) {
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: '50%', border: `2px solid ${s.color}`, background: s.badgeBg, color: s.color, fontSize: 13, fontWeight: 800, boxShadow: `0 0 12px ${s.color}88, inset 0 0 8px ${s.color}44`, fontFamily: 'inherit' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: '50%', border: `1px solid ${s.color}33`, background: s.badgeBg, color: s.color, fontSize: 11, fontWeight: 700, boxShadow: `0 0 10px ${s.color}80`, fontFamily: 'inherit', flexShrink: 0 }}>
         {rank}
       </span>
     )
   }
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)', color: '#4a5568', fontSize: 13, fontWeight: 700, fontFamily: 'inherit' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, fontFamily: 'inherit', flexShrink: 0 }}>
       {rank}
     </span>
   )
@@ -111,10 +115,12 @@ function DeltaDisplay({ delta }) {
   )
 }
 
-// ── Desktop row (needs useState for hover) ─────────────────────────────────
+// ── Desktop row ────────────────────────────────────────────────────────────
 
-function AgentRow({ r, onNavigate }) {
+function AgentRow({ r, onNavigate, delay = 0 }) {
   const [hovered, setHovered] = useState(false)
+  const [visible, setVisible] = useState(false)
+  const rowRef = useRef()
   const displayName = getAgentDisplayName(r)
   const archetype   = getAgentArchetype(r)
   const delta       = r.weekly_delta || 0
@@ -122,27 +128,38 @@ function AgentRow({ r, onNavigate }) {
   const vis = r.score_visibility ?? r.visibility_score ?? 0
   const rep = r.score_reputation ?? r.reputation_score ?? 0
 
-  // Signal data (kept for future use — not shown in V0 design)
   const tag         = getSignalTag(r.trending?.latest_event_type)
   const explanation = getRowExplanation(delta, r.trending?.latest_event_type)
   const isHot       = (delta >= 3 && !!tag) || delta >= 7
 
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setTimeout(() => setVisible(true), delay); obs.disconnect() }
+    }, { threshold: 0.1 })
+    if (rowRef.current) obs.observe(rowRef.current)
+    return () => obs.disconnect()
+  }, [delay])
+
   const rowBg = hovered
-    ? 'rgba(232,121,249,0.045)'
+    ? 'rgba(255,255,255,0.03)'
     : rankStyle ? rankStyle.bg : 'transparent'
-  const leftBorder = hovered
-    ? '3px solid #e879f9'
-    : rankStyle ? `3px solid ${rankStyle.border}` : '3px solid transparent'
-  const rowBoxShadow = hovered
-    ? 'inset 3px 0 16px rgba(232,121,249,0.12), -2px 0 12px rgba(232,121,249,0.18)'
-    : rankStyle ? `inset 3px 0 12px ${rankStyle.glow}1a` : 'none'
+  const leftBorder = rankStyle ? rankStyle.leftBorder : '2px solid transparent'
 
   return (
     <tr
+      ref={rowRef}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onNavigate}
-      style={{ background: rowBg, borderLeft: leftBorder, boxShadow: rowBoxShadow, transition: 'all 0.18s ease', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+      style={{
+        background: rowBg,
+        borderLeft: leftBorder,
+        transition: 'all 0.18s ease, opacity 0.5s ease, transform 0.5s ease',
+        cursor: 'pointer',
+        borderBottom: '1px solid rgba(255,255,255,0.04)',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'none' : 'translateY(14px)',
+      }}
     >
       {/* Rank */}
       <td style={{ padding: '14px 12px 14px 20px', width: 52, verticalAlign: 'middle' }}>
@@ -152,7 +169,7 @@ function AgentRow({ r, onNavigate }) {
       {/* Agent */}
       <td style={{ padding: '14px 12px', verticalAlign: 'middle' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <AgentAvatar name={displayName} archetype={archetype} avatarUrl={r.avatar_url} />
+          <AgentAvatar name={displayName} archetype={archetype} avatarUrl={r.avatar_url} rank={r.global_rank} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 14, fontWeight: 600, color: hovered ? '#f1f5f9' : '#cbd5e1', letterSpacing: '0.02em', transition: 'color 0.18s', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
@@ -286,10 +303,11 @@ export default function RankingTable({ rows = [] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {rows.map((r, i) => (
               <AgentRow
                 key={r.id || r.agent_id || r.handle}
                 r={r}
+                delay={i * 60}
                 onNavigate={() => router.push(`/agent/${encodeURIComponent(r.handle)}`)}
               />
             ))}
@@ -320,7 +338,7 @@ export default function RankingTable({ rows = [] }) {
               style={{ padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.04)' }}
             >
               <RankBadge rank={r.global_rank} />
-              <AgentAvatar name={displayName} archetype={archetype} avatarUrl={r.avatar_url} />
+              <AgentAvatar name={displayName} archetype={archetype} avatarUrl={r.avatar_url} rank={r.global_rank} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
                   <span style={{ fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 13, fontWeight: 600, color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

@@ -2,6 +2,8 @@ import Container from '@/components/ui/Container'
 import AgentCard from '@/components/agents/AgentCard'
 import SectorTabsAndTable from '@/components/home/SectorTabsAndTable'
 import AgentIntelBar from '@/components/home/AgentIntelBar'
+import HeroSection from '@/components/home/HeroSection'
+import IntelTicker from '@/components/home/IntelTicker'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { getSignalTag, getEventIcon, getMovementReason, formatRelativeTime } from '@/lib/why-moving'
@@ -297,12 +299,11 @@ export default async function Home() {
     .limit(25)
 
   // Deduplicate to max 1 item per source so no single outlet dominates
-  // Also filter to items published within the last 48 hours
-  const cutoff48h = new Date(Date.now() - 48 * 3600000)
+  // Also filter to items published within the last 48 hours (reuse twoDaysAgo = midnight 2 days ago ≈ 48h)
   const _seenSources = new Set()
   const newsItems = (rawNewsItems || []).filter((item) => {
     if (_seenSources.has(item.source)) return false
-    if (item.published_at && new Date(item.published_at) < cutoff48h) return false
+    if (item.published_at && new Date(item.published_at) < twoDaysAgo) return false
     _seenSources.add(item.source)
     return true
   }).slice(0, 5)
@@ -401,10 +402,6 @@ export default async function Home() {
   }
   const topSectors = Object.entries(archetypeCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
 
-  // Agent Intel News Bar — mock until Phase 3 RSS backend
-  // TODO: replace with real news_items Supabase query when Phase 3 RSS backend is built
-  const intelNews = []
-
   const rankedCount = rankingRows.filter((r) => r.score_total > 0).length
   const indexedFreshness = getIndexedFreshnessMeta(recentAgents?.[0]?.created_at)
 
@@ -487,87 +484,23 @@ export default async function Home() {
         </div>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
-        <div className="border-b border-white/[0.04] py-8 sm:py-10">
-          <Container>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h1 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
-                  Get your open-source agent discovered.
-                </h1>
-                <p className="font-mono text-[12px] sm:text-sm text-white/40 mt-2 max-w-xl leading-relaxed">
-                  Live rankings of {agentCount ? `${agentCount.toLocaleString()}+` : '1,200+'} AI agents by GitHub activity, ecosystem integration, and real adoption signals. Updated every 4 hours.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Link href="/submit"
-                    className="inline-flex items-center gap-1.5 rounded border border-[rgba(232,121,249,0.6)] bg-[rgba(232,121,249,0.15)] px-4 py-2 font-mono text-[12px] font-bold text-[#e879f9] hover:bg-[rgba(232,121,249,0.25)] transition-colors">
-                    Submit your agent →
-                  </Link>
-                  <Link href="/rankings"
-                    className="inline-flex items-center gap-1.5 rounded border border-white/[0.15] bg-white/[0.04] px-4 py-2 font-mono text-[12px] text-white/60 hover:text-white hover:border-white/[0.25] transition-colors">
-                    Browse rankings
-                  </Link>
-                </div>
-              </div>
-              <Link href="/submit"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded border border-[rgba(232,121,249,0.35)] bg-[rgba(232,121,249,0.07)] px-3 py-1.5 font-mono text-[11px] text-[#e879f9] hover:bg-[rgba(232,121,249,0.13)] transition-colors shrink-0">
-                + Submit Agent
-              </Link>
-            </div>
+        <HeroSection
+          agentCount={agentCount}
+          signalsToday={signalsToday}
+          rankedCount={rankedCount}
+          topMover={topMover}
+        />
 
-            {/* Value prop strip */}
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                {
-                  icon: '📊',
-                  title: 'Get tracked',
-                  body: 'Multi-signal scoring from GitHub, X mentions, and ecosystem integration depth. No hype, no synthetic signals.',
-                },
-                {
-                  icon: '🎯',
-                  title: 'Get discovered',
-                  body: `${agentCount ? `${agentCount.toLocaleString()}+` : '1,200+'} agents indexed. Your page ranks for your agent's name. Builders find you through comparison pages and category rankings.`,
-                },
-                {
-                  icon: '⚡',
-                  title: 'Claim your profile',
-                  body: 'Respond to users, update your bio, verify your agent. Free to claim.',
-                },
-              ].map(({ icon, title, body }) => (
-                <div key={title} className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] px-4 py-3 overflow-hidden">
-                  <CornerAccent />
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-base leading-none">{icon}</span>
-                    <span className="font-mono text-[11px] font-bold text-white tracking-wide">{title}</span>
-                  </div>
-                  <p className="font-mono text-[10px] text-white/35 leading-relaxed">{body}</p>
-                </div>
-              ))}
-            </div>
-          </Container>
-        </div>
-
-        {/* ── AGENT INTEL NEWS BAR ─────────────────────────────────────────── */}
-        {/* TODO: replace intelNews with real news_items Supabase query when Phase 3 RSS backend is built */}
-        {intelNews.length > 0 && (
-          <div className="border-b border-[rgba(0,212,255,0.1)] bg-[rgba(0,212,255,0.02)] py-1.5 overflow-x-auto">
-            <Container>
-              <div className="flex items-center gap-3 flex-nowrap">
-                <span className="font-mono text-[9px] font-bold text-[rgba(0,212,255,0.6)] uppercase tracking-widest shrink-0">Intel</span>
-                <div className="flex items-center gap-4 overflow-x-auto">
-                  {intelNews.map((item, i) => (
-                    <span key={i} className="font-mono text-[11px] text-white/50 whitespace-nowrap">
-                      <span className="text-[rgba(0,212,255,0.7)] mr-1">›</span>
-                      {item.headline}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </Container>
-          </div>
-        )}
+        {/* ── INTEL TICKER ─────────────────────────────────────────────────── */}
+        <IntelTicker newsItems={newsItems} />
 
         {/* ── MAIN CONTENT ─────────────────────────────────────────────────── */}
-        <main>
+        <main style={{ position: 'relative', zIndex: 10 }}>
+          {/* Ambient fog blobs between hero and rankings */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 400, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+            <div style={{ position: 'absolute', width: 800, height: 800, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(167,139,250,0.06) 0%, transparent 70%)', top: -300, left: '20%', animation: 'fogDrift 18s ease-in-out infinite' }} />
+            <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(232,121,249,0.05) 0%, transparent 70%)', top: -200, right: '10%', animation: 'fogDrift 24s ease-in-out infinite 6s' }} />
+          </div>
           <Container>
             {/* Agent Intel news bar */}
             <div className="pt-3">
