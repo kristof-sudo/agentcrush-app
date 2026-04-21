@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# CDP wallet output (contains account address — keep off git)
+cdp-server-wallet-account.json
+
 # AgentCrush runtime local state
 runtime/**/.env
 runtime/**/node_modules/
@@ -50,3 +53,4 @@ runtime/state/
 
 # Local ops logs
 ops/logs/
+.env*.local
