@@ -5,8 +5,8 @@
  * trust-summary endpoint on Base mainnet via the x402 protocol.
  *
  * Prerequisites:
- *   - cdp-server-wallet-account.json must exist (run `npm run create-wallet` once)
- *   - Wallet must hold >= 0.05 USDC on Base mainnet
+ *   - cdp-buyer-wallet-account.json must exist (run `npm run create-buyer-wallet` once)
+ *   - Buyer wallet must hold >= 0.05 USDC on Base mainnet (distinct from the seller wallet)
  *   - .env must contain CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET
  *
  * Run: npm run x402-buyer-test
@@ -23,7 +23,7 @@ import { registerExactEvmScheme } from '@x402/evm/exact/client'
 dotenv.config()
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const ACCOUNT_FILE = resolve(__dirname, '../cdp-server-wallet-account.json')
+const ACCOUNT_FILE = resolve(__dirname, '../cdp-buyer-wallet-account.json')
 const NETWORK = 'base'
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
 const ENDPOINT = 'https://www.agentcrush.xyz/api/agent/devin/trust-summary'
@@ -48,7 +48,7 @@ try {
 } catch (err) {
   if (err.code === 'ENOENT') {
     console.error(`No account file found at ${ACCOUNT_FILE}.`)
-    console.error('Run `npm run create-wallet` first.')
+    console.error('Run `npm run create-buyer-wallet` first.')
   } else {
     console.error('Failed to read account file:', err.message ?? err)
   }

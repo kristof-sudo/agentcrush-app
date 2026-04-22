@@ -42,6 +42,7 @@ next-env.d.ts
 
 # CDP wallet output (contains account address — keep off git)
 cdp-server-wallet-account.json
+cdp-buyer-wallet-account.json
 
 # AgentCrush runtime local state
 runtime/**/.env

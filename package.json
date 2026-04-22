@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "create-wallet": "node scripts/cdp-create-server-wallet.mjs",
+    "create-buyer-wallet": "node scripts/cdp-create-buyer-wallet.mjs",
     "check-wallet": "node scripts/cdp-check-wallet-balance.mjs",
     "send-test": "node scripts/cdp-send-test-transaction.mjs",
     "x402-buyer-test": "node scripts/cdp-x402-buyer-test.mjs"
