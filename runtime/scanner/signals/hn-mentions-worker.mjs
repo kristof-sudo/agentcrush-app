@@ -1,9 +1,12 @@
 /**
  * Hacker News mention signal worker.
  *
- * Dry-run only: reads a bounded set of agents, queries the public HN Algolia
- * API, applies conservative relevance checks, and prints signal candidates.
- * It intentionally does not write to Supabase or call scoring RPCs.
+ * Modes:
+ *   --dry-run  Read-only: queries agents and HN, prints signal candidates.
+ *   --write    Upserts relevant HN mention evidence into agent_hn_signals.
+ *
+ * Never modifies: agents, rankings, ecosystem_signals, agent_daily_snapshots,
+ * github_repo_snapshots, or any scoring RPC.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -18,10 +21,12 @@ const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
 const HN_BASE = 'https://hn.algolia.com/api/v1/search';
 const HITS_PER_QUERY = 10;
+const USER_AGENT = 'AgentCrush-HN-Mention-Worker/1.0';
 
 function parseArgs(argv) {
   const args = {
     dryRun: false,
+    write: false,
     limit: DEFAULT_LIMIT,
   };
 
@@ -33,8 +38,9 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === '--write' || arg === '--no-dry-run') {
-      throw new Error('Refusing non-dry-run mode. This worker currently supports --dry-run only.');
+    if (arg === '--write') {
+      args.write = true;
+      continue;
     }
 
     if (arg === '--limit') {
@@ -53,8 +59,12 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!args.dryRun) {
-    throw new Error('Refusing to run without --dry-run. No write mode exists yet.');
+  if (args.dryRun && args.write) {
+    throw new Error('Cannot use --dry-run and --write together. Pick one.');
+  }
+
+  if (!args.dryRun && !args.write) {
+    throw new Error('Specify --dry-run or --write.');
   }
 
   return args;
@@ -177,7 +187,7 @@ async function fetchHnHits(query) {
   const res = await fetch(url, {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'AgentCrush-HN-Mention-DryRun/1.0',
+      'User-Agent': USER_AGENT,
     },
   });
 
@@ -317,6 +327,49 @@ function summarizeAgent(agent, hits) {
   };
 }
 
+async function upsertHnSignals(supabase, agentId, relevantHits) {
+  if (relevantHits.length === 0) return 0;
+
+  const now = new Date().toISOString();
+  const rows = relevantHits.map(hit => ({
+    agent_id: agentId,
+    source: 'hn',
+    source_item_id: hit.objectID,
+    source_url: hit.url,
+    title: hit.title,
+    author: hit.author,
+    hn_created_at: hit.created_at || null,
+    matched_query: hit.matched_query,
+    relevance_reason: hit.relevance_reason,
+    points: hit.points,
+    num_comments: hit.num_comments,
+    strength: hit.points + hit.num_comments,
+    is_relevant: true,
+    false_positive_reason: null,
+    raw: {
+      objectID: hit.objectID,
+      title: hit.title,
+      url: hit.url,
+      points: hit.points,
+      num_comments: hit.num_comments,
+      author: hit.author,
+      created_at: hit.created_at,
+    },
+    observed_at: now,
+    updated_at: now,
+  }));
+
+  const { error, count } = await supabase
+    .from('agent_hn_signals')
+    .upsert(rows, {
+      onConflict: 'agent_id,source_item_id',
+      count: 'exact',
+    });
+
+  if (error) throw error;
+  return count ?? rows.length;
+}
+
 function compact(value, max = 70) {
   const text = cleanText(value).replace(/\s+/g, ' ');
   if (text.length <= max) return text;
@@ -392,6 +445,48 @@ function printSummary(summaries, noHitCount, skippedCount) {
   }
 }
 
+function printWriteSummary(summaries, noHitCount, skippedCount, totalRelevantHits, rowsWritten, writtenSignals) {
+  const agentsWithHits = summaries.filter(s => s.relevant_hits > 0).length;
+
+  console.log('\n=== HN mention write summary ===');
+  console.log(`agents_checked=${summaries.length}`);
+  console.log(`relevant_hits_found=${totalRelevantHits}`);
+  console.log(`rows_inserted_or_updated=${rowsWritten}`);
+  console.log(`agents_with_relevant_hits=${agentsWithHits}`);
+  console.log(`agents_with_no_relevant_hits=${noHitCount}`);
+  console.log(`agents_skipped_no_queries=${skippedCount}`);
+
+  const top10 = writtenSignals
+    .slice()
+    .sort((a, b) => b.strength - a.strength)
+    .slice(0, 10);
+
+  console.log('\n=== Top 10 written HN signals ===');
+  if (top10.length === 0) {
+    console.log('(none)');
+  } else {
+    top10.forEach((hit, index) => {
+      console.log(`${index + 1}. ${compact(hit.agent, 28)} | strength=${hit.strength} points=${hit.points} comments=${hit.num_comments}`);
+      console.log(`   query="${hit.matched_query}" reason="${hit.relevance_reason}" date=${hit.created_at || '-'}`);
+      console.log(`   ${compact(hit.title || '-', 100)}`);
+      console.log(`   ${hit.url}`);
+    });
+  }
+
+  const concerns = summaries
+    .flatMap(s => s.falsePositiveConcerns)
+    .slice(0, 15);
+
+  console.log('\n=== False-positive warnings ===');
+  if (concerns.length === 0) {
+    console.log('(none observed in returned hits)');
+  } else {
+    for (const concern of concerns) {
+      console.log(`- ${compact(concern.agent, 28)} query="${concern.query}" reason="${concern.reason}" title="${compact(concern.title, 90)}"`);
+    }
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv);
   await loadEnvFiles(ENV_PATHS);
@@ -408,6 +503,8 @@ async function main() {
   const agents = await fetchAgents(supabase, args.limit);
   const summaries = [];
   let skippedNoQueries = 0;
+  let totalRowsWritten = 0;
+  const writtenSignals = [];
 
   for (const agent of agents) {
     const queries = buildQueries(agent);
@@ -426,11 +523,42 @@ async function main() {
       }
     }
 
-    summaries.push(summarizeAgent(agent, hits));
+    const summary = summarizeAgent(agent, hits);
+    summaries.push(summary);
+
+    if (args.write && summary.relevant.length > 0) {
+      try {
+        const written = await upsertHnSignals(supabase, agent.id, summary.relevant);
+        totalRowsWritten += written;
+        const agentLabel = agent.display_name || agent.handle;
+        for (const hit of summary.relevant) {
+          writtenSignals.push({
+            agent: agentLabel,
+            handle: agent.handle,
+            title: hit.title,
+            url: hit.url,
+            points: hit.points,
+            num_comments: hit.num_comments,
+            created_at: hit.created_at,
+            matched_query: hit.matched_query,
+            relevance_reason: hit.relevance_reason,
+            strength: hit.points + hit.num_comments,
+          });
+        }
+      } catch (err) {
+        console.error(`Upsert failed for agent=${agent.handle || agent.id}: ${err.message}`);
+      }
+    }
   }
 
   const noHitCount = summaries.filter(s => s.relevant_hits === 0).length;
-  printSummary(summaries, noHitCount, skippedNoQueries);
+  const totalRelevantHits = summaries.reduce((sum, s) => sum + s.relevant_hits, 0);
+
+  if (args.dryRun) {
+    printSummary(summaries, noHitCount, skippedNoQueries);
+  } else {
+    printWriteSummary(summaries, noHitCount, skippedNoQueries, totalRelevantHits, totalRowsWritten, writtenSignals);
+  }
 }
 
 main().catch(err => {
