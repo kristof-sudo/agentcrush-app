@@ -1,222 +1,288 @@
-import { createClient } from "@supabase/supabase-js";
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+/**
+ * Ajsa Daily Brief Worker — DRY RUN prototype
+ *
+ * Read-only. Never sends Telegram. Never writes to Supabase.
+ * Must be invoked with --dry-run; non-dry-run is refused.
+ */
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, "../..");
+import { createClient } from '@supabase/supabase-js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
-const ENV_PATHS = [
-  path.join(repoRoot, ".env.local"),
-  path.join(repoRoot, ".env"),
-  path.join(__dirname, ".env"),
-];
+// ── Arg check ──────────────────────────────────────────────────────────────
 
-const TABLES = [
-  "ajsa_sources",
-  "ajsa_brief_items",
-  "ajsa_weekly_reviews",
-  "ajsa_catalyst_state",
-  "ajsa_feedback",
+const isDryRun = process.argv.includes('--dry-run');
+
+if (!isDryRun) {
+  console.error('[ajsa] ERROR: This worker only runs in --dry-run mode for now.');
+  console.error('[ajsa]        Non-dry-run execution is not yet implemented.');
+  process.exit(1);
+}
+
+// ── Env loading ────────────────────────────────────────────────────────────
+
+const ENV_CANDIDATES = [
+  '/opt/agentcrush/selector/.env',
+  '/opt/agentcrush/briefing/.env',
+  '/opt/agentcrush/copydesk/.env',
 ];
 
 function parseEnv(text) {
   const out = {};
-
-  for (const rawLine of text.split("\n")) {
+  for (const rawLine of text.split('\n')) {
     const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-
-    const eq = line.indexOf("=");
+    if (!line || line.startsWith('#')) continue;
+    const eq = line.indexOf('=');
     if (eq === -1) continue;
-
     const key = line.slice(0, eq).trim();
     let value = line.slice(eq + 1).trim();
-
     if (
       (value.startsWith('"') && value.endsWith('"')) ||
       (value.startsWith("'") && value.endsWith("'"))
     ) {
       value = value.slice(1, -1);
     }
-
     out[key] = value;
   }
-
   return out;
 }
 
-async function loadEnvFiles() {
-  const loaded = [];
-
-  for (const envPath of ENV_PATHS) {
+async function loadSupabaseEnv() {
+  for (const envPath of ENV_CANDIDATES) {
+    let text;
     try {
-      const text = await fs.readFile(envPath, "utf8");
-      const parsed = parseEnv(text);
-
-      for (const [key, value] of Object.entries(parsed)) {
-        if (!process.env[key]) process.env[key] = value;
+      text = await fs.readFile(envPath, 'utf8');
+    } catch {
+      continue;
+    }
+    const parsed = parseEnv(text);
+    if (parsed.SUPABASE_URL && parsed.SUPABASE_SERVICE_ROLE_KEY) {
+      for (const [k, v] of Object.entries(parsed)) {
+        if (!process.env[k]) process.env[k] = v;
       }
-
-      loaded.push(path.relative(repoRoot, envPath) || envPath);
-    } catch (err) {
-      if (err.code !== "ENOENT") {
-        console.warn(`Warning: could not read ${path.relative(repoRoot, envPath)}: ${err.message}`);
-      }
+      console.log(`[ajsa] Loaded env from ${path.basename(path.dirname(envPath))}/.env`);
+      return;
     }
   }
-
-  return loaded;
-}
-
-function assertDryRunOnly() {
-  const args = process.argv.slice(2);
-  const refusedFlags = ["--live", "--send", "--no-dry-run", "--write", "--telegram"];
-  const requestedLiveMode = args.find((arg) => refusedFlags.includes(arg));
-
-  if (requestedLiveMode) {
-    throw new Error(`Refusing ${requestedLiveMode}: Ajsa repo worker supports dry-run only.`);
-  }
-
-  const unknown = args.find((arg) => arg !== "--dry-run");
-  if (unknown) {
-    throw new Error(`Unknown argument ${unknown}. Only --dry-run is supported.`);
-  }
-}
-
-function todayUTC() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function requireEnv() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error("Missing SUPABASE_URL/NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  }
-
-  return { url, key };
-}
-
-async function countTable(supabase, table) {
-  const { count, error } = await supabase
-    .from(table)
-    .select("*", { count: "exact", head: true });
-
-  if (error) return { table, count: null, error };
-  return { table, count: count ?? 0, error: null };
-}
-
-async function fetchActiveSources(supabase) {
-  return supabase
-    .from("ajsa_sources")
-    .select("source_key, source_type, status, display_name, url")
-    .eq("status", "active")
-    .order("source_type", { ascending: true })
-    .order("source_key", { ascending: true });
-}
-
-async function fetchTodayBriefItems(supabase, briefDate) {
-  return supabase
-    .from("ajsa_brief_items")
-    .select("id, source_key, title, url, recommendation, priority, score, status")
-    .eq("brief_date", briefDate)
-    .in("status", ["candidate", "selected"])
-    .order("priority", { ascending: false, nullsFirst: false })
-    .order("score", { ascending: false, nullsFirst: false })
-    .limit(12);
-}
-
-async function fetchCatalysts(supabase) {
-  return supabase
-    .from("ajsa_catalyst_state")
-    .select("catalyst_key, status, title, source_key, last_seen_at, last_triggered_at")
-    .order("status", { ascending: true })
-    .order("catalyst_key", { ascending: true });
-}
-
-function printRows(label, rows, renderRow) {
-  console.log(`\n${label}`);
-
-  if (!rows?.length) {
-    console.log("  - none");
-    return;
-  }
-
-  for (const row of rows) {
-    console.log(`  - ${renderRow(row)}`);
-  }
-}
-
-async function main() {
-  assertDryRunOnly();
-  const loadedEnv = await loadEnvFiles();
-  const { url, key } = requireEnv();
-
-  const supabase = createClient(url, key, {
-    auth: { persistSession: false },
-  });
-
-  const briefDate = todayUTC();
-  const [tableCounts, activeSourcesResult, briefItemsResult, catalystsResult] = await Promise.all([
-    Promise.all(TABLES.map((table) => countTable(supabase, table))),
-    fetchActiveSources(supabase),
-    fetchTodayBriefItems(supabase, briefDate),
-    fetchCatalysts(supabase),
-  ]);
-
-  console.log("Ajsa Daily Brief — DRY RUN");
-  console.log(`Date: ${briefDate}`);
-  console.log(`Env files loaded: ${loadedEnv.length ? loadedEnv.join(", ") : "none"}`);
-  console.log("Mode: read-only; Telegram disabled; Supabase writes disabled");
-
-  console.log("\nTable counts");
-  for (const result of tableCounts) {
-    if (result.error) {
-      console.log(`  - ${result.table}: error (${result.error.message})`);
-    } else {
-      console.log(`  - ${result.table}: ${result.count}`);
-      if (result.count === 0) console.warn(`Warning: ${result.table} is empty.`);
-    }
-  }
-
-  if (activeSourcesResult.error) throw activeSourcesResult.error;
-  if (briefItemsResult.error) throw briefItemsResult.error;
-  if (catalystsResult.error) throw catalystsResult.error;
-
-  printRows(
-    "Active sources",
-    activeSourcesResult.data,
-    (source) => `${source.source_key} [${source.source_type}] ${source.display_name}`
+  throw new Error(
+    `[ajsa] Could not find SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in any of:\n  ${ENV_CANDIDATES.join('\n  ')}`
   );
-
-  printRows(
-    "Today's candidate/selected brief items",
-    briefItemsResult.data,
-    (item) => `${item.status}: ${item.title} (${item.source_key})`
-  );
-
-  if (!briefItemsResult.data?.length) {
-    console.warn("Warning: no candidate or selected brief items for today's dry-run preview.");
-  }
-
-  printRows(
-    "Catalyst state",
-    catalystsResult.data,
-    (catalyst) => `${catalyst.catalyst_key} [${catalyst.status}] ${catalyst.title}`
-  );
-
-  console.log("\nTelegram-ready preview");
-  console.log("Ajsa Daily Brief — DRY RUN");
-  console.log(`Sources active: ${activeSourcesResult.data?.length ?? 0}`);
-  console.log(`Brief candidates today: ${briefItemsResult.data?.length ?? 0}`);
-  console.log(`Catalysts tracked: ${catalystsResult.data?.length ?? 0}`);
-  console.log("No Telegram message was sent.");
 }
 
-main().catch((err) => {
-  console.error(err.message);
+await loadSupabaseEnv();
+
+const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
+
+if (!SUPABASE_URL) {
+  console.error('[ajsa] ERROR: SUPABASE_URL is missing after env load.');
   process.exit(1);
+}
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('[ajsa] ERROR: SUPABASE_SERVICE_ROLE_KEY is missing after env load.');
+  process.exit(1);
+}
+
+// ── Supabase client ────────────────────────────────────────────────────────
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
 });
+
+// ── Query helpers ──────────────────────────────────────────────────────────
+
+const TODAY = new Date().toISOString().slice(0, 10);
+const MAX_ITEMS = 5;
+
+async function countBriefItems(status) {
+  let query = supabase
+    .from('ajsa_brief_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('brief_date', TODAY);
+
+  if (status) query = query.eq('status', status);
+
+  const { count, error } = await query;
+  if (error) {
+    console.warn(`[ajsa] WARN: count failed for status=${status ?? 'all'}: ${error.message}`);
+    return 0;
+  }
+  return count ?? 0;
+}
+
+async function getBriefItems(status, limit = MAX_ITEMS) {
+  const { data, error } = await supabase
+    .from('ajsa_brief_items')
+    .select('id, title, summary, recommendation, source_key, source_type, url, score, status, evidence, payload')
+    .eq('brief_date', TODAY)
+    .eq('status', status)
+    .order('score', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.warn(`[ajsa] WARN: query failed for ajsa_brief_items status=${status}: ${error.message}`);
+    return [];
+  }
+  return data ?? [];
+}
+
+function cleanLine(value, fallback = 'No detail available.') {
+  return String(value ?? fallback).replace(/\s+/g, ' ').trim();
+}
+
+function displayTitle(item) {
+  const title = cleanLine(item.title, 'Untitled signal');
+  const parts = title.split('|').map(p => p.trim()).filter(Boolean);
+  if (parts.length === 2 && parts[0].toLowerCase() === parts[1].toLowerCase()) {
+    return parts[0];
+  }
+  return title;
+}
+
+function keywordSet(item) {
+  return new Set((item.evidence?.matched_keywords ?? []).map(k => String(k).toLowerCase()));
+}
+
+function inferTheme(items) {
+  const kws = new Set();
+  for (const item of items) for (const k of keywordSet(item)) kws.add(k);
+
+  const themes = [];
+  if (kws.has('x402') || kws.has('agent payment') || kws.has('agent payments') || kws.has('usdc')) {
+    themes.push('payment-standard / x402');
+  }
+  if (kws.has('erc-8004') || kws.has('erc8004') || kws.has('identity registry') || kws.has('validation registry')) {
+    themes.push('ERC-8004 identity/trust');
+  }
+  if (kws.has('a2a') || kws.has('agent-to-agent') || kws.has('agent economy')) {
+    themes.push('agent-to-agent economy');
+  }
+
+  return themes.length > 0
+    ? `Today's useful signals are mostly ${themes.slice(0, 2).join(' / ')} movement.`
+    : "Today's useful signals are limited; treat this as watchlist maintenance, not a strategy shift.";
+}
+
+function signalText(item) {
+  const hnPoints = item.evidence?.hn_points;
+  const hnComments = item.evidence?.hn_comments;
+  const sourceKey = item.source_key ?? '';
+  if (hnPoints != null) {
+    return `Community signal: ${displayTitle(item)} drew ${hnPoints} HN points and ${hnComments ?? 0} comments.`;
+  }
+  if (sourceKey === 'erc8004_scan') {
+    return 'Live ERC-8004 explorer should be checked for new agents, implementations, or adoption changes.';
+  }
+  return cleanLine(item.summary, item.title);
+}
+
+function whyItMatters(item) {
+  const kws = keywordSet(item);
+  if (kws.has('x402') || kws.has('agent payment') || kws.has('agent payments')) {
+    return 'AgentCrush needs crisp positioning around agent payments before x402/AP2 narratives harden.';
+  }
+  if (kws.has('erc-8004') || kws.has('erc8004')) {
+    return 'ERC-8004 can affect how AgentCrush tracks agent identity, trust, listings, and registry metadata.';
+  }
+  if (kws.has('a2a') || kws.has('agent-to-agent')) {
+    return 'A2A traction may change what AgentCrush treats as protocol-level infrastructure versus app noise.';
+  }
+  return cleanLine(item.recommendation, 'Potential market signal for AgentCrush prioritization.');
+}
+
+function suggestedAction(item) {
+  const title = cleanLine(item.title, 'this item');
+  const titleL = title.toLowerCase();
+  const kws = keywordSet(item);
+
+  if (titleL.includes('stripe') || titleL.includes('payment agent')) {
+    return 'Investigate: extract payment-agent UX language and update the x402/AP2 positioning note.';
+  }
+  if (titleL.includes('ap2') || titleL.includes('agent payments protocol')) {
+    return 'Ship: write the AP2 vs x402 comparison brief and decide what AgentCrush should track.';
+  }
+  if ((item.source_key ?? '').includes('8004')) {
+    return 'Add/check listing: inspect 8004scan for new live ERC-8004 agents or implementations.';
+  }
+  if (kws.has('erc-8004') || kws.has('erc8004')) {
+    return 'Investigate: map whether this changes AgentCrush registry fields or trust metadata.';
+  }
+  return cleanLine(item.recommendation, `Investigate: decide whether ${title} changes the AgentCrush build queue.`);
+}
+
+function executionRecommendation(items) {
+  if (items.length === 0) return 'Wait. No selected signal is strong enough for founder action today.';
+
+  const strongest = [...items].sort((a, b) => {
+    const actionA = suggestedAction(a);
+    const actionB = suggestedAction(b);
+    const rank = action => {
+      if (/^Ship:/i.test(action)) return 0;
+      if (/^Add\/check listing:/i.test(action)) return 1;
+      if (/^Investigate:/i.test(action)) return 2;
+      return 3;
+    };
+    const rankDiff = rank(actionA) - rank(actionB);
+    if (rankDiff !== 0) return rankDiff;
+    return (b.evidence?.hn_points ?? b.score ?? 0) - (a.evidence?.hn_points ?? a.score ?? 0);
+  })[0];
+  const action = suggestedAction(strongest);
+  if (/^Ship:/i.test(action)) return `Ship. Strongest action: ${action.replace(/^Ship:\s*/i, '')}`;
+  if (/^Add\/check listing:/i.test(action)) return `Investigate. Strongest action: ${action}`;
+  if (/^Investigate:/i.test(action)) return `Investigate. Strongest action: ${action.replace(/^Investigate:\s*/i, '')}`;
+  return `Investigate. Strongest action: ${action}`;
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────
+
+const selectedCount = await countBriefItems('selected');
+const candidateCount = await countBriefItems('candidate');
+const dismissedCount = await countBriefItems('dismissed');
+const totalCount = await countBriefItems(null);
+
+let selectedItems = await getBriefItems('selected', MAX_ITEMS);
+const selectorHasRun = selectedItems.length > 0;
+
+if (!selectorHasRun) {
+  selectedItems = await getBriefItems('candidate', MAX_ITEMS);
+}
+
+const briefItems = selectedItems.slice(0, MAX_ITEMS);
+const fallbackNote = selectorHasRun
+  ? null
+  : 'Selector has not run for today; falling back to top candidate items.';
+
+console.log('');
+console.log('Ajsa Daily Brief — DRY RUN');
+console.log(TODAY);
+console.log('');
+console.log('Executive read:');
+console.log(`- ${selectorHasRun ? selectedCount : 0} selected signals from ${totalCount} candidates.`);
+if (fallbackNote) console.log(`- ${fallbackNote}`);
+console.log(`- One-line judgment: ${inferTheme(briefItems)}`);
+console.log('');
+console.log('Selected signals:');
+
+if (briefItems.length === 0) {
+  console.log('No selected signals. Wait; do not create founder action from today\'s feed yet.');
+} else {
+  for (const [idx, item] of briefItems.entries()) {
+    console.log(`${idx + 1}. ${displayTitle(item)}`);
+    console.log(`   Signal: ${signalText(item)}`);
+    console.log(`   Why it matters for AgentCrush: ${whyItMatters(item)}`);
+    console.log(`   Suggested action: ${suggestedAction(item)}`);
+    console.log(`   Source: ${item.source_key}`);
+    console.log(`   Link: ${item.url ?? 'none'}`);
+    console.log('');
+  }
+}
+
+console.log('Execution recommendation:');
+console.log(`- ${executionRecommendation(briefItems)}`);
+console.log('');
+console.log('Noise filtered:');
+console.log(`- ${dismissedCount} dismissed.`);
+console.log(`- ${candidateCount} candidates still unselected.`);
+console.log('- Static reference pages are filtered unless there is movement evidence.');
+console.log('');
+console.log('[DRY RUN — Telegram NOT sent. No writes to Supabase.]');
+console.log('');
