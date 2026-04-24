@@ -1,16 +1,16 @@
 /**
  * Ajsa Ingest Worker
  *
- * Fetches active doc/ecosystem/blog/protocol sources, scores them with
- * deterministic keyword rules (no LLM), and produces candidate brief items.
+ * Two ingest paths:
+ *   1. Direct HTML — sources of type docs/ecosystem/protocol_site/blog
+ *   2. HN Algolia  — hacker_news_agent_economy_search (type=search), uses config.queries
  *
  * Usage:
  *   node ajsa-ingest-worker.mjs --dry-run [--limit N]
  *   node ajsa-ingest-worker.mjs --write   [--limit N]
  *
- * score=0 sources are checked and their timestamps updated but never become
- * candidate brief items.
- *
+ * --limit applies to HTML sources. HN is always run as one source with N queries.
+ * score=0 results are never written as brief items.
  * Never sends Telegram. Never prints secrets.
  */
 
@@ -99,17 +99,18 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 // ── Keyword scoring ───────────────────────────────────────────────────────────
 //
 // Each entry: [keyword, useWordBoundary]
-// Word-boundary matching is used for short acronyms that would false-positive
-// as substrings (e.g. "acp" inside "capacity", "mcp" inside "rmcp").
+// Word-boundary matching for short acronyms that would false-positive as substrings.
 
 const KEYWORDS = [
   // x402 / payment protocols
   ['x402',                         false],
   ['agent payment',                false],
+  ['agent payments',               false],
   ['agentic commerce',             false],
   ['agent commerce protocol',      false],
   ['onchain commerce',             false],
   ['autonomous economic activity', false],
+  ['agent economy',                false],
   // ERC-8004
   ['erc-8004',                     false],
   ['erc8004',                      false],
@@ -132,7 +133,7 @@ const KEYWORDS = [
   ['stablecoin',                   false],
   ['agentverse',                   false],
   ['bankr',                        false],
-  // short acronyms — whole-word only to avoid false positives
+  // short acronyms — whole-word only
   ['a2a',                          true],
   ['acp',                          true],
   ['usdc',                         true],
@@ -146,7 +147,6 @@ function scoreText(text) {
   for (const [kw, wordBoundary] of KEYWORDS) {
     let hit;
     if (wordBoundary) {
-      // escape regex special chars, then wrap in non-alphanumeric boundary assertions
       const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       hit = new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, 'i').test(lower);
     } else {
@@ -159,13 +159,14 @@ function scoreText(text) {
 
 function buildRecommendation(matchedKeywords) {
   if (matchedKeywords.some(k => [
-    'x402', 'erc-8004', 'erc8004', 'agent payment', 'agentic commerce',
-    'agent commerce protocol', 'acp', 'onchain commerce',
+    'x402', 'erc-8004', 'erc8004', 'agent payment', 'agent payments',
+    'agentic commerce', 'agent commerce protocol', 'acp', 'onchain commerce',
   ].includes(k))) {
     return 'Review for AgentCrush x402/ERC-8004/ACP docs or update opportunity.';
   }
   if (matchedKeywords.some(k => [
-    'agent-to-agent', 'a2a', 'agent coordination', 'agent network', 'autonomous economic activity',
+    'agent-to-agent', 'a2a', 'agent coordination', 'agent network',
+    'autonomous economic activity', 'agent economy',
   ].includes(k))) {
     return 'Evaluate for A2A/agent coordination signal — potential AgentCrush ecosystem update.';
   }
@@ -188,6 +189,36 @@ function buildRecommendation(matchedKeywords) {
   return 'Monitor source for emerging agent economy signals.';
 }
 
+function buildHNRecommendation(matchedKeywords, hit) {
+  const highEngagement = (hit.points ?? 0) >= 100 || (hit.num_comments ?? 0) >= 50;
+  if (matchedKeywords.some(k => [
+    'x402', 'erc-8004', 'erc8004', 'agent payment', 'agent payments',
+    'agentic commerce', 'agent commerce protocol', 'acp', 'onchain commerce',
+  ].includes(k))) {
+    return highEngagement
+      ? 'High-signal HN thread on x402/ERC-8004 — use for narrative timing and positioning.'
+      : 'Review HN discussion for market skepticism or positioning angle.';
+  }
+  if (matchedKeywords.some(k => [
+    'agent-to-agent', 'a2a', 'agent coordination', 'agent network',
+    'autonomous economic activity', 'agent economy',
+  ].includes(k))) {
+    return 'Use this as a signal for x402/A2A narrative timing.';
+  }
+  if (matchedKeywords.some(k => [
+    'autonomous agent', 'agent wallet', 'agent payments', 'mcp',
+    'agent services', 'agent identity', 'agent reputation',
+  ].includes(k))) {
+    return 'Consider adding this project/service to AgentCrush if relevant.';
+  }
+  if (matchedKeywords.some(k => [
+    'marketplace', 'discovery', 'agentverse', 'kite', 'bankr',
+  ].includes(k))) {
+    return 'Consider adding this project/service to AgentCrush if relevant.';
+  }
+  return 'Review HN discussion for market skepticism or positioning angle.';
+}
+
 function priorityFromScore(score) {
   if (score >= 50) return 1;
   if (score >= 30) return 2;
@@ -195,7 +226,7 @@ function priorityFromScore(score) {
   return 4;
 }
 
-// ── Fetch helper ──────────────────────────────────────────────────────────────
+// ── Fetch helpers ─────────────────────────────────────────────────────────────
 
 const FETCH_TIMEOUT_MS = 12000;
 const UA = 'AgentCrush-Ajsa-Ingest/1.0 (+https://agentcrush.com)';
@@ -241,12 +272,33 @@ async function fetchSource(url) {
   }
 }
 
+const HN_ALGOLIA_BASE = 'https://hn.algolia.com/api/v1/search';
+
+async function fetchHNAlgoliaQuery(query) {
+  const url = `${HN_ALGOLIA_BASE}?query=${encodeURIComponent(query)}&tags=story&hitsPerPage=10`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const resp = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { 'User-Agent': UA },
+    });
+    clearTimeout(timer);
+    if (!resp.ok) return { ok: false, error: `HTTP ${resp.status}` };
+    const json = await resp.json();
+    return { ok: true, hits: json.hits ?? [], nbHits: json.nbHits ?? 0 };
+  } catch (e) {
+    clearTimeout(timer);
+    return { ok: false, error: e.name === 'AbortError' ? 'timeout' : e.message };
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 const TODAY   = new Date().toISOString().slice(0, 10);
 const NOW_ISO = new Date().toISOString();
 
-// 1. Load active ingestible sources
+// 1a. Load active HTML-ingestible sources
 const { data: sources, error: srcErr } = await supabase
   .from('ajsa_sources')
   .select('id, source_key, source_type, display_name, url')
@@ -261,12 +313,26 @@ if (srcErr) {
   process.exit(1);
 }
 
-console.log(`\n[ajsa-ingest] ${sources.length} source(s) to ingest\n`);
+// 1b. Load HN source specifically (type=search, excluded from HTML query)
+const { data: hnSrc, error: hnSrcErr } = await supabase
+  .from('ajsa_sources')
+  .select('id, source_key, source_type, display_name, url, config')
+  .eq('source_key', 'hacker_news_agent_economy_search')
+  .eq('status', 'active')
+  .maybeSingle();
 
-// 2. Fetch, score, and classify each source
-const candidates    = [];
-const skipped       = [];   // fetched OK but score=0
-const fetchFailures = [];
+if (hnSrcErr) {
+  console.warn('[ajsa-ingest] WARN: could not load HN source:', hnSrcErr.message);
+}
+
+const hnLabel = hnSrc ? `1 HN source (${(hnSrc.config?.queries ?? []).length} queries)` : 'HN source inactive/missing';
+console.log(`\n[ajsa-ingest] ${sources.length} HTML source(s)  +  ${hnLabel}\n`);
+
+// ── 2. HTML ingest ────────────────────────────────────────────────────────────
+
+const htmlCandidates = [];
+const htmlSkipped    = [];
+const htmlFailures   = [];
 
 for (const src of sources) {
   process.stdout.write(`  [${src.source_type}] ${src.source_key} ... `);
@@ -274,7 +340,7 @@ for (const src of sources) {
 
   if (!fetched.ok) {
     console.log(`FAILED (${fetched.error})`);
-    fetchFailures.push({ source_key: src.source_key, error: fetched.error });
+    htmlFailures.push({ source_key: src.source_key, error: fetched.error });
     if (isWrite) {
       await supabase.from('ajsa_sources').update({
         last_checked_at: NOW_ISO,
@@ -288,7 +354,6 @@ for (const src of sources) {
   const scoringText = [fetched.title ?? '', fetched.snippet ?? ''].join(' ');
   const { score, matchedKeywords } = scoreText(scoringText);
 
-  // Always update source timestamps on successful fetch (clears stale errors too)
   if (isWrite) {
     await supabase.from('ajsa_sources').update({
       last_checked_at: NOW_ISO,
@@ -300,7 +365,7 @@ for (const src of sources) {
 
   if (score <= 0) {
     console.log(`SKIPPED  score=0  no catalyst keywords`);
-    skipped.push({ source_key: src.source_key, title: fetched.title });
+    htmlSkipped.push({ source_key: src.source_key });
     continue;
   }
 
@@ -308,7 +373,7 @@ for (const src of sources) {
   const priority = priorityFromScore(score);
   const itemUrl  = fetched.finalUrl ?? src.url;
 
-  candidates.push({
+  htmlCandidates.push({
     brief_date:      TODAY,
     source_id:       src.id,
     source_key:      src.source_key,
@@ -340,51 +405,173 @@ for (const src of sources) {
   console.log(`OK  score=${score}  [${matchedKeywords.join(', ')}]`);
 }
 
-// 3. Summary
+// ── 3. HN Algolia ingest ──────────────────────────────────────────────────────
+
+const hnCandidates    = [];
+const hnSkipped       = [];
+const hnQueryFailures = [];
+
+if (hnSrc) {
+  const queries = hnSrc.config?.queries ?? [];
+  console.log(`\n[ajsa-ingest] HN Algolia — ${queries.length} quer${queries.length === 1 ? 'y' : 'ies'}\n`);
+
+  const seenObjectIDs = new Set();
+
+  for (const query of queries) {
+    process.stdout.write(`  [HN] "${query}" ... `);
+    const result = await fetchHNAlgoliaQuery(query);
+
+    if (!result.ok) {
+      console.log(`FAILED (${result.error})`);
+      hnQueryFailures.push({ query, error: result.error });
+      continue;
+    }
+
+    // Deduplicate across queries by objectID
+    const newHits = result.hits.filter(h => !seenObjectIDs.has(h.objectID));
+    newHits.forEach(h => seenObjectIDs.add(h.objectID));
+
+    let scoredCount = 0;
+    for (const hit of newHits) {
+      const itemUrl = hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`;
+      // Include query in scoring text so query keywords auto-match (e.g. "x402" query → x402 keyword)
+      const scoringText = [hit.title ?? '', itemUrl, query].join(' ');
+      const { score, matchedKeywords } = scoreText(scoringText);
+
+      if (score <= 0) {
+        hnSkipped.push({ query, objectID: hit.objectID, title: hit.title });
+        continue;
+      }
+
+      const recommendation = buildHNRecommendation(matchedKeywords, hit);
+      const priority = priorityFromScore(score);
+
+      hnCandidates.push({
+        brief_date:   TODAY,
+        source_id:    hnSrc.id,
+        source_key:   hnSrc.source_key,
+        source_type:  hnSrc.source_type,
+        title:        hit.title ?? `HN: ${query}`,
+        url:          itemUrl,
+        summary:      `HN: ${hit.points ?? 0} pts / ${hit.num_comments ?? 0} comments — "${hit.title ?? ''}"`,
+        recommendation,
+        priority,
+        score,
+        status:       'candidate',
+        occurred_at:  hit.created_at ?? null,
+        published_at: hit.created_at ?? null,
+        evidence: {
+          matched_keywords: matchedKeywords,
+          hn_points:        hit.points ?? 0,
+          hn_comments:      hit.num_comments ?? 0,
+          hn_object_id:     hit.objectID,
+          query,
+        },
+        payload: {
+          display_name:  hnSrc.display_name,
+          hn_title:      hit.title ?? null,
+          hn_author:     hit.author ?? null,
+          hn_created_at: hit.created_at ?? null,
+        },
+      });
+      scoredCount++;
+    }
+
+    console.log(`${result.hits.length} hits  ${newHits.length} new  ${scoredCount} scored`);
+  }
+
+  // Update HN source timestamps
+  if (isWrite) {
+    const allFailed = hnQueryFailures.length > 0 && hnQueryFailures.length === queries.length;
+    if (allFailed) {
+      await supabase.from('ajsa_sources').update({
+        last_checked_at: NOW_ISO,
+        last_error_at:   NOW_ISO,
+        last_error:      `All ${queries.length} queries failed`,
+      }).eq('id', hnSrc.id);
+    } else {
+      await supabase.from('ajsa_sources').update({
+        last_checked_at: NOW_ISO,
+        last_success_at: NOW_ISO,
+        last_error_at:   null,
+        last_error:      null,
+      }).eq('id', hnSrc.id);
+    }
+  }
+}
+
+// ── 4. Summary ────────────────────────────────────────────────────────────────
+
+const allCandidates = [...htmlCandidates, ...hnCandidates];
+
 console.log(`\n${'─'.repeat(60)}`);
-console.log(`  Sources: ${sources.length}  Candidates: ${candidates.length}  Skipped (no signal): ${skipped.length}  Failed: ${fetchFailures.length}`);
+console.log(`  HTML   Sources: ${sources.length}  Candidates: ${htmlCandidates.length}  Skipped: ${htmlSkipped.length}  Failed: ${htmlFailures.length}`);
+if (hnSrc) {
+  const hnHitsTotal = hnCandidates.length + hnSkipped.length;
+  console.log(`  HN     Hits: ${hnHitsTotal}  Candidates: ${hnCandidates.length}  No-signal: ${hnSkipped.length}  Query failures: ${hnQueryFailures.length}`);
+}
+console.log(`  Total candidates: ${allCandidates.length}`);
 console.log(`${'─'.repeat(60)}\n`);
 
-for (const c of candidates) {
-  console.log(`  [${c.source_type}] ${c.source_key}`);
-  console.log(`    title:          ${c.title}`);
-  console.log(`    url:            ${c.url}`);
-  console.log(`    score/priority: ${c.score} / P${c.priority}`);
-  console.log(`    keywords:       ${c.evidence.matched_keywords.join(', ')}`);
-  console.log(`    recommendation: ${c.recommendation}`);
-  console.log('');
-}
-
-if (skipped.length > 0) {
-  console.log('  No-signal skips:');
-  for (const s of skipped) {
-    console.log(`    [SKIPPED] ${s.source_key}  score=0  no catalyst keywords`);
+if (htmlCandidates.length > 0) {
+  console.log('  ── HTML candidates ──');
+  for (const c of htmlCandidates) {
+    console.log(`  [${c.source_type}] ${c.source_key}  score=${c.score} / P${c.priority}`);
+    console.log(`    title:  ${c.title}`);
+    console.log(`    keys:   ${c.evidence.matched_keywords.join(', ')}`);
+    console.log(`    action: ${c.recommendation}`);
+    console.log('');
   }
-  console.log('');
 }
 
-if (fetchFailures.length > 0) {
-  console.log('  Fetch failures:');
-  for (const f of fetchFailures) {
-    console.log(`    ✗ ${f.source_key}: ${f.error}`);
+if (hnCandidates.length > 0) {
+  console.log('  ── HN candidates ──');
+  for (const c of hnCandidates) {
+    console.log(`  score=${c.score} / P${c.priority}  ${c.evidence.hn_points}pts / ${c.evidence.hn_comments}c  query="${c.evidence.query}"`);
+    console.log(`    title:  "${c.title}"`);
+    console.log(`    url:    ${c.url}`);
+    console.log(`    keys:   ${c.evidence.matched_keywords.join(', ')}`);
+    console.log(`    action: ${c.recommendation}`);
+    console.log('');
   }
+} else if (hnSrc) {
+  console.log('  ── HN candidates: none scored above 0 ──\n');
+}
+
+if (htmlSkipped.length > 0) {
+  console.log('  No-signal (HTML):');
+  for (const s of htmlSkipped) console.log(`    [SKIPPED] ${s.source_key}`);
+  console.log('');
+}
+if (htmlFailures.length > 0) {
+  console.log('  Failures (HTML):');
+  for (const f of htmlFailures) console.log(`    ✗ ${f.source_key}: ${f.error}`);
+  console.log('');
+}
+if (hnQueryFailures.length > 0) {
+  console.log('  HN query failures:');
+  for (const f of hnQueryFailures) console.log(`    ✗ "${f.query}": ${f.error}`);
   console.log('');
 }
 
-// 4. Dry-run exit
+// ── 5. Dry-run exit ───────────────────────────────────────────────────────────
+
 if (isDryRun) {
-  console.log(`[ajsa-ingest] DRY RUN complete. ${candidates.length} item(s) would be written, ${skipped.length} skipped (no signal). No changes made.`);
+  console.log(`[ajsa-ingest] DRY RUN complete. ${allCandidates.length} total candidate(s) (${htmlCandidates.length} HTML + ${hnCandidates.length} HN), ${htmlSkipped.length + hnSkipped.length} no-signal. No changes made.`);
   process.exit(0);
 }
 
-// 5. Write mode: upsert candidates (source timestamps already updated above)
-console.log(`[ajsa-ingest] Writing ${candidates.length} candidate(s) ...`);
+// ── 6. Write ──────────────────────────────────────────────────────────────────
+
+console.log(`[ajsa-ingest] Writing ${allCandidates.length} candidate(s) ...`);
 
 let written = 0;
 let writeErrors = 0;
 
-for (const item of candidates) {
-  // SELECT first to decide INSERT vs UPDATE — avoids upsert/constraint ambiguity
+for (const item of allCandidates) {
+  const isHN = item.source_key === 'hacker_news_agent_economy_search';
+
+  // SELECT first — avoids upsert/constraint ambiguity
   const { data: existing, error: selectErr } = await supabase
     .from('ajsa_brief_items')
     .select('id')
@@ -399,6 +586,8 @@ for (const item of candidates) {
     continue;
   }
 
+  const shortTitle = item.title?.slice(0, 55) ?? '?';
+
   if (existing?.id) {
     const { source_id, brief_date, source_key, url, ...updateFields } = item;
     const { error: updateErr } = await supabase
@@ -410,7 +599,10 @@ for (const item of candidates) {
       writeErrors++;
       continue;
     }
-    console.log(`  [UPDATED] ${item.source_key}  score=${item.score}  P${item.priority}`);
+    console.log(isHN
+      ? `  [HN:UPDATED]  "${shortTitle}"  score=${item.score}`
+      : `  [UPDATED] ${item.source_key}  score=${item.score}  P${item.priority}`
+    );
   } else {
     const { error: insertErr } = await supabase.from('ajsa_brief_items').insert(item);
     if (insertErr) {
@@ -418,10 +610,13 @@ for (const item of candidates) {
       writeErrors++;
       continue;
     }
-    console.log(`  [WRITTEN] ${item.source_key}  score=${item.score}  P${item.priority}`);
+    console.log(isHN
+      ? `  [HN:WRITTEN]  "${shortTitle}"  score=${item.score}`
+      : `  [WRITTEN] ${item.source_key}  score=${item.score}  P${item.priority}`
+    );
   }
 
   written++;
 }
 
-console.log(`\n[ajsa-ingest] Done. Written: ${written}  Skipped (no signal): ${skipped.length}  Errors: ${writeErrors}`);
+console.log(`\n[ajsa-ingest] Done. Written: ${written}  Errors: ${writeErrors}`);
