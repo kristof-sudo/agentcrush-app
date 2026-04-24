@@ -7,8 +7,8 @@ CREATE TABLE agent_package_download_signals (
   registry           TEXT NOT NULL,
   package_name       TEXT NOT NULL,
   download_window    TEXT NOT NULL,
-  period_start       DATE,
-  period_end         DATE,
+  period_start       DATE NOT NULL,
+  period_end         DATE NOT NULL,
   downloads          INTEGER NOT NULL DEFAULT 0,
   source_url         TEXT,
   mapping_confidence INTEGER,
@@ -23,6 +23,14 @@ CREATE TABLE agent_package_download_signals (
     CHECK (registry IN ('npm', 'pypi')),
   CONSTRAINT agent_package_download_signals_window_check
     CHECK (download_window IN ('daily', 'weekly', 'monthly')),
+  CONSTRAINT agent_package_download_signals_downloads_check
+    CHECK (downloads >= 0),
+  CONSTRAINT agent_package_download_signals_mapping_confidence_check
+    CHECK (mapping_confidence IS NULL OR mapping_confidence BETWEEN 0 AND 100),
+  CONSTRAINT agent_package_download_signals_mapping_status_check
+    CHECK (mapping_status IS NULL OR mapping_status IN ('candidate', 'high_auto', 'good_warn', 'manual_review', 'rejected', 'hard_reject')),
+  CONSTRAINT agent_package_download_signals_period_order_check
+    CHECK (period_end >= period_start),
   CONSTRAINT agent_package_download_signals_unique_period
     UNIQUE (agent_id, registry, package_name, download_window, period_start, period_end)
 );
