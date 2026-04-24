@@ -113,6 +113,33 @@ if (catErr) { console.error('[ajsa-select] ERROR loading catalysts:', catErr.mes
 
 const activeCatalysts = (catalystData ?? []).filter(c => c.status !== 'triggered');
 
+const RECENT_LOOKBACK_DAYS = 7;
+
+function addDays(yyyyMmDd, days) {
+  const d = new Date(`${yyyyMmDd}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+const RECENT_START_DATE = addDays(TARGET_DATE, -RECENT_LOOKBACK_DAYS);
+
+const { data: recentSelectedData, error: recentErr } = await supabase
+  .from('ajsa_brief_items')
+  .select('source_key, url, title, brief_date')
+  .eq('status', 'selected')
+  .gte('brief_date', RECENT_START_DATE)
+  .lt('brief_date', TARGET_DATE);
+if (recentErr) { console.error('[ajsa-select] ERROR loading recent selections:', recentErr.message); process.exit(1); }
+
+const recentSourceUrl = new Set();
+const recentTitles = new Set();
+for (const item of recentSelectedData ?? []) {
+  if (item.source_key && item.url) recentSourceUrl.add(`${item.source_key}::${item.url}`);
+  if (item.title) recentTitles.add(String(item.title).trim().toLowerCase());
+}
+
+console.log(`[ajsa-select] Recent selected lookback: ${recentSelectedData?.length ?? 0} item(s) since ${RECENT_START_DATE}`);
+
 // ── Load candidates ───────────────────────────────────────────────────────────
 
 // In write mode: reset selected/dismissed → candidate before loading, so re-runs work.
@@ -160,11 +187,27 @@ const STATIC_REF_STABLE = new Set([
   'coinbase_x402_docs_welcome',  // intro/overview, changes rarely
   'x402_bazaar_docs',            // feature description landing page
   'erc8004_official_eip',        // EIP spec, stable once published
+  'huggingface_agents_spaces',    // reference/directory surface, not an event by itself
 ]);
 // Living docs — do update, but are still reference, not event (lighter penalty)
 const STATIC_REF_LIVING = new Set([
   'coinbase_cdp_changelog',      // updated with each SDK release
 ]);
+
+const LIVE_MOVEMENT_SOURCES = [
+  /8004.*scan/i,
+  /erc8004_scan/i,
+  /explorer/i,
+];
+
+const CHANGELOG_SOURCES = [
+  /changelog/i,
+];
+
+const MOVEMENT_RE = /\b(changelog|release|released|new|update|updated|launch|launched|announc(?:e|ed|ing)|integration|integrated|adoption|adopted|added|shipped|now live|rollout|milestone)\b/i;
+
+const MIN_SELECTOR_SCORE = 60;
+const RECENT_SELECTION_PENALTY = 80;
 
 // Vague/low-actionability title patterns
 const VAGUE_PATTERNS = [
@@ -179,6 +222,49 @@ const VAGUE_PATTERNS = [
 
 // Source-type caps for final selection
 const TYPE_CAPS = { search: 2, docs: 2 };
+
+function textForMovement(item) {
+  return [
+    item.title,
+    item.evidence?.summary,
+    item.evidence?.reason,
+    item.payload?.summary,
+    item.payload?.description,
+  ].filter(Boolean).join(' ');
+}
+
+function textForAction(item) {
+  return [
+    textForMovement(item),
+    item.recommendation,
+  ].filter(Boolean).join(' ');
+}
+
+function isChangelogSource(item) {
+  return CHANGELOG_SOURCES.some(re => re.test(item.source_key ?? ''));
+}
+
+function isLiveMovementSource(item) {
+  return LIVE_MOVEMENT_SOURCES.some(re => re.test(item.source_key ?? ''));
+}
+
+function hasCommunityEngagement(item) {
+  return item.evidence?.hn_points != null || item.evidence?.hn_comments != null;
+}
+
+function hasMovementEvidence(item) {
+  return hasCommunityEngagement(item) ||
+    MOVEMENT_RE.test(textForMovement(item)) ||
+    isChangelogSource(item) ||
+    isLiveMovementSource(item);
+}
+
+function isStaticReference(item) {
+  if (STATIC_REF_STABLE.has(item.source_key)) return true;
+  if (item.source_type !== 'docs') return false;
+  if (isChangelogSource(item) || isLiveMovementSource(item)) return false;
+  return true;
+}
 
 // ── Catalyst match detection ──────────────────────────────────────────────────
 
@@ -248,6 +334,8 @@ function computeSelectorScore(item) {
   const cmt    = item.evidence?.hn_comments ?? null;
   const isHN   = item.source_key === 'hacker_news_agent_economy_search';
   const titleL = (item.title ?? '').toLowerCase();
+  const sourceUrlKey = item.source_key && item.url ? `${item.source_key}::${item.url}` : null;
+  const titleKey = item.title ? String(item.title).trim().toLowerCase() : null;
 
   // Source priority
   const pri = sourcePriority[item.source_key] ?? 'medium';
@@ -292,11 +380,23 @@ function computeSelectorScore(item) {
     sel -= 25; reasons.push('-25 no_catalyst_kw');
   }
 
-  // Static reference docs — tiered penalty; stable pages ranked much lower than live signals
-  if (STATIC_REF_STABLE.has(item.source_key)) {
-    sel -= 30; reasons.push('-30 static_stable_ref');
+  // Static reference docs — hard guard later; score penalty keeps them visibly lower in dry-runs.
+  if (isStaticReference(item)) {
+    sel -= 45; reasons.push('-45 static_ref_no_event');
   } else if (STATIC_REF_LIVING.has(item.source_key)) {
     sel -= 10; reasons.push('-10 static_living_ref');
+  }
+
+  if (isStaticReference(item) && hasMovementEvidence(item)) {
+    sel += 15; reasons.push('+15 static_has_movement_evidence');
+  }
+
+  if (sourceUrlKey && recentSourceUrl.has(sourceUrlKey)) {
+    sel -= RECENT_SELECTION_PENALTY; reasons.push(`-${RECENT_SELECTION_PENALTY} recent_source_url`);
+  }
+
+  if (titleKey && recentTitles.has(titleKey)) {
+    sel -= RECENT_SELECTION_PENALTY; reasons.push(`-${RECENT_SELECTION_PENALTY} recent_title`);
   }
 
   // Vague, academic, or speculative title
@@ -317,6 +417,12 @@ function computeSelectorScore(item) {
     catMatches,
     isAP2,
     isX402Main,
+    isStaticReference: isStaticReference(item),
+    hasMovementEvidence: hasMovementEvidence(item),
+    wasRecentlySelected: Boolean(
+      (sourceUrlKey && recentSourceUrl.has(sourceUrlKey)) ||
+      (titleKey && recentTitles.has(titleKey))
+    ),
   };
 }
 
@@ -351,6 +457,7 @@ for (const item of scored) {
 
   const typeCount = typeCounts[item.source_type] ?? 0;
   const cap = TYPE_CAPS[item.source_type] ?? Infinity;
+  const allowBelowCutoff = selected.length === 0;
 
   // Catalyst matches can bypass docs/ecosystem type cap, but NOT search cap
   // (search results cluster around events; enforce the search cap strictly)
@@ -365,6 +472,21 @@ for (const item of scored) {
   }
   if (item.isX402Main && x402MainSelected) {
     dismissed.push({ item, reason: 'near-dup: x402.org thread already selected' });
+    continue;
+  }
+
+  if (item.isStaticReference && !item.hasMovementEvidence) {
+    dismissed.push({ item, reason: 'static reference without movement evidence' });
+    continue;
+  }
+
+  if (item.wasRecentlySelected) {
+    dismissed.push({ item, reason: 'recently selected in previous 7 days' });
+    continue;
+  }
+
+  if (item.selectorScore < MIN_SELECTOR_SCORE && !allowBelowCutoff) {
+    dismissed.push({ item, reason: `weak filler below selector cutoff (${item.selectorScore}<${MIN_SELECTOR_SCORE})` });
     continue;
   }
 
@@ -409,8 +531,10 @@ function whyItMatters(item) {
   if (kws.some(k => ['a2a','agent-to-agent'].includes(k))) {
     parts.push('A2A protocol infrastructure signal.');
   }
-  if (sourcePriority[item.source_key] === 'high' && item.source_type !== 'search') {
-    parts.push('High-priority source.');
+  if (isLiveMovementSource(item)) {
+    parts.push('Live ecosystem surface; page state can indicate new listings or adoption.');
+  } else if (sourcePriority[item.source_key] === 'high' && item.source_type !== 'search') {
+    parts.push('Priority source with actionable catalyst context.');
   }
   return parts.join(' ') || item.recommendation;
 }
@@ -427,18 +551,38 @@ function suggestedAction(item) {
       case 'cloudflare_pay_per_crawl_ga':
         return 'Track Cloudflare x402/pay-per-crawl milestone for AgentCrush content timing.';
       case 'stripe_x402_revenue_disclosure':
-        return 'Monitor Stripe x402 data for AgentCrush market intelligence.';
+        return 'Investigate Stripe payment-agent signal; use this as positioning signal for x402/AP2 coverage.';
     }
   }
+  const titleL = (item.title ?? '').toLowerCase();
   if (item.source_type === 'docs' && sourcePriority[item.source_key] === 'high') {
-    return 'Review for AgentCrush docs coverage gap or update opportunity.';
+    if (isChangelogSource(item) || MOVEMENT_RE.test(textForMovement(item))) {
+      return `Ship/update AgentCrush coverage for ${item.title}.`;
+    }
+    return `Investigate docs movement behind ${item.title}; only brief if it changes adoption or implementation work.`;
   }
   if (item.source_type === 'ecosystem' && sourcePriority[item.source_key] === 'high') {
-    return 'Evaluate for AgentCrush ecosystem index. Check if listed/described.';
+    if (isLiveMovementSource(item)) {
+      return `Add/check listing: inspect ${item.title} for new live agents, implementations, or adoption changes.`;
+    }
+    if (MOVEMENT_RE.test(textForAction(item))) {
+      return `Use this as positioning signal: ${item.title}.`;
+    }
+    return `Investigate ${item.title}; select only if it shows actionable ecosystem movement.`;
   }
   const isHN = item.source_key === 'hacker_news_agent_economy_search';
-  if (isHN) return item.recommendation;
-  return item.recommendation;
+  if (isHN) {
+    if (titleL.includes('ap2') || titleL.includes('agent payments protocol')) {
+      return 'Investigate AP2 traction; ship/update AP2 vs x402 positioning note.';
+    }
+    if (titleL.includes('stripe') || titleL.includes('payment agent')) {
+      return 'Use this as positioning signal for payment-agent UX and market language.';
+    }
+    if (titleL.includes('a2a')) {
+      return 'Investigate A2A traction; decide whether AgentCrush should track this protocol surface.';
+    }
+  }
+  return item.recommendation || `Investigate ${item.title}.`;
 }
 
 // ── Print output ──────────────────────────────────────────────────────────────
@@ -458,7 +602,7 @@ if (isDryRun) {
     const pts = item.evidence?.hn_points ?? null;
     const hnTag = pts !== null ? `  HN:${pts}pts/${item.evidence.hn_comments}c` : '';
     const selMark = selected.includes(item) ? ' ✓' : '';
-    const staticTag = STATIC_REF_STABLE.has(item.source_key) ? '/static' : '';
+    const staticTag = item.isStaticReference ? '/static' : '';
     console.log(`  ${String(i + 1).padStart(2)}. [sel=${String(item.selectorScore).padStart(3)}] [score=${item.score}]${hnTag}  [${item.source_type}${staticTag}]${selMark}`);
     console.log(`      "${item.title?.slice(0, 72)}"`);
     console.log(`      ${item.reasons.join('  ')}`);
@@ -471,7 +615,7 @@ console.log('  ── Selected brief items ──\n');
 for (const [i, item] of selected.entries()) {
   const pts = item.evidence?.hn_points ?? null;
   const hnTag = pts !== null ? `  ${pts}pts/${item.evidence.hn_comments}c` : '';
-  const staticNote = STATIC_REF_STABLE.has(item.source_key) ? '  [static ref]' : '';
+  const staticNote = item.isStaticReference ? '  [static ref]' : '';
   console.log(`  ${i + 1}. ${item.title}${staticNote}`);
   console.log(`     source: ${item.source_key} / ${item.source_type} / score=${item.score} / sel=${item.selectorScore}${hnTag}`);
   console.log(`     why:    ${whyItMatters(item)}`);
