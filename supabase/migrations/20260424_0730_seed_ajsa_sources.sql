@@ -103,13 +103,13 @@ INSERT INTO ajsa_sources (
   ),
   (
     'virtuals_protocol_announcements',
-    'blog',
+    'ecosystem',
     'active',
     'Virtuals Protocol announcements',
-    'https://www.virtuals.io/blog',
+    'https://x.com/virtuals_io',
     1440,
-    '{"watch_for":["agent launches","commercial traction","protocol updates","marketplace changes","tokenized agent milestones"]}'::jsonb,
-    '{"priority":"medium","execution_use":"trigger AgentCrush coverage when Virtuals launches agents or mechanics that affect agent discovery and monetization"}'::jsonb
+    '{"watch_for":["official announcements","ACP updates","agent commerce integrations","chain expansions","new agent launches","marketplace changes","tokenized agent milestones"],"related_urls":["https://www.virtuals.io/","https://whitepaper.virtuals.io/"]}'::jsonb,
+    '{"priority":"medium","execution_use":"trigger AgentCrush coverage when Virtuals announces agent-commerce integrations, ACP updates, chain expansions, or agent launches"}'::jsonb
   ),
   (
     'huggingface_agents_spaces',
