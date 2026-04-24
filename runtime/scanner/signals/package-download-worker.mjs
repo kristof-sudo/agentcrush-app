@@ -31,9 +31,9 @@ const ENV_PATHS = [
 const DEFAULT_LIMIT  = 50;
 const MAX_LIMIT      = 200;
 const USER_AGENT     = 'AgentCrush-Download-Worker/1.0 (agentcrush.com)';
-const NPM_DELAY_MS   = 500;
-const PYPI_DELAY_MS  = 2000;
-const PYPI_RETRY_WAIT_MS = 35_000;
+const NPM_DELAY_MS       = 500;
+const PYPI_DELAY_MS      = 6_000;
+const PYPI_RETRY_WAIT_MS = 75_000;   // used when Retry-After header is absent
 
 // ─── Argument parsing ─────────────────────────────────────────────────────────
 
@@ -215,8 +215,13 @@ async function fetchPypiDownloads(packageName) {
   let res = await doFetch();
 
   if (res.status === 429) {
-    // Single retry after waiting out the rate limit.
-    await sleep(PYPI_RETRY_WAIT_MS);
+    // Honour Retry-After if present; fall back to PYPI_RETRY_WAIT_MS.
+    const retryAfterSec = Number.parseInt(res.headers.get('retry-after') ?? '', 10);
+    const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+      ? Math.min(retryAfterSec * 1000, 120_000)
+      : PYPI_RETRY_WAIT_MS;
+    process.stdout.write(`[429→wait ${Math.round(waitMs / 1000)}s] `);
+    await sleep(waitMs);
     res = await doFetch();
   }
 
@@ -392,7 +397,7 @@ async function main() {
 
   // Fetch PyPI downloads.
   if (pypiMappings.length > 0) {
-    console.log(`\nFetching PyPI downloads (${pypiMappings.length} packages, delay=${PYPI_DELAY_MS}ms)…`);
+    console.log(`\nFetching PyPI downloads (${pypiMappings.length} packages, inter-request delay=${PYPI_DELAY_MS / 1000}s, retry-wait=${PYPI_RETRY_WAIT_MS / 1000}s)…`);
     for (const mapping of pypiMappings) {
       process.stdout.write(`  pypi/${mapping.package_name}… `);
       const result = await fetchPypiDownloads(mapping.package_name);
