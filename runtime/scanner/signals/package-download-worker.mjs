@@ -6,10 +6,11 @@
  * agent_package_download_signals.
  *
  * Modes:
- *   --dry-run   Fetch downloads, print report, no writes. (default)
- *   --write     Upsert rows into agent_package_download_signals.
- *   --limit N   Max mappings to process (default 50, max 200).
- *   --window W  Download window: only 'weekly' supported (default).
+ *   --dry-run       Fetch downloads, print report, no writes. (default)
+ *   --write         Upsert rows into agent_package_download_signals.
+ *   --limit N       Max mappings to process (default 50, max 200).
+ *   --window W      Download window: only 'weekly' supported (default).
+ *   --missing-only  Only fetch high_auto mappings that have no weekly download row yet.
  *
  * Trust policy:
  *   Only mapping_status='high_auto' AND confidence>=95 are processed.
@@ -38,13 +39,14 @@ const PYPI_RETRY_WAIT_MS = 75_000;   // used when Retry-After header is absent
 // ─── Argument parsing ─────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const args = { dryRun: true, write: false, limit: DEFAULT_LIMIT, window: 'weekly' };
+  const args = { dryRun: true, write: false, limit: DEFAULT_LIMIT, window: 'weekly', missingOnly: false };
 
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
 
-    if (arg === '--dry-run') { args.dryRun = true;  args.write = false; continue; }
-    if (arg === '--write')   { args.write  = true;  args.dryRun = false; continue; }
+    if (arg === '--dry-run')      { args.dryRun = true;  args.write = false; continue; }
+    if (arg === '--write')        { args.write  = true;  args.dryRun = false; continue; }
+    if (arg === '--missing-only') { args.missingOnly = true; continue; }
 
     if (arg === '--limit') {
       const raw = argv[i + 1];
@@ -148,6 +150,33 @@ async function fetchTrustedMappings(supabase, limit) {
   }
 
   return [...seen.values()].slice(0, limit);
+}
+
+// Returns high_auto mappings that have no weekly download row in the latest view.
+async function fetchMissingMappings(supabase, limit, window) {
+  const [mappingsResult, downloadsResult] = await Promise.all([
+    supabase
+      .from('agent_package_mapping_latest')
+      .select('agent_id, registry, package_name, mapping_status, confidence, snapshot_date, github_full_name')
+      .eq('mapping_status', 'high_auto')
+      .gte('confidence', 95),
+    supabase
+      .from('agent_package_download_latest')
+      .select('agent_id, registry, package_name')
+      .eq('download_window', window),
+  ]);
+
+  if (mappingsResult.error) throw mappingsResult.error;
+  if (downloadsResult.error) throw downloadsResult.error;
+
+  const dlSet = new Set(
+    (downloadsResult.data || []).map(d => `${d.agent_id}|${d.registry}|${d.package_name}`)
+  );
+
+  const missing = (mappingsResult.data || [])
+    .filter(m => !dlSet.has(`${m.agent_id}|${m.registry}|${m.package_name}`));
+
+  return missing.slice(0, limit);
 }
 
 async function upsertDownloadSignals(supabase, rows) {
@@ -351,7 +380,7 @@ async function main() {
     args = parseArgs(process.argv);
   } catch (err) {
     console.error(`Error: ${err.message}`);
-    console.error('Usage: package-download-worker.mjs [--dry-run|--write] [--limit N] [--window weekly]');
+    console.error('Usage: package-download-worker.mjs [--dry-run|--write] [--missing-only] [--limit N] [--window weekly]');
     process.exit(1);
   }
 
@@ -366,9 +395,17 @@ async function main() {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  console.log(`Loading trusted mappings (high_auto, confidence>=95, limit=${args.limit})…`);
-  const mappings = await fetchTrustedMappings(supabase, args.limit);
-  console.log(`Found ${mappings.length} mappings to process.`);
+  let mappings;
+  if (args.missingOnly) {
+    console.log(`MODE: missing-only ${args.window} downloads`);
+    console.log(`Loading high_auto mappings with no ${args.window} download row (limit=${args.limit})…`);
+    mappings = await fetchMissingMappings(supabase, args.limit, args.window);
+    console.log(`Found ${mappings.length} mappings missing a ${args.window} download row.`);
+  } else {
+    console.log(`Loading trusted mappings (high_auto, confidence>=95, limit=${args.limit})…`);
+    mappings = await fetchTrustedMappings(supabase, args.limit);
+    console.log(`Found ${mappings.length} mappings to process.`);
+  }
 
   if (mappings.length === 0) {
     console.log('Nothing to fetch. Exiting.');
@@ -411,7 +448,9 @@ async function main() {
     }
   }
 
-  const mode = args.write ? 'write' : 'dry-run';
+  const modeParts = [args.write ? 'write' : 'dry-run'];
+  if (args.missingOnly) modeParts.push('missing-only');
+  const mode = modeParts.join(' + ');
   printReport(mappings, results, args, mode);
 
   if (args.write) {
