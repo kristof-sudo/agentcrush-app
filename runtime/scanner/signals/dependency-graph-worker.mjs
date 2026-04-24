@@ -1,15 +1,16 @@
 /**
- * Dependency graph dry-run worker — indexed repos only.
+ * Dependency graph dry-run worker — indexed and search source tiers.
  *
- * Scans GitHub repos for AgentCrush agents, finds which repos depend on
- * verified agent packages, and prints a dependency edge report.
+ * Scans GitHub repos for repos that depend on verified AgentCrush agent
+ * packages, and prints a dependency edge report.
  *
  * This is a dry-run-only worker. It never writes to Supabase.
  *
  * Modes:
  *   --dry-run          Fetch, match, print. No writes. (required)
- *   --source indexed   Only scan AgentCrush indexed repos. (required for v1)
- *   --limit N          Max repos to scan (default 20, max 45).
+ *   --source indexed   Scan AgentCrush indexed repos (max 45).
+ *   --source search    Scan external repos via GitHub topic search (max 100).
+ *   --limit N          Max repos to scan (indexed default 20; search default 25).
  *
  * Trust policy:
  *   Only mapping_status='high_auto' AND confidence>=95 from
@@ -27,11 +28,14 @@ const ENV_PATHS = [
   '/opt/agentcrush/scanner/.env',
 ];
 
-const DEFAULT_LIMIT  = 20;
-const MAX_LIMIT      = 45;
-const GH_BASE        = 'https://api.github.com';
-const USER_AGENT     = 'AgentCrush-DepGraph-Worker/1.0 (agentcrush.com)';
-const GH_DELAY_MS    = 350;   // inter-request delay — stays well inside secondary rate limits
+const DEFAULT_LIMIT_INDEXED  = 20;
+const DEFAULT_LIMIT_SEARCH   = 25;
+const MAX_LIMIT_INDEXED      = 45;
+const MAX_LIMIT_SEARCH       = 100;
+const SEARCH_QUERY           = 'topic:ai-agent stars:>50 pushed:>2025-01-01';
+const GH_BASE                = 'https://api.github.com';
+const USER_AGENT             = 'AgentCrush-DepGraph-Worker/1.0 (agentcrush.com)';
+const GH_DELAY_MS            = 350;   // inter-request delay — stays well inside secondary rate limits
 
 // Dep files we parse (in order of preference per repo).
 const DEP_FILES = ['package.json', 'requirements.txt', 'pyproject.toml'];
@@ -45,7 +49,7 @@ const SKIP_FILES = new Set([
 // ─── Argument parsing ─────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const args = { dryRun: false, source: null, limit: DEFAULT_LIMIT };
+  const args = { dryRun: false, source: null, limit: null };
 
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
@@ -53,21 +57,21 @@ function parseArgs(argv) {
     if (arg === '--dry-run') { args.dryRun = true; continue; }
 
     if (arg === '--write') {
-      console.error('Error: --write is not supported in v1. This worker is dry-run only.');
+      console.error('Error: --write is not supported. This worker is dry-run only.');
       process.exit(1);
     }
 
     if (arg === '--source') {
       const raw = argv[i + 1];
       if (!raw) throw new Error('Missing value for --source');
-      if (raw !== 'indexed') throw new Error(`--source "${raw}" not supported. Only "indexed" is available in v1.`);
+      if (raw !== 'indexed' && raw !== 'search') throw new Error(`--source "${raw}" not supported. Use "indexed" or "search".`);
       args.source = raw;
       i++;
       continue;
     }
     if (arg.startsWith('--source=')) {
       const raw = arg.slice('--source='.length);
-      if (raw !== 'indexed') throw new Error(`--source "${raw}" not supported. Only "indexed" is available in v1.`);
+      if (raw !== 'indexed' && raw !== 'search') throw new Error(`--source "${raw}" not supported. Use "indexed" or "search".`);
       args.source = raw;
       continue;
     }
@@ -88,7 +92,16 @@ function parseArgs(argv) {
   }
 
   if (!args.dryRun) throw new Error('--dry-run is required. This worker never writes.');
-  if (!args.source) throw new Error('--source indexed is required.');
+  if (!args.source) throw new Error('--source indexed or --source search is required.');
+
+  // Apply per-source defaults and caps.
+  if (args.source === 'search') {
+    if (args.limit === null) args.limit = DEFAULT_LIMIT_SEARCH;
+    args.limit = Math.min(args.limit, MAX_LIMIT_SEARCH);
+  } else {
+    if (args.limit === null) args.limit = DEFAULT_LIMIT_INDEXED;
+    args.limit = Math.min(args.limit, MAX_LIMIT_INDEXED);
+  }
 
   return args;
 }
@@ -96,7 +109,7 @@ function parseArgs(argv) {
 function parseLimit(raw) {
   const n = Number.parseInt(raw, 10);
   if (!Number.isInteger(n) || n < 1) throw new Error('--limit must be a positive integer');
-  return Math.min(n, MAX_LIMIT);
+  return n; // per-source cap applied in parseArgs
 }
 
 // ─── Env loading ──────────────────────────────────────────────────────────────
@@ -159,6 +172,18 @@ async function fetchIndexedAgents(supabase, limit) {
   return data || [];
 }
 
+async function fetchAgentHandleMap(supabase) {
+  const { data, error } = await supabase
+    .from('agents')
+    .select('id, handle, display_name');
+  if (error) throw error;
+  const map = new Map();
+  for (const a of (data || [])) {
+    map.set(a.id, a.handle ?? a.display_name ?? a.id.slice(0, 8));
+  }
+  return map;
+}
+
 // ─── Package lookup maps ───────────────────────────────────────────────────────
 
 function normalizePypiName(name) {
@@ -210,6 +235,36 @@ async function ghGet(path, token) {
   }
   if (!res.ok) return { status: res.status, data: null, error: `GitHub ${res.status}` };
   return { status: res.status, data: await res.json() };
+}
+
+async function ghSearch(query, perPage, token) {
+  const headers = {
+    Accept: 'application/vnd.github.v3+json',
+    'User-Agent': USER_AGENT,
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const url = `${GH_BASE}/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=${perPage}`;
+  let res = await fetch(url, { headers });
+
+  if (res.status === 403 || res.status === 429) {
+    const retryAfter = res.headers.get('Retry-After');
+    const wait = retryAfter ? Number.parseInt(retryAfter, 10) * 1000 : 60_000;
+    console.warn(`  [search rate-limit] waiting ${Math.round(wait / 1000)}s…`);
+    await sleep(wait);
+    res = await fetch(url, { headers });
+  }
+
+  const rateLimitRemaining = res.headers.get('X-RateLimit-Remaining');
+  if (!res.ok) {
+    return { items: [], totalCount: 0, rateLimitRemaining: null, error: `GitHub search ${res.status}` };
+  }
+  const data = await res.json();
+  return {
+    items:              data.items ?? [],
+    totalCount:         data.total_count ?? 0,
+    rateLimitRemaining: rateLimitRemaining !== null ? Number.parseInt(rateLimitRemaining, 10) : null,
+  };
 }
 
 async function fetchRootContents(fullName, token) {
@@ -344,7 +399,7 @@ function parsePyprojectTomlDeps(text) {
 
 // ─── Matching ──────────────────────────────────────────────────────────────────
 
-function matchDeps(deps, depFile, scannedRepo, scannedAgent, mappings, npmMap, pypiMap) {
+function matchDeps(deps, depFile, scannedFullName, scannedStars, sourceTier, npmMap, pypiMap) {
   const edges = [];
   const selfMatches = [];
 
@@ -369,26 +424,24 @@ function matchDeps(deps, depFile, scannedRepo, scannedAgent, mappings, npmMap, p
     if (!mapping) continue;
 
     const edge = {
-      scanned_repo:       scannedRepo.github_full_name,
-      scanned_agent_id:   scannedAgent.id,
-      scanned_agent_handle: scannedAgent.handle,
-      scanned_display_name: scannedAgent.display_name,
-      matched_package:    mapping.package_name,
-      matched_agent_id:   mapping.agent_id,
+      scanned_repo:             scannedFullName,
+      scanned_stars:            scannedStars ?? null,
+      matched_package:          mapping.package_name,
+      matched_agent_id:         mapping.agent_id,
       matched_github_full_name: mapping.github_full_name,
       registry,
-      dep_file:           depFile,
-      dep_type:           depType,
-      match_source:       matchSource,
-      mapping_confidence: mapping.confidence,
-      source_tier:        'indexed',
+      dep_file:                 depFile,
+      dep_type:                 depType,
+      match_source:             matchSource,
+      mapping_confidence:       mapping.confidence,
+      source_tier:              sourceTier,
     };
 
     // Self-match: the scanned repo IS the matched agent's repo.
     if (
-      scannedRepo.github_full_name &&
+      scannedFullName &&
       mapping.github_full_name &&
-      scannedRepo.github_full_name.toLowerCase() === mapping.github_full_name.toLowerCase()
+      scannedFullName.toLowerCase() === mapping.github_full_name.toLowerCase()
     ) {
       selfMatches.push(edge);
     } else {
@@ -401,8 +454,10 @@ function matchDeps(deps, depFile, scannedRepo, scannedAgent, mappings, npmMap, p
 
 // ─── Per-repo processing ───────────────────────────────────────────────────────
 
-async function processRepo(agent, mappings, npmMap, pypiMap, token, stats) {
-  const fullName = agent.github_full_name;
+// repoInfo: { github_full_name, stars? }  sourceTier: 'indexed' | 'search'
+async function processRepo(repoInfo, sourceTier, mappings, npmMap, pypiMap, token, stats) {
+  const fullName = repoInfo.github_full_name;
+  const stars    = repoInfo.stars ?? null;
   process.stdout.write(`  [${fullName}] `);
 
   // Fetch root contents listing.
@@ -447,7 +502,7 @@ async function processRepo(agent, mappings, npmMap, pypiMap, token, stats) {
     }
 
     const { edges, selfMatches } = matchDeps(
-      parsed.deps, depFile, agent, agent, mappings, npmMap, pypiMap
+      parsed.deps, depFile, fullName, stars, sourceTier, npmMap, pypiMap
     );
     allEdges.push(...edges);
     allSelfMatches.push(...selfMatches);
@@ -461,20 +516,22 @@ async function processRepo(agent, mappings, npmMap, pypiMap, token, stats) {
 
 // ─── Reporting ────────────────────────────────────────────────────────────────
 
-// Build a lookup of agent_id → handle from mappings + agents list.
-function buildAgentHandleMap(mappings, agents) {
-  const map = new Map();
-  for (const a of agents) map.set(a.id, a.handle ?? a.display_name ?? a.id.slice(0, 8));
-  return map;
-}
-
-function printReport(agents, mappings, allEdges, allSelfMatches, stats, args) {
-  const agentHandleMap = buildAgentHandleMap(mappings, agents);
+// agentHandleMap: Map<agent_id, string>
+// searchMeta: null for indexed, or { query, totalCount, rateLimitRemaining } for search
+function printReport(agentHandleMap, mappings, allEdges, allSelfMatches, stats, args, searchMeta) {
+  const isSearch = args.source === 'search';
 
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('  Dependency Graph Worker — DRY-RUN — source=indexed');
+  console.log(`  Dependency Graph Worker — DRY-RUN — source=${args.source}`);
   console.log('═══════════════════════════════════════════════════════════════');
+  if (isSearch && searchMeta) {
+    console.log(`  github_search_query        ${searchMeta.query}`);
+    console.log(`  search_total_count         ${searchMeta.totalCount}`);
+    if (searchMeta.rateLimitRemaining !== null) {
+      console.log(`  rate_limit_remaining       ${searchMeta.rateLimitRemaining}`);
+    }
+  }
   console.log(`  repos_checked              ${stats.reposChecked}`);
   console.log(`  files_fetched              ${stats.filesFetched}`);
   console.log(`  package_mappings_loaded    ${mappings.length}`);
@@ -489,14 +546,15 @@ function printReport(agents, mappings, allEdges, allSelfMatches, stats, args) {
     console.log('  ─────────────────────────────────────────────────────────────');
     for (const e of allEdges) {
       const matchedHandle = agentHandleMap.get(e.matched_agent_id) ?? e.matched_agent_id?.slice(0, 8);
+      const starsStr = e.scanned_stars !== null ? ` (⭐${e.scanned_stars})` : '';
       console.log(
-        `  [${e.registry}] ${e.scanned_repo.padEnd(35)} ` +
-        `depends on  ${e.matched_package.padEnd(22)} ` +
+        `  [${e.registry}] ${(e.scanned_repo + starsStr).padEnd(45)} ` +
+        `→  ${e.matched_package.padEnd(22)} ` +
         `(${matchedHandle})`
       );
       console.log(
         `           file=${e.dep_file}  dep_type=${e.dep_type}  ` +
-        `match=${e.match_source}  conf=${e.mapping_confidence}  tier=${e.source_tier}`
+        `match=${e.match_source}  conf=${e.mapping_confidence}`
       );
     }
     console.log('');
@@ -509,13 +567,14 @@ function printReport(agents, mappings, allEdges, allSelfMatches, stats, args) {
     console.log('  Self-matches excluded (scanned repo IS the matched agent):');
     console.log('  ─────────────────────────────────────────────────────────────');
     for (const e of allSelfMatches) {
-      console.log(`  [${e.registry}] ${e.scanned_repo}  →  ${e.matched_package}  (self)`);
+      const starsStr = e.scanned_stars !== null ? ` (⭐${e.scanned_stars})` : '';
+      console.log(`  [${e.registry}] ${e.scanned_repo}${starsStr}  →  ${e.matched_package}  (self)`);
     }
     console.log('');
   }
 
-  // Top matched packages.
   if (allEdges.length > 0) {
+    // Top matched packages.
     const pkgCounts = new Map();
     for (const e of allEdges) {
       pkgCounts.set(e.matched_package, (pkgCounts.get(e.matched_package) ?? 0) + 1);
@@ -566,7 +625,7 @@ async function main() {
     args = parseArgs(process.argv);
   } catch (err) {
     console.error(`Error: ${err.message}`);
-    console.error('Usage: dependency-graph-worker.mjs --dry-run --source indexed [--limit N]');
+    console.error('Usage: dependency-graph-worker.mjs --dry-run --source indexed|search [--limit N]');
     process.exit(1);
   }
 
@@ -580,7 +639,6 @@ async function main() {
   }
 
   const ghToken = process.env.GITHUB_TOKEN ?? null;
-
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   // Load package mappings and build lookup maps.
@@ -590,21 +648,8 @@ async function main() {
   const { npmMap, pypiMap } = buildLookupMaps(mappings);
   console.log(`  npm packages: ${npmMap.size}  PyPI packages (normalized): ${pypiMap.size}`);
 
-  // Load indexed agents.
-  console.log(`\nLoading indexed agents (limit=${args.limit})…`);
-  const agents = await fetchIndexedAgents(supabase, args.limit);
-  console.log(`Loaded ${agents.length} agents with github_full_name.`);
-
-  if (agents.length === 0) {
-    console.log('No agents to scan. Exiting.');
-    return;
-  }
-
-  // Build a map of github_full_name → agent for the scanned set.
-  const agentByRepo = new Map();
-  for (const a of agents) {
-    agentByRepo.set(a.github_full_name.toLowerCase(), a);
-  }
+  // Load agent handle map (used in report for matched agent labels).
+  const agentHandleMap = await fetchAgentHandleMap(supabase);
 
   const stats = {
     reposChecked: 0,
@@ -612,24 +657,76 @@ async function main() {
     fetchErrors:  [],
     parseErrors:  [],
   };
-
   const allEdges       = [];
   const allSelfMatches = [];
+  let searchMeta       = null;
 
-  console.log(`\nScanning ${agents.length} repos for dependency references…`);
-  console.log('  (delay=' + GH_DELAY_MS + 'ms between GitHub requests)');
-  console.log('');
+  if (args.source === 'indexed') {
+    // ── Indexed mode: scan AgentCrush-indexed repos ───────────────────────────
+    console.log(`\nLoading indexed agents (limit=${args.limit})…`);
+    const agents = await fetchIndexedAgents(supabase, args.limit);
+    console.log(`Loaded ${agents.length} agents with github_full_name.`);
 
-  for (const agent of agents) {
-    stats.reposChecked++;
-    const { edges, selfMatches } = await processRepo(
-      agent, mappings, npmMap, pypiMap, ghToken, stats
-    );
-    allEdges.push(...edges);
-    allSelfMatches.push(...selfMatches);
+    if (agents.length === 0) {
+      console.log('No agents to scan. Exiting.');
+      return;
+    }
+
+    console.log(`\nScanning ${agents.length} repos for dependency references…`);
+    console.log('  (delay=' + GH_DELAY_MS + 'ms between GitHub requests)');
+    console.log('');
+
+    for (const agent of agents) {
+      stats.reposChecked++;
+      const { edges, selfMatches } = await processRepo(
+        { github_full_name: agent.github_full_name, stars: null },
+        'indexed', mappings, npmMap, pypiMap, ghToken, stats
+      );
+      allEdges.push(...edges);
+      allSelfMatches.push(...selfMatches);
+    }
+
+  } else {
+    // ── Search mode: scan external repos via GitHub topic search ──────────────
+    console.log(`\nSearching GitHub: ${SEARCH_QUERY}`);
+    console.log(`  limit=${args.limit}  authenticated=${!!ghToken}`);
+
+    const perPage = Math.min(args.limit, 100);
+    const { items, totalCount, rateLimitRemaining, error: searchError } =
+      await ghSearch(SEARCH_QUERY, perPage, ghToken);
+
+    if (searchError) {
+      console.error(`Search error: ${searchError}`);
+      process.exit(1);
+    }
+
+    const repos = items.slice(0, args.limit);
+    searchMeta = { query: SEARCH_QUERY, totalCount, rateLimitRemaining };
+
+    console.log(`  found ${totalCount} total results; scanning first ${repos.length}`);
+    if (rateLimitRemaining !== null) {
+      console.log(`  search rate_limit_remaining: ${rateLimitRemaining}`);
+    }
+    console.log('');
+
+    await sleep(GH_DELAY_MS); // breathe after search request
+
+    console.log(`Scanning ${repos.length} repos for dependency references…`);
+    console.log('  (delay=' + GH_DELAY_MS + 'ms between GitHub requests)');
+    console.log('');
+
+    for (const item of repos) {
+      stats.reposChecked++;
+      const { edges, selfMatches } = await processRepo(
+        { github_full_name: item.full_name, stars: item.stargazers_count },
+        'search', mappings, npmMap, pypiMap, ghToken, stats
+      );
+      allEdges.push(...edges);
+      allSelfMatches.push(...selfMatches);
+    }
   }
 
-  printReport(agents, mappings, allEdges, allSelfMatches, stats, args);
+  printReport(agentHandleMap, mappings, allEdges, allSelfMatches, stats, args, searchMeta);
 }
 
 main().catch(err => {
