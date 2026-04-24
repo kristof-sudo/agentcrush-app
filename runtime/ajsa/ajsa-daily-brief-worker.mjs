@@ -1,8 +1,13 @@
 /**
- * Ajsa Daily Brief Worker — DRY RUN prototype
+ * Ajsa Daily Brief Worker
  *
- * Read-only. Never sends Telegram. Never writes to Supabase.
- * Must be invoked with --dry-run; non-dry-run is refused.
+ * Read-only query of Supabase. Optional single Telegram send.
+ * Never writes to Supabase.
+ *
+ * Usage:
+ *   node ajsa-daily-brief-worker.mjs              -- dry-run (default)
+ *   node ajsa-daily-brief-worker.mjs --dry-run    -- dry-run (explicit)
+ *   node ajsa-daily-brief-worker.mjs --send       -- send to Telegram once
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -11,20 +16,31 @@ import path from 'node:path';
 
 // ── Arg check ──────────────────────────────────────────────────────────────
 
-const isDryRun = process.argv.includes('--dry-run');
+const hasDryRun = process.argv.includes('--dry-run');
+const hasSend   = process.argv.includes('--send');
 
-if (!isDryRun) {
-  console.error('[ajsa] ERROR: This worker only runs in --dry-run mode for now.');
-  console.error('[ajsa]        Non-dry-run execution is not yet implemented.');
+if (hasDryRun && hasSend) {
+  console.error('[ajsa] ERROR: Cannot combine --dry-run and --send.');
   process.exit(1);
 }
 
+const isSend = hasSend;
+const MODE   = isSend ? 'SEND' : 'DRY-RUN';
+console.log(`[ajsa] Mode: ${MODE}`);
+
 // ── Env loading ────────────────────────────────────────────────────────────
 
-const ENV_CANDIDATES = [
+const SUPABASE_ENV_CANDIDATES = [
   '/opt/agentcrush/selector/.env',
   '/opt/agentcrush/briefing/.env',
   '/opt/agentcrush/copydesk/.env',
+];
+
+const TELEGRAM_ENV_CANDIDATES = [
+  '/opt/agentcrush/selector/.env',
+  '/opt/agentcrush/briefing/.env',
+  '/opt/agentcrush/copydesk/.env',
+  '/opt/agentcrush/scanner/.env',
 ];
 
 function parseEnv(text) {
@@ -48,39 +64,43 @@ function parseEnv(text) {
 }
 
 async function loadSupabaseEnv() {
-  for (const envPath of ENV_CANDIDATES) {
+  for (const envPath of SUPABASE_ENV_CANDIDATES) {
     let text;
-    try {
-      text = await fs.readFile(envPath, 'utf8');
-    } catch {
-      continue;
-    }
+    try { text = await fs.readFile(envPath, 'utf8'); } catch { continue; }
     const parsed = parseEnv(text);
     if (parsed.SUPABASE_URL && parsed.SUPABASE_SERVICE_ROLE_KEY) {
       for (const [k, v] of Object.entries(parsed)) {
         if (!process.env[k]) process.env[k] = v;
       }
-      console.log(`[ajsa] Loaded env from ${path.basename(path.dirname(envPath))}/.env`);
+      console.log(`[ajsa] Supabase env from ${path.basename(path.dirname(envPath))}/.env`);
       return;
     }
   }
   throw new Error(
-    `[ajsa] Could not find SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in any of:\n  ${ENV_CANDIDATES.join('\n  ')}`
+    `[ajsa] Could not find SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in any of:\n  ${SUPABASE_ENV_CANDIDATES.join('\n  ')}`
   );
+}
+
+async function loadTelegramEnv() {
+  for (const envPath of TELEGRAM_ENV_CANDIDATES) {
+    let text;
+    try { text = await fs.readFile(envPath, 'utf8'); } catch { continue; }
+    const parsed = parseEnv(text);
+    if (parsed.TELEGRAM_BOT_TOKEN && parsed.TELEGRAM_CHAT_ID) {
+      if (!process.env.TELEGRAM_BOT_TOKEN) process.env.TELEGRAM_BOT_TOKEN = parsed.TELEGRAM_BOT_TOKEN;
+      if (!process.env.TELEGRAM_CHAT_ID)   process.env.TELEGRAM_CHAT_ID   = parsed.TELEGRAM_CHAT_ID;
+      console.log(`[ajsa] Telegram env from ${path.basename(path.dirname(envPath))}/.env`);
+      return true;
+    }
+  }
+  return false;
 }
 
 await loadSupabaseEnv();
 
 const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
-
-if (!SUPABASE_URL) {
-  console.error('[ajsa] ERROR: SUPABASE_URL is missing after env load.');
-  process.exit(1);
-}
-if (!SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('[ajsa] ERROR: SUPABASE_SERVICE_ROLE_KEY is missing after env load.');
-  process.exit(1);
-}
+if (!SUPABASE_URL)              { console.error('[ajsa] ERROR: SUPABASE_URL missing.'); process.exit(1); }
+if (!SUPABASE_SERVICE_ROLE_KEY) { console.error('[ajsa] ERROR: SUPABASE_SERVICE_ROLE_KEY missing.'); process.exit(1); }
 
 // ── Supabase client ────────────────────────────────────────────────────────
 
@@ -90,7 +110,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 // ── Query helpers ──────────────────────────────────────────────────────────
 
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY     = new Date().toISOString().slice(0, 10);
 const MAX_ITEMS = 5;
 
 async function countBriefItems(status) {
@@ -124,6 +144,8 @@ async function getBriefItems(status, limit = MAX_ITEMS) {
   }
   return data ?? [];
 }
+
+// ── Brief formatting helpers ───────────────────────────────────────────────
 
 function cleanLine(value, fallback = 'No detail available.') {
   return String(value ?? fallback).replace(/\s+/g, ' ').trim();
@@ -163,7 +185,7 @@ function inferTheme(items) {
 }
 
 function signalText(item) {
-  const hnPoints = item.evidence?.hn_points;
+  const hnPoints  = item.evidence?.hn_points;
   const hnComments = item.evidence?.hn_comments;
   const sourceKey = item.source_key ?? '';
   if (hnPoints != null) {
@@ -190,9 +212,9 @@ function whyItMatters(item) {
 }
 
 function suggestedAction(item) {
-  const title = cleanLine(item.title, 'this item');
+  const title  = cleanLine(item.title, 'this item');
   const titleL = title.toLowerCase();
-  const kws = keywordSet(item);
+  const kws    = keywordSet(item);
 
   if (titleL.includes('stripe') || titleL.includes('payment agent')) {
     return 'Investigate: extract payment-agent UX language and update the x402/AP2 positioning note.';
@@ -226,18 +248,108 @@ function executionRecommendation(items) {
     return (b.evidence?.hn_points ?? b.score ?? 0) - (a.evidence?.hn_points ?? a.score ?? 0);
   })[0];
   const action = suggestedAction(strongest);
-  if (/^Ship:/i.test(action)) return `Ship. Strongest action: ${action.replace(/^Ship:\s*/i, '')}`;
+  if (/^Ship:/i.test(action))             return `Ship. Strongest action: ${action.replace(/^Ship:\s*/i, '')}`;
   if (/^Add\/check listing:/i.test(action)) return `Investigate. Strongest action: ${action}`;
-  if (/^Investigate:/i.test(action)) return `Investigate. Strongest action: ${action.replace(/^Investigate:\s*/i, '')}`;
+  if (/^Investigate:/i.test(action))      return `Investigate. Strongest action: ${action.replace(/^Investigate:\s*/i, '')}`;
   return `Investigate. Strongest action: ${action}`;
+}
+
+// ── Brief text builder ─────────────────────────────────────────────────────
+
+function buildBriefText({ briefItems, selectorHasRun, selectedCount, totalCount, dismissedCount, candidateCount, fallbackNote }) {
+  const lines = [];
+
+  lines.push(`Ajsa Daily Brief — ${TODAY}`);
+  lines.push('');
+  lines.push('Executive read:');
+  lines.push(`- ${selectorHasRun ? selectedCount : 0} selected signals from ${totalCount} candidates.`);
+  if (fallbackNote) lines.push(`- ${fallbackNote}`);
+  lines.push(`- ${inferTheme(briefItems)}`);
+  lines.push('');
+  lines.push('Selected signals:');
+
+  if (briefItems.length === 0) {
+    lines.push("No selected signals. Wait; do not create founder action from today's feed yet.");
+  } else {
+    for (const [idx, item] of briefItems.entries()) {
+      lines.push('');
+      lines.push(`${idx + 1}. ${displayTitle(item)}`);
+      lines.push(`   Signal: ${signalText(item)}`);
+      lines.push(`   Why it matters: ${whyItMatters(item)}`);
+      lines.push(`   Action: ${suggestedAction(item)}`);
+      lines.push(`   Source: ${item.source_key}`);
+      lines.push(`   Link: ${item.url ?? 'none'}`);
+    }
+  }
+
+  lines.push('');
+  lines.push('Execution recommendation:');
+  lines.push(`- ${executionRecommendation(briefItems)}`);
+  lines.push('');
+  lines.push('Noise filtered:');
+  lines.push(`- ${dismissedCount} dismissed.`);
+  lines.push(`- ${candidateCount} candidates still unselected.`);
+  lines.push('- Static reference pages are filtered unless there is movement evidence.');
+
+  return lines.join('\n');
+}
+
+// ── Telegram send ──────────────────────────────────────────────────────────
+
+const TELEGRAM_MAX_CHARS = 4096;
+
+async function sendTelegramMessage(text) {
+  const token  = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    console.error('[ajsa] ERROR: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID missing after env load.');
+    return false;
+  }
+
+  let message  = text;
+  let truncated = false;
+
+  if (message.length > TELEGRAM_MAX_CHARS) {
+    const cutoff = message.lastIndexOf('\n', TELEGRAM_MAX_CHARS - 25);
+    message  = message.slice(0, cutoff > 0 ? cutoff : TELEGRAM_MAX_CHARS - 25) + '\n[brief truncated]';
+    truncated = true;
+    console.warn(`[ajsa] WARN: Brief truncated to fit Telegram ${TELEGRAM_MAX_CHARS}-char limit.`);
+  }
+
+  console.log(`[ajsa] Sending brief (${message.length} chars) to configured founder chat...`);
+
+  const res = await fetch(
+    `https://api.telegram.org/bot${token}/sendMessage`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        disable_web_page_preview: true,
+      }),
+    }
+  );
+
+  const data = await res.json().catch(() => ({}));
+
+  if (data.ok) {
+    console.log(`[ajsa] Telegram: sent OK (message_id: ${data.result?.message_id ?? '?'})`);
+    if (truncated) console.warn('[ajsa] WARN: Sent message was truncated — brief was over 4096 chars.');
+    return true;
+  } else {
+    console.error(`[ajsa] Telegram: send FAILED — HTTP ${res.status} — ${data.description ?? 'unknown error'}`);
+    return false;
+  }
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────
 
-const selectedCount = await countBriefItems('selected');
+const selectedCount  = await countBriefItems('selected');
 const candidateCount = await countBriefItems('candidate');
 const dismissedCount = await countBriefItems('dismissed');
-const totalCount = await countBriefItems(null);
+const totalCount     = await countBriefItems(null);
 
 let selectedItems = await getBriefItems('selected', MAX_ITEMS);
 const selectorHasRun = selectedItems.length > 0;
@@ -246,43 +358,44 @@ if (!selectorHasRun) {
   selectedItems = await getBriefItems('candidate', MAX_ITEMS);
 }
 
-const briefItems = selectedItems.slice(0, MAX_ITEMS);
+const briefItems   = selectedItems.slice(0, MAX_ITEMS);
 const fallbackNote = selectorHasRun
   ? null
   : 'Selector has not run for today; falling back to top candidate items.';
 
-console.log('');
-console.log('Ajsa Daily Brief — DRY RUN');
-console.log(TODAY);
-console.log('');
-console.log('Executive read:');
-console.log(`- ${selectorHasRun ? selectedCount : 0} selected signals from ${totalCount} candidates.`);
-if (fallbackNote) console.log(`- ${fallbackNote}`);
-console.log(`- One-line judgment: ${inferTheme(briefItems)}`);
-console.log('');
-console.log('Selected signals:');
+const briefText = buildBriefText({
+  briefItems,
+  selectorHasRun,
+  selectedCount,
+  totalCount,
+  dismissedCount,
+  candidateCount,
+  fallbackNote,
+});
 
-if (briefItems.length === 0) {
-  console.log('No selected signals. Wait; do not create founder action from today\'s feed yet.');
-} else {
-  for (const [idx, item] of briefItems.entries()) {
-    console.log(`${idx + 1}. ${displayTitle(item)}`);
-    console.log(`   Signal: ${signalText(item)}`);
-    console.log(`   Why it matters for AgentCrush: ${whyItMatters(item)}`);
-    console.log(`   Suggested action: ${suggestedAction(item)}`);
-    console.log(`   Source: ${item.source_key}`);
-    console.log(`   Link: ${item.url ?? 'none'}`);
-    console.log('');
+if (isSend) {
+  // ── Send mode ────────────────────────────────────────────────────────────
+  if (!selectorHasRun) {
+    console.error('[ajsa] ABORT: Selector has not produced selected items for today.');
+    console.error('[ajsa]        Run the selector worker first, then retry --send.');
+    process.exit(1);
   }
-}
 
-console.log('Execution recommendation:');
-console.log(`- ${executionRecommendation(briefItems)}`);
-console.log('');
-console.log('Noise filtered:');
-console.log(`- ${dismissedCount} dismissed.`);
-console.log(`- ${candidateCount} candidates still unselected.`);
-console.log('- Static reference pages are filtered unless there is movement evidence.');
-console.log('');
-console.log('[DRY RUN — Telegram NOT sent. No writes to Supabase.]');
-console.log('');
+  const telegramLoaded = await loadTelegramEnv();
+  if (!telegramLoaded) {
+    console.error('[ajsa] ERROR: Could not find TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID in any env file.');
+    console.error(`[ajsa]        Searched: ${TELEGRAM_ENV_CANDIDATES.map(p => path.basename(path.dirname(p)) + '/.env').join(', ')}`);
+    process.exit(1);
+  }
+
+  const ok = await sendTelegramMessage(briefText);
+  if (!ok) process.exit(1);
+
+} else {
+  // ── Dry-run mode ─────────────────────────────────────────────────────────
+  console.log('');
+  console.log(briefText);
+  console.log('');
+  console.log('[DRY RUN — Telegram NOT sent. No writes to Supabase.]');
+  console.log('');
+}
