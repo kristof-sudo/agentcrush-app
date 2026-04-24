@@ -37,6 +37,8 @@ const DISTINCTIVE_TERMS = new Set([
 const RISKY_TERMS = new Set([
   'autogen', 'swarms', 'marvin', 'fetch', 'camel',
   'superagent', 'openagents', 'devika',
+  'sweep',  // "sweeping" is a common word; require Sweep AI project context
+  'goose',  // "goose game" etc.; require Block/Square Goose AI context
 ]);
 
 // ─── Argument parsing ────────────────────────────────────────────────────────
@@ -342,6 +344,18 @@ function validateRiskyTerm(term, titleUrl, fullText) {
     case 'devika':
       return { relevant: true, reason: 'devika: project name confirmed in title/url' };
 
+    case 'sweep':
+      if (/sweepai\/sweep|sweep\.dev|sweep\s+ai\b|sweepai\b/i.test(combined)) {
+        return { relevant: true, reason: 'Sweep AI: sweepai/sweep project context confirmed' };
+      }
+      return { relevant: false, reason: 'sweep: no sweepai / sweep.dev project context found' };
+
+    case 'goose':
+      if (/block\/goose|goose\.ai|\bblock\b.*\bgoose\b|\bgoose\b.*\bblock\b|square\/goose/i.test(combined)) {
+        return { relevant: true, reason: 'Goose (Block): block/goose project context confirmed' };
+      }
+      return { relevant: false, reason: 'goose: no Block/Square Goose AI project context found' };
+
     default:
       return { relevant: true, reason: `${term}: risky term confirmed in title/url` };
   }
@@ -418,8 +432,9 @@ function isRelevantHit(agent, hit) {
       continue;
     }
 
-    // Generic token: match in title/url → relevant; repo-name match in body only → reject.
-    if (textContains(titleUrl, token)) {
+    // Generic token: word-boundary match in title/url → relevant.
+    // Using textHasToken prevents short tokens (e.g. "sweep") matching longer words ("sweeping").
+    if (textHasToken(titleUrl, token)) {
       return { relevant: true, reason: `${label} match in title/url` };
     }
     if (label === 'repo-name' && textContains(fullText, token)) {

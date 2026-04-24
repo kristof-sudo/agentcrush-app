@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush HN mentions signal worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/scanner
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-hn-signals.lock \
+    /usr/bin/node /opt/agentcrush/scanner/signals/hn-mentions-worker.mjs \
+    --write --limit 200
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-hn-signals
