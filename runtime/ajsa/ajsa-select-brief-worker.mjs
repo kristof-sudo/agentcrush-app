@@ -115,11 +115,25 @@ const activeCatalysts = (catalystData ?? []).filter(c => c.status !== 'triggered
 
 // ── Load candidates ───────────────────────────────────────────────────────────
 
+// In write mode: reset selected/dismissed → candidate before loading, so re-runs work.
+// In dry-run: fetch all statuses so the ranker can re-evaluate without modifying anything.
+if (isWrite) {
+  const { error: preResetErr } = await supabase
+    .from('ajsa_brief_items')
+    .update({ status: 'candidate' })
+    .eq('brief_date', TARGET_DATE)
+    .in('status', ['selected', 'dismissed']);
+  if (preResetErr) {
+    console.error('[ajsa-select] ERROR pre-resetting statuses:', preResetErr.message);
+    process.exit(1);
+  }
+}
+
 const { data: candidates, error: candErr } = await supabase
   .from('ajsa_brief_items')
   .select('id, source_key, source_type, title, url, score, status, recommendation, priority, evidence, payload')
   .eq('brief_date', TARGET_DATE)
-  .eq('status', 'candidate')
+  .in('status', ['candidate', 'selected', 'dismissed'])
   .order('score', { ascending: false });
 
 if (candErr) { console.error('[ajsa-select] ERROR loading candidates:', candErr.message); process.exit(1); }
@@ -141,10 +155,15 @@ const CATALYST_KW = new Set([
   'autonomous economic activity',
 ]);
 
-// Static reference docs — valuable but rarely change; slight penalty vs fresh signals
-const STATIC_REF_DOCS = new Set([
-  'coinbase_x402_docs_welcome', 'x402_bazaar_docs',
-  'erc8004_official_eip', 'coinbase_cdp_changelog',
+// Stable reference pages — definitionally static content; heavy penalty vs live signals
+const STATIC_REF_STABLE = new Set([
+  'coinbase_x402_docs_welcome',  // intro/overview, changes rarely
+  'x402_bazaar_docs',            // feature description landing page
+  'erc8004_official_eip',        // EIP spec, stable once published
+]);
+// Living docs — do update, but are still reference, not event (lighter penalty)
+const STATIC_REF_LIVING = new Set([
+  'coinbase_cdp_changelog',      // updated with each SDK release
 ]);
 
 // Vague/low-actionability title patterns
@@ -179,10 +198,13 @@ function detectCatalystMatches(item) {
         }
         break;
       case 'enterprise_x402_deployment':
+        // Exclude own reference docs (Coinbase's x402 docs pages are not deployment signals)
         if (kws.includes('x402') &&
+            item.source_type !== 'docs' &&
             (titleL.includes('cloudflare') || titleL.includes('stripe') ||
-             titleL.includes('foundation') || titleL.includes('coinbase') ||
-             titleL.includes('enterprise'))) {
+             titleL.includes('foundation') || titleL.includes('enterprise') ||
+             (titleL.includes('coinbase') &&
+              !titleL.includes('documentation') && !titleL.includes('developer')))) {
           matched.push({ key: cat.catalyst_key, label: 'enterprise x402 deployment' });
         }
         break;
@@ -270,9 +292,11 @@ function computeSelectorScore(item) {
     sel -= 25; reasons.push('-25 no_catalyst_kw');
   }
 
-  // Static reference doc (known baseline, not fresh signal)
-  if (STATIC_REF_DOCS.has(item.source_key)) {
-    sel -= 8; reasons.push('-8 static_ref_doc');
+  // Static reference docs — tiered penalty; stable pages ranked much lower than live signals
+  if (STATIC_REF_STABLE.has(item.source_key)) {
+    sel -= 30; reasons.push('-30 static_stable_ref');
+  } else if (STATIC_REF_LIVING.has(item.source_key)) {
+    sel -= 10; reasons.push('-10 static_living_ref');
   }
 
   // Vague, academic, or speculative title
@@ -280,10 +304,11 @@ function computeSelectorScore(item) {
     sel -= 30; reasons.push('-30 vague/academic');
   }
 
-  // Near-duplicate AP2 signal — keep only the best, penalize extras
-  // (detected post-sort in selection loop; flag here for display)
-  const isAP2 = titleL.includes('ap2') ||
-    (titleL.includes('agent payment') && titleL.includes('protocol') && titleL.includes('google'));
+  // Near-duplicate AP2/competing-standards cluster — keep only the best
+  // Catches: AP2, XBPP, "state of agent payment protocols", and similar survey/launch posts
+  const isAP2 = titleL.includes('ap2') || titleL.includes('xbpp') ||
+    (titleL.includes('agent payment') &&
+     (titleL.includes('protocol') || titleL.includes('standard') || titleL.includes('state of')));
   const isX402Main = (item.url ?? '').includes('x402.org') && isHN;
 
   return {
@@ -297,10 +322,19 @@ function computeSelectorScore(item) {
 
 // ── Score all candidates ──────────────────────────────────────────────────────
 
+const TYPE_ORDER = { ecosystem: 0, search: 1, docs: 2 };
+
 const scored = candidates.map(item => ({
   ...item,
   ...computeSelectorScore(item),
-})).sort((a, b) => b.selectorScore - a.selectorScore);
+})).sort((a, b) => {
+  if (b.selectorScore !== a.selectorScore) return b.selectorScore - a.selectorScore;
+  // Tiebreak 1: prefer ecosystem > search > docs to favour live signals
+  const typeOrderDiff = (TYPE_ORDER[a.source_type] ?? 3) - (TYPE_ORDER[b.source_type] ?? 3);
+  if (typeOrderDiff !== 0) return typeOrderDiff;
+  // Tiebreak 2: prefer higher HN engagement at equal score
+  return (b.evidence?.hn_points ?? 0) - (a.evidence?.hn_points ?? 0);
+});
 
 // ── Greedy diversity-aware selection ─────────────────────────────────────────
 
@@ -318,8 +352,11 @@ for (const item of scored) {
   const typeCount = typeCounts[item.source_type] ?? 0;
   const cap = TYPE_CAPS[item.source_type] ?? Infinity;
 
-  // Catalyst matches bypass type cap (but not total limit)
-  const catalystBypass = item.catMatches.length > 0 && typeCount >= cap;
+  // Catalyst matches can bypass docs/ecosystem type cap, but NOT search cap
+  // (search results cluster around events; enforce the search cap strictly)
+  const catalystBypass = item.catMatches.length > 0 &&
+    typeCount >= cap &&
+    item.source_type !== 'search';
 
   // Near-duplicate suppression
   if (item.isAP2 && ap2Selected) {
@@ -420,8 +457,9 @@ if (isDryRun) {
   for (const [i, item] of scored.slice(0, 10).entries()) {
     const pts = item.evidence?.hn_points ?? null;
     const hnTag = pts !== null ? `  HN:${pts}pts/${item.evidence.hn_comments}c` : '';
-    const sel = selected.includes(item) ? ' ✓' : '';
-    console.log(`  ${String(i + 1).padStart(2)}. [sel=${String(item.selectorScore).padStart(3)}] [score=${item.score}]${hnTag}  [${item.source_type}]${sel}`);
+    const selMark = selected.includes(item) ? ' ✓' : '';
+    const staticTag = STATIC_REF_STABLE.has(item.source_key) ? '/static' : '';
+    console.log(`  ${String(i + 1).padStart(2)}. [sel=${String(item.selectorScore).padStart(3)}] [score=${item.score}]${hnTag}  [${item.source_type}${staticTag}]${selMark}`);
     console.log(`      "${item.title?.slice(0, 72)}"`);
     console.log(`      ${item.reasons.join('  ')}`);
     console.log('');
@@ -433,7 +471,8 @@ console.log('  ── Selected brief items ──\n');
 for (const [i, item] of selected.entries()) {
   const pts = item.evidence?.hn_points ?? null;
   const hnTag = pts !== null ? `  ${pts}pts/${item.evidence.hn_comments}c` : '';
-  console.log(`  ${i + 1}. ${item.title}`);
+  const staticNote = STATIC_REF_STABLE.has(item.source_key) ? '  [static ref]' : '';
+  console.log(`  ${i + 1}. ${item.title}${staticNote}`);
   console.log(`     source: ${item.source_key} / ${item.source_type} / score=${item.score} / sel=${item.selectorScore}${hnTag}`);
   console.log(`     why:    ${whyItMatters(item)}`);
   console.log(`     action: ${suggestedAction(item)}`);
@@ -480,20 +519,9 @@ if (isDryRun) {
 }
 
 // ── Write ─────────────────────────────────────────────────────────────────────
+// Reset already happened before load (pre-reset above). All items are now 'candidate'.
 
-// 1. Reset: put all selected/dismissed back to candidate for this date
-const { error: resetErr } = await supabase
-  .from('ajsa_brief_items')
-  .update({ status: 'candidate' })
-  .eq('brief_date', TARGET_DATE)
-  .in('status', ['selected', 'dismissed']);
-
-if (resetErr) {
-  console.error('[ajsa-select] ERROR resetting statuses:', resetErr.message);
-  process.exit(1);
-}
-
-// 2. Mark selected
+// Mark selected
 let markedSelected = 0;
 for (const item of selected) {
   const { error } = await supabase
