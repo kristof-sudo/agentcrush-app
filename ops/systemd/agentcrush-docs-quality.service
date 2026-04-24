@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush docs-quality signal worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/scanner
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-docs-quality.lock \
+    /usr/bin/node /opt/agentcrush/scanner/signals/docs-quality-worker.mjs \
+    --write --limit 200
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-docs-quality
