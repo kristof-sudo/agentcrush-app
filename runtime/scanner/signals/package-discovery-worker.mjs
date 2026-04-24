@@ -6,11 +6,13 @@
  * package files from GitHub, resolves candidate package names against the
  * npm registry and PyPI, and prints a confidence-ranked mapping report.
  *
- * This worker is DRY-RUN ONLY. It never writes to Supabase.
- *
  * Modes:
- *   --dry-run   Run the full pipeline and print results.
+ *   --dry-run   Fetch + score, print results, no writes.
+ *   --write     Upsert all candidates into agent_package_mapping_signals.
  *   --limit N   Override agent limit (default 50, max 200).
+ *
+ * Never modifies: agents, rankings, ecosystem_signals, agent_daily_snapshots,
+ * github_repo_snapshots, agent_package_download_signals, or any scoring RPC.
  *
  * Confidence tiers:
  *   95   HIGH_AUTO    Registry verified + repo URL matches github_full_name exactly
@@ -101,19 +103,13 @@ const MANUAL_VERIFIED_MAPPINGS = {
 // ─── Argument parsing ────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const args = { dryRun: false, limit: DEFAULT_LIMIT };
+  const args = { dryRun: false, write: false, limit: DEFAULT_LIMIT };
 
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
 
     if (arg === '--dry-run') { args.dryRun = true; continue; }
-
-    if (arg === '--write') {
-      throw new Error(
-        'This worker is dry-run only. --write is not supported.\n' +
-        'Package mappings require human review before persistence.'
-      );
-    }
+    if (arg === '--write')   { args.write   = true; continue; }
 
     if (arg === '--limit') {
       const raw = argv[i + 1];
@@ -131,8 +127,11 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!args.dryRun) {
-    throw new Error('Specify --dry-run to run the package discovery pipeline.');
+  if (args.dryRun && args.write) {
+    throw new Error('Cannot use --dry-run and --write together. Pick one.');
+  }
+  if (!args.dryRun && !args.write) {
+    throw new Error('Specify --dry-run or --write.');
   }
 
   return args;
@@ -617,6 +616,9 @@ function makePlaceholderCandidate(agentRow, meta, registry, name, version) {
     match_reason: 'placeholder/generic package name',
     warning: `"${name}" is a generic build artefact name — hard rejected, never safe to map`,
     registry_repo_url: null,
+    registry_homepage: null,
+    parsed_homepage: null,
+    parsed_repo_url: null,
     fetch_error: null,
     is_fallback: false,
   };
@@ -667,6 +669,9 @@ async function processAgent(agentRow, agentMeta, token) {
             match_reason: matchReason,
             warning,
             registry_repo_url: npmResult.repoUrl ?? null,
+            registry_homepage: npmResult.homepage ?? null,
+            parsed_homepage: parsed.homepage ?? null,
+            parsed_repo_url: parsed.repoUrl ?? null,
             fetch_error: npmResult.error ?? null,
             is_fallback: false,
           });
@@ -734,6 +739,9 @@ async function processAgent(agentRow, agentMeta, token) {
             match_reason: matchReason,
             warning,
             registry_repo_url: null,
+            registry_homepage: pypiResult.homepage ?? null,
+            parsed_homepage: null,
+            parsed_repo_url: null,
             fetch_error: pypiResult.error ?? null,
             is_fallback: isFallback,
           });
@@ -902,6 +910,133 @@ function printSummary(candidates, agentsChecked, agentsSkipped, allErrors) {
   }
 }
 
+// ─── Write-mode helpers ───────────────────────────────────────────────────────
+
+function tierToStatus(confidence) {
+  if (confidence === 0)   return 'hard_reject';
+  if (confidence >= 95)   return 'high_auto';
+  if (confidence >= 85)   return 'good_warn';
+  if (confidence >= 70)   return 'manual_review';
+  return 'rejected';
+}
+
+function evidenceSource(c) {
+  if (c.is_fallback)                                   return 'toml_curated_fallback';
+  if (c.match_reason?.includes('manually verified'))   return 'manual_verified_mapping';
+  if (c.match_reason?.includes('known repo transfer')) return 'known_repo_transfer';
+  if (c.match_reason?.includes('registry repo URL'))   return 'registry_repo_url';
+  if (c.match_reason?.includes('PyPI project URL'))    return 'pypi_project_url';
+  if (c.match_reason?.includes('homepage'))            return 'homepage_match';
+  if (c.match_reason?.includes('placeholder'))         return 'placeholder_rejected';
+  if (c.match_reason?.includes('not in'))              return 'registry_not_found';
+  if (c.match_reason?.includes('different GitHub'))    return 'org_mismatch';
+  return 'registry_ambiguous';
+}
+
+function registryUrl(registry, packageName) {
+  if (registry === 'npm')  return `https://www.npmjs.com/package/${encodeURIComponent(packageName)}`;
+  if (registry === 'pypi') return `https://pypi.org/project/${encodeURIComponent(packageName)}/`;
+  return null;
+}
+
+function nameMatchesRepo(packageName, githubFullName) {
+  const repoName = (githubFullName ?? '').split('/').pop() ?? '';
+  const norm = s => s.toLowerCase().replace(/[-_.]/g, '');
+  return norm(packageName) === norm(repoName);
+}
+
+function buildMappingRow(c, agentRow, snapshotDate, now) {
+  return {
+    agent_id:                       c.agent_id,
+    registry:                       c.registry,
+    package_name:                   c.package_name,
+    package_version:                c.version ?? null,
+    mapping_status:                 tierToStatus(c.confidence),
+    confidence:                     c.confidence,
+    match_reason:                   c.match_reason ?? null,
+    warning:                        c.warning ?? null,
+    evidence_source:                evidenceSource(c),
+    github_full_name:               agentRow.github_full_name,
+    github_repo_url:                agentRow.github_repo_url ?? null,
+    website_url:                    agentRow.website_url ?? null,
+    registry_url:                   registryUrl(c.registry, c.package_name),
+    package_homepage:               c.parsed_homepage ?? null,
+    package_repository_url:         c.parsed_repo_url ?? null,
+    registry_exists:                c.registry_exists,
+    name_matches_repo:              nameMatchesRepo(c.package_name, agentRow.github_full_name),
+    repo_url_matches_registry_metadata: (
+      c.match_reason === 'registry repo URL matches github_full_name' ||
+      c.match_reason === 'PyPI project URL matches github_full_name'
+    ),
+    homepage_matches_agent: (
+      c.match_reason === 'registry homepage matches agent website_url' ||
+      c.match_reason === 'package.json homepage matches agent URLs' ||
+      c.match_reason === 'PyPI project URL matches agent website_url'
+    ),
+    raw_package_file:               {},  // populated in future enhancement
+    raw_registry_metadata:          {},  // npm responses are large; populated in future enhancement
+    errors:                         c.fetch_error ? [c.fetch_error] : [],
+    observed_at:                    now,
+    snapshot_date:                  snapshotDate,
+    updated_at:                     now,
+  };
+}
+
+async function upsertMappingSignals(supabase, rows) {
+  const { error, count } = await supabase
+    .from('agent_package_mapping_signals')
+    .upsert(rows, { onConflict: 'agent_id,registry,package_name,snapshot_date', count: 'exact' });
+  if (error) throw error;
+  return count ?? rows.length;
+}
+
+function printWriteSummary(rows, count) {
+  const byStatus = {};
+  for (const r of rows) {
+    byStatus[r.mapping_status] = (byStatus[r.mapping_status] ?? 0) + 1;
+  }
+
+  console.log(`\n  Rows upserted:  ${count}`);
+  console.log('  By status:');
+  const order = ['high_auto', 'good_warn', 'manual_review', 'rejected', 'hard_reject'];
+  for (const s of order) {
+    if (byStatus[s]) console.log(`    ${s.padEnd(16)}  ${byStatus[s]}`);
+  }
+
+  const highAuto = rows.filter(r => r.mapping_status === 'high_auto');
+  const goodWarn = rows.filter(r => r.mapping_status === 'good_warn');
+
+  if (highAuto.length > 0) {
+    console.log('\n  HIGH_AUTO mappings written:');
+    for (const r of highAuto) {
+      console.log(`    ${r.registry.padEnd(5)}  ${r.package_name.padEnd(36)}  ${r.github_full_name}`);
+    }
+  }
+
+  if (goodWarn.length > 0) {
+    console.log('\n  GOOD_WARN mappings written:');
+    for (const r of goodWarn) {
+      console.log(`    ${r.registry.padEnd(5)}  ${r.package_name.padEnd(36)}  ${r.github_full_name}`);
+      if (r.warning) console.log(`           ⚠  ${r.warning}`);
+    }
+  }
+
+  const evidenceOnly = rows.filter(r =>
+    r.mapping_status === 'manual_review' ||
+    r.mapping_status === 'rejected' ||
+    r.mapping_status === 'hard_reject'
+  );
+  if (evidenceOnly.length > 0) {
+    console.log(
+      `\n  Evidence-only rows (${evidenceOnly.length}): ` +
+      `manual_review=${byStatus.manual_review ?? 0}  ` +
+      `rejected=${byStatus.rejected ?? 0}  ` +
+      `hard_reject=${byStatus.hard_reject ?? 0}`
+    );
+    console.log('  These will NOT be used by the download worker without explicit approval.');
+  }
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -922,13 +1057,15 @@ async function main() {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  console.log('AgentCrush Package Discovery Worker — DRY RUN');
+  const mode = args.write ? 'WRITE MODE' : 'DRY RUN';
+  console.log(`AgentCrush Package Discovery Worker — ${mode}`);
   console.log(`Limit: ${args.limit} agents`);
   console.log('');
 
   console.log('Querying agent_docs_quality_signals for package file flags…');
   const rawRows = await fetchSignalRows(supabase, args.limit);
   const signalRows = deduplicateByAgent(rawRows).slice(0, args.limit);
+  const signalRowMap = new Map(signalRows.map(r => [r.agent_id, r]));
 
   console.log(`Found ${signalRows.length} agents with package files (after dedup)`);
 
@@ -968,7 +1105,25 @@ async function main() {
 
   printSummary(allCandidates, signalRows.length - agentsSkipped, agentsSkipped, allErrors);
 
-  console.log('\nDone. No writes performed.');
+  if (args.write) {
+    const now          = new Date().toISOString();
+    const snapshotDate = now.slice(0, 10);
+
+    const rows = allCandidates.map(c => {
+      const agentRow = signalRowMap.get(c.agent_id);
+      return buildMappingRow(c, agentRow, snapshotDate, now);
+    });
+
+    console.log('\n══ Writing to agent_package_mapping_signals ══════════════════════════════════');
+    console.log(`  Upserting ${rows.length} rows (snapshot_date=${snapshotDate})…`);
+
+    const count = await upsertMappingSignals(supabase, rows);
+    printWriteSummary(rows, count);
+
+    console.log('\nDone. Writes complete.');
+  } else {
+    console.log('\nDone. No writes performed.');
+  }
 }
 
 main().catch(err => {
