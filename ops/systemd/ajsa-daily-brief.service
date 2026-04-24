@@ -1,0 +1,25 @@
+[Unit]
+Description=Ajsa Daily Brief — ingest + select + send
+Documentation=https://github.com/agentcrush/ajsa
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/ajsa
+
+# flock prevents overlapping runs (e.g. if a previous run is still in progress)
+ExecStart=/usr/bin/flock --nonblock /run/ajsa-daily-brief.lock \
+    /usr/bin/node /opt/agentcrush/ajsa/ajsa-run-pipeline.mjs --send --limit 5
+
+# Workers load their own env from /opt/agentcrush/*/env files — no EnvironmentFile needed.
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ajsa-daily-brief
+
+# Allow up to 10 minutes for ingest + select + Telegram send
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

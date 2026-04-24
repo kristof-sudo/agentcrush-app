@@ -1,0 +1,15 @@
+[Unit]
+Description=Ajsa Daily Brief timer — 07:00 Europe/Budapest
+Documentation=https://github.com/agentcrush/ajsa
+
+[Timer]
+# Fires at 07:00 Budapest time; systemd 247+ handles DST automatically
+OnCalendar=*-*-* 07:00:00 Europe/Budapest
+# Catch up if the machine was off at fire time
+Persistent=false
+# No random delay — this is a founder brief, not a batch job
+RandomizedDelaySec=0
+Unit=ajsa-daily-brief.service
+
+[Install]
+WantedBy=timers.target
