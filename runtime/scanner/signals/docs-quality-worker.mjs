@@ -1,8 +1,8 @@
 /**
  * Docs quality signal worker.
  *
- * Dry-run only. Fetches GitHub repo metadata, README, and root contents for each
- * eligible agent and computes a 0–100 docs_quality_score across 5 components:
+ * Fetches GitHub repo metadata, README, and root contents for each eligible agent
+ * and computes a 0–100 docs_quality_score across 5 components:
  *
  *   Foundation          10 pts  – repo URL, homepage / website_url
  *   README quality      30 pts  – exists, length, install, usage, examples, badges, api-ref
@@ -20,10 +20,12 @@
  *   −2  no CONTRIBUTING guide
  *
  * Modes:
- *   --dry-run            (required) Fetch + score, print results, no writes.
+ *   --dry-run            Fetch + score, print results, no writes.
+ *   --write              Upsert scored rows into agent_docs_quality_signals.
  *   --limit N            Override agent limit (default 25, max 200).
  *
- * Never writes to any table.
+ * Never modifies: agents, rankings, ecosystem_signals, agent_daily_snapshots,
+ * github_repo_snapshots, or any scoring RPC.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -43,17 +45,13 @@ const DELAY_MS = 150;
 // ─── Argument parsing ────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const args = { dryRun: false, limit: DEFAULT_LIMIT };
+  const args = { dryRun: false, write: false, limit: DEFAULT_LIMIT };
 
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
 
     if (arg === '--dry-run') { args.dryRun = true; continue; }
-
-    if (arg === '--write') {
-      console.error('ERROR: --write is not supported. This worker is dry-run only.');
-      process.exit(1);
-    }
+    if (arg === '--write')   { args.write   = true; continue; }
 
     if (arg === '--limit') {
       const raw = argv[i + 1];
@@ -71,8 +69,11 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!args.dryRun) {
-    throw new Error('Specify --dry-run.');
+  if (args.dryRun && args.write) {
+    throw new Error('Cannot use --dry-run and --write together. Pick one.');
+  }
+  if (!args.dryRun && !args.write) {
+    throw new Error('Specify --dry-run or --write.');
   }
 
   return args;
@@ -195,6 +196,9 @@ async function fetchRepoData(fullName, token) {
   const readme = readmeRes.data;
   const contents = Array.isArray(contentsRes.data) ? contentsRes.data : [];
 
+  // readme.size is the byte length before base64 decoding.
+  const readmeBytes = readme?.size ?? null;
+
   let readmeText = null;
   if (readme?.content && readme.encoding === 'base64') {
     try {
@@ -211,7 +215,7 @@ async function fetchRepoData(fullName, token) {
     latestRelease = releaseRes.data;
   }
 
-  return { meta, readmeText, contents, latestRelease };
+  return { meta, readmeText, readmeBytes, contents, latestRelease };
 }
 
 // ─── Section detection helpers ────────────────────────────────────────────────
@@ -235,13 +239,11 @@ function hasInstallContent(text) {
 
 // Detects usage / onboarding content via section heading only.
 // Broad set of synonyms so "Getting Started", "Run", "Demo" all count.
-// Code-block fallback removed — too many repos have import statements outside usage sections.
 function hasUsageContent(text) {
   return hasReadmeSection(text, /usage|quick[\s-]?start|getting[\s-]started|get[\s-]started|running|run[\s-]the|demo/i);
 }
 
 // Detects example content: dedicated section heading OR many code blocks (≥8 fences = ≥4 blocks).
-// Raised from 4 fences so a single pair of ```python … ``` doesn't qualify.
 function hasExamplesContent(text) {
   if (hasReadmeSection(text, /example|demo|tutorial|cookbook|notebook|sample/i)) return true;
   const fences = (text.match(/```/g) || []).length;
@@ -261,6 +263,23 @@ function hasTypedCodeBlocks(text) {
 // Detects link to a dedicated docs site in README text.
 function hasExternalDocsLink(text) {
   return /https?:\/\/(docs\.|readthedocs\.|gitbook\.io|[a-z0-9-]+\.gitbook\.io|[a-z0-9-]+\.readthedocs\.io)/i.test(text);
+}
+
+// Detects a run/demo command in README (python script, npm run, bash, etc.).
+function hasRunOrDemoCommand(text) {
+  return /\bpython3?\s+\w|\bnpm\s+run\s+\w|\bnode\s+\w|\bbash\s+\w|\bsh\s+\w|\.\/\w+\.sh\b|\bmake\s+\w/i.test(text);
+}
+
+// Extracts ATX heading text from README, capped at 40 entries.
+function extractReadmeSections(text) {
+  if (!text) return [];
+  const out = [];
+  for (const line of text.split('\n')) {
+    const m = line.match(/^#{1,4}\s+(.+)/);
+    if (m) out.push(m[1].trim().replace(/\s+/g, ' '));
+    if (out.length >= 40) break;
+  }
+  return out;
 }
 
 function countWords(text) {
@@ -288,13 +307,17 @@ const AGENT_TERMS = [
   'memory', 'planning', 'reasoning', 'workflow', 'orchestrat', 'agentic',
 ];
 
+const AGENT_CONCEPTS  = ['agent', 'autonomous', 'multi-agent', 'orchestrat', 'workflow', 'tool use', 'tool-use', 'planning', 'reasoning', 'agentic'];
+const LLM_CONCEPTS    = ['llm', 'gpt', 'openai', 'anthropic', 'claude', 'language model', 'embedding', 'transformer', 'foundation model'];
+
 function scoreAgent(agent, repoData) {
   if (!repoData || !repoData.meta) {
     return {
       score: 0,
-      components: { foundation: 0, readme: 0, structure: 0, maintenance: 0, agentClarity: 0 },
+      raw: 0,
       penalty: 0,
       penaltyReasons: ['github_meta_unavailable'],
+      components: { foundation: 0, readme: 0, structure: 0, maintenance: 0, agentClarity: 0 },
       signals: [],
       missing: ['github_meta_unavailable'],
       meta: null,
@@ -315,7 +338,7 @@ function scoreAgent(agent, repoData) {
 
   // ── Foundation (10 pts) ──────────────────────────────────────────────────
   // github_url is always true for these agents (they have github_full_name),
-  // so the real signal here is whether there's a dedicated homepage.
+  // so the real signal is whether there's a dedicated homepage.
   if (agent.github_repo_url || agent.github_full_name) {
     foundation += 4;
     signals.push('has_github_url');
@@ -400,7 +423,7 @@ function scoreAgent(agent, repoData) {
   const hasChangelog = files.has('changelog.md') || files.has('changelog') ||
     files.has('history.md') || files.has('changes.md');
   if (hasChangelog) {
-    structure += 3; signals.push('has_changelog');             // 3 pts (was 5) — nice-to-have
+    structure += 3; signals.push('has_changelog');
   } else {
     missing.push('no_changelog');
   }
@@ -414,11 +437,11 @@ function scoreAgent(agent, repoData) {
   }
 
   // ── Maintenance / trust (20 pts) ─────────────────────────────────────────
-  // max: 6 + 4 + 5 + 5 = 20
+  // max: 6 + 2 + 2 + 5 + 5 = 20
   const hasLicense = files.has('license') || files.has('license.md') ||
     files.has('license.txt') || !!meta.license;
   if (hasLicense) {
-    maintenance += 6; signals.push('has_license');             // 6 pts (was 5)
+    maintenance += 6; signals.push('has_license');
   } else {
     missing.push('no_license');
   }
@@ -428,7 +451,7 @@ function scoreAgent(agent, repoData) {
   const stars = meta.stargazers_count ?? 0;
 
   // Governance docs: a better proxy for project maturity and documentation investment.
-  // Only root-level files are visible from the /contents call, so .github/SECURITY.md is not detectable here.
+  // Only root-level files are visible from the /contents call.
   const hasSecurityPolicy = files.has('security.md');
   if (hasSecurityPolicy) {
     maintenance += 2; signals.push('has_security_policy');
@@ -453,9 +476,9 @@ function scoreAgent(agent, repoData) {
   if (pushedDaysAgo <= 30) {
     maintenance += 5; signals.push('active_last_30d');
   } else if (pushedDaysAgo <= 60) {
-    maintenance += 1; signals.push('active_last_60d');         // only 1 pt for 31-60d window
+    maintenance += 1; signals.push('active_last_60d');
   } else {
-    missing.push('inactive_60d_plus');                         // >60d earns nothing
+    missing.push('inactive_60d_plus');
   }
 
   // ── Agent-specific clarity (20 pts) ─────────────────────────────────────
@@ -477,7 +500,7 @@ function scoreAgent(agent, repoData) {
     const readmeLower = readmeText.toLowerCase();
     const agentTermsInReadme = AGENT_TERMS.filter(t => readmeLower.includes(t)).length;
     if (agentTermsInReadme >= 8) {
-      agentClarity += 6; signals.push('readme_agent_rich');    // ≥8 terms: genuinely agent-focused
+      agentClarity += 6; signals.push('readme_agent_rich');
     } else if (agentTermsInReadme >= 2) {
       agentClarity += 3; signals.push('readme_mentions_agent_terms');
     } else if (agentTermsInReadme >= 1) {
@@ -522,25 +545,21 @@ function scoreAgent(agent, repoData) {
     penalty += 3; penaltyReasons.push('no_onboarding(−3)');
   }
 
-  // Structural penalties: missing signals that indicate weak project health beyond just "no points".
-  // These create downward pressure rather than simply not rewarding.
   if (!hasDocsDir && !hasExtDocs) {
-    // No docs/ directory AND no link to an external docs site — no proper docs presence.
     penalty += 5; penaltyReasons.push('no_docs_presence(−5)');
   }
 
   if (!hasContributing) {
     penalty += 2; penaltyReasons.push('no_contributing(−2)');
   }
-  // no_typed_code intentionally not penalised — language detection is fragile
-  // and typed code blocks are already rewarded (not required) in agent clarity.
+  // no_typed_code intentionally not penalised — language detection is fragile.
 
-  const raw = foundation + readme + structure + maintenance + agentClarity;
-  const total = Math.max(0, Math.min(100, raw - penalty));
+  const rawScore = foundation + readme + structure + maintenance + agentClarity;
+  const total = Math.max(0, Math.min(100, rawScore - penalty));
 
   return {
     score: total,
-    raw,
+    raw: rawScore,
     penalty,
     penaltyReasons,
     components: { foundation, readme, structure, maintenance, agentClarity },
@@ -561,6 +580,103 @@ function tier(score) {
   if (score >= 60) return 'good';
   if (score >= 40) return 'fair';
   return 'weak';
+}
+
+// ─── Row builder (write mode) ─────────────────────────────────────────────────
+
+function buildRow(agent, repoData, result, fetchErrors, now, snapshotDate) {
+  const { meta, readmeText, readmeBytes, contents, latestRelease } = repoData ?? {};
+  const files = contents ? rootFileNames(contents) : new Set();
+
+  const readmeSections = readmeText ? extractReadmeSections(readmeText) : [];
+
+  const combinedText = [
+    meta?.description ?? '',
+    (meta?.topics ?? []).join(' '),
+    readmeText ?? '',
+  ].join(' ').toLowerCase();
+
+  const mentionsAgentConcepts = AGENT_CONCEPTS.some(t => combinedText.includes(t));
+  const mentionsLlmConcepts   = LLM_CONCEPTS.some(t => combinedText.includes(t));
+
+  const hasDocsDir     = contents ? contents.some(f => f.type === 'dir' && /^docs?$/i.test(f.name)) : false;
+  const hasExamplesDir = contents ? contents.some(f => f.type === 'dir' && /^examples?$/i.test(f.name)) : false;
+
+  // Sanitised raw metadata — no tokens or credentials.
+  const rawMeta = meta ? {
+    description:       meta.description,
+    topics:            meta.topics,
+    pushed_at:         meta.pushed_at,
+    created_at:        meta.created_at,
+    default_branch:    meta.default_branch,
+    stargazers_count:  meta.stargazers_count,
+    forks_count:       meta.forks_count,
+    open_issues_count: meta.open_issues_count,
+    archived:          meta.archived,
+    disabled:          meta.disabled,
+    visibility:        meta.visibility,
+    license: meta.license
+      ? { spdx_id: meta.license.spdx_id, name: meta.license.name }
+      : null,
+  } : null;
+
+  return {
+    agent_id:                  agent.id,
+    github_full_name:          agent.github_full_name,
+    github_repo_url:           agent.github_repo_url ?? meta?.html_url ?? null,
+    website_url:               agent.website_url ?? meta?.homepage ?? null,
+    observed_at:               now,
+    snapshot_date:             snapshotDate,
+    default_branch:            meta?.default_branch ?? null,
+    repo_pushed_at:            meta?.pushed_at ?? null,
+    last_release_tag:          latestRelease?.tag_name ?? null,
+    last_release_published_at: latestRelease?.published_at ?? null,
+    docs_quality_score:        result.score,
+    docs_quality_tier:         tier(result.score),
+    score_components:          result.components,
+    readme_exists:             !!readmeText,
+    readme_bytes:              readmeBytes ?? null,
+    readme_sections:           readmeSections,
+    has_install_section:       readmeText ? hasInstallContent(readmeText) : false,
+    has_usage_section:         readmeText ? hasUsageContent(readmeText) : false,
+    has_api_or_config_section: readmeText ? hasApiRefSection(readmeText) : false,
+    has_run_or_demo_command:   readmeText ? hasRunOrDemoCommand(readmeText) : false,
+    has_docs_dir:              hasDocsDir,
+    docs_file_count:           null,     // extra API call not warranted per-run
+    has_examples_dir:          hasExamplesDir,
+    examples_file_count:       null,     // same
+    has_package_json:          files.has('package.json'),
+    has_pyproject_toml:        files.has('pyproject.toml'),
+    package_name:              null,     // would require fetching file contents
+    package_version:           null,
+    has_license:               result.signals.includes('has_license'),
+    license_name:              meta?.license?.spdx_id ?? meta?.license?.name ?? null,
+    has_security_md:           result.signals.includes('has_security_policy'),
+    has_changelog:             result.signals.includes('has_changelog'),
+    mentions_agent_concepts:   mentionsAgentConcepts,
+    mentions_llm_concepts:     mentionsLlmConcepts,
+    has_external_docs_link:    result.signals.includes('has_external_docs'),
+    evidence: {
+      signals:    result.signals,
+      missing:    result.missing,
+      penalties:  result.penaltyReasons,
+      components: result.components,
+    },
+    errors:     fetchErrors,
+    raw:        rawMeta,
+    updated_at: now,
+  };
+}
+
+// ─── Upsert ───────────────────────────────────────────────────────────────────
+
+async function upsertDocsSignals(supabase, rows) {
+  if (rows.length === 0) return 0;
+  const { error, count } = await supabase
+    .from('agent_docs_quality_signals')
+    .upsert(rows, { onConflict: 'agent_id,snapshot_date', count: 'exact' });
+  if (error) throw error;
+  return count ?? rows.length;
 }
 
 // ─── Reporting ────────────────────────────────────────────────────────────────
@@ -590,7 +706,7 @@ function printDetailedBreakdown(label, agent, result) {
      'readme_has_badges','readme_has_api_ref']
       .filter(s => r.signals.includes(s)).join(' '));
   if (!r.signals.includes('readme_exists')) {
-    console.log(`                        (no README found)`);
+    console.log('                        (no README found)');
   }
   console.log(`     Structure    ${padL(c.structure, 2)}/20  ` +
     ['has_docs_dir','has_contributing','has_changelog','has_external_docs']
@@ -614,7 +730,7 @@ function printDetailedBreakdown(label, agent, result) {
   }
 }
 
-function printResults(results) {
+function printSummary(results, { mode, writeCount }) {
   const sorted = [...results].sort((a, b) => b.result.score - a.result.score);
 
   const W = 120;
@@ -656,13 +772,15 @@ function printResults(results) {
 
   console.log('─'.repeat(W));
 
-  // Aggregate summary
   const scores = results.map(r => r.result.score);
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
   const tiers = { excellent: 0, good: 0, fair: 0, weak: 0 };
   for (const s of scores) tiers[tier(s)]++;
 
-  console.log(`\nAgents scored: ${results.length}`);
+  console.log(`\nAgents checked: ${results.length}`);
+  if (mode === 'write') {
+    console.log(`Rows inserted/updated: ${writeCount}`);
+  }
   console.log(`Average score: ${avg.toFixed(1)}`);
   console.log(`Tiers: ${tiers.excellent} excellent / ${tiers.good} good / ${tiers.fair} fair / ${tiers.weak} weak`);
 
@@ -673,13 +791,13 @@ function printResults(results) {
       missingCounts[m] = (missingCounts[m] ?? 0) + 1;
     }
   }
-  const topMissing = Object.entries(missingCounts)
+  const topMissingList = Object.entries(missingCounts)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 10);
 
-  if (topMissing.length > 0) {
+  if (topMissingList.length > 0) {
     console.log('\nMost common missing signals:');
-    for (const [signal, count] of topMissing) {
+    for (const [signal, count] of topMissingList) {
       console.log(`  ${padL(count, 3)}x  ${signal}`);
     }
   }
@@ -700,16 +818,13 @@ function printResults(results) {
     }
   }
 
-  // Detailed component breakdown: top, median, bottom
+  // Component breakdown: top, median, bottom
   console.log('\n' + '═'.repeat(W));
   console.log('Component breakdown — top / median / bottom');
   console.log('═'.repeat(W));
-  const top = sorted[0];
-  const mid = sorted[Math.floor(sorted.length / 2)];
-  const bot = sorted[sorted.length - 1];
-  printDetailedBreakdown('TOP   ', top.agent, top.result);
-  printDetailedBreakdown('MEDIAN', mid.agent, mid.result);
-  printDetailedBreakdown('BOTTOM', bot.agent, bot.result);
+  printDetailedBreakdown('TOP   ', sorted[0].agent, sorted[0].result);
+  printDetailedBreakdown('MEDIAN', sorted[Math.floor(sorted.length / 2)].agent, sorted[Math.floor(sorted.length / 2)].result);
+  printDetailedBreakdown('BOTTOM', sorted[sorted.length - 1].agent, sorted[sorted.length - 1].result);
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -738,8 +853,9 @@ async function main() {
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
+  const mode = args.write ? 'write' : 'dry-run';
 
-  console.log(`[docs-quality] --dry-run  limit=${args.limit}`);
+  console.log(`[docs-quality] --${mode}  limit=${args.limit}`);
   console.log('[docs-quality] Fetching agents…');
 
   const agents = await fetchAgents(supabase, args.limit);
@@ -750,7 +866,11 @@ async function main() {
     return;
   }
 
+  const now = new Date().toISOString();
+  const snapshotDate = now.slice(0, 10); // YYYY-MM-DD
+
   const results = [];
+  const rows = [];
   let fetched = 0;
   let failed = 0;
 
@@ -760,18 +880,22 @@ async function main() {
 
     process.stdout.write(`  [${fetched + 1}/${agents.length}] ${fullName}…`);
 
+    const fetchErrors = [];
     let repoData = null;
     try {
       repoData = await fetchRepoData(fullName, githubToken);
     } catch (err) {
       process.stdout.write(` ERROR: ${err.message}\n`);
+      fetchErrors.push(err.message);
       failed++;
-      results.push({ agent, result: scoreAgent(agent, null) });
-      continue;
     }
 
     const result = scoreAgent(agent, repoData);
     results.push({ agent, result });
+
+    if (args.write) {
+      rows.push(buildRow(agent, repoData ?? {}, result, fetchErrors, now, snapshotDate));
+    }
 
     const penStr = result.penalty > 0 ? ` pen=−${result.penalty}` : '';
     process.stdout.write(` score=${result.score}${penStr} (${tier(result.score)})\n`);
@@ -780,7 +904,19 @@ async function main() {
 
   console.log(`\n[docs-quality] Done. Scored=${fetched} Failed=${failed}`);
 
-  printResults(results);
+  let writeCount = 0;
+  if (args.write && rows.length > 0) {
+    console.log(`[docs-quality] Upserting ${rows.length} rows into agent_docs_quality_signals…`);
+    try {
+      writeCount = await upsertDocsSignals(supabase, rows);
+      console.log(`[docs-quality] Upsert complete. rows_inserted_or_updated=${writeCount}`);
+    } catch (err) {
+      console.error(`[docs-quality] Upsert failed: ${err.message}`);
+      process.exit(1);
+    }
+  }
+
+  printSummary(results, { mode, writeCount });
 }
 
 main().catch(err => {
