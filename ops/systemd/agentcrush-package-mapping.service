@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush package mapping signal worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/scanner
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-package-mapping.lock \
+    /usr/bin/node /opt/agentcrush/scanner/signals/package-discovery-worker.mjs \
+    --write --limit 50
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-package-mapping

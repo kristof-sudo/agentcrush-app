@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush package download signal worker – weekly refresh
+
+[Timer]
+OnCalendar=Sun *-*-* 05:30:00
+Persistent=false
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target
