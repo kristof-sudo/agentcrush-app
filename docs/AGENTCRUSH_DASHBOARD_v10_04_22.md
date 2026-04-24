@@ -533,6 +533,30 @@ AgentCrush now has two distinct monetization surfaces, serving different custome
 2. Run the entity_type SQL fix in Supabase (5 seconds, makes 29 agents visible)
 3. Verify x402 seller endpoints still return 402 after any buyer-side code changes
 
+## x402 VERIFIED LIVE — APRIL 22, 2026
+
+First successful end-to-end x402 payment completed on Base mainnet. 
+Buyer wallet `0x11f990De3490868E2cc5A0Bf7AE5DB04E3ec9Db9` (separate 
+from seller wallet, created specifically for testing — EIP-3009 
+rejects self-transfers) paid $0.02 USDC to seller wallet 
+`0x58e632Fa698383820FFC22156352C9836790E2c0` and received the 
+trust-summary JSON for agent `devin` in return. Transaction hash: 
+`0x3506d3d6e91fa6c0f2b9b49cb66d55060d8521d48ee05a41dc8158d7b73cf228` 
+(https://basescan.org/tx/0x3506d3d6e91fa6c0f2b9b49cb66d55060d8521d48ee05a41dc8158d7b73cf228). 
+Buyer USDC balance moved from 1.000000 → 0.980000, matching expected 
+-0.020000 delta. This is AgentCrush's first machine-paid API call 
+and the trigger event for Coinbase Bazaar indexing — the service 
+should appear on agentic.market within 24-48h under category 
+"reputation". Two days from X suspension (Apr 15) to live paid 
+endpoint on Base mainnet (Apr 22). The distribution arm that was 
+killed on X has been replaced — at least structurally — by a 
+machine-callable surface on a protocol that can't ban you for 
+being automated.
+
+The End-to-end buyer test row: change ⚠️ Failed to ✅ Verified Apr 22
+The Bazaar listing row: change 🔲 Pending to ⏳ Indexing (24-48h after Apr 22)
+In KPIs: x402 Paid Calls (Base mainnet) goes from 0 to 1, and x402 Revenue goes from $0 to $0.02
+
 ### Rest of This Week
 
 1. First successful end-to-end x402 payment on Base mainnet
@@ -593,3 +617,6 @@ AgentCrush now has two distinct monetization surfaces, serving different custome
 
 **Last Edit:** April 22, 2026 — v10 x402 deployed, buyer loop debugging
 **Next Review:** April 27, 2026 (pending x402 end-to-end verification + first Bazaar listing)
+
+
+
