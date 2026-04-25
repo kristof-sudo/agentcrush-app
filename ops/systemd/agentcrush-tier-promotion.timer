@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush tier promotion – weekly Sunday check
+
+[Timer]
+OnCalendar=Sun *-*-* 07:00:00
+Persistent=false
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target

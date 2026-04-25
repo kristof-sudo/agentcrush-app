@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush tier promotion worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/scanner
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-tier-promotion.lock \
+    /usr/bin/node /opt/agentcrush/scanner/tier-promotion-worker.mjs \
+    --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-tier-promotion

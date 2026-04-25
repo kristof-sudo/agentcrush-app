@@ -9,6 +9,12 @@ Older historical DB changes existed before this process was formalized and may n
 ## Entries
 
 ### 2026-04-25
+- `supabase/migrations/20260425_1600_add_agents_tier.sql` — Phase 5.1 tiered indexing foundation.
+  Adds agents.tier (text NOT NULL DEFAULT 'indexed', CHECK IN evidence_ranked/indexed/archived),
+  agents.tier_promoted_at (timestamptz), and idx_agents_tier index. Backfills ~39 agents to
+  evidence_ranked based on evidence_ready_for_public_rank from agent_score_v2_rank_comparison.
+  Does not modify rankings, score_total, global_rank, or call recalc_rankings.
+  **STATUS: Written, requires manual apply via Supabase dashboard.**
 - `supabase/migrations/20260425_1400_add_score_v2c_shadow_formula.sql` — Phase 5 shadow scoring
   Phase 2: adds score_v2_c conservative formula. Fixed denominator (0.90), missing-signal prior
   = 20. Replaces agent_score_v2_preview and agent_score_v2_rank_comparison to add rank_v2_c,
