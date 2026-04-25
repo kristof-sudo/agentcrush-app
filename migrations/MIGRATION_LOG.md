@@ -8,6 +8,15 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-04-25
+- `supabase/migrations/20260425_1200_create_score_v2_shadow_views.sql` — Phase 5 shadow scoring
+  infrastructure. Creates 8 read-only views: `agent_score_v2_github` (GitHub component),
+  `agent_score_v2_ecosystem` (relationship-based component), `agent_score_v2_signal_components`
+  (all components joined per agent), `agent_score_v2_preview` (score_v2_a + score_v2_b formulas),
+  `agent_score_v2_rank_comparison` (ranks + deltas + review flags), plus 5 comparison/diagnostic
+  views. Zero writes to agents, rankings, or any live scoring path. No recalc_rankings calls.
+  **STATUS: Written, requires manual apply via Supabase dashboard.**
+
 ### 2026-04-08
 - `20260408_1000_claim_requests.sql` — Create `claim_requests` table for builder profile claim
   flow. Stores: agent_handle, agent_id, contact (email/X handle), note, status (pending →
