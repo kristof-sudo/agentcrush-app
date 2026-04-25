@@ -11,7 +11,8 @@ const STATIC_PAGES = [
   { path: '/use-cases',    priority: 0.8, changeFrequency: 'weekly' },
   { path: '/about',        priority: 0.5, changeFrequency: 'monthly'},
   { path: '/how-it-works', priority: 0.5, changeFrequency: 'monthly'},
-  { path: '/api-docs',     priority: 0.6, changeFrequency: 'monthly'},
+  { path: '/api-docs',     priority: 0.7, changeFrequency: 'monthly'},
+  { path: '/for-agents',  priority: 0.7, changeFrequency: 'monthly'},
   { path: '/submit',       priority: 0.7, changeFrequency: 'monthly'},
   { path: '/compare',      priority: 0.7, changeFrequency: 'daily'  },
 ]

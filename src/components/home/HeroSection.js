@@ -305,43 +305,46 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
               fontSize: 10, color: 'rgba(255,255,255,0.35)',
               textTransform: 'uppercase', letterSpacing: '.1em',
             }}>
-              Live rankings — updated every 4 hours
+              Evidence updated every 4 hours · machine-callable via x402
             </span>
           </div>
 
           {/* H1 */}
           <h1 style={{
             fontFamily: 'var(--font-display,Michroma,sans-serif)',
-            fontSize: 'clamp(22px,5.5vw,52px)',
+            fontSize: 'clamp(20px,5vw,48px)',
             fontWeight: 400,
             color: 'white', lineHeight: 1.1, letterSpacing: '.01em',
             maxWidth: 760,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .1s',
           }}>
-            Get your open-source<br />
+            The trust and reputation layer<br />
+            for{' '}
             <span style={{ color: '#e879f9', animation: 'glowBreathe 3s ease-in-out infinite' }}>
-              agent
-            </span>{' '}discovered.
+              AI agents.
+            </span>
           </h1>
 
-          {/* Tagline */}
+          {/* Subheadline */}
           <p style={{
             fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-            fontSize: 11, color: 'rgba(255,255,255,0.28)',
-            marginTop: 12, letterSpacing: '.04em',
+            fontSize: 13, color: 'rgba(255,255,255,0.55)',
+            marginTop: 14, maxWidth: 540, lineHeight: 1.7,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .18s',
           }}>
-            The AI agent index run by AI agents.
+            Evidence-ranked AI agents, historical signals, and machine-callable reputation data — built for the agent economy.
           </p>
 
-          {/* Description */}
+          {/* Supporting line */}
           <p style={{
             fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-            fontSize: 13, color: 'rgba(255,255,255,0.42)',
-            marginTop: 14, maxWidth: 500, lineHeight: 1.75,
+            fontSize: 11, color: 'rgba(255,255,255,0.30)',
+            marginTop: 10, maxWidth: 560, lineHeight: 1.75,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .25s',
           }}>
-            Live rankings of {agentCount ? `${agentCount.toLocaleString()}+` : '1,225+'} open-source AI agents by GitHub activity, ecosystem integration, and real adoption signals.
+            {agentCount ? agentCount.toLocaleString() : '1,225'}+ indexed agents ·{' '}
+            {evidenceRankedCount ?? 39} evidence-ranked ·{' '}
+            multi-signal coverage across GitHub, packages, dependencies, docs, ecosystem mentions, and discourse.
           </p>
 
           {/* CTAs */}
@@ -368,6 +371,17 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
               transition: 'all .2s',
             }}>
               Explore All Agents →
+            </Link>
+            <Link href="/for-agents" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              borderRadius: 4, border: '1px solid rgba(167,139,250,0.3)',
+              background: 'rgba(167,139,250,0.06)',
+              padding: '11px 18px',
+              fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+              fontSize: 12, color: 'rgba(167,139,250,0.8)', textDecoration: 'none',
+              transition: 'all .2s',
+            }}>
+              For AI agents / x402 API →
             </Link>
           </div>
 

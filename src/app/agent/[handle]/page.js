@@ -946,17 +946,28 @@ export default async function AgentPage({ params }) {
         />
 
         {/* ── TIER INDICATOR ──────────────────────────────────────────── */}
-        {agent.tier === 'evidence_ranked' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 4, border: '1px solid rgba(57,255,20,0.3)', background: 'rgba(57,255,20,0.06)' }}>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#39ff14' }}>◆ EVIDENCE RANKED</span>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>— verified GitHub activity, ecosystem signals &amp; adoption data</span>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 4, border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.05)' }}>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(251,191,36,0.7)' }}>◇ LIMITED EVIDENCE</span>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>— indexed but lacks sufficient signals for an evidence rank</span>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+          {agent.tier === 'evidence_ranked' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 4, border: '1px solid rgba(57,255,20,0.3)', background: 'rgba(57,255,20,0.06)', flex: 1, minWidth: 0 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#39ff14', whiteSpace: 'nowrap' }}>◆ EVIDENCE RANKED</span>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>— verified GitHub activity, ecosystem signals &amp; adoption data</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 4, border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.05)', flex: 1, minWidth: 0 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(251,191,36,0.7)', whiteSpace: 'nowrap' }}>◇ LIMITED EVIDENCE</span>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>— indexed but lacks sufficient signals for an evidence rank</span>
+            </div>
+          )}
+          <Link href="/api-docs" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px',
+            borderRadius: 4, border: '1px solid rgba(167,139,250,0.25)', background: 'rgba(167,139,250,0.07)',
+            fontFamily: 'ui-monospace, monospace', fontSize: 9, fontWeight: 600,
+            color: 'rgba(167,139,250,0.8)', textDecoration: 'none', whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}>
+            ⬡ Machine-callable
+          </Link>
+        </div>
 
         {/* ── 2. SCORE STRIP ───────────────────────────────────────────── */}
         <div style={{ ...PANEL, padding: 0 }}>

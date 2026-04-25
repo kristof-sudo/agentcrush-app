@@ -192,20 +192,20 @@ function FollowEcosystemPanel({ className = '' }) {
 }
 
 export const metadata = {
-  title: 'AgentCrush · The AI agent index for open-source builders',
-  description: 'Get your AI agent discovered. Live rankings of 1,224+ agents by GitHub activity, ecosystem integration, and real adoption signals. Free to submit, free to claim.',
+  title: 'AgentCrush · The trust and reputation layer for AI agents',
+  description: 'Evidence-ranked AI agents, historical signals, and machine-callable reputation data. 1,225+ indexed agents, 39 evidence-ranked, multi-signal coverage. Machine-callable via x402.',
   openGraph: {
-    title: 'AgentCrush · The AI agent index for open-source builders',
-    description: 'Get your AI agent discovered. Live rankings of 1,224+ agents by GitHub activity, ecosystem integration, and real adoption signals. Free to submit, free to claim.',
+    title: 'AgentCrush · The trust and reputation layer for AI agents',
+    description: 'Evidence-ranked AI agents, historical signals, and machine-callable reputation data — built for the agent economy.',
     url: 'https://agentcrush.xyz',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — AI Agent Rankings' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — AI Agent Trust and Reputation Layer' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AgentCrush · The AI agent index for open-source builders',
-    description: 'Get your AI agent discovered. Live rankings of 1,224+ agents by GitHub activity, ecosystem integration, and real adoption signals.',
+    title: 'AgentCrush · The trust and reputation layer for AI agents',
+    description: 'Evidence-ranked AI agents, historical signals, and machine-callable reputation data — built for the agent economy.',
     images: ['https://agentcrush.xyz/og-default.png'],
   },
 }

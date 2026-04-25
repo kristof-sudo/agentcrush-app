@@ -1,9 +1,9 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'API — AgentCrush',
+  title: 'API Docs | AgentCrush',
   description:
-    'Machine-callable AgentCrush API endpoints. Pay-per-call via x402 on Base mainnet. Returns agent trust scores, rank history, and reputation signals.',
+    'Query AgentCrush trust summaries, rankings, and history for AI agents through x402-protected endpoints. Responses include tier, score, rank, and evidence context.',
 }
 
 const ENDPOINTS = [
@@ -16,6 +16,7 @@ const ENDPOINTS = [
     responseExample: `{
   "handle": "autogpt",
   "name": "AutoGPT",
+  "tier": "evidence_ranked",
   "rank": 2,
   "score": {
     "total": 9220,
@@ -39,6 +40,7 @@ const ENDPOINTS = [
     responseExample: `{
   "handle": "autogpt",
   "name": "AutoGPT",
+  "tier": "evidence_ranked",
   "history": [
     {
       "date": "2026-04-21",
@@ -70,8 +72,11 @@ export default function ApiDocsPage() {
           API
         </p>
         <h1 className="text-3xl font-bold text-white tracking-tight">AgentCrush API</h1>
+        <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
+          Trust · Reputation · Evidence Ranking
+        </p>
         <p className="mt-3 text-sm text-white/50 max-w-xl">
-          Machine-callable endpoints for AI agent trust data. Pay-per-call via the{' '}
+          Machine-callable reputation endpoints for AI agents — tier, rank, score, and history data. Pay-per-call via the{' '}
           <a
             href="https://docs.cdp.coinbase.com/x402"
             target="_blank"
@@ -166,6 +171,43 @@ export default function ApiDocsPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* For AI Agents section */}
+      <section id="for-agents" className="mb-10">
+        <h2 className="text-lg font-semibold text-white mb-4 scroll-mt-24">For AI agents</h2>
+        <div className="text-sm text-white/60 leading-relaxed space-y-3">
+          <p>
+            AgentCrush exposes machine-callable reputation endpoints designed for use by AI agents, orchestration
+            systems, wallets, and marketplaces. All endpoints are{' '}
+            <span className="text-white/80">x402-protected</span> — a{' '}
+            <code className="text-violet-300 bg-white/[0.06] px-1 rounded">402 Payment Required</code> response
+            is expected until a valid payment is attached.
+          </p>
+          <p>
+            Every response includes a{' '}
+            <code className="text-violet-300 bg-white/[0.06] px-1 rounded">tier</code> field:
+          </p>
+          <div className="space-y-2">
+            {[
+              { value: 'evidence_ranked', color: '#39ff14', border: 'rgba(57,255,20,0.25)', bg: 'rgba(57,255,20,0.04)', desc: 'Verified GitHub activity, ecosystem relationships, sufficient signal coverage. Full ranking and evidence context.' },
+              { value: 'indexed', color: 'rgba(255,255,255,0.5)', border: 'rgba(255,255,255,0.1)', bg: 'rgba(255,255,255,0.02)', desc: 'Tracked but limited evidence. Score and rank may be absent or low-confidence.' },
+              { value: 'archived', color: 'rgba(255,255,255,0.3)', border: 'rgba(255,255,255,0.07)', bg: 'rgba(0,0,0,0)', desc: 'Reserved for future use.' },
+            ].map((t) => (
+              <div key={t.value} className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-xs" style={{ border: `1px solid ${t.border}`, background: t.bg }}>
+                <code className="font-bold shrink-0 mt-0.5" style={{ color: t.color }}>{t.value}</code>
+                <span className="text-white/40">{t.desc}</span>
+              </div>
+            ))}
+          </div>
+          <p>
+            Bazaar discovery metadata is present on all endpoints. Use{' '}
+            <Link href="/for-agents" className="text-violet-400 hover:text-violet-300 transition-colors">
+              the For Agents page →
+            </Link>{' '}
+            for a fuller integration overview.
+          </p>
         </div>
       </section>
 
