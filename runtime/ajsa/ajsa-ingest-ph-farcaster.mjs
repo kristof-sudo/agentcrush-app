@@ -41,7 +41,9 @@ const YC_RSS_URL        = 'https://www.ycombinator.com/blog/rss.xml';
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const PH_GRAPHQL_URL         = 'https://api.producthunt.com/v2/api/graphql';
-const NEYNAR_CHANNEL_URL     = 'https://api.neynar.com/v2/farcaster/feed/channel';
+const NEYNAR_FEED_URL        = 'https://api.neynar.com/v2/farcaster/feed';
+// parent_url fallback map — add entries when confirmed from Neynar channel metadata
+const NEYNAR_CHANNEL_PARENT_URLS = {};
 const FETCH_TIMEOUT_MS       = 15000;
 const UA                     = 'AgentCrush-Ajsa-PH-Farcaster/1.0 (+https://agentcrush.com)';
 const PH_VOTES_THRESHOLD     = 50;
@@ -579,19 +581,32 @@ function channelSlugFromUrl(channelUrl) {
 }
 
 async function fetchFarcasterChannel(apiKey, channelId, limit) {
-  const url = `${NEYNAR_CHANNEL_URL}?channel_id=${encodeURIComponent(channelId)}&limit=${limit}&type=recent`;
-  const result = await fetchJSON(url, {
-    headers: {
-      'api_key': apiKey,
-      'Accept': 'application/json',
-      'User-Agent': UA,
-    },
-  });
-  if (!result.ok) {
-    if (result.status === 402) return { ok: false, paidPlanRequired: true, error: result.error };
-    return result;
+  const headers = { 'api_key': apiKey, 'Accept': 'application/json', 'User-Agent': UA };
+
+  // Primary: feed_type=filter&filter_type=channel_id
+  const primaryUrl = `${NEYNAR_FEED_URL}?feed_type=filter&filter_type=channel_id&channel_id=${encodeURIComponent(channelId)}&limit=${limit}`;
+  const primary = await fetchJSON(primaryUrl, { headers });
+
+  if (primary.ok) return { ok: true, casts: primary.data?.casts ?? [] };
+  if (primary.status === 402) return { ok: false, paidPlanRequired: true, error: primary.error };
+
+  // Fallback: parent_url mode (if channel_id param is rejected)
+  if (primary.status === 400 || primary.status === 404) {
+    const parentUrl = NEYNAR_CHANNEL_PARENT_URLS[channelId] ?? null;
+    if (!parentUrl) {
+      return {
+        ok: false, noFallback: true,
+        error: `channel_id filter returned ${primary.status}; parent_url fallback not configured for /${channelId}`,
+      };
+    }
+    const fallbackUrl = `${NEYNAR_FEED_URL}?feed_type=filter&filter_type=parent_url&parent_url=${encodeURIComponent(parentUrl)}&limit=${limit}`;
+    const fallback = await fetchJSON(fallbackUrl, { headers });
+    if (fallback.ok) return { ok: true, casts: fallback.data?.casts ?? [], usedFallback: true };
+    if (fallback.status === 402) return { ok: false, paidPlanRequired: true, error: fallback.error };
+    return { ok: false, error: `channel_id(${primary.status}): ${primary.error} | parent_url fallback: ${fallback.error}` };
   }
-  return { ok: true, casts: result.data?.casts ?? [] };
+
+  return primary;
 }
 
 // ── Credentials ───────────────────────────────────────────────────────────────
@@ -1117,10 +1132,20 @@ if (neynarKey) {
         fcPaidPlanGated = true;
         continue;
       }
+      if (result.noFallback) {
+        console.log(`skipped (${result.error})`);
+        fcFailures.push({ channel: channelId, error: result.error });
+        await sleep(NEYNAR_DELAY_MS);
+        continue;
+      }
       console.log(`FAILED (${result.error})`);
       fcFailures.push({ channel: channelId, error: result.error });
       await sleep(NEYNAR_DELAY_MS);
       continue;
+    }
+
+    if (result.usedFallback) {
+      process.stdout.write('(parent_url fallback) ');
     }
 
     const newCasts = result.casts.filter(c => !seenCastHashes.has(c.hash));
