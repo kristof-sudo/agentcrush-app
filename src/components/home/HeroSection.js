@@ -173,7 +173,7 @@ function Scanline() {
 }
 
 /* ── Main export ───────────────────────────────────────────────────────── */
-export default function HeroSection({ agentCount, signalsToday, rankedCount, topMover, evidenceRankedCount }) {
+export default function HeroSection({ agentCount, signalsToday, topMover, evidenceRankedCount }) {
   const [mouse, setMouse] = useState({ x: 0, y: 0 })
   const heroRef = useRef()
 

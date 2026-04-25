@@ -405,7 +405,6 @@ export default async function Home() {
   }
   const topSectors = Object.entries(archetypeCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
 
-  const rankedCount = rankingRows.filter((r) => r.score_total > 0).length
   const indexedFreshness = getIndexedFreshnessMeta(recentAgents?.[0]?.created_at)
 
   return (
@@ -427,7 +426,7 @@ export default async function Home() {
                   <span className="text-white/15">·</span>
                   <span className="font-mono text-[11px] text-white/50">⚡ <span className="text-white font-bold tabular-nums">{signalsToday}</span> <span className="text-white/30">SIGNALS</span></span>
                   <span className="text-white/15">·</span>
-                  <span className="font-mono text-[11px] text-white/50">↑ <span className="text-white font-bold tabular-nums">{rankedCount}</span> <span className="text-white/30">RANKED</span></span>
+                  <span className="font-mono text-[11px] text-white/50">↑ <span className="text-white font-bold tabular-nums">{evidenceRankedCount ?? 0}</span> <span className="text-white/30">EVIDENCE RANKED</span></span>
                   {topMover ? (
                     <>
                       <span className="text-white/15">·</span>
@@ -452,7 +451,7 @@ export default async function Home() {
                     color: signalsDelta >= 0 ? '#39ff14' : '#f87171',
                   } : null}
                 />
-                <StatPill label="RANKED" value={rankedCount} />
+                <StatPill label="EVIDENCE RANKED" value={evidenceRankedCount ?? 0} />
                 {topMover ? (
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="font-mono text-[10px] text-white/25 uppercase tracking-wider">Top Mover</span>
@@ -490,7 +489,7 @@ export default async function Home() {
         <HeroSection
           agentCount={agentCount}
           signalsToday={signalsToday}
-          rankedCount={rankedCount}
+
           topMover={topMover}
           evidenceRankedCount={evidenceRankedCount}
         />
