@@ -151,7 +151,6 @@ SELECT
   active_weight_total,
   ROUND(score_v2_a_raw, 2)               AS score_v2_a_candidate,
   ROUND(LEAST(100.0, score_v2_b_raw), 2) AS score_v2_b_candidate,
-  ROUND(score_v2_c_raw, 2)               AS score_v2_c_candidate,
   github_stars, github_forks, github_pushed_at, last_release_tag,
   weekly_downloads_total, package_count,
   unique_dependent_repos, external_dependent_repos, dependency_weighted_strength,
@@ -193,7 +192,9 @@ SELECT
     'trust',      jsonb_build_object('score', trust_score,         'weight', w_trust,      'available', trust_available),
     'native',     jsonb_build_object('score', native_score,        'weight', w_native,     'available', native_available,
                                      'note', 'reserved — excluded from active denominator')
-  ) AS components
+  ) AS components,
+  -- score_v2_c appended last so existing column positions are unchanged
+  ROUND(score_v2_c_raw, 2) AS score_v2_c_candidate
 FROM computed;
 
 
