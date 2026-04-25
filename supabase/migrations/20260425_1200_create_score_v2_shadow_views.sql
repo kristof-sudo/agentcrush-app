@@ -52,7 +52,7 @@ WITH latest AS (
     pushed_at,
     last_release_tag
   FROM github_repo_snapshots
-  ORDER BY agent_id, created_at DESC NULLS LAST, id DESC
+  ORDER BY agent_id, pushed_at DESC NULLS LAST, id DESC
 ),
 pts AS (
   SELECT
