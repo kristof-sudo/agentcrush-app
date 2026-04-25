@@ -233,14 +233,21 @@ async function fetchIndexedAgents(supabase, limit) {
   return data || [];
 }
 
-async function fetchAgentHandleMap(supabase) {
+async function fetchAgentsByIds(supabase, agentIds) {
+  if (agentIds.length === 0) return new Map();
   const { data, error } = await supabase
     .from('agents')
-    .select('id, handle, display_name');
+    .select('id, handle, display_name, github_full_name')
+    .in('id', agentIds);
   if (error) throw error;
   const map = new Map();
   for (const a of (data || [])) {
-    map.set(a.id, a.handle ?? a.display_name ?? a.id.slice(0, 8));
+    map.set(a.id, {
+      handle:           a.handle           ?? null,
+      display_name:     a.display_name     ?? null,
+      github_full_name: a.github_full_name ?? null,
+      label:            a.handle ?? a.display_name ?? a.id.slice(0, 8),
+    });
   }
   return map;
 }
@@ -618,29 +625,43 @@ async function processRepo(repoInfo, sourceTier, preset, mappings, npmMap, pypiM
       }
 
       if (edges.length > 0) {
-        const edgeRows = edges.map(e => ({
-          scanned_repo:                  e.scanned_repo,
-          source_tier:                   e.source_tier,
-          source_preset:                 preset,
-          matched_agent_id:              e.matched_agent_id,
-          registry:                      e.registry,
-          package_name:                  e.matched_package,
-          dep_file:                      e.dep_file,
-          dep_type:                      e.dep_type,
-          snapshot_date:                 SNAPSHOT_DATE,
-          scan_id:                       scanId,
-          scanned_repo_stars:            e.scanned_stars,
-          matched_agent_github_full_name: e.matched_github_full_name,
-          match_source:                  e.match_source,
-          mapping_confidence:            e.mapping_confidence,
-          same_repo:                     false,   // same_repo=true edges are in selfMatches, never written
-          same_owner:                    isSameOwner(e.scanned_repo, e.matched_github_full_name),
-          evidence: {
-            match_source:       e.match_source,
-            mapping_confidence: e.mapping_confidence,
-            scanned_repo_stars: e.scanned_stars,
-          },
-        }));
+        const edgeRows = edges.map(e => {
+          const agentInfo       = writeCtx.agentMap?.get(e.matched_agent_id);
+          const handle          = agentInfo?.handle           ?? null;
+          const displayName     = agentInfo?.display_name     ?? null;
+          const agentGithubName = agentInfo?.github_full_name ?? e.matched_github_full_name ?? null;
+
+          if (!handle) {
+            const fallback = agentGithubName ?? e.matched_package;
+            console.warn(`  [warn] matched_agent_handle missing for agent_id=${e.matched_agent_id?.slice(0, 8)} fallback=${fallback}`);
+          }
+
+          return {
+            scanned_repo:                  e.scanned_repo,
+            source_tier:                   e.source_tier,
+            source_preset:                 preset,
+            matched_agent_id:              e.matched_agent_id,
+            matched_agent_handle:          handle,
+            matched_agent_display_name:    displayName,
+            matched_agent_github_full_name: agentGithubName,
+            registry:                      e.registry,
+            package_name:                  e.matched_package,
+            dep_file:                      e.dep_file,
+            dep_type:                      e.dep_type,
+            snapshot_date:                 SNAPSHOT_DATE,
+            scan_id:                       scanId,
+            scanned_repo_stars:            e.scanned_stars,
+            match_source:                  e.match_source,
+            mapping_confidence:            e.mapping_confidence,
+            same_repo:                     false,   // same_repo=true edges are in selfMatches, never written
+            same_owner:                    isSameOwner(e.scanned_repo, e.matched_github_full_name),
+            evidence: {
+              match_source:       e.match_source,
+              mapping_confidence: e.mapping_confidence,
+              scanned_repo_stars: e.scanned_stars,
+            },
+          };
+        });
 
         try {
           await upsertEdgeBatch(writeCtx.supabase, edgeRows);
@@ -696,7 +717,7 @@ function printReport(agentHandleMap, mappings, allEdges, allSelfMatches, stats, 
     console.log('  Dependency edges (non-self):');
     console.log('  ─────────────────────────────────────────────────────────────');
     for (const e of allEdges) {
-      const matchedHandle = agentHandleMap.get(e.matched_agent_id) ?? e.matched_agent_id?.slice(0, 8);
+      const matchedHandle = agentHandleMap.get(e.matched_agent_id)?.label ?? e.matched_agent_id?.slice(0, 8);
       const starsStr      = e.scanned_stars !== null ? ` (⭐${e.scanned_stars})` : '';
       const ownerFlag     = isSameOwner(e.scanned_repo, e.matched_github_full_name) ? ' [same_owner]' : '';
       console.log(
@@ -803,8 +824,6 @@ async function main() {
   const ghToken  = process.env.GITHUB_TOKEN ?? null;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const writeCtx = args.writeMode ? { supabase } : null;
-
   // Load package mappings and build lookup maps.
   console.log('Loading high_auto package mappings…');
   const mappings = await fetchHighAutoMappings(supabase);
@@ -812,8 +831,15 @@ async function main() {
   const { npmMap, pypiMap } = buildLookupMaps(mappings);
   console.log(`  npm packages: ${npmMap.size}  PyPI packages (normalized): ${pypiMap.size}`);
 
-  // Load agent handle map (used in report for matched agent labels).
-  const agentHandleMap = await fetchAgentHandleMap(supabase);
+  // Load agent metadata for every agent referenced by the high_auto mappings.
+  // Querying by ID (not full table scan) guarantees handle/display_name/github_full_name
+  // are populated even when the package mapping view does not expose them.
+  const mappedAgentIds = [...new Set(mappings.map(m => m.agent_id).filter(Boolean))];
+  console.log(`Loading agent metadata for ${mappedAgentIds.length} matched agents…`);
+  const agentHandleMap = await fetchAgentsByIds(supabase, mappedAgentIds);
+  console.log(`Loaded ${agentHandleMap.size} agents.`);
+
+  const writeCtx = args.writeMode ? { supabase, agentMap: agentHandleMap } : null;
 
   const stats = {
     reposChecked: 0,
