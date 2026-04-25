@@ -38,6 +38,17 @@ const YZI_BLOG_BASE     = 'https://www.yzilabs.com';
 const YZI_LOOKBACK_DAYS = 30;
 const YC_RSS_URL        = 'https://www.ycombinator.com/blog/rss.xml';
 
+const CB_VENTURES_SOURCE_KEY = 'coinbase_ventures_activity';
+const PARADIGM_SOURCE_KEY    = 'paradigm_activity';
+const YC_LAUNCH_SOURCE_KEY   = 'ycombinator_launch';
+
+const CB_VENTURES_RSS_URL       = 'https://paragraph.xyz/@cbventures/feed';
+const PARADIGM_WRITING_URL      = 'https://www.paradigm.xyz/writing';
+const YC_LAUNCHES_URL           = 'https://www.ycombinator.com/launches';
+const CB_VENTURES_LOOKBACK_DAYS = 30;
+const PARADIGM_LOOKBACK_DAYS    = 30;
+const YC_LAUNCH_LOOKBACK_DAYS   = 7;
+
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const PH_GRAPHQL_URL         = 'https://api.producthunt.com/v2/api/graphql';
@@ -100,6 +111,61 @@ const YZI_STRATEGIC_TERMS = [
   'base',
   'rwa',
   'tokenization',
+];
+
+const CB_VENTURES_STRATEGIC_TERMS = [
+  'ai agent',
+  'agentic',
+  'autonomous agent',
+  'onchain ai',
+  'agent commerce',
+  'x402',
+  'agent payment',
+  'agent payments',
+  'stablecoin',
+  'multi-agent',
+  'agent infrastructure',
+  'crypto ai',
+  'ai infrastructure',
+  'mcp',
+  'a2a',
+];
+
+const PARADIGM_STRATEGIC_TERMS = [
+  'ai agent',
+  'agentic',
+  'autonomous agent',
+  'agent economy',
+  'agent payment',
+  'agent payments',
+  'x402',
+  'erc-8004',
+  'stablecoin',
+  'identity',
+  'reputation',
+  'verification',
+  'multi-agent',
+  'agent infrastructure',
+  'crypto ai',
+  'mcp',
+  'a2a',
+];
+
+const YC_LAUNCH_STRATEGIC_TERMS = [
+  'ai agent',
+  'agentic',
+  'autonomous',
+  'coding agent',
+  'browser agent',
+  'research agent',
+  'agent workflow',
+  'multi-agent',
+  'agent builder',
+  'ai automation',
+  'agent framework',
+  'mcp',
+  'a2a',
+  'copilot',
 ];
 
 const PH_DELAY_MS            = 1000;
@@ -459,6 +525,43 @@ function auditYziRelevance(text) {
   return { relevant: terms.length > 0, terms };
 }
 
+function auditSourceRelevance(text, terms) {
+  const lower = (text ?? '').toLowerCase();
+  const matched = terms.filter(t => lower.includes(t));
+  return { relevant: matched.length > 0, terms: matched };
+}
+
+function slugToTitle(slug) {
+  return (slug ?? '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+async function ensureSource(sourceKey, displayName, sourceType, config = {}) {
+  const { data, error } = await supabase
+    .from('ajsa_sources')
+    .select('id, source_key, source_type, display_name, config')
+    .eq('source_key', sourceKey)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(`[ajsa-ph-fc] WARN: could not load source ${sourceKey}:`, error.message);
+    return null;
+  }
+  if (data) return data;
+
+  const { data: inserted, error: insertErr } = await supabase
+    .from('ajsa_sources')
+    .insert({ source_key: sourceKey, display_name: displayName, source_type: sourceType, config })
+    .select('id, source_key, source_type, display_name, config')
+    .single();
+
+  if (insertErr) {
+    console.warn(`[ajsa-ph-fc] WARN: could not create source ${sourceKey}:`, insertErr.message);
+    return null;
+  }
+  console.log(`[ajsa-ph-fc] INFO: Created source row for ${sourceKey} (id=${inserted.id})`);
+  return inserted;
+}
+
 // ── Product Hunt ──────────────────────────────────────────────────────────────
 
 // topics(query:) supports free-text search; posts() does NOT accept query arg.
@@ -659,6 +762,27 @@ const { data: ycSrc, error: ycSrcErr } = await supabase
   .maybeSingle();
 
 if (ycSrcErr) console.warn('[ajsa-ph-fc] WARN: could not load YC source config:', ycSrcErr.message);
+
+const cbVenturesSrc = await ensureSource(
+  CB_VENTURES_SOURCE_KEY,
+  'Coinbase Ventures',
+  'blog',
+  { rss_url: CB_VENTURES_RSS_URL, lookback_days: CB_VENTURES_LOOKBACK_DAYS },
+);
+
+const paradigmSrc = await ensureSource(
+  PARADIGM_SOURCE_KEY,
+  'Paradigm Writing',
+  'blog',
+  { writing_url: PARADIGM_WRITING_URL, lookback_days: PARADIGM_LOOKBACK_DAYS },
+);
+
+const ycLaunchSrc = await ensureSource(
+  YC_LAUNCH_SOURCE_KEY,
+  'YC Launch',
+  'blog',
+  { launches_url: YC_LAUNCHES_URL, lookback_days: YC_LAUNCH_LOOKBACK_DAYS },
+);
 
 // PH queries: from DB config or sensible defaults
 const phQueries = phSrc?.config?.queries ?? [
@@ -1440,9 +1564,294 @@ const ycFailures   = [];
   }
 }
 
+// ── Coinbase Ventures ingest ──────────────────────────────────────────────────
+
+const cbCandidates = [];
+const cbSkipped    = [];
+const cbFailures   = [];
+
+{
+  const lookbackDays = cbVenturesSrc?.config?.lookback_days ?? CB_VENTURES_LOOKBACK_DAYS;
+  const cutoff       = new Date(Date.now() - lookbackDays * 86400_000);
+  const rssUrl       = cbVenturesSrc?.config?.rss_url ?? CB_VENTURES_RSS_URL;
+
+  console.log(`\n[ajsa-ph-fc] Coinbase Ventures — ${rssUrl}  lookback=${lookbackDays}d\n`);
+
+  process.stdout.write('  [CBV] Fetching RSS ... ');
+  const rssResult = await fetchText(rssUrl, { headers: { 'User-Agent': UA } });
+
+  if (!rssResult.ok) {
+    console.log(`FAILED (${rssResult.error})`);
+    cbFailures.push({ step: 'rss', error: rssResult.error });
+  } else {
+    const items = parseRssItems(rssResult.data);
+    console.log(`${items.length} item(s)`);
+
+    for (const item of items) {
+      const title = decodeHtmlEntities(item.title ?? '');
+      const link  = item.link ?? item.guid ?? '';
+      const desc  = decodeHtmlEntities(item.description ?? '');
+      const pubMs = item.pubDate ? new Date(item.pubDate).getTime() : null;
+
+      if (!title && !link) {
+        cbSkipped.push({ reason: 'no_title_or_link' });
+        continue;
+      }
+
+      if (pubMs && !isNaN(pubMs) && new Date(pubMs) < cutoff) {
+        console.log(`  [CBV:skip]  "${title.slice(0, 60)}"  reason=before_cutoff  pub=${item.pubDate}`);
+        cbSkipped.push({ reason: 'before_cutoff', title, pubDate: item.pubDate });
+        continue;
+      }
+
+      const scoringText    = [title, desc].join(' ');
+      const relevanceAudit = auditSourceRelevance(scoringText, CB_VENTURES_STRATEGIC_TERMS);
+
+      if (!relevanceAudit.relevant) {
+        console.log(`  [CBV:skip]  "${title.slice(0, 60)}"  reason=not_relevant`);
+        cbSkipped.push({ reason: 'not_relevant', title });
+        continue;
+      }
+
+      const { score, matchedKeywords } = scoreText(scoringText);
+      const effectiveScore = score > 0 ? score : 10;
+      const recommendation = buildRecommendation(matchedKeywords);
+      const priority       = priorityFromScore(effectiveScore);
+      const pubIso         = pubMs && !isNaN(pubMs) ? new Date(pubMs).toISOString() : null;
+
+      console.log(`  [CBV]  "${title.slice(0, 60)}"  score=${effectiveScore}  terms=[${relevanceAudit.terms.join(', ')}]`);
+
+      cbCandidates.push({
+        brief_date:   TODAY,
+        source_id:    cbVenturesSrc?.id ?? null,
+        source_key:   CB_VENTURES_SOURCE_KEY,
+        source_type:  'blog',
+        title,
+        url:          link,
+        summary:      desc.slice(0, 400) || null,
+        recommendation,
+        priority,
+        score:        effectiveScore,
+        status:       'candidate',
+        occurred_at:  pubIso,
+        published_at: pubIso,
+        evidence: {
+          matched_keywords:       matchedKeywords,
+          pub_date:               item.pubDate ?? null,
+          rss_guid:               item.guid ?? null,
+          cb_ventures_terms:      relevanceAudit.terms,
+        },
+        payload: {
+          display_name: cbVenturesSrc?.display_name ?? 'Coinbase Ventures',
+          cb_title:     title,
+          cb_link:      link,
+        },
+      });
+    }
+  }
+}
+
+// ── Paradigm ingest ───────────────────────────────────────────────────────────
+
+const paradigmCandidates = [];
+const paradigmSkipped    = [];
+const paradigmFailures   = [];
+let   paradigmPostsSeen  = 0;
+
+{
+  const lookbackDays = paradigmSrc?.config?.lookback_days ?? PARADIGM_LOOKBACK_DAYS;
+  const cutoff       = new Date(Date.now() - lookbackDays * 86400_000);
+  const writingUrl   = paradigmSrc?.config?.writing_url ?? PARADIGM_WRITING_URL;
+
+  console.log(`\n[ajsa-ph-fc] Paradigm — ${writingUrl}  lookback=${lookbackDays}d\n`);
+
+  process.stdout.write('  [PAR] Fetching writing page ... ');
+  const pageResult = await fetchText(writingUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36', 'Accept': 'text/html' },
+  });
+
+  if (!pageResult.ok) {
+    console.log(`FAILED (${pageResult.error})`);
+    paradigmFailures.push({ step: 'page', error: pageResult.error });
+  } else {
+    const ndm = /<script[^>]+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(pageResult.data);
+    if (!ndm) {
+      console.log('FAILED (__NEXT_DATA__ not found)');
+      paradigmFailures.push({ step: 'parse', error: '__NEXT_DATA__ script tag not found' });
+    } else {
+      let nextData;
+      try { nextData = JSON.parse(ndm[1]); } catch (e) {
+        console.log(`FAILED (JSON parse: ${e.message})`);
+        paradigmFailures.push({ step: 'parse', error: `JSON parse: ${e.message}` });
+        nextData = null;
+      }
+
+      if (nextData) {
+        const allPosts = nextData?.props?.pageProps?.components?.[0]?.allPosts ?? [];
+        console.log(`${allPosts.length} post(s)`);
+        paradigmPostsSeen = allPosts.length;
+
+        for (const post of allPosts) {
+          const slug   = post.slug ?? '';
+          const pubDt  = post.publishDatetime ?? null;
+          const pubMs  = pubDt ? new Date(pubDt).getTime() : null;
+          const title  = slugToTitle(slug);
+          const desc   = decodeHtmlEntities(post.summary ?? '');
+          const url    = `https://www.paradigm.xyz/${slug}`;
+
+          if (!slug) {
+            paradigmSkipped.push({ reason: 'no_slug' });
+            continue;
+          }
+
+          if (pubMs && !isNaN(pubMs) && new Date(pubMs) < cutoff) {
+            paradigmSkipped.push({ reason: 'before_cutoff', slug, pubDate: pubDt });
+            continue;
+          }
+
+          const scoringText    = [title, desc].join(' ');
+          const relevanceAudit = auditSourceRelevance(scoringText, PARADIGM_STRATEGIC_TERMS);
+
+          if (!relevanceAudit.relevant) {
+            paradigmSkipped.push({ reason: 'not_relevant', slug });
+            continue;
+          }
+
+          const { score, matchedKeywords } = scoreText(scoringText);
+          const effectiveScore = score > 0 ? score : 10;
+          const recommendation = buildRecommendation(matchedKeywords);
+          const priority       = priorityFromScore(effectiveScore);
+          const pubIso         = pubMs && !isNaN(pubMs) ? new Date(pubMs).toISOString() : null;
+
+          console.log(`  [PAR]  "${title.slice(0, 60)}"  score=${effectiveScore}  terms=[${relevanceAudit.terms.join(', ')}]`);
+
+          paradigmCandidates.push({
+            brief_date:   TODAY,
+            source_id:    paradigmSrc?.id ?? null,
+            source_key:   PARADIGM_SOURCE_KEY,
+            source_type:  'blog',
+            title,
+            url,
+            summary:      desc.slice(0, 400) || null,
+            recommendation,
+            priority,
+            score:        effectiveScore,
+            status:       'candidate',
+            occurred_at:  pubIso,
+            published_at: pubIso,
+            evidence: {
+              matched_keywords:  matchedKeywords,
+              slug,
+              pub_date:          pubDt ?? null,
+              paradigm_terms:    relevanceAudit.terms,
+            },
+            payload: {
+              display_name: paradigmSrc?.display_name ?? 'Paradigm Writing',
+              slug,
+            },
+          });
+        }
+      }
+    }
+  }
+}
+
+// ── YC Launch ingest ──────────────────────────────────────────────────────────
+
+const ycLaunchCandidates = [];
+const ycLaunchSkipped    = [];
+const ycLaunchFailures   = [];
+let   ycLaunchPostsSeen  = 0;
+
+{
+  const lookbackDays = ycLaunchSrc?.config?.lookback_days ?? YC_LAUNCH_LOOKBACK_DAYS;
+  const cutoff       = new Date(Date.now() - lookbackDays * 86400_000);
+  const launchesUrl  = ycLaunchSrc?.config?.launches_url ?? YC_LAUNCHES_URL;
+
+  console.log(`\n[ajsa-ph-fc] YC Launch — ${launchesUrl}  lookback=${lookbackDays}d\n`);
+
+  process.stdout.write('  [YCL] Fetching launches ... ');
+  const launchResult = await fetchJSON(launchesUrl, { headers: { 'User-Agent': UA } });
+
+  if (!launchResult.ok) {
+    console.log(`FAILED (${launchResult.error})`);
+    ycLaunchFailures.push({ step: 'fetch', error: launchResult.error });
+  } else {
+    const hits = launchResult.data?.hits ?? [];
+    console.log(`${hits.length} hit(s)`);
+    ycLaunchPostsSeen = hits.length;
+
+    for (const hit of hits) {
+      const title   = hit.title ?? '';
+      const tagline = hit.tagline ?? '';
+      const url     = hit.search_path ?? `${YC_LAUNCHES_URL}/${hit.slug ?? hit.id}`;
+      const pubDt   = hit.created_at ?? null;
+      const pubMs   = pubDt ? new Date(pubDt).getTime() : null;
+
+      if (!title && !url) {
+        ycLaunchSkipped.push({ reason: 'no_title_or_url' });
+        continue;
+      }
+
+      if (pubMs && !isNaN(pubMs) && new Date(pubMs) < cutoff) {
+        console.log(`  [YCL:skip]  "${title.slice(0, 60)}"  reason=before_cutoff  pub=${pubDt}`);
+        ycLaunchSkipped.push({ reason: 'before_cutoff', title, pubDate: pubDt });
+        continue;
+      }
+
+      const scoringText    = [title, tagline].join(' ');
+      const relevanceAudit = auditSourceRelevance(scoringText, YC_LAUNCH_STRATEGIC_TERMS);
+
+      if (!relevanceAudit.relevant) {
+        console.log(`  [YCL:skip]  "${title.slice(0, 60)}"  reason=not_relevant`);
+        ycLaunchSkipped.push({ reason: 'not_relevant', title });
+        continue;
+      }
+
+      const { score, matchedKeywords } = scoreText(scoringText);
+      const effectiveScore = score > 0 ? score : 10;
+      const recommendation = buildRecommendation(matchedKeywords);
+      const priority       = priorityFromScore(effectiveScore);
+      const pubIso         = pubMs && !isNaN(pubMs) ? new Date(pubMs).toISOString() : null;
+
+      console.log(`  [YCL]  "${title.slice(0, 60)}"  score=${effectiveScore}  terms=[${relevanceAudit.terms.join(', ')}]`);
+
+      ycLaunchCandidates.push({
+        brief_date:   TODAY,
+        source_id:    ycLaunchSrc?.id ?? null,
+        source_key:   YC_LAUNCH_SOURCE_KEY,
+        source_type:  'blog',
+        title,
+        url,
+        summary:      tagline.slice(0, 400) || null,
+        recommendation,
+        priority,
+        score:        effectiveScore,
+        status:       'candidate',
+        occurred_at:  pubIso,
+        published_at: pubIso,
+        evidence: {
+          matched_keywords:    matchedKeywords,
+          pub_date:            pubDt ?? null,
+          yc_launch_terms:     relevanceAudit.terms,
+          total_vote_count:    hit.total_vote_count ?? 0,
+          yc_batch:            hit.company?.batch ?? null,
+        },
+        payload: {
+          display_name: ycLaunchSrc?.display_name ?? 'YC Launch',
+          yc_title:     title,
+          yc_tagline:   tagline,
+          yc_company:   hit.company?.name ?? null,
+          yc_batch:     hit.company?.batch ?? null,
+        },
+      });
+    }
+  }
+}
+
 // ── Summary ───────────────────────────────────────────────────────────────────
 
-const allCandidates = [...phCandidates, ...fcCandidates, ...yziCandidates, ...ycCandidates];
+const allCandidates = [...phCandidates, ...fcCandidates, ...yziCandidates, ...ycCandidates, ...cbCandidates, ...paradigmCandidates, ...ycLaunchCandidates];
 
 console.log(`\n${'─'.repeat(60)}`);
 if (phToken) {
@@ -1458,6 +1867,9 @@ if (neynarKey) {
 }
 console.log(`  YZI Labs   posts_seen=${yziPostsSeen}  candidates=${yziCandidates.length}  skipped_old=${yziSkippedOld}  skipped_unknown_not_relevant=${yziSkippedUnknownDateNotRelevant}  unknown_date_relevant=${yziUnknownDateRelevant}  date_parsed=${yziDateParseSuccess}  date_unknown=${yziDateParseFailed}  failed=${yziFailures.length}`);
 console.log(`  YC Blog    Candidates: ${ycCandidates.length}  Skipped: ${ycSkipped.length}  Failed: ${ycFailures.length}`);
+console.log(`  CB Ventures  Candidates: ${cbCandidates.length}  Skipped: ${cbSkipped.length}  Failed: ${cbFailures.length}`);
+console.log(`  Paradigm     posts_seen=${paradigmPostsSeen}  candidates=${paradigmCandidates.length}  skipped=${paradigmSkipped.length}  failed=${paradigmFailures.length}`);
+console.log(`  YC Launch    posts_seen=${ycLaunchPostsSeen}  candidates=${ycLaunchCandidates.length}  skipped=${ycLaunchSkipped.length}  failed=${ycLaunchFailures.length}`);
 console.log(`  Total candidates: ${allCandidates.length}`);
 console.log(`${'─'.repeat(60)}\n`);
 
@@ -1569,6 +1981,80 @@ if (ycCandidates.length > 0) {
   console.log('  ── Y Combinator candidates: none ──\n');
 }
 
+if (cbCandidates.length > 0) {
+  console.log('  ── Coinbase Ventures candidates ──');
+  for (const c of cbCandidates) {
+    const ev = c.evidence;
+    console.log(`  score=${c.score} / P${c.priority}  pub=${ev.pub_date ?? 'unknown'}`);
+    console.log(`    title:  ${c.title}`);
+    console.log(`    url:    ${c.url}`);
+    if (ev.cb_ventures_terms?.length > 0) {
+      console.log(`    terms:  [${ev.cb_ventures_terms.join(', ')}]`);
+    }
+    if (c.summary) {
+      const snip = c.summary.slice(0, 180);
+      console.log(`    snip:   ${snip}${c.summary.length > 180 ? '…' : ''}`);
+    }
+    if (ev.matched_keywords.length > 0) {
+      console.log(`    keys:   ${ev.matched_keywords.join(', ')}`);
+    }
+    console.log(`    action: ${c.recommendation}`);
+    console.log('');
+  }
+} else {
+  console.log('  ── Coinbase Ventures candidates: none ──\n');
+}
+
+if (paradigmCandidates.length > 0) {
+  console.log('  ── Paradigm candidates ──');
+  for (const c of paradigmCandidates) {
+    const ev = c.evidence;
+    console.log(`  score=${c.score} / P${c.priority}  pub=${ev.pub_date ?? 'unknown'}`);
+    console.log(`    title:  ${c.title}`);
+    console.log(`    url:    ${c.url}`);
+    if (ev.paradigm_terms?.length > 0) {
+      console.log(`    terms:  [${ev.paradigm_terms.join(', ')}]`);
+    }
+    if (c.summary) {
+      const snip = c.summary.slice(0, 180);
+      console.log(`    snip:   ${snip}${c.summary.length > 180 ? '…' : ''}`);
+    }
+    if (ev.matched_keywords.length > 0) {
+      console.log(`    keys:   ${ev.matched_keywords.join(', ')}`);
+    }
+    console.log(`    action: ${c.recommendation}`);
+    console.log('');
+  }
+} else {
+  console.log('  ── Paradigm candidates: none ──\n');
+}
+
+if (ycLaunchCandidates.length > 0) {
+  console.log('  ── YC Launch candidates ──');
+  for (const c of ycLaunchCandidates) {
+    const ev = c.evidence;
+    const company = c.payload.yc_company ? `  company=${c.payload.yc_company}` : '';
+    const batch   = ev.yc_batch         ? `  batch=${ev.yc_batch}` : '';
+    console.log(`  score=${c.score} / P${c.priority}  votes=${ev.total_vote_count}${company}${batch}`);
+    console.log(`    title:  ${c.title}`);
+    console.log(`    url:    ${c.url}`);
+    if (ev.yc_launch_terms?.length > 0) {
+      console.log(`    terms:  [${ev.yc_launch_terms.join(', ')}]`);
+    }
+    if (c.summary) {
+      const snip = c.summary.slice(0, 180);
+      console.log(`    snip:   ${snip}${c.summary.length > 180 ? '…' : ''}`);
+    }
+    if (ev.matched_keywords.length > 0) {
+      console.log(`    keys:   ${ev.matched_keywords.join(', ')}`);
+    }
+    console.log(`    action: ${c.recommendation}`);
+    console.log('');
+  }
+} else {
+  console.log('  ── YC Launch candidates: none ──\n');
+}
+
 if (yziFailures.length > 0) {
   console.log('  YZI failures:');
   for (const f of yziFailures) console.log(`    ✗ ${f.step}${f.slug ? ' ' + f.slug : ''}: ${f.error}`);
@@ -1579,11 +2065,26 @@ if (ycFailures.length > 0) {
   for (const f of ycFailures) console.log(`    ✗ ${f.step}: ${f.error}`);
   console.log('');
 }
+if (cbFailures.length > 0) {
+  console.log('  Coinbase Ventures failures:');
+  for (const f of cbFailures) console.log(`    ✗ ${f.step}: ${f.error}`);
+  console.log('');
+}
+if (paradigmFailures.length > 0) {
+  console.log('  Paradigm failures:');
+  for (const f of paradigmFailures) console.log(`    ✗ ${f.step}: ${f.error}`);
+  console.log('');
+}
+if (ycLaunchFailures.length > 0) {
+  console.log('  YC Launch failures:');
+  for (const f of ycLaunchFailures) console.log(`    ✗ ${f.step}: ${f.error}`);
+  console.log('');
+}
 
 // ── Dry-run exit ──────────────────────────────────────────────────────────────
 
 if (isDryRun) {
-  console.log(`[ajsa-ph-fc] DRY RUN complete. ${allCandidates.length} candidate(s) (${phCandidates.length} PH + ${fcCandidates.length} FC + ${yziCandidates.length} YZI + ${ycCandidates.length} YC). No changes made.`);
+  console.log(`[ajsa-ph-fc] DRY RUN complete. ${allCandidates.length} candidate(s) (${phCandidates.length} PH + ${fcCandidates.length} FC + ${yziCandidates.length} YZI + ${ycCandidates.length} YC + ${cbCandidates.length} CBV + ${paradigmCandidates.length} PAR + ${ycLaunchCandidates.length} YCL). No changes made.`);
   process.exit(0);
 }
 
@@ -1610,10 +2111,13 @@ for (const item of allCandidates) {
   }
 
   const shortTitle = item.title?.slice(0, 55) ?? '?';
-  const tag        = item.source_key === PH_SOURCE_KEY  ? 'PH'
-                   : item.source_key === FC_SOURCE_KEY  ? 'FC'
-                   : item.source_key === YZI_SOURCE_KEY ? 'YZI'
-                   : item.source_key === YC_SOURCE_KEY  ? 'YC'
+  const tag        = item.source_key === PH_SOURCE_KEY       ? 'PH'
+                   : item.source_key === FC_SOURCE_KEY       ? 'FC'
+                   : item.source_key === YZI_SOURCE_KEY      ? 'YZI'
+                   : item.source_key === YC_SOURCE_KEY       ? 'YC'
+                   : item.source_key === CB_VENTURES_SOURCE_KEY ? 'CBV'
+                   : item.source_key === PARADIGM_SOURCE_KEY ? 'PAR'
+                   : item.source_key === YC_LAUNCH_SOURCE_KEY ? 'YCL'
                    : item.source_key.toUpperCase().slice(0, 4);
 
   if (existing?.id) {
@@ -1688,6 +2192,39 @@ if (ycSrc) {
       : { last_success_at: NOW_ISO, last_error_at: null, last_error: null }
     ),
   }).eq('id', YC_SOURCE_ID);
+}
+
+if (cbVenturesSrc) {
+  const failed = cbFailures.some(f => f.step === 'rss');
+  await supabase.from('ajsa_sources').update({
+    last_checked_at: NOW_ISO,
+    ...(failed
+      ? { last_error_at: NOW_ISO, last_error: 'Coinbase Ventures RSS fetch failed' }
+      : { last_success_at: NOW_ISO, last_error_at: null, last_error: null }
+    ),
+  }).eq('id', cbVenturesSrc.id);
+}
+
+if (paradigmSrc) {
+  const failed = paradigmFailures.length > 0;
+  await supabase.from('ajsa_sources').update({
+    last_checked_at: NOW_ISO,
+    ...(failed
+      ? { last_error_at: NOW_ISO, last_error: paradigmFailures[0]?.error ?? 'Paradigm fetch failed' }
+      : { last_success_at: NOW_ISO, last_error_at: null, last_error: null }
+    ),
+  }).eq('id', paradigmSrc.id);
+}
+
+if (ycLaunchSrc) {
+  const failed = ycLaunchFailures.length > 0;
+  await supabase.from('ajsa_sources').update({
+    last_checked_at: NOW_ISO,
+    ...(failed
+      ? { last_error_at: NOW_ISO, last_error: ycLaunchFailures[0]?.error ?? 'YC Launch fetch failed' }
+      : { last_success_at: NOW_ISO, last_error_at: null, last_error: null }
+    ),
+  }).eq('id', ycLaunchSrc.id);
 }
 
 console.log(`\n[ajsa-ph-fc] Done. Written: ${written}  Errors: ${writeErrors}`);
