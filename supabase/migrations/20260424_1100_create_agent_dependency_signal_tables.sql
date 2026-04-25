@@ -26,8 +26,12 @@ CREATE TABLE agent_dependency_scans (
     CHECK (source_preset IN ('indexed', 'general', 'python', 'javascript', 'multiagent')),
   CONSTRAINT agent_dependency_scans_scan_status_check
     CHECK (scan_status IN ('ok', 'no_file', 'fetch_error', 'parse_error')),
+  CONSTRAINT agent_dependency_scans_raw_deps_shape_check
+    CHECK (jsonb_typeof(raw_deps) = 'array'),
+  CONSTRAINT agent_dependency_scans_stars_check
+    CHECK (scanned_repo_stars IS NULL OR scanned_repo_stars >= 0),
   CONSTRAINT agent_dependency_scans_unique_day
-    UNIQUE (scanned_repo, dep_file, snapshot_date)
+    UNIQUE (scanned_repo, source_tier, source_preset, dep_file, snapshot_date)
 );
 
 CREATE INDEX agent_dependency_scans_scanned_repo_idx ON agent_dependency_scans (scanned_repo);
@@ -77,8 +81,12 @@ CREATE TABLE agent_dependency_edges (
     CHECK (match_source IN ('exact', 'normalized')),
   CONSTRAINT agent_dependency_edges_mapping_confidence_check
     CHECK (mapping_confidence BETWEEN 0 AND 100),
+  CONSTRAINT agent_dependency_edges_evidence_shape_check
+    CHECK (jsonb_typeof(evidence) = 'object'),
+  CONSTRAINT agent_dependency_edges_stars_check
+    CHECK (scanned_repo_stars IS NULL OR scanned_repo_stars >= 0),
   CONSTRAINT agent_dependency_edges_unique_day
-    UNIQUE (scanned_repo, matched_agent_id, registry, package_name, dep_file, dep_type, snapshot_date)
+    UNIQUE (scanned_repo, source_tier, source_preset, matched_agent_id, registry, package_name, dep_file, dep_type, snapshot_date)
 );
 
 CREATE INDEX agent_dependency_edges_matched_agent_id_idx ON agent_dependency_edges (matched_agent_id);
