@@ -50,10 +50,15 @@ const x402Handler = paymentProxy(
         'Current trust state, rank, and multi-signal score for an AI agent on AgentCrush. Updated every 4 hours.',
       mimeType: 'application/json',
       extensions: {
-        ...declareDiscoveryExtension({
-          method: 'GET',
-          pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
-        }),
+        bazaar: {
+          discoverable: true,
+          category: 'reputation',
+          tags: ['ai-agents', 'trust', 'verification', 'analytics', 'identity', 'kya'],
+          ...declareDiscoveryExtension({
+            method: 'GET',
+            pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
+          }).bazaar,
+        },
       },
     },
 
@@ -67,13 +72,18 @@ const x402Handler = paymentProxy(
         },
       ],
       description:
-        'Rank and score history over the last 30 days for an AI agent on AgentCrush. Daily snapshots covering visibility, reputation, and weekly delta.',
+        'Rank and score history for an AI agent on AgentCrush. Daily snapshots including visibility, reputation, and weekly delta. Coverage varies by agent.',
       mimeType: 'application/json',
       extensions: {
-        ...declareDiscoveryExtension({
-          method: 'GET',
-          pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
-        }),
+        bazaar: {
+          discoverable: true,
+          category: 'reputation',
+          tags: ['ai-agents', 'trust', 'verification', 'analytics', 'identity', 'kya'],
+          ...declareDiscoveryExtension({
+            method: 'GET',
+            pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
+          }).bazaar,
+        },
       },
     },
   },
