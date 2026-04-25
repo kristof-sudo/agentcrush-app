@@ -784,6 +784,39 @@ const ycLaunchSrc = await ensureSource(
   { launches_url: YC_LAUNCHES_URL, lookback_days: YC_LAUNCH_LOOKBACK_DAYS },
 );
 
+// ── Unknown-date repeat suppression ──────────────────────────────────────────
+// Prefetch source_key + url for all sources that can produce unknown-date
+// candidates, within the last 30 days, so we can skip repeats cheaply.
+
+const SUPPRESSION_LOOKBACK_DAYS = 30;
+const suppressionCutoff = new Date(Date.now() - SUPPRESSION_LOOKBACK_DAYS * 86400_000)
+  .toISOString().slice(0, 10);
+const unknownDateSourceKeys = [
+  YZI_SOURCE_KEY, PARADIGM_SOURCE_KEY, CB_VENTURES_SOURCE_KEY, YC_LAUNCH_SOURCE_KEY,
+];
+
+const recentUnknownDateUrls = new Set();
+{
+  const { data: suppressRows, error: suppressErr } = await supabase
+    .from('ajsa_brief_items')
+    .select('source_key, url')
+    .in('source_key', unknownDateSourceKeys)
+    .gte('brief_date', suppressionCutoff);
+
+  if (suppressErr) {
+    console.warn('[ajsa-ph-fc] WARN: could not prefetch recent unknown-date URLs:', suppressErr.message);
+  } else {
+    for (const row of suppressRows ?? []) {
+      recentUnknownDateUrls.add(`${row.source_key}::${row.url}`);
+    }
+    console.log(`[ajsa-ph-fc] Unknown-date suppression: ${recentUnknownDateUrls.size} recent URL(s) loaded (lookback=${SUPPRESSION_LOOKBACK_DAYS}d)`);
+  }
+}
+
+function isRecentSuppressed(sourceKey, url) {
+  return recentUnknownDateUrls.has(`${sourceKey}::${url}`);
+}
+
 // PH queries: from DB config or sensible defaults
 const phQueries = phSrc?.config?.queries ?? [
   'agent', 'AI agent', 'agent marketplace', 'automation agent', 'agent wallet',
@@ -1338,6 +1371,7 @@ const yziFailures   = [];
 let yziPostsSeen                     = 0;
 let yziSkippedOld                    = 0;
 let yziSkippedUnknownDateNotRelevant = 0;
+let yziSkippedUnknownDateRecent      = 0;
 let yziUnknownDateRelevant           = 0;
 let yziDateParseSuccess              = 0;
 let yziDateParseFailed               = 0;
@@ -1431,6 +1465,12 @@ let yziDateParseFailed               = 0;
           console.log('skip  date=unknown  reason=unknown_date_not_relevant');
           yziSkippedUnknownDateNotRelevant++;
           yziSkipped.push({ slug, reason: 'unknown_date_not_relevant' });
+          continue;
+        }
+        if (isRecentSuppressed(YZI_SOURCE_KEY, postUrl)) {
+          console.log(`skip  date=unknown  reason=unknown_date_seen_recently  "${title.slice(0, 60)}"`);
+          yziSkippedUnknownDateRecent++;
+          yziSkipped.push({ slug, reason: 'unknown_date_seen_recently' });
           continue;
         }
         yziUnknownDateRelevant++;
@@ -1569,6 +1609,7 @@ const ycFailures   = [];
 const cbCandidates = [];
 const cbSkipped    = [];
 const cbFailures   = [];
+let   cbSkippedUnknownDateRecent = 0;
 
 {
   const lookbackDays = cbVenturesSrc?.config?.lookback_days ?? CB_VENTURES_LOOKBACK_DAYS;
@@ -1610,6 +1651,13 @@ const cbFailures   = [];
       if (!relevanceAudit.relevant) {
         console.log(`  [CBV:skip]  "${title.slice(0, 60)}"  reason=not_relevant`);
         cbSkipped.push({ reason: 'not_relevant', title });
+        continue;
+      }
+
+      if (pubMs === null && isRecentSuppressed(CB_VENTURES_SOURCE_KEY, link)) {
+        console.log(`  [CBV:skip]  "${title.slice(0, 60)}"  reason=unknown_date_seen_recently`);
+        cbSkippedUnknownDateRecent++;
+        cbSkipped.push({ reason: 'unknown_date_seen_recently', title });
         continue;
       }
 
@@ -1656,7 +1704,8 @@ const cbFailures   = [];
 const paradigmCandidates = [];
 const paradigmSkipped    = [];
 const paradigmFailures   = [];
-let   paradigmPostsSeen  = 0;
+let   paradigmPostsSeen              = 0;
+let   paradigmSkippedUnknownDateRecent = 0;
 
 {
   const lookbackDays = paradigmSrc?.config?.lookback_days ?? PARADIGM_LOOKBACK_DAYS;
@@ -1717,6 +1766,13 @@ let   paradigmPostsSeen  = 0;
             continue;
           }
 
+          if (pubMs === null && isRecentSuppressed(PARADIGM_SOURCE_KEY, url)) {
+            console.log(`  [PAR:skip]  "${title.slice(0, 60)}"  reason=unknown_date_seen_recently`);
+            paradigmSkippedUnknownDateRecent++;
+            paradigmSkipped.push({ reason: 'unknown_date_seen_recently', slug });
+            continue;
+          }
+
           const { score, matchedKeywords } = scoreText(scoringText);
           const effectiveScore = score > 0 ? score : 10;
           const recommendation = buildRecommendation(matchedKeywords);
@@ -1761,7 +1817,8 @@ let   paradigmPostsSeen  = 0;
 const ycLaunchCandidates = [];
 const ycLaunchSkipped    = [];
 const ycLaunchFailures   = [];
-let   ycLaunchPostsSeen  = 0;
+let   ycLaunchPostsSeen                = 0;
+let   ycLaunchSkippedUnknownDateRecent = 0;
 
 {
   const lookbackDays = ycLaunchSrc?.config?.lookback_days ?? YC_LAUNCH_LOOKBACK_DAYS;
@@ -1805,6 +1862,13 @@ let   ycLaunchPostsSeen  = 0;
       if (!relevanceAudit.relevant) {
         console.log(`  [YCL:skip]  "${title.slice(0, 60)}"  reason=not_relevant`);
         ycLaunchSkipped.push({ reason: 'not_relevant', title });
+        continue;
+      }
+
+      if (pubMs === null && isRecentSuppressed(YC_LAUNCH_SOURCE_KEY, url)) {
+        console.log(`  [YCL:skip]  "${title.slice(0, 60)}"  reason=unknown_date_seen_recently`);
+        ycLaunchSkippedUnknownDateRecent++;
+        ycLaunchSkipped.push({ reason: 'unknown_date_seen_recently', title });
         continue;
       }
 
@@ -1865,11 +1929,15 @@ if (neynarKey) {
   const paidTag = fcPaidPlanSkipped.length > 0 ? `  Skipped paid-plan: ${fcPaidPlanSkipped.length}` : '';
   console.log(`  Farcaster  Channels: ${fcChannels.length}  Candidates: ${fcCandidates.length}${paidTag}  No-signal: ${fcSkipped.length}  Failed: ${fcFailures.length}`);
 }
-console.log(`  YZI Labs   posts_seen=${yziPostsSeen}  candidates=${yziCandidates.length}  skipped_old=${yziSkippedOld}  skipped_unknown_not_relevant=${yziSkippedUnknownDateNotRelevant}  unknown_date_relevant=${yziUnknownDateRelevant}  date_parsed=${yziDateParseSuccess}  date_unknown=${yziDateParseFailed}  failed=${yziFailures.length}`);
+console.log(`  YZI Labs   posts_seen=${yziPostsSeen}  candidates=${yziCandidates.length}  skipped_old=${yziSkippedOld}  skipped_unknown_not_relevant=${yziSkippedUnknownDateNotRelevant}  skipped_unknown_seen_recently=${yziSkippedUnknownDateRecent}  unknown_date_relevant=${yziUnknownDateRelevant}  date_parsed=${yziDateParseSuccess}  date_unknown=${yziDateParseFailed}  failed=${yziFailures.length}`);
 console.log(`  YC Blog    Candidates: ${ycCandidates.length}  Skipped: ${ycSkipped.length}  Failed: ${ycFailures.length}`);
-console.log(`  CB Ventures  Candidates: ${cbCandidates.length}  Skipped: ${cbSkipped.length}  Failed: ${cbFailures.length}`);
-console.log(`  Paradigm     posts_seen=${paradigmPostsSeen}  candidates=${paradigmCandidates.length}  skipped=${paradigmSkipped.length}  failed=${paradigmFailures.length}`);
-console.log(`  YC Launch    posts_seen=${ycLaunchPostsSeen}  candidates=${ycLaunchCandidates.length}  skipped=${ycLaunchSkipped.length}  failed=${ycLaunchFailures.length}`);
+console.log(`  CB Ventures  Candidates: ${cbCandidates.length}  Skipped: ${cbSkipped.length}  skipped_unknown_seen_recently=${cbSkippedUnknownDateRecent}  Failed: ${cbFailures.length}`);
+console.log(`  Paradigm     posts_seen=${paradigmPostsSeen}  candidates=${paradigmCandidates.length}  skipped=${paradigmSkipped.length}  skipped_unknown_seen_recently=${paradigmSkippedUnknownDateRecent}  failed=${paradigmFailures.length}`);
+console.log(`  YC Launch    posts_seen=${ycLaunchPostsSeen}  candidates=${ycLaunchCandidates.length}  skipped=${ycLaunchSkipped.length}  skipped_unknown_seen_recently=${ycLaunchSkippedUnknownDateRecent}  failed=${ycLaunchFailures.length}`);
+const unknownDateSeenRecentlySkipped = yziSkippedUnknownDateRecent + cbSkippedUnknownDateRecent + paradigmSkippedUnknownDateRecent + ycLaunchSkippedUnknownDateRecent;
+if (unknownDateSeenRecentlySkipped > 0) {
+  console.log(`  Unknown-date suppressed: ${unknownDateSeenRecentlySkipped} total (yzi=${yziSkippedUnknownDateRecent}  cbv=${cbSkippedUnknownDateRecent}  par=${paradigmSkippedUnknownDateRecent}  ycl=${ycLaunchSkippedUnknownDateRecent})`);
+}
 console.log(`  Total candidates: ${allCandidates.length}`);
 console.log(`${'─'.repeat(60)}\n`);
 
