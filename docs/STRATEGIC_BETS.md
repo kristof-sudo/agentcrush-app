@@ -1,5 +1,6 @@
 # AgentCrush — Strategic Bets
 **Created:** April 23, 2026
+**Last updated:** April 24, 2026
 **Owner:** Kris
 **Review cadence:** Weekly (Ajsa surfaces signals), Monthly (Kris reviews + prunes)
 **Companion documents:** `DASHBOARD_vN.md` (state), `EXECUTION_PLAN.md` (tasks)
@@ -46,7 +47,7 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 - Weekly volume peaked Nov 2025 at $5.3M, declined 96% by Feb 2026
 - Real enterprise adoption still nascent
 - Dexter's zero-fee facilitator model risks commoditizing the layer before AgentCrush establishes position
-- Our Bazaar listing still not indexed as of Apr 23 (1+ day post first payment)
+- Our Bazaar listing still not indexed as of Apr 24 (2+ days post first payment) — needs investigation if not visible by Apr 26
 
 **Dependent actions:**
 - Ship additional x402 endpoints (verification-status, history, relationship-graph)
@@ -56,7 +57,7 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 
 **Retirement criteria:** If by October 2026 we see fewer than 100 machine-paid calls cumulatively AND no major enterprise (F500 or widely-known SaaS) has publicly deployed x402 AND x402 monthly volume hasn't recovered past $5M, materially reduce investment here.
 
-**Last reviewed:** April 23, 2026
+**Last reviewed:** April 24, 2026
 
 ---
 
@@ -85,7 +86,7 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 
 **Retirement criteria:** If by August 2026 ERC-8004 registrations plateau (under 10% quarterly growth) AND no meaningful application layer emerges on top of the standard AND a clear closed-ecosystem winner captures >80% of machine commerce volume, reduce this lane to maintenance-only.
 
-**Last reviewed:** April 23, 2026
+**Last reviewed:** April 24, 2026
 
 ---
 
@@ -114,19 +115,28 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 
 **Retirement criteria:** If after 90 days of consistent writing + public engagement no paid interest has materialized (no inbound DM, no consulting request, no paid brief subscriber), the audience isn't there on this timeline. Rethink either the audience (wrong segment) or the approach (wrong format). Do not simply keep pushing the same offers.
 
-**Last reviewed:** April 23, 2026
+**Last reviewed:** April 24, 2026
 
 ---
 
 ### Bet D: Acquihire optionality (not a lead bet — a posture)
 
-**Thesis:** AgentCrush may become an attractive acquisition target in 12-24 months for a player in the identity/trust layer (Kite AI, Coinbase-portfolio company, ERC-8004 ecosystem company, possibly Virtuals Protocol or a Fetch-adjacent acquirer). The path to acquirability is the same as the path to being a good product: deep data moat, working methodology, clean infrastructure, ecosystem integration. This bet does not change daily decisions — it keeps certain doors open.
+**Thesis:** AgentCrush may become an attractive acquisition target in 12-24 months for a player in the identity/trust layer or for a strategic investor backing one. The path to acquirability is the same as the path to being a good product: deep data moat, working methodology, clean infrastructure, ecosystem integration. This bet does not change daily decisions — it keeps certain doors open.
+
+**Potential strategic acquirers / partners (mental list, not pitch list):**
+- **Kite AI** — direct architectural fit, $368M cap, known to acquire data/methodology layers
+- **Coinbase or Coinbase-portfolio company** — natural for x402-era trust infrastructure; Coinbase Ventures has agent-economy thesis
+- **YZI Labs (formerly Binance Labs)** — actively investing in agentic infrastructure, RWA, and crypto+AI intersection. Portfolio companies frequently become acquirers themselves. Their thesis overlap with AgentCrush is strong.
+- **Y Combinator / YC alumni network** — less acquisition path, more partnership/customer/competitive intel. Each batch surfaces 3-5 AI agent companies that could become AgentCrush customers, partners, or competitors. Worth monitoring as ecosystem signal.
+- **ERC-8004 ecosystem company** — whichever player builds the dominant reputation/identity application layer on the standard
+- **Virtuals Protocol or Fetch-adjacent acquirer** — open-ecosystem side counterpart
 
 **Evidence for:**
 - Identity/trust layer explicitly named as value-accrual layer in institutional research (Khala report, Apr 2026)
 - No current competitor occupies the "ranked, algorithmic, decision-grade, machine-callable" niche
 - Small strategic acquisitions in this space happen regularly ($500K-$5M range for early teams with unique data)
 - AgentCrush data moat (historical daily snapshots, ecosystem graph) is inherently uncopyable
+- Multiple potential acquirers in active investment posture (YZI Labs, Coinbase Ventures, Paradigm portfolio)
 
 **Evidence against:**
 - Most "built to acquire" founders don't get acquired; intentional acquihires are rare
@@ -139,10 +149,11 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 - Never launch own token (regulatory overhang, community drama)
 - Integrate with ERC-8004 as one output channel (makes us plug-and-play for any acquirer in that ecosystem)
 - Keep infrastructure clean, boring, easily due-diligenced
+- Monitor potential acquirers' portfolio moves via Ajsa (YZI Labs, YC, Coinbase Ventures, Paradigm, Virtuals Protocol)
 
 **Retirement criteria:** This bet never gets retired — it becomes irrelevant. If AgentCrush becomes self-sustaining at $10K+ MRR, the acquihire frame becomes secondary to "should we actually want to sell?" If AgentCrush fails to find product-market fit by end of 2027, the frame also becomes irrelevant. Review annually, not monthly.
 
-**Last reviewed:** April 23, 2026
+**Last reviewed:** April 24, 2026
 
 ---
 
@@ -155,12 +166,16 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 - **Launch native token** — reduces acquirability, regulatory risk, community drama. Rejected Apr 23.
 - **Second product (non-AgentCrush SaaS)** — rejected Apr 23; services yes, new product no.
 - **Mike persona revival on X** — account permanently dead. Confirmed Apr 23.
+- **Automated X scoring signal** — deferred indefinitely. X's own pricing makes API automation expensive (per-URL post pricing); risk of new account suspensions remains. Rejected Apr 24.
+- **Product Hunt and Farcaster as scoring signals** — these are Ajsa monitoring inputs (catalyst/event evidence), NOT scoring signals. Cleaner separation: hard evidence (GitHub, downloads, dependency graph, docs, HN, Reddit) feeds the scoring formula; catalyst signals (Product Hunt, Farcaster) feed Ajsa's brief. Decided Apr 24.
 
 ---
 
 ## REVIEW LOG
 
 **April 23, 2026 (creation):** Four bets initialized. Bet A (A2A closed) is the most established — we have working product. Bet B (A2A open) is exploration-phase. Bet C (near-term cash) is unproven, has no signal yet but highest time-urgency. Bet D (acquihire) is posture, not action.
+
+**April 24, 2026 (incremental update):** Added YZI Labs and Y Combinator to Bet D's potential acquirers/partners list. YZI Labs as strong potential acquirer aligned with crypto+AI thesis; YC as ecosystem-monitoring channel. No bet changes. Also clarified scoring signal architecture — Product Hunt and Farcaster confirmed as Ajsa monitoring inputs, not scoring signals. Reddit confirmed as the sole social/discourse scoring signal in current Layer 1B. Status update: Reddit scoring worker is the next item in the build queue (Ajsa daily live, HN/docs/package mapping/dependency graph all live and scheduled).
 
 **Next monthly review:** First Sunday of June 2026 (May was too close to creation to be meaningful)
 
