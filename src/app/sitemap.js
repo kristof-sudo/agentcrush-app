@@ -6,6 +6,7 @@ const BASE_URL = 'https://agentcrush.xyz'
 const STATIC_PAGES = [
   { path: '/',              priority: 1.0, changeFrequency: 'daily'  },
   { path: '/rankings',     priority: 0.9, changeFrequency: 'daily'  },
+  { path: '/explore',      priority: 0.8, changeFrequency: 'daily'  },
   { path: '/categories',   priority: 0.8, changeFrequency: 'weekly' },
   { path: '/use-cases',    priority: 0.8, changeFrequency: 'weekly' },
   { path: '/about',        priority: 0.5, changeFrequency: 'monthly'},
@@ -53,14 +54,14 @@ export default async function sitemap() {
 
     const { data: agents } = await supabase
       .from('agents')
-      .select('id, handle')
+      .select('id, handle, tier')
       .eq('status', 'active')
 
     agentEntries = (agents ?? []).map((agent) => ({
       url: `${BASE_URL}/agent/${encodeURIComponent(agent.handle)}`,
       lastModified: latestSnapshotByAgent[agent.id] ?? now,
       changeFrequency: 'daily',
-      priority: 0.7,
+      priority: agent.tier === 'evidence_ranked' ? 0.8 : 0.6,
     }))
   }
 

@@ -173,7 +173,7 @@ function Scanline() {
 }
 
 /* ── Main export ───────────────────────────────────────────────────────── */
-export default function HeroSection({ agentCount, signalsToday, rankedCount, topMover }) {
+export default function HeroSection({ agentCount, signalsToday, rankedCount, topMover, evidenceRankedCount }) {
   const [mouse, setMouse] = useState({ x: 0, y: 0 })
   const heroRef = useRef()
 
@@ -192,8 +192,8 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
 
   const stats = [
     { label: 'agents indexed', value: agentCount || 0 },
+    evidenceRankedCount != null ? { label: 'evidence ranked', value: evidenceRankedCount, color: '#39ff14' } : null,
     { label: 'signals today', value: signalsToday || 0 },
-    { label: 'ranked', value: rankedCount || 0 },
     topMover ? {
       label: 'top mover',
       value: null,
@@ -346,19 +346,19 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
 
           {/* CTAs */}
           <div style={{ marginTop: 28, display: 'flex', gap: 12, flexWrap: 'wrap', animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .4s' }}>
-            <Link href="/submit" style={{
+            <Link href="/rankings" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              borderRadius: 4, border: '1px solid rgba(232,121,249,0.7)',
-              background: 'rgba(232,121,249,0.18)',
+              borderRadius: 4, border: '1px solid rgba(57,255,20,0.6)',
+              background: 'rgba(57,255,20,0.1)',
               padding: '11px 22px',
               fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-              fontSize: 13, fontWeight: 700, color: '#e879f9', textDecoration: 'none',
-              boxShadow: '0 0 20px rgba(232,121,249,0.15)',
+              fontSize: 13, fontWeight: 700, color: '#39ff14', textDecoration: 'none',
+              boxShadow: '0 0 20px rgba(57,255,20,0.12)',
               transition: 'all .2s',
             }}>
-              Submit your agent →
+              Browse Evidence Rankings →
             </Link>
-            <Link href="/rankings" style={{
+            <Link href="/explore" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               borderRadius: 4, border: '1px solid rgba(255,255,255,0.12)',
               background: 'rgba(255,255,255,0.04)',
@@ -367,7 +367,7 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
               fontSize: 13, color: 'rgba(255,255,255,0.6)', textDecoration: 'none',
               transition: 'all .2s',
             }}>
-              Browse rankings
+              Explore All Agents →
             </Link>
           </div>
 

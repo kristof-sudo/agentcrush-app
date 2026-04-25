@@ -547,7 +547,9 @@ export default async function AgentPage({ params }) {
       builder_attribution,
       framework,
       runtime,
-      dependencies
+      dependencies,
+      tier,
+      tier_promoted_at
     `)
     .ilike('handle', cleanHandle)
     .maybeSingle()
@@ -942,6 +944,19 @@ export default async function AgentPage({ params }) {
           externalUrl={agent.website_url || agent.github_url || null}
           tags={headerTags}
         />
+
+        {/* ── TIER INDICATOR ──────────────────────────────────────────── */}
+        {agent.tier === 'evidence_ranked' ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 4, border: '1px solid rgba(57,255,20,0.3)', background: 'rgba(57,255,20,0.06)' }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#39ff14' }}>◆ EVIDENCE RANKED</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>— verified GitHub activity, ecosystem signals &amp; adoption data</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 4, border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.05)' }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(251,191,36,0.7)' }}>◇ LIMITED EVIDENCE</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>— indexed but lacks sufficient signals for an evidence rank</span>
+          </div>
+        )}
 
         {/* ── 2. SCORE STRIP ───────────────────────────────────────────── */}
         <div style={{ ...PANEL, padding: 0 }}>

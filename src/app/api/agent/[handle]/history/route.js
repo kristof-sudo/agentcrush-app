@@ -33,7 +33,7 @@ export async function GET(_req, context) {
 
   const { data: agent, error: agentErr } = await supabase
     .from('agents')
-    .select('id, handle, display_name')
+    .select('id, handle, display_name, tier')
     .ilike('handle', handle.trim())
     .maybeSingle()
 
@@ -99,6 +99,7 @@ export async function GET(_req, context) {
   return ok({
     handle: agent.handle,
     name:   agent.display_name,
+    tier:   agent.tier ?? null,
     history,
     summary: {
       days_tracked:  history.length,

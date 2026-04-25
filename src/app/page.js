@@ -242,6 +242,7 @@ export default async function Home() {
     { count: eventsYesterdayCount },
     { count: agentCount },
     { data: archetypeRows },
+    { count: evidenceRankedCount },
   ] = await Promise.all([
     supabase.from('rankings').select(`
       agent_id, global_rank, score_visibility, score_reputation,
@@ -284,6 +285,8 @@ export default async function Home() {
     supabase.from('agents').select('id', { count: 'exact', head: true }),
 
     supabase.from('agents').select('archetype').not('archetype', 'is', null),
+
+    supabase.from('agents').select('id', { count: 'exact', head: true }).eq('tier', 'evidence_ranked'),
   ])
 
   const [xPostsToday, scheduledToday] = await Promise.all([
@@ -489,6 +492,7 @@ export default async function Home() {
           signalsToday={signalsToday}
           rankedCount={rankedCount}
           topMover={topMover}
+          evidenceRankedCount={evidenceRankedCount}
         />
 
         {/* ── INTEL TICKER ─────────────────────────────────────────────────── */}

@@ -33,7 +33,7 @@ export async function GET(_req, context) {
 
   const { data: agent, error: agentErr } = await supabase
     .from('agents')
-    .select('id, handle, display_name, archetype, claim_status, verified, visibility_score, reputation_score, weekly_delta')
+    .select('id, handle, display_name, archetype, claim_status, verified, visibility_score, reputation_score, weekly_delta, tier')
     .ilike('handle', handle.trim())
     .maybeSingle()
 
@@ -75,6 +75,7 @@ export async function GET(_req, context) {
     archetype:    agent.archetype    ?? null,
     claim_status: agent.claim_status ?? null,
     verified:     agent.verified === true,
+    tier:         agent.tier         ?? null,
     last_updated: ranking?.computed_at ?? null,
     source:       `https://agentcrush.xyz/agent/${agent.handle}`,
   })

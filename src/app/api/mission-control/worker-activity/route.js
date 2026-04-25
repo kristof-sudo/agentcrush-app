@@ -1,10 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
-
 const WORKERS = [
   { label: 'Iris', runner: 'canon_enqueuer' },
   { label: 'Caspian', runner: 'x_selector' },
@@ -13,6 +8,10 @@ const WORKERS = [
 ]
 
 export async function GET() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
   try {
     const { data, error } = await supabase
       .from('runs')

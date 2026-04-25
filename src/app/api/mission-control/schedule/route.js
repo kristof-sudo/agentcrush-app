@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
-
 const FIELDS = `id, created_at, run_at, approved, status, payload, approval_token, approval_requested_at`
 
 export async function GET() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
   try {
     const now = new Date()
     const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000)
