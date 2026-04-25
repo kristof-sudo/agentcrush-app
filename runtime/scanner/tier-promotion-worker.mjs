@@ -87,6 +87,25 @@ async function loadEnvFiles(paths) {
   }
 }
 
+// ─── Paginated fetch ──────────────────────────────────────────────────────────
+// Supabase REST API enforces a 1000-row page limit. With 1200+ agents, a
+// single .select() silently truncates results. This helper fetches all rows.
+
+async function fetchAll(query) {
+  const PAGE_SIZE = 1000;
+  const all = [];
+  let offset = 0;
+  while (true) {
+    const { data, error } = await query.range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+  return all;
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -108,24 +127,24 @@ async function main() {
 
   // ── 1. Fetch evidence-ready agents from v2 rank comparison view ──────────────
 
-  const { data: eligible, error: eligibleErr } = await supabase
-    .from('agent_score_v2_rank_comparison')
-    .select('agent_id, handle, display_name, active_weight_total, coverage_tier, current_rank, rank_v2_c, score_v2_c_public_candidate')
-    .eq('evidence_ready_for_public_rank', true);
-
-  if (eligibleErr) throw new Error(`Failed to query eligible agents: ${eligibleErr.message}`);
+  const eligible = await fetchAll(
+    supabase
+      .from('agent_score_v2_rank_comparison')
+      .select('agent_id, handle, display_name, active_weight_total, coverage_tier, current_rank, rank_v2_c, score_v2_c_public_candidate')
+      .eq('evidence_ready_for_public_rank', true)
+  ).catch(e => { throw new Error(`Failed to query eligible agents: ${e.message}`); });
 
   const eligibleIds = new Set((eligible || []).map(r => r.agent_id));
   console.log(`[tier-promotion] evidence_ready agents: ${eligibleIds.size}`);
 
   // ── 2. Fetch current tier state from agents table ────────────────────────────
 
-  const { data: currentAgents, error: agentsErr } = await supabase
-    .from('agents')
-    .select('id, handle, tier, tier_promoted_at')
-    .in('tier', ['evidence_ranked', 'indexed']);
-
-  if (agentsErr) throw new Error(`Failed to query agents: ${agentsErr.message}`);
+  const currentAgents = await fetchAll(
+    supabase
+      .from('agents')
+      .select('id, handle, tier, tier_promoted_at')
+      .in('tier', ['evidence_ranked', 'indexed', 'archived'])
+  ).catch(e => { throw new Error(`Failed to query agents: ${e.message}`); });
 
   const currentByTier = {};
   for (const a of currentAgents || []) {
@@ -207,16 +226,16 @@ async function main() {
 
   // ── 6. Post-write verification ───────────────────────────────────────────────
 
-  const { data: verifyRows, error: verifyErr } = await supabase
-    .from('agents')
-    .select('tier')
-    .in('tier', ['evidence_ranked', 'indexed', 'archived']);
+  const verifyRows = await fetchAll(
+    supabase.from('agents').select('tier').in('tier', ['evidence_ranked', 'indexed', 'archived'])
+  ).catch(e => {
+    console.warn(`[tier-promotion] Post-write verification query failed: ${e.message}`);
+    return null;
+  });
 
-  if (verifyErr) {
-    console.warn(`[tier-promotion] Post-write verification query failed: ${verifyErr.message}`);
-  } else {
+  if (verifyRows) {
     const counts = {};
-    for (const r of verifyRows || []) {
+    for (const r of verifyRows) {
       counts[r.tier] = (counts[r.tier] || 0) + 1;
     }
     console.log('\n[tier-promotion] Post-write tier counts:');
