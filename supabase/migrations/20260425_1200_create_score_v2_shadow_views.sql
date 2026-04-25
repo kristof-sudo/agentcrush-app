@@ -98,52 +98,39 @@ FROM pts;
 
 CREATE OR REPLACE VIEW agent_score_v2_ecosystem AS
 WITH all_rels AS (
-  -- Outgoing: this agent integrates with / is built on / powers others
-  SELECT
-    from_agent_id AS agent_id,
-    CASE rel_type
-      WHEN 'framework_of'      THEN 3.0
-      WHEN 'integrates_with'   THEN 2.0
-      WHEN 'part_of_ecosystem' THEN 2.0
-      WHEN 'runs_on'           THEN 1.5
-      WHEN 'derived_from'      THEN 1.0
-      WHEN 'competes_with'     THEN 0.5
-      WHEN 'adjacent_to'       THEN 0.5
-      ELSE 1.0
-    END * (COALESCE(intensity, 7)::numeric / 10.0) AS rel_weight
-  FROM agent_relationships
+  -- agent_relationships uses symmetric agent_a / agent_b columns.
+  -- Union both sides so each agent gets credit regardless of slot.
+  SELECT agent_a AS agent_id, rel_type, intensity FROM agent_relationships
   UNION ALL
-  -- Incoming: other agents depend on / extend / run on this agent
-  SELECT
-    to_agent_id AS agent_id,
-    CASE rel_type
-      WHEN 'runs_on'           THEN 1.5  -- being a platform others run on
-      WHEN 'framework_of'      THEN 1.0
-      WHEN 'integrates_with'   THEN 2.0
-      WHEN 'part_of_ecosystem' THEN 1.5
-      WHEN 'derived_from'      THEN 0.5
-      WHEN 'competes_with'     THEN 0.5
-      WHEN 'adjacent_to'       THEN 0.5
-      ELSE 1.0
-    END * (COALESCE(intensity, 7)::numeric / 10.0) AS rel_weight
-  FROM agent_relationships
+  SELECT agent_b AS agent_id, rel_type, intensity FROM agent_relationships
 ),
-rollup AS (
+weighted AS (
   SELECT
     agent_id,
-    COUNT(*)                   AS total_relationships,
-    ROUND(SUM(rel_weight), 3)  AS weighted_rel_score
+    COUNT(*) AS total_relationships,
+    SUM(
+      CASE rel_type
+        WHEN 'framework_of'      THEN 3.0
+        WHEN 'integrates_with'   THEN 2.0
+        WHEN 'part_of_ecosystem' THEN 2.0
+        WHEN 'runs_on'           THEN 1.5
+        WHEN 'derived_from'      THEN 1.0
+        WHEN 'competes_with'     THEN 0.5
+        WHEN 'adjacent_to'       THEN 0.5
+        ELSE 1.0
+      END * (COALESCE(intensity, 7)::numeric / 10.0)
+    ) AS weighted_rel_score
   FROM all_rels
   GROUP BY agent_id
-)
+),
 SELECT
   agent_id,
   total_relationships,
-  weighted_rel_score,
+  ROUND(weighted_rel_score, 3) AS weighted_rel_score,
   LEAST(100.0,
     ROUND((LN(1 + weighted_rel_score) / LN(101::numeric) * 100.0)::numeric, 2)
   ) AS ecosystem_score
-FROM rollup;
+FROM weighted;
 
 
 -- ============================================================
