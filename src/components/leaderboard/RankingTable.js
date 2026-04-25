@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getAgentArchetype, getAgentDisplayName } from '@/lib/agent-quality'
 import { getSignalTag, getRowExplanation } from '@/lib/why-moving'
+import ScoreBreakdown from '@/components/ui/ScoreBreakdown'
+import EvidenceBadge from '@/components/ui/EvidenceBadge'
 
 // ── Category styles ────────────────────────────────────────────────────────
 const CATEGORY_STYLES = {
@@ -19,7 +21,7 @@ const CATEGORY_STYLES = {
   Crypto:     { bg: 'rgba(52,211,153,0.12)',  text: '#34d399', border: 'rgba(52,211,153,0.4)',  glow: '#34d399' },
   Developer:  { bg: 'rgba(129,140,248,0.12)', text: '#818cf8', border: 'rgba(129,140,248,0.4)', glow: '#818cf8' },
   Infra:      { bg: 'rgba(248,113,113,0.12)', text: '#f87171', border: 'rgba(248,113,113,0.4)', glow: '#f87171' },
-  Creator:    { bg: 'rgba(232,121,249,0.12)', text: '#e879f9', border: 'rgba(232,121,249,0.4)', glow: '#e879f9' },
+  Creator:    { bg: 'rgba(233,30,128,0.12)', text: '#e91e80', border: 'rgba(233,30,128,0.4)', glow: '#e91e80' },
 }
 
 const DEFAULT_CAT = { bg: 'rgba(255,255,255,0.06)', text: '#94a3b8', border: 'rgba(255,255,255,0.15)', glow: '#94a3b8' }
@@ -30,7 +32,7 @@ function catStyle(archetype) {
 
 // ── Rank badge styles (top 3 only) ─────────────────────────────────────────
 const RANK_STYLES = {
-  1: { border: '#e879f9', bg: 'rgba(232,121,249,0.055)', glow: '#e879f9', color: '#e879f9', badgeBg: 'rgba(232,121,249,0.2)',  leftBorder: '2px solid #e879f9' },
+  1: { border: '#e91e80', bg: 'rgba(233,30,128,0.055)', glow: '#e91e80', color: '#e91e80', badgeBg: 'rgba(233,30,128,0.2)',  leftBorder: '2px solid #e91e80' },
   2: { border: '#39ff14', bg: 'rgba(57,255,20,0.04)',    glow: '#39ff14', color: '#39ff14', badgeBg: 'rgba(57,255,20,0.15)',   leftBorder: '2px solid rgba(57,255,20,0.5)' },
   3: { border: '#00d4ff', bg: 'rgba(0,212,255,0.04)',    glow: '#00d4ff', color: '#00d4ff', badgeBg: 'rgba(0,212,255,0.15)',   leftBorder: '2px solid rgba(0,212,255,0.4)' },
 }
@@ -208,20 +210,14 @@ function AgentRow({ r, onNavigate, delay = 0 }) {
         <div style={{ fontSize: 9, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 2 }}>SCORE</div>
       </td>
 
-      {/* Visibility */}
-      <td style={{ padding: '14px 12px', verticalAlign: 'middle', minWidth: 88 }} className="hidden lg:table-cell">
-        <div style={{ fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 13, fontWeight: 600, color: '#22d3ee' }}>
-          {vis}<span style={{ color: '#374151', fontSize: 10, marginLeft: 2 }}>/100</span>
-        </div>
-        <ScoreBar value={vis} color="#22d3ee" />
+      {/* Signal breakdown */}
+      <td style={{ padding: '14px 12px', verticalAlign: 'middle', minWidth: 140 }} className="hidden lg:table-cell">
+        <ScoreBreakdown scores={{ gh: vis, dis: rep }} compact={false} />
       </td>
 
-      {/* Reputation */}
-      <td style={{ padding: '14px 20px 14px 12px', verticalAlign: 'middle', minWidth: 88 }} className="hidden lg:table-cell">
-        <div style={{ fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 13, fontWeight: 600, color: '#e879f9' }}>
-          {rep}<span style={{ color: '#374151', fontSize: 10, marginLeft: 2 }}>/100</span>
-        </div>
-        <ScoreBar value={rep} color="#e879f9" />
+      {/* Tier badge */}
+      <td style={{ padding: '14px 12px', verticalAlign: 'middle', whiteSpace: 'nowrap' }} className="hidden lg:table-cell">
+        <EvidenceBadge size="sm" />
       </td>
 
       {/* External link */}
@@ -254,15 +250,15 @@ export default function RankingTable({ rows = [] }) {
     <div style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden', position: 'relative' }}>
 
       {/* Corner accent decorations */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: 40, height: 40, borderTop: '2px solid rgba(232,121,249,0.35)', borderLeft: '2px solid rgba(232,121,249,0.35)', borderRadius: '16px 0 0 0', pointerEvents: 'none', zIndex: 1 }} />
-      <div style={{ position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderTop: '2px solid rgba(232,121,249,0.35)', borderRight: '2px solid rgba(232,121,249,0.35)', borderRadius: '0 16px 0 0', pointerEvents: 'none', zIndex: 1 }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, width: 40, height: 40, borderBottom: '2px solid rgba(232,121,249,0.35)', borderLeft: '2px solid rgba(232,121,249,0.35)', borderRadius: '0 0 0 16px', pointerEvents: 'none', zIndex: 1 }} />
-      <div style={{ position: 'absolute', bottom: 0, right: 0, width: 40, height: 40, borderBottom: '2px solid rgba(232,121,249,0.35)', borderRight: '2px solid rgba(232,121,249,0.35)', borderRadius: '0 0 16px 0', pointerEvents: 'none', zIndex: 1 }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, width: 12, height: 12, borderTop: '2px solid rgba(233,30,128,0.35)', borderLeft: '2px solid rgba(233,30,128,0.35)', borderRadius: '16px 0 0 0', pointerEvents: 'none', zIndex: 1 }} />
+      <div style={{ position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderTop: '2px solid rgba(233,30,128,0.35)', borderRight: '2px solid rgba(233,30,128,0.35)', borderRadius: '0 16px 0 0', pointerEvents: 'none', zIndex: 1 }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, width: 12, height: 12, borderBottom: '2px solid rgba(233,30,128,0.35)', borderLeft: '2px solid rgba(233,30,128,0.35)', borderRadius: '0 0 0 16px', pointerEvents: 'none', zIndex: 1 }} />
+      <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderBottom: '2px solid rgba(233,30,128,0.35)', borderRight: '2px solid rgba(233,30,128,0.35)', borderRadius: '0 0 16px 0', pointerEvents: 'none', zIndex: 1 }} />
 
       {/* Header */}
       <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e879f9', textShadow: '0 0 20px #e879f9', marginBottom: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e91e80', textShadow: '0 0 20px #e91e80', marginBottom: 4 }}>
             ◆ Live Rankings
           </div>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.01em', fontFamily: "var(--font-michroma, 'Michroma', sans-serif)" }}>
@@ -275,7 +271,7 @@ export default function RankingTable({ rows = [] }) {
           </span>
           <Link
             href="/rankings"
-            style={{ fontSize: 13, fontWeight: 600, color: '#e879f9', textDecoration: 'none', letterSpacing: '0.05em' }}
+            style={{ fontSize: 13, fontWeight: 600, color: '#e91e80', textDecoration: 'none', letterSpacing: '0.05em' }}
           >
             All →
           </Link>
@@ -292,8 +288,8 @@ export default function RankingTable({ rows = [] }) {
                 { label: 'AGENT', style: { padding: '8px 12px',                       textAlign: 'left'  } },
                 { label: '7D',    style: { padding: '8px 12px',                       textAlign: 'right' } },
                 { label: 'SCORE', style: { padding: '8px 12px', minWidth: 72,        textAlign: 'right' } },
-                { label: 'VIS',   style: { padding: '8px 12px', minWidth: 88,        textAlign: 'left'  }, className: 'hidden lg:table-cell' },
-                { label: 'REP',   style: { padding: '8px 20px 8px 12px', minWidth: 88, textAlign: 'left' }, className: 'hidden lg:table-cell' },
+                { label: 'SIGNALS', style: { padding: '8px 12px', minWidth: 140, textAlign: 'left' }, className: 'hidden lg:table-cell' },
+                { label: 'TIER',    style: { padding: '8px 12px', textAlign: 'left'  }, className: 'hidden lg:table-cell' },
                 { label: '',      style: { padding: '8px 16px', width: 36                                } },
               ].map(({ label, style, className }) => (
                 <th key={label} style={{ ...style, fontSize: 10, fontWeight: 700, color: '#374151', letterSpacing: '0.14em', fontFamily: 'inherit' }} className={className}>
@@ -313,7 +309,7 @@ export default function RankingTable({ rows = [] }) {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#374151', fontSize: 13 }}>
+                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#374151', fontSize: 13 }}>
                   No rankings available yet.
                 </td>
               </tr>
@@ -351,7 +347,10 @@ export default function RankingTable({ rows = [] }) {
                     <span style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: '1px solid rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.1)', color: '#38bdf8', lineHeight: 1.4, flexShrink: 0 }}>✓</span>
                   )}
                 </div>
-                <CategoryPill archetype={archetype} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <CategoryPill archetype={archetype} />
+                  <EvidenceBadge size="sm" />
+                </div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 {delta !== 0 ? (
@@ -392,7 +391,7 @@ export default function RankingTable({ rows = [] }) {
       {/* Footer */}
       <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 11, color: '#374151' }}>Updated in real-time · Powered by AgentCrush</span>
-        <Link href="/rankings" style={{ fontSize: 12, fontWeight: 600, color: '#e879f9', textDecoration: 'none' }}>
+        <Link href="/rankings" style={{ fontSize: 12, fontWeight: 600, color: '#e91e80', textDecoration: 'none' }}>
           View Full Rankings →
         </Link>
       </div>

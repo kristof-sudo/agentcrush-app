@@ -9,6 +9,9 @@ import {
 } from '@/lib/agent-quality'
 import { getWhyMoving, getArchetypeStyle } from '@/lib/why-moving'
 import AgentHeader from '@/components/agent/AgentHeader'
+import EvidenceBadge from '@/components/ui/EvidenceBadge'
+import IndexedBadge from '@/components/ui/IndexedBadge'
+import ScoreBreakdown from '@/components/ui/ScoreBreakdown'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -401,7 +404,7 @@ function formatProfileEventSummary(event) {
 
 const EVENT_DOT_COLORS = {
   repo_star_growth:     '#4ade80',
-  repo_release:         '#e879f9',
+  repo_release:         '#e91e80',
   dev_activity:         '#60a5fa',
   ranking_jump:         '#fbbf24',
   audience_spike:       '#00e5ff',
@@ -413,7 +416,7 @@ const EVENT_DOT_COLORS = {
   ecosystem_integration:'#00e5ff',
   reputation_hit:       '#f87171',
   reputation_recovery:  '#4ade80',
-  spotlight_pick:       '#e879f9',
+  spotlight_pick:       '#e91e80',
   profile_upgrade:      '#818cf8',
   rumor_wave:           '#facc15',
 }
@@ -427,7 +430,7 @@ const CAT_COLORS_SERVER = {
   BUILDER:    { bg: 'rgba(52,211,153,0.12)',  text: '#34d399', glow: '#34d399' },
   FRAMEWORK:  { bg: 'rgba(99,102,241,0.14)',  text: '#818cf8', glow: '#818cf8' },
   AGENT:      { bg: 'rgba(0,229,255,0.09)',   text: '#67e8f9', glow: '#67e8f9' },
-  CREATOR:    { bg: 'rgba(232,121,249,0.12)', text: '#e879f9', glow: '#e879f9' },
+  CREATOR:    { bg: 'rgba(233,30,128,0.12)', text: '#e91e80', glow: '#e91e80' },
   FINANCE:    { bg: 'rgba(250,204,21,0.12)',  text: '#facc15', glow: '#facc15' },
   CRYPTO:     { bg: 'rgba(52,211,153,0.12)',  text: '#34d399', glow: '#34d399' },
   DEVELOPER:  { bg: 'rgba(129,140,248,0.14)', text: '#818cf8', glow: '#818cf8' },
@@ -948,15 +951,9 @@ export default async function AgentPage({ params }) {
         {/* ── TIER INDICATOR ──────────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
           {agent.tier === 'evidence_ranked' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 4, border: '1px solid rgba(57,255,20,0.3)', background: 'rgba(57,255,20,0.06)', flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#39ff14', whiteSpace: 'nowrap' }}>◆ EVIDENCE RANKED</span>
-              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>— verified GitHub activity, ecosystem signals &amp; adoption data</span>
-            </div>
+            <EvidenceBadge size="md" />
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 4, border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.05)', flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(251,191,36,0.7)', whiteSpace: 'nowrap' }}>◇ LIMITED EVIDENCE</span>
-              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>— indexed but lacks sufficient signals for an evidence rank</span>
-            </div>
+            <IndexedBadge size="md" />
           )}
           <Link href="/api-docs" style={{
             display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px',
@@ -989,29 +986,35 @@ export default async function AgentPage({ params }) {
         </div>
 
         {/* ── 3. SCORE BREAKDOWN ───────────────────────────────────────── */}
-        <div style={{ ...PANEL, padding: 0, overflow: 'hidden' }}>
-          <CornerAccentsServer color="#ff40c8" />
-          <div style={{ padding: '8px 12px 4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <span style={LABEL_STYLE}>Score breakdown</span>
+        {agent.tier === 'evidence_ranked' ? (
+          <div style={{ ...PANEL, padding: 0, overflow: 'hidden' }}>
+            <CornerAccentsServer color="#00d4ff" />
+            <div style={{ padding: '8px 12px 4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ ...LABEL_STYLE, color: '#00d4ff' }}>◆ Evidence Breakdown</span>
+            </div>
+            <div style={{ padding: 16 }}>
+              <ScoreBreakdown
+                scores={{ gh: agent.visibility_score ?? null, dis: agent.reputation_score ?? null }}
+                compact={false}
+                showThreshold={false}
+              />
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-            {[
-              { label: 'Total Score',   value: agentCrushScore, display: agentCrushScore ? agentCrushScore.toLocaleString() : '—', max: maxScore, color: '#f0f4ff', suffix: '' },
-              { label: 'Visibility',    value: agent.visibility_score ?? 0, display: String(agent.visibility_score ?? 0), max: 100, color: '#00e5ff', suffix: '/100' },
-              { label: 'Reputation',    value: agent.reputation_score ?? 0, display: String(agent.reputation_score ?? 0), max: 100, color: '#c084fc', suffix: '/100' },
-              { label: 'Weekly Delta',  value: Math.abs(weeklyDelta), display: weeklyDelta > 0 ? `+${weeklyDelta}` : weeklyDelta < 0 ? `${weeklyDelta}` : '—', max: 50, color: weeklyDelta >= 0 ? '#4ade80' : '#f87171', suffix: '' },
-            ].map((item, i) => (
-              <div key={item.label} style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 4, borderRight: i % 2 === 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
-                <span style={LABEL_STYLE}>{item.label}</span>
-                <span style={{ fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: item.color, textShadow: `0 0 12px ${item.color}66` }}>
-                  {item.display}
-                  {item.suffix && <span style={{ fontSize: 14, fontWeight: 400, opacity: 0.4 }}>{item.suffix}</span>}
-                </span>
-                <NeonBar value={item.value} max={item.max} color={item.color} />
-              </div>
-            ))}
+        ) : (
+          <div style={{ ...PANEL, padding: 0, overflow: 'hidden' }}>
+            <CornerAccentsServer color="rgba(255,255,255,0.2)" />
+            <div style={{ padding: '8px 12px 4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ ...LABEL_STYLE, color: 'rgba(255,255,255,0.3)' }}>◌ Evidence Progress</span>
+            </div>
+            <div style={{ padding: 16 }}>
+              <ScoreBreakdown
+                scores={{ gh: agent.visibility_score ?? null, dis: agent.reputation_score ?? null }}
+                compact={false}
+                showThreshold={true}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── 4. WHAT THIS AGENT IS FOR ────────────────────────────────── */}
         {useCases.length > 0 && (
