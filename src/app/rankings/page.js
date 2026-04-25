@@ -67,10 +67,10 @@ function generateWeeklyStory(rows) {
 function CornerAccent() {
   return (
     <>
-      <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(232,121,249,0.35)]" />
-      <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(232,121,249,0.35)]" />
-      <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(232,121,249,0.35)]" />
-      <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(232,121,249,0.35)]" />
+      <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(233,30,128,0.35)]" />
+      <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(233,30,128,0.35)]" />
+      <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(233,30,128,0.35)]" />
+      <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(233,30,128,0.35)]" />
     </>
   )
 }
@@ -163,12 +163,13 @@ export default async function RankingsPage({ searchParams }) {
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
       {/* Header */}
       <div className="mb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="shrink-0 rounded border border-[rgba(57,255,20,0.35)] bg-[rgba(57,255,20,0.08)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider" style={{ color: '#39ff14' }}>
-            Evidence Ranked
-          </span>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-widest" style={{ color: '#00d4ff' }}>TIER 02</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(0,212,255,0.25)' }} />
         </div>
-        <h1 className="font-mono text-2xl font-bold text-white tracking-tight">Rankings</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "var(--font-michroma,'Michroma',sans-serif)" }}>
+          Evidence <span style={{ color: '#00d4ff', textShadow: '0 0 20px rgba(0,212,255,0.5)' }}>Rankings</span>
+        </h1>
         <p className="mt-1 font-mono text-xs text-white/40">
           {rows.length} evidence-ranked ·{' '}
           {totalIndexed ?? 0} total indexed ·{' '}
@@ -193,7 +194,7 @@ export default async function RankingsPage({ searchParams }) {
         <div className="mb-4 relative rounded-lg bg-[#0a0a14] border border-white/[0.08] px-4 py-3 overflow-hidden">
           <CornerAccent />
           <div className="flex items-center gap-1.5 mb-2">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-widest" style={{ color: '#e879f9' }}>◆ WEEKLY NARRATIVE</span>
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest" style={{ color: '#e91e80' }}>◆ WEEKLY NARRATIVE</span>
           </div>
           <p className="font-mono text-sm text-white/80 leading-relaxed">{weeklyStory}</p>
         </div>
@@ -207,7 +208,7 @@ export default async function RankingsPage({ searchParams }) {
           {topRisers.length > 0 && (
             <div className="relative rounded-lg bg-[#0a0a14] border border-white/[0.08] px-3 py-2.5 overflow-hidden">
               <CornerAccent />
-              <div className="font-mono text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: '#e879f9' }}>↑ RISING NOW</div>
+              <div className="font-mono text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: '#e91e80' }}>↑ RISING NOW</div>
               <div className="space-y-1.5">
                 {topRisers.map((r) => (
                   <div key={r.handle} className="flex items-center justify-between gap-2">

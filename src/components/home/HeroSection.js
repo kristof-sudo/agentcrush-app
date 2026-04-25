@@ -58,7 +58,7 @@ function HeroRain() {
       vx: (Math.random() - .5) * 0.15,
       vy: (Math.random() - .5) * 0.08,
       opacity: Math.random() * 0.04 + 0.02,
-      col: i < 2 ? '0,212,255' : i < 4 ? '167,139,250' : '232,121,249',
+      col: i < 2 ? '0,212,255' : i < 4 ? '167,139,250' : '233,30,128',
     }))
     let raf
     function draw() {
@@ -108,7 +108,7 @@ function Particles() {
     const c = canvasRef.current; if (!c) return
     const ctx = c.getContext('2d')
     let W = c.width = window.innerWidth, H = c.height = window.innerHeight
-    const COLS = ['#e879f9', '#00d4ff', '#39ff14', '#a78bfa', '#60a5fa']
+    const COLS = ['#e91e80', '#00d4ff', '#39ff14', '#a78bfa', '#60a5fa']
     const pts = Array.from({ length: 55 }, (_, i) => ({
       x: Math.random() * W, y: Math.random() * H,
       r: Math.random() * 1.8 + 0.6,
@@ -192,8 +192,8 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
 
   const stats = [
     { label: 'agents indexed', value: agentCount || 0 },
-    evidenceRankedCount != null ? { label: 'evidence ranked', value: evidenceRankedCount, color: '#39ff14' } : null,
-    { label: 'signals today', value: signalsToday || 0 },
+    evidenceRankedCount != null ? { label: 'evidence ranked', value: evidenceRankedCount, color: '#00d4ff' } : null,
+    { label: 'signals today', value: signalsToday || 0, color: '#e91e80' },
     { label: 'machine-callable', value: null, extra: 'x402 enabled', color: 'rgba(167,139,250,0.8)' },
     topMover ? {
       label: 'top mover',
@@ -266,7 +266,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
         {/* Pink light beam */}
         <div style={{
           position: 'absolute', top: '-20%', left: '42%', width: 2, height: '60%',
-          background: 'linear-gradient(to bottom, transparent, rgba(232,121,249,0.2), transparent)',
+          background: 'linear-gradient(to bottom, transparent, rgba(233,30,128,0.2), transparent)',
           transformOrigin: 'top center',
           animation: 'beamSweep 9s ease-in-out infinite 2s',
           filter: 'blur(8px)',
@@ -287,7 +287,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
         <div style={{
           position: 'absolute', bottom: -90, left: '50%', transform: 'translateX(-50%)',
           width: 480, height: 480, borderRadius: '50%',
-          border: '1px solid rgba(232,121,249,0.12)',
+          border: '1px solid rgba(233,30,128,0.12)',
           animation: 'ringPulse 4s ease-in-out infinite 1s',
           pointerEvents: 'none',
         }} />
@@ -321,7 +321,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
           }}>
             The trust and reputation layer<br />
             for{' '}
-            <span style={{ color: '#e879f9', animation: 'glowBreathe 3s ease-in-out infinite' }}>
+            <span style={{ color: '#e91e80', animation: 'glowBreathe 3s ease-in-out infinite' }}>
               AI agents.
             </span>
           </h1>

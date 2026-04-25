@@ -79,28 +79,41 @@ export default async function ExplorePage() {
 
   const evidenceCount = agentsWithV2.filter((a) => a.tier === 'evidence_ranked').length
 
+  const top4 = agentsWithV2.filter((a) => a.tier === 'evidence_ranked' && a.v2_rank != null).slice(0, 4)
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      <div className="mb-2">
-        <div className="flex items-center gap-3 mb-1">
-          <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
-            ← Evidence Rankings
-          </Link>
-        </div>
-        <h1 className="font-mono text-2xl font-bold text-white tracking-tight">Explore Agents</h1>
-        <p className="mt-1 font-mono text-xs text-white/40">
-          {agents.length} agents indexed ·{' '}
-          <span style={{ color: '#39ff14' }}>{evidenceCount} evidence-ranked</span>
-          {' '}· indexed agents sorted A–Z
-        </p>
+      {/* TIER 02 eyebrow */}
+      <div className="flex items-center gap-3 mb-3">
+        <span className="font-mono text-[9px] font-bold uppercase tracking-widest" style={{ color: '#00d4ff' }}>TIER 02 · EVIDENCE RANKED</span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(0,212,255,0.2)' }} />
+        <Link href="/rankings" className="font-mono text-[9px] text-white/30 hover:text-white/55 transition-colors">
+          full rankings →
+        </Link>
       </div>
 
-      <div className="mb-5 rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3 font-mono text-[11px] text-white/40 leading-relaxed">
-        Explore the full AgentCrush index.{' '}
-        <span className="rounded border border-[rgba(57,255,20,0.35)] bg-[rgba(57,255,20,0.08)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ color: '#39ff14' }}>Evidence-ranked</span>
-        {' '}agents have enough signal for public ranking;{' '}
-        <span className="rounded border border-white/[0.1] bg-white/[0.03] px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white/30">indexed</span>
-        {' '}agents are tracked but still accumulating evidence.
+      {/* Top-4 featured strip */}
+      {top4.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
+          {top4.map((a) => (
+            <Link key={a.handle} href={`/agent/${encodeURIComponent(a.handle)}`}
+              className="block rounded-lg border border-[rgba(0,212,255,0.15)] bg-[rgba(0,212,255,0.04)] px-3 py-2.5 hover:border-[rgba(0,212,255,0.3)] hover:bg-[rgba(0,212,255,0.07)] transition-all no-underline"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-mono text-[10px] font-bold tabular-nums" style={{ color: '#00d4ff' }}>#{a.v2_rank}</span>
+              </div>
+              <div className="font-mono text-xs font-semibold text-white/80 truncate">{a.display_name || a.handle}</div>
+              <div className="font-mono text-[10px] text-white/30 truncate">@{a.handle}</div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* TIER 01 eyebrow */}
+      <div className="flex items-center gap-3 mb-3 mt-1">
+        <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/25">TIER 01 · FULL INDEX</span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+        <span className="font-mono text-[9px] text-white/25">{agents.length} agents · <span style={{ color: '#00d4ff' }}>{evidenceCount} ranked</span></span>
       </div>
 
       <ExploreSearch agents={agentsWithV2} />
