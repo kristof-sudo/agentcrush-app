@@ -96,11 +96,11 @@ export default async function ExplorePage() {
       </div>
 
       <div className="mb-5 rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3 font-mono text-[11px] text-white/40 leading-relaxed">
-        <span className="text-white/60">How tiers work:</span>{' '}
-        <span className="rounded border border-[rgba(57,255,20,0.35)] bg-[rgba(57,255,20,0.08)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ color: '#39ff14' }}>Evidence</span>
-        {' '}agents have verified GitHub activity, ecosystem relationships, and signal coverage.{' '}
-        <span className="rounded border border-white/[0.1] bg-white/[0.03] px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white/30">Indexed</span>
-        {' '}agents are tracked but lack enough evidence for a public rank yet.
+        Explore the full AgentCrush index.{' '}
+        <span className="rounded border border-[rgba(57,255,20,0.35)] bg-[rgba(57,255,20,0.08)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ color: '#39ff14' }}>Evidence-ranked</span>
+        {' '}agents have enough signal for public ranking;{' '}
+        <span className="rounded border border-white/[0.1] bg-white/[0.03] px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white/30">indexed</span>
+        {' '}agents are tracked but still accumulating evidence.
       </div>
 
       <ExploreSearch agents={agentsWithV2} />

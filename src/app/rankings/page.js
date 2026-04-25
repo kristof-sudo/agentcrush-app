@@ -185,7 +185,7 @@ export default async function RankingsPage({ searchParams }) {
 
       {/* Evidence explanation */}
       <div className="mb-4 rounded-lg border border-[rgba(57,255,20,0.15)] bg-[rgba(57,255,20,0.04)] px-4 py-3 font-mono text-[11px] text-white/50 leading-relaxed">
-        All evidence-ranked agents — agents with verified GitHub activity, ecosystem relationships, and sufficient signal coverage. Scores use the v2 conservative formula. As more agents clear the evidence threshold this list grows automatically.
+        These rankings include only agents with enough public evidence to score reliably. Signals include GitHub activity, package usage, dependency adoption, docs quality, ecosystem relationships, and public discourse. The list grows automatically as indexed agents accumulate evidence.
       </div>
 
       {/* Weekly Narrative */}
@@ -252,7 +252,7 @@ export default async function RankingsPage({ searchParams }) {
           href="/explore"
           className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-4 py-2 font-mono text-xs text-white/50 hover:text-white hover:border-white/20 transition-colors"
         >
-          Explore all {totalIndexed ?? 0} indexed agents →
+          View all indexed agents →
         </Link>
       </div>
     </main>

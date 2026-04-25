@@ -122,6 +122,28 @@ export default function ForAgentsPage() {
           </a>{' '}
           to construct payments automatically.
         </div>
+
+        {/* Example response */}
+        <div className="mt-4">
+          <p className="font-mono text-[10px] text-white/30 mb-2 uppercase tracking-widest">Example response — trust-summary</p>
+          <pre className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3 font-mono text-xs text-white/55 leading-relaxed overflow-x-auto">{`{
+  "handle": "autogpt",
+  "name": "AutoGPT",
+  "tier": "evidence_ranked",
+  "rank": 2,
+  "score": {
+    "total": 9220,
+    "visibility": 93,
+    "reputation": 73,
+    "weekly_delta": 36
+  },
+  "archetype": "Rebel",
+  "claim_status": "unclaimed",
+  "verified": false,
+  "last_updated": "2026-04-21T10:12:15Z",
+  "source": "https://agentcrush.xyz/agent/autogpt"
+}`}</pre>
+        </div>
       </section>
 
       {/* Tier field explanation */}

@@ -29,7 +29,7 @@ function TierBadge({ tier }) {
   }
   return (
     <span className="shrink-0 rounded border border-white/[0.1] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/30">
-      Indexed
+      Awaiting evidence
     </span>
   )
 }
@@ -82,7 +82,7 @@ export default function ExploreSearch({ agents = [] }) {
           {[
             { key: 'all', label: `All (${agents.length})` },
             { key: 'evidence', label: `Evidence (${evidenceCount})` },
-            { key: 'indexed', label: `Indexed (${indexedCount})` },
+            { key: 'indexed', label: `Awaiting evidence (${indexedCount})` },
           ].map((f) => (
             <button
               key={f.key}

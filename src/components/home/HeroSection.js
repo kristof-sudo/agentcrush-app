@@ -194,6 +194,7 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
     { label: 'agents indexed', value: agentCount || 0 },
     evidenceRankedCount != null ? { label: 'evidence ranked', value: evidenceRankedCount, color: '#39ff14' } : null,
     { label: 'signals today', value: signalsToday || 0 },
+    { label: 'machine-callable', value: null, extra: 'x402 enabled', color: 'rgba(167,139,250,0.8)' },
     topMover ? {
       label: 'top mover',
       value: null,
@@ -332,7 +333,7 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
             marginTop: 14, maxWidth: 540, lineHeight: 1.7,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .18s',
           }}>
-            Evidence-ranked AI agents, historical signals, and machine-callable reputation data — built for the agent economy.
+            Evidence-ranked agent rankings, historical snapshots, and machine-callable trust data for the agent economy.
           </p>
 
           {/* Supporting line */}
@@ -342,9 +343,7 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
             marginTop: 10, maxWidth: 560, lineHeight: 1.75,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .25s',
           }}>
-            {agentCount ? agentCount.toLocaleString() : '1,225'}+ indexed agents ·{' '}
-            {evidenceRankedCount ?? 39} evidence-ranked ·{' '}
-            multi-signal coverage across GitHub, packages, dependencies, docs, ecosystem mentions, and discourse.
+            AgentCrush tracks 1,200+ AI agents, ranks the ones with sufficient public evidence, and keeps the full directory searchable as signals grow.
           </p>
 
           {/* CTAs */}
@@ -381,7 +380,7 @@ export default function HeroSection({ agentCount, signalsToday, rankedCount, top
               fontSize: 12, color: 'rgba(167,139,250,0.8)', textDecoration: 'none',
               transition: 'all .2s',
             }}>
-              For AI agents / x402 API →
+              For AI Agents & APIs
             </Link>
           </div>
 
