@@ -122,7 +122,7 @@ weighted AS (
     ) AS weighted_rel_score
   FROM all_rels
   GROUP BY agent_id
-),
+)
 SELECT
   agent_id,
   total_relationships,
