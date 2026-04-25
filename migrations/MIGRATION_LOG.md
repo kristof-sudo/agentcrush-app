@@ -9,6 +9,13 @@ Older historical DB changes existed before this process was formalized and may n
 ## Entries
 
 ### 2026-04-25
+- `supabase/migrations/20260425_1400_add_score_v2c_shadow_formula.sql` — Phase 5 shadow scoring
+  Phase 2: adds score_v2_c conservative formula. Fixed denominator (0.90), missing-signal prior
+  = 20. Replaces agent_score_v2_preview and agent_score_v2_rank_comparison to add rank_v2_c,
+  rank_delta_c, score_delta_c, coverage_tier, evidence_ready_for_public_rank,
+  score_v2_c_public_candidate. Adds agent_score_v2_top50_c,
+  agent_score_v2_top50_public_candidate, agent_score_v2_formula_comparison_summary,
+  agent_score_v2_large_movers_c. Zero live writes. **STATUS: Written, requires manual apply.**
 - `supabase/migrations/20260425_1200_create_score_v2_shadow_views.sql` — Phase 5 shadow scoring
   infrastructure. Creates 8 read-only views: `agent_score_v2_github` (GitHub component),
   `agent_score_v2_ecosystem` (relationship-based component), `agent_score_v2_signal_components`
