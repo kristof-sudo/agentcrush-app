@@ -1,5 +1,5 @@
 [Unit]
-Description=AgentCrush Ajsa PH / YZI / YC / Farcaster ingest — daily at 04:35 UTC
+Description=AgentCrush Ajsa PH / YZI / YC / Farcaster ingest — daily at 03:30 UTC
 Requires=agentcrush-ajsa-ph-farcaster-ingest.service
 
 [Timer]
