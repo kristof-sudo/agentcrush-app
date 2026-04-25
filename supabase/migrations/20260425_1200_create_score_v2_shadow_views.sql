@@ -61,8 +61,8 @@ pts AS (
     forks,
     pushed_at,
     last_release_tag,
-    LEAST(60.0, ROUND(LN(1 + COALESCE(stars, 0)::numeric) / LN(50001) * 60, 2))  AS stars_pts,
-    LEAST(20.0, ROUND(LN(1 + COALESCE(forks, 0)::numeric) / LN(10001) * 20, 2))  AS forks_pts,
+    LEAST(60.0, ROUND(LN(1 + COALESCE(stars, 0)::numeric) / LN(50001::numeric) * 60, 2))  AS stars_pts,
+    LEAST(20.0, ROUND(LN(1 + COALESCE(forks, 0)::numeric) / LN(10001::numeric) * 20, 2))  AS forks_pts,
     CASE
       WHEN pushed_at >= NOW() - INTERVAL '30 days'  THEN 15.0
       WHEN pushed_at >= NOW() - INTERVAL '90 days'  THEN  8.0
@@ -141,7 +141,7 @@ SELECT
   total_relationships,
   weighted_rel_score,
   LEAST(100.0,
-    ROUND(LN(1 + weighted_rel_score) / LN(101.0) * 100.0, 2)
+    ROUND((LN(1 + weighted_rel_score) / LN(101::numeric) * 100.0)::numeric, 2)
   ) AS ecosystem_score
 FROM rollup;
 
