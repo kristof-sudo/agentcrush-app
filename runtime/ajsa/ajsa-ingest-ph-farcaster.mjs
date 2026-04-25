@@ -587,7 +587,10 @@ async function fetchFarcasterChannel(apiKey, channelId, limit) {
       'User-Agent': UA,
     },
   });
-  if (!result.ok) return result;
+  if (!result.ok) {
+    if (result.status === 402) return { ok: false, paidPlanRequired: true, error: result.error };
+    return result;
+  }
   return { ok: true, casts: result.data?.casts ?? [] };
 }
 
@@ -1085,19 +1088,35 @@ if (phToken) {
 
 // ── Farcaster ingest ──────────────────────────────────────────────────────────
 
-const fcCandidates   = [];
-const fcSkipped      = [];
-const fcFailures     = [];
-const seenCastHashes = new Set();
+const fcCandidates      = [];
+const fcSkipped         = [];
+const fcFailures        = [];
+const fcPaidPlanSkipped = [];
+let   fcPaidPlanGated   = false;
+const seenCastHashes    = new Set();
 
 if (neynarKey) {
   console.log(`\n[ajsa-ph-fc] Farcaster — ${fcChannels.length} channel(s): /${fcChannels.join(', /')}\n`);
 
   for (const channelId of fcChannels) {
     process.stdout.write(`  [FC] /${channelId} ... `);
+
+    if (fcPaidPlanGated) {
+      console.log('skipped (paid plan required)');
+      fcPaidPlanSkipped.push({ channel: channelId });
+      continue;
+    }
+
     const result = await fetchFarcasterChannel(neynarKey, channelId, LIMIT);
 
     if (!result.ok) {
+      if (result.paidPlanRequired) {
+        console.log('skipped (paid plan required)');
+        fcPaidPlanSkipped.push({ channel: channelId });
+        console.warn('[ajsa-ph-fc] WARN: Farcaster channel monitoring requires paid Neynar access; skipping channels.');
+        fcPaidPlanGated = true;
+        continue;
+      }
       console.log(`FAILED (${result.error})`);
       fcFailures.push({ channel: channelId, error: result.error });
       await sleep(NEYNAR_DELAY_MS);
@@ -1409,7 +1428,8 @@ if (phToken) {
   console.log(`      weak_indexed_agent_matches_skipped=${phSkippedWeakIndexed}  skipped_not_agent_relevant=${phSkippedNotRelevant}  skipped_weak_indexed_match=${phSkippedWeakIndexed}  skipped_below_vote_threshold=${phSkippedBelowVotes}  failures=${phFailures.length}`);
 }
 if (neynarKey) {
-  console.log(`  Farcaster  Channels: ${fcChannels.length}  Candidates: ${fcCandidates.length}  No-signal: ${fcSkipped.length}  Failed: ${fcFailures.length}`);
+  const paidTag = fcPaidPlanSkipped.length > 0 ? `  Skipped paid-plan: ${fcPaidPlanSkipped.length}` : '';
+  console.log(`  Farcaster  Channels: ${fcChannels.length}  Candidates: ${fcCandidates.length}${paidTag}  No-signal: ${fcSkipped.length}  Failed: ${fcFailures.length}`);
 }
 console.log(`  YZI Labs   posts_seen=${yziPostsSeen}  candidates=${yziCandidates.length}  skipped_old=${yziSkippedOld}  skipped_unknown_not_relevant=${yziSkippedUnknownDateNotRelevant}  unknown_date_relevant=${yziUnknownDateRelevant}  date_parsed=${yziDateParseSuccess}  date_unknown=${yziDateParseFailed}  failed=${yziFailures.length}`);
 console.log(`  YC Blog    Candidates: ${ycCandidates.length}  Skipped: ${ycSkipped.length}  Failed: ${ycFailures.length}`);
@@ -1609,14 +1629,18 @@ if (phToken && phSrc) {
 }
 
 if (neynarKey && fcSrc) {
-  const allFcFailed = fcFailures.length > 0 && fcFailures.length === fcChannels.length;
-  await supabase.from('ajsa_sources').update({
-    last_checked_at: NOW_ISO,
-    ...(allFcFailed
-      ? { last_error_at: NOW_ISO, last_error: `All ${fcChannels.length} Farcaster channels failed` }
-      : { last_success_at: NOW_ISO, last_error_at: null, last_error: null }
-    ),
-  }).eq('id', FC_SOURCE_ID);
+  const allFcFailed       = fcFailures.length > 0 && fcFailures.length === fcChannels.length;
+  const allFcPaidPlanOnly = fcPaidPlanSkipped.length > 0 && fcFailures.length === 0;
+  // Plan-gated skips are not a runtime failure — leave timestamps unchanged
+  if (!allFcPaidPlanOnly) {
+    await supabase.from('ajsa_sources').update({
+      last_checked_at: NOW_ISO,
+      ...(allFcFailed
+        ? { last_error_at: NOW_ISO, last_error: `All ${fcChannels.length} Farcaster channels failed` }
+        : { last_success_at: NOW_ISO, last_error_at: null, last_error: null }
+      ),
+    }).eq('id', FC_SOURCE_ID);
+  }
 }
 
 if (yziSrc) {
