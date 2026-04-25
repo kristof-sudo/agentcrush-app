@@ -37,7 +37,8 @@
 -- ============================================================
 -- Step 1: Replace agent_score_v2_preview
 -- Adds score_v2_c_candidate to the existing a/b candidates.
--- Everything else in this view is unchanged.
+-- score_v2_c_candidate appended LAST — column positions 1–60
+-- are identical to migration 1200; new column lands at 61.
 -- ============================================================
 
 CREATE OR REPLACE VIEW agent_score_v2_preview AS
@@ -138,6 +139,7 @@ computed AS (
   FROM base
 )
 SELECT
+  -- positions 1–60: identical to migration 1200
   agent_id, handle, display_name,
   github_score, package_usage_score, dependency_score, ecosystem_score,
   docs_quality_score, hn_score, trust_score, native_score,
@@ -157,7 +159,6 @@ SELECT
   total_relationships, weighted_rel_score,
   hn_relevant_mentions, recent_90d_log_strength,
   claim_status, verified_source,
-  -- Contribution ratios (for disproportionate-influence detection on v2_a)
   ROUND(
     CASE WHEN github_available AND score_v2_a_raw > 0
       THEN (COALESCE(github_score, 0) * w_github / NULLIF(active_weight_total,0)) / NULLIF(score_v2_a_raw,0)
@@ -193,7 +194,7 @@ SELECT
     'native',     jsonb_build_object('score', native_score,        'weight', w_native,     'available', native_available,
                                      'note', 'reserved — excluded from active denominator')
   ) AS components,
-  -- score_v2_c appended last so existing column positions are unchanged
+  -- position 61: score_v2_c appended last so positions 1–60 are unchanged
   ROUND(score_v2_c_raw, 2) AS score_v2_c_candidate
 FROM computed;
 
@@ -202,6 +203,13 @@ FROM computed;
 -- Step 2: Replace agent_score_v2_rank_comparison
 -- Adds rank_v2_c, rank_delta_c, score_delta_c, coverage_tier,
 -- evidence_ready_for_public_rank, score_v2_c_public_candidate.
+--
+-- Column-position discipline:
+--   Positions 1–70 are identical to migration 1200.
+--   New columns are appended at positions 71–77.
+--   No wildcard (*) expansion in the final SELECT — all 70
+--   original columns are listed explicitly to prevent position
+--   shifts when the upstream preview view gains new columns.
 -- ============================================================
 
 CREATE OR REPLACE VIEW agent_score_v2_rank_comparison AS
@@ -213,53 +221,166 @@ WITH current_rankings AS (
   FROM rankings
   ORDER BY agent_id, global_rank ASC
 ),
-v2 AS (
-  SELECT p.*, r.current_score, r.current_rank
-  FROM agent_score_v2_preview p
-  LEFT JOIN current_rankings r ON r.agent_id = p.agent_id
-),
-ranked AS (
+all_scores AS (
   SELECT
-    v2.*,
-    RANK() OVER (ORDER BY score_v2_a_candidate DESC NULLS LAST) AS rank_v2_a,
-    RANK() OVER (ORDER BY score_v2_b_candidate DESC NULLS LAST) AS rank_v2_b,
-    RANK() OVER (ORDER BY score_v2_c_candidate DESC NULLS LAST) AS rank_v2_c
-  FROM v2
-),
-with_meta AS (
-  SELECT
-    ranked.*,
-    -- Coverage tier based on active_weight_total
+    -- preview columns 1–60 (explicit — no p.*)
+    p.agent_id,
+    p.handle,
+    p.display_name,
+    p.github_score,
+    p.package_usage_score,
+    p.dependency_score,
+    p.ecosystem_score,
+    p.docs_quality_score,
+    p.hn_score,
+    p.trust_score,
+    p.native_score,
+    p.github_available,
+    p.package_usage_available,
+    p.dependency_available,
+    p.ecosystem_available,
+    p.docs_quality_available,
+    p.hn_available,
+    p.trust_available,
+    p.native_available,
+    p.missing_github,
+    p.missing_package_usage,
+    p.missing_dependency_signal,
+    p.missing_ecosystem_signal,
+    p.missing_docs_quality,
+    p.missing_hn_signal,
+    p.missing_trust_signal,
+    p.missing_native_signal,
+    p.w_github,
+    p.w_package,
+    p.w_dependency,
+    p.w_ecosystem,
+    p.w_docs,
+    p.w_hn,
+    p.w_trust,
+    p.w_native,
+    p.active_weight_total,
+    p.score_v2_a_candidate,
+    p.score_v2_b_candidate,
+    p.github_stars,
+    p.github_forks,
+    p.github_pushed_at,
+    p.last_release_tag,
+    p.weekly_downloads_total,
+    p.package_count,
+    p.unique_dependent_repos,
+    p.external_dependent_repos,
+    p.dependency_weighted_strength,
+    p.total_relationships,
+    p.weighted_rel_score,
+    p.hn_relevant_mentions,
+    p.recent_90d_log_strength,
+    p.claim_status,
+    p.verified_source,
+    p.github_contribution_ratio,
+    p.package_contribution_ratio,
+    p.dependency_contribution_ratio,
+    p.ecosystem_contribution_ratio,
+    p.docs_contribution_ratio,
+    p.hn_contribution_ratio,
+    p.components,
+    -- rank_comparison-specific columns 61–64
+    r.current_score,
+    r.current_rank,
+    RANK() OVER (ORDER BY p.score_v2_a_candidate DESC NULLS LAST) AS rank_v2_a,
+    RANK() OVER (ORDER BY p.score_v2_b_candidate DESC NULLS LAST) AS rank_v2_b,
+    -- new computed values (consumed by final SELECT for positions 71–77)
+    RANK() OVER (ORDER BY p.score_v2_c_candidate DESC NULLS LAST) AS rank_v2_c,
     CASE
-      WHEN active_weight_total >= 0.75 THEN 'high'
-      WHEN active_weight_total >= 0.55 THEN 'medium'
-      WHEN active_weight_total >= 0.25 THEN 'low'
+      WHEN p.active_weight_total >= 0.75 THEN 'high'
+      WHEN p.active_weight_total >= 0.55 THEN 'medium'
+      WHEN p.active_weight_total >= 0.25 THEN 'low'
       ELSE 'very_low'
     END AS coverage_tier,
-    -- Evidence gate: enough signal to show a public rank
     (
-      active_weight_total >= 0.55
-      OR (COALESCE(current_rank, 9999) <= 100 AND active_weight_total >= 0.45)
-    ) AS evidence_ready_for_public_rank
-  FROM ranked
+      p.active_weight_total >= 0.55
+      OR (COALESCE(r.current_rank, 9999) <= 100 AND p.active_weight_total >= 0.45)
+    ) AS evidence_ready_for_public_rank,
+    p.score_v2_c_candidate
+  FROM agent_score_v2_preview p
+  LEFT JOIN current_rankings r ON r.agent_id = p.agent_id
 )
 SELECT
-  with_meta.*,
-  -- Score deltas vs current v1
-  ROUND(score_v2_a_candidate - COALESCE(current_score, 0), 2) AS score_delta_a,
-  ROUND(score_v2_b_candidate - COALESCE(current_score, 0), 2) AS score_delta_b,
-  ROUND(score_v2_c_candidate - COALESCE(current_score, 0), 2) AS score_delta_c,
-  -- Rank deltas: positive = improved (moved up), negative = dropped
-  (current_rank - rank_v2_a::integer) AS rank_delta_a,
-  (current_rank - rank_v2_b::integer) AS rank_delta_b,
-  (current_rank - rank_v2_c::integer) AS rank_delta_c,
-  -- Conservative public-facing candidate:
-  -- full score if evidence_ready, else 75% penalty
-  CASE
-    WHEN evidence_ready_for_public_rank THEN score_v2_c_candidate
-    ELSE ROUND(score_v2_c_candidate * 0.75, 2)
-  END AS score_v2_c_public_candidate,
-  -- Review flags (v2_c added to the movement checks)
+  -- ── positions 1–60: original preview columns ────────────────
+  agent_id,
+  handle,
+  display_name,
+  github_score,
+  package_usage_score,
+  dependency_score,
+  ecosystem_score,
+  docs_quality_score,
+  hn_score,
+  trust_score,
+  native_score,
+  github_available,
+  package_usage_available,
+  dependency_available,
+  ecosystem_available,
+  docs_quality_available,
+  hn_available,
+  trust_available,
+  native_available,
+  missing_github,
+  missing_package_usage,
+  missing_dependency_signal,
+  missing_ecosystem_signal,
+  missing_docs_quality,
+  missing_hn_signal,
+  missing_trust_signal,
+  missing_native_signal,
+  w_github,
+  w_package,
+  w_dependency,
+  w_ecosystem,
+  w_docs,
+  w_hn,
+  w_trust,
+  w_native,
+  active_weight_total,
+  score_v2_a_candidate,
+  score_v2_b_candidate,
+  github_stars,
+  github_forks,
+  github_pushed_at,
+  last_release_tag,
+  weekly_downloads_total,
+  package_count,
+  unique_dependent_repos,
+  external_dependent_repos,
+  dependency_weighted_strength,
+  total_relationships,
+  weighted_rel_score,
+  hn_relevant_mentions,
+  recent_90d_log_strength,
+  claim_status,
+  verified_source,
+  github_contribution_ratio,
+  package_contribution_ratio,
+  dependency_contribution_ratio,
+  ecosystem_contribution_ratio,
+  docs_contribution_ratio,
+  hn_contribution_ratio,
+  components,
+  -- ── positions 61–70: original rank_comparison columns ───────
+  current_score,                                                         -- 61
+  current_rank,                                                          -- 62
+  rank_v2_a,                                                             -- 63
+  rank_v2_b,                                                             -- 64
+  ROUND(score_v2_a_candidate - COALESCE(current_score, 0), 2)           -- 65
+    AS score_delta_a,
+  ROUND(score_v2_b_candidate - COALESCE(current_score, 0), 2)           -- 66
+    AS score_delta_b,
+  (current_rank - rank_v2_a::integer)                                    -- 67
+    AS rank_delta_a,
+  (current_rank - rank_v2_b::integer)                                    -- 68
+    AS rank_delta_b,
+  -- 69: needs_human_review (expanded to include v2_c checks)
   (
     ABS(current_rank - rank_v2_a::integer) >= 50
     OR ABS(current_rank - rank_v2_b::integer) >= 50
@@ -278,6 +399,7 @@ SELECT
          COALESCE(hn_contribution_ratio, 0)
        ) > 0.75
   ) AS needs_human_review,
+  -- 70: review_reasons (expanded to include v2_c reasons)
   ARRAY_REMOVE(ARRAY[
     CASE WHEN ABS(current_rank - rank_v2_a::integer) >= 50
       THEN 'rank_move_50+_under_v2a' END,
@@ -304,8 +426,21 @@ SELECT
                COALESCE(hn_contribution_ratio, 0)
              ) > 0.75
       THEN 'single_component_dominates_75pct' END
-  ], NULL) AS review_reasons
-FROM with_meta;
+  ], NULL) AS review_reasons,
+  -- ── positions 71–77: NEW columns appended after review_reasons ──
+  score_v2_c_candidate,                                                  -- 71
+  rank_v2_c,                                                             -- 72
+  coverage_tier,                                                         -- 73
+  evidence_ready_for_public_rank,                                        -- 74
+  ROUND(score_v2_c_candidate - COALESCE(current_score, 0), 2)           -- 75
+    AS score_delta_c,
+  (current_rank - rank_v2_c::integer)                                    -- 76
+    AS rank_delta_c,
+  CASE                                                                   -- 77
+    WHEN evidence_ready_for_public_rank THEN score_v2_c_candidate
+    ELSE ROUND(score_v2_c_candidate * 0.75, 2)
+  END AS score_v2_c_public_candidate
+FROM all_scores;
 
 
 -- ============================================================
@@ -313,6 +448,8 @@ FROM with_meta;
 -- ============================================================
 
 -- ── Coverage diagnostics (adds coverage_tier breakdown) ──────────────────────
+-- Column-position rule: new tier/evidence columns appended AFTER
+-- needs_review_count (position 22 in migration 1200's version).
 
 CREATE OR REPLACE VIEW agent_score_v2_coverage_diagnostics AS
 SELECT
@@ -337,48 +474,60 @@ SELECT
   ROUND(MIN(active_weight_total), 3)                                   AS min_active_weight,
   ROUND(MAX(active_weight_total), 3)                                   AS max_active_weight,
   COUNT(*) FILTER (WHERE active_weight_total < 0.40)                   AS low_coverage_agents,
-  -- Coverage tier breakdown
+  COUNT(*) FILTER (WHERE needs_human_review)                           AS needs_review_count,
+  -- NEW columns appended after needs_review_count (positions 23–28)
   COUNT(*) FILTER (WHERE coverage_tier = 'high')                       AS tier_high,
   COUNT(*) FILTER (WHERE coverage_tier = 'medium')                     AS tier_medium,
   COUNT(*) FILTER (WHERE coverage_tier = 'low')                        AS tier_low,
   COUNT(*) FILTER (WHERE coverage_tier = 'very_low')                   AS tier_very_low,
-  -- Evidence gate
   COUNT(*) FILTER (WHERE evidence_ready_for_public_rank = TRUE)        AS evidence_ready_count,
-  COUNT(*) FILTER (WHERE evidence_ready_for_public_rank = FALSE)       AS evidence_not_ready_count,
-  COUNT(*) FILTER (WHERE needs_human_review)                           AS needs_review_count
+  COUNT(*) FILTER (WHERE evidence_ready_for_public_rank = FALSE)       AS evidence_not_ready_count
 FROM agent_score_v2_rank_comparison;
 
 
 -- ── Known-agent comparison (expanded list, includes v2_c) ────────────────────
+-- Column-position rule: v2_c columns appended AFTER review_reasons
+-- (position 28 in migration 1200's version of this view).
 
 CREATE OR REPLACE VIEW agent_score_v2_known_agents AS
 SELECT
+  -- positions 1–28: identical to migration 1200
   handle,
   display_name,
   current_rank,
   current_score,
   rank_v2_a,
   rank_v2_b,
-  rank_v2_c,
   rank_delta_a,
   rank_delta_b,
-  rank_delta_c,
   score_v2_a_candidate,
   score_v2_b_candidate,
-  score_v2_c_candidate,
-  score_v2_c_public_candidate,
   score_delta_a,
   score_delta_b,
-  score_delta_c,
   active_weight_total,
-  coverage_tier,
-  evidence_ready_for_public_rank,
-  github_available, package_usage_available, dependency_available,
-  ecosystem_available, docs_quality_available, hn_available,
-  github_score, package_usage_score, dependency_score,
-  ecosystem_score, docs_quality_score, hn_score, trust_score,
+  github_available,
+  package_usage_available,
+  dependency_available,
+  ecosystem_available,
+  docs_quality_available,
+  hn_available,
+  github_score,
+  package_usage_score,
+  dependency_score,
+  ecosystem_score,
+  docs_quality_score,
+  hn_score,
+  trust_score,
   needs_human_review,
-  review_reasons
+  review_reasons,
+  -- NEW columns appended after review_reasons (positions 29–35)
+  rank_v2_c,
+  rank_delta_c,
+  score_v2_c_candidate,
+  score_v2_c_public_candidate,
+  score_delta_c,
+  coverage_tier,
+  evidence_ready_for_public_rank
 FROM agent_score_v2_rank_comparison
 WHERE handle IN (
   'crewai', 'dspyagents', 'openclaw', 'agentops', 'aider',
@@ -389,7 +538,7 @@ ORDER BY COALESCE(current_rank, 99999);
 
 
 -- ── Top 50 by score_v2_c_candidate ───────────────────────────────────────────
--- Query: SELECT * FROM agent_score_v2_top50_c LIMIT 50;
+-- New view (no prior column-position constraints).
 
 CREATE OR REPLACE VIEW agent_score_v2_top50_c AS
 SELECT
@@ -411,7 +560,7 @@ ORDER BY rank_v2_c ASC NULLS LAST;
 
 
 -- ── Top 50 by score_v2_c_public_candidate ────────────────────────────────────
--- Query: SELECT * FROM agent_score_v2_top50_public_candidate LIMIT 50;
+-- New view (no prior column-position constraints).
 
 CREATE OR REPLACE VIEW agent_score_v2_top50_public_candidate AS
 WITH pub_ranked AS (
@@ -440,6 +589,7 @@ ORDER BY rank_v2_c_public ASC NULLS LAST;
 
 
 -- ── Formula comparison summary (a vs b vs c at a glance) ─────────────────────
+-- New view (no prior column-position constraints).
 
 CREATE OR REPLACE VIEW agent_score_v2_formula_comparison_summary AS
 WITH pub_ranked AS (
@@ -464,10 +614,8 @@ SELECT
   active_weight_total,
   coverage_tier,
   evidence_ready_for_public_rank,
-  -- How much v2_c diverges from v2_a (large = formula sensitivity)
   ROUND(ABS(score_v2_a_candidate - score_v2_c_candidate), 2) AS a_vs_c_divergence,
   ROUND(ABS(score_v2_b_candidate - score_v2_c_candidate), 2) AS b_vs_c_divergence,
-  -- Which formula ranks this agent highest
   CASE
     WHEN rank_v2_c <= rank_v2_a AND rank_v2_c <= rank_v2_b THEN 'v2_c'
     WHEN rank_v2_a <= rank_v2_b                             THEN 'v2_a'
@@ -480,6 +628,7 @@ ORDER BY rank_v2_c ASC NULLS LAST;
 
 
 -- ── Large movers under v2_c (±20 positions) ──────────────────────────────────
+-- New view (no prior column-position constraints).
 
 CREATE OR REPLACE VIEW agent_score_v2_large_movers_c AS
 SELECT
