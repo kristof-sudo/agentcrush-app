@@ -1,23 +1,38 @@
 /**
- * Dependency graph dry-run worker — indexed and search source tiers.
+ * Dependency graph worker — indexed and search source tiers.
  *
  * Scans GitHub repos for repos that depend on verified AgentCrush agent
- * packages, and prints a dependency edge report.
- *
- * This is a dry-run-only worker. It never writes to Supabase.
+ * packages, and writes raw dependency evidence to Supabase.
  *
  * Modes:
- *   --dry-run          Fetch, match, print. No writes. (required)
- *   --source indexed   Scan AgentCrush indexed repos (max 45).
- *   --source search    Scan external repos via GitHub topic search (max 100).
- *   --limit N          Max repos to scan (indexed default 20; search default 25).
+ *   --dry-run              Fetch, match, print. No writes. (default)
+ *   --write                Fetch, match, upsert to Supabase, print summary.
+ *                          Only allowed with --source search --preset multiagent|javascript.
+ *   --source indexed       Scan AgentCrush indexed repos (max 45).
+ *   --source search        Scan external repos via GitHub topic search (max 100).
+ *   --preset general       topic:ai-agent stars:>50 pushed:>2025-01-01  (default)
+ *   --preset python        topic:ai-agent language:python stars:>50 pushed:>2025-01-01
+ *   --preset javascript    topic:ai-agent language:javascript stars:>50 pushed:>2025-01-01
+ *   --preset multiagent    multi-agent language:python stars:>50 pushed:>2025-01-01
+ *   --limit N              Max repos to scan (indexed default 20; search default 25).
+ *
+ * Write policy:
+ *   --write only allowed for --source search --preset multiagent or --preset javascript.
+ *   --write refused for --source indexed, --preset general, --preset python.
+ *   --dry-run and --write cannot be combined.
+ *   Default mode is dry-run when neither flag is passed.
+ *
+ * Writes to (raw evidence only):
+ *   agent_dependency_scans   (one row per repo/dep_file)
+ *   agent_dependency_edges   (one row per dependency match, same_repo=true excluded)
+ *
+ * Never writes: agents, rankings, ecosystem_signals, agent_daily_snapshots,
+ *               agent_relationships, github_repo_snapshots, any RPC.
+ * Never prints: secrets, tokens, keys.
  *
  * Trust policy:
  *   Only mapping_status='high_auto' AND confidence>=95 from
  *   agent_package_mapping_latest are used for matching.
- *
- * Never writes: agents, rankings, Supabase tables, any RPC.
- * Never prints: secrets, tokens, keys.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -32,10 +47,17 @@ const DEFAULT_LIMIT_INDEXED  = 20;
 const DEFAULT_LIMIT_SEARCH   = 25;
 const MAX_LIMIT_INDEXED      = 45;
 const MAX_LIMIT_SEARCH       = 100;
-const SEARCH_QUERY           = 'topic:ai-agent stars:>50 pushed:>2025-01-01';
 const GH_BASE                = 'https://api.github.com';
-const USER_AGENT             = 'AgentCrush-DepGraph-Worker/1.0 (agentcrush.com)';
-const GH_DELAY_MS            = 350;   // inter-request delay — stays well inside secondary rate limits
+
+const SEARCH_PRESETS = {
+  general:    'topic:ai-agent stars:>50 pushed:>2025-01-01',
+  python:     'topic:ai-agent language:python stars:>50 pushed:>2025-01-01',
+  javascript: 'topic:ai-agent language:javascript stars:>50 pushed:>2025-01-01',
+  multiagent: 'multi-agent language:python stars:>50 pushed:>2025-01-01',
+};
+const DEFAULT_PRESET = 'general';
+const USER_AGENT     = 'AgentCrush-DepGraph-Worker/1.0 (agentcrush.com)';
+const GH_DELAY_MS    = 350;   // inter-request delay — stays well inside secondary rate limits
 
 // Dep files we parse (in order of preference per repo).
 const DEP_FILES = ['package.json', 'requirements.txt', 'pyproject.toml'];
@@ -46,20 +68,19 @@ const SKIP_FILES = new Set([
   'poetry.lock', 'requirements-dev.txt', 'setup.py', 'setup.cfg',
 ]);
 
+// Snapshot date for all rows written in this run.
+const SNAPSHOT_DATE = new Date().toISOString().split('T')[0];
+
 // ─── Argument parsing ─────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const args = { dryRun: false, source: null, limit: null };
+  const args = { dryRun: false, writeMode: false, source: null, limit: null, preset: DEFAULT_PRESET };
 
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
 
-    if (arg === '--dry-run') { args.dryRun = true; continue; }
-
-    if (arg === '--write') {
-      console.error('Error: --write is not supported. This worker is dry-run only.');
-      process.exit(1);
-    }
+    if (arg === '--dry-run') { args.dryRun    = true; continue; }
+    if (arg === '--write')   { args.writeMode = true; continue; }
 
     if (arg === '--source') {
       const raw = argv[i + 1];
@@ -73,6 +94,21 @@ function parseArgs(argv) {
       const raw = arg.slice('--source='.length);
       if (raw !== 'indexed' && raw !== 'search') throw new Error(`--source "${raw}" not supported. Use "indexed" or "search".`);
       args.source = raw;
+      continue;
+    }
+
+    if (arg === '--preset') {
+      const raw = argv[i + 1];
+      if (!raw) throw new Error('Missing value for --preset');
+      if (!SEARCH_PRESETS[raw]) throw new Error(`--preset "${raw}" not supported. Use: ${Object.keys(SEARCH_PRESETS).join(', ')}.`);
+      args.preset = raw;
+      i++;
+      continue;
+    }
+    if (arg.startsWith('--preset=')) {
+      const raw = arg.slice('--preset='.length);
+      if (!SEARCH_PRESETS[raw]) throw new Error(`--preset "${raw}" not supported. Use: ${Object.keys(SEARCH_PRESETS).join(', ')}.`);
+      args.preset = raw;
       continue;
     }
 
@@ -91,8 +127,33 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!args.dryRun) throw new Error('--dry-run is required. This worker never writes.');
+  // Conflict: both flags passed together.
+  if (args.dryRun && args.writeMode) {
+    throw new Error('--dry-run and --write cannot be combined. Pass one or the other.');
+  }
+
+  // Default to dry-run when neither mode flag is given.
+  if (!args.dryRun && !args.writeMode) {
+    args.dryRun = true;
+  }
+
   if (!args.source) throw new Error('--source indexed or --source search is required.');
+
+  // Write mode restrictions (policy).
+  if (args.writeMode) {
+    if (args.source === 'indexed') {
+      throw new Error('--write is not allowed with --source indexed.');
+    }
+    if (args.preset === 'general') {
+      throw new Error('--write is not allowed with --preset general.');
+    }
+    if (args.preset === 'python') {
+      throw new Error('--write is not allowed with --preset python.');
+    }
+    if (args.preset !== 'multiagent' && args.preset !== 'javascript') {
+      throw new Error(`--write is not allowed with --preset ${args.preset}. Allowed: multiagent, javascript.`);
+    }
+  }
 
   // Apply per-source defaults and caps.
   if (args.source === 'search') {
@@ -147,7 +208,7 @@ async function loadEnvFiles(paths) {
   }
 }
 
-// ─── Supabase (read-only) ─────────────────────────────────────────────────────
+// ─── Supabase reads ───────────────────────────────────────────────────────────
 
 async function fetchHighAutoMappings(supabase) {
   const { data, error } = await supabase
@@ -184,6 +245,30 @@ async function fetchAgentHandleMap(supabase) {
   return map;
 }
 
+// ─── Supabase writes ──────────────────────────────────────────────────────────
+
+async function upsertScan(supabase, row) {
+  const { data, error } = await supabase
+    .from('agent_dependency_scans')
+    .upsert(row, {
+      onConflict: 'scanned_repo,source_tier,source_preset,dep_file,snapshot_date',
+    })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function upsertEdgeBatch(supabase, rows) {
+  if (rows.length === 0) return;
+  const { error } = await supabase
+    .from('agent_dependency_edges')
+    .upsert(rows, {
+      onConflict: 'scanned_repo,source_tier,source_preset,matched_agent_id,registry,package_name,dep_file,dep_type,snapshot_date',
+    });
+  if (error) throw error;
+}
+
 // ─── Package lookup maps ───────────────────────────────────────────────────────
 
 function normalizePypiName(name) {
@@ -193,7 +278,7 @@ function normalizePypiName(name) {
 
 function buildLookupMaps(mappings) {
   // npm: exact package_name → mapping row
-  const npmMap = new Map();
+  const npmMap  = new Map();
   // pypi: normalized name → mapping row
   const pypiMap = new Map();
 
@@ -206,6 +291,13 @@ function buildLookupMaps(mappings) {
   }
 
   return { npmMap, pypiMap };
+}
+
+// ─── same_owner helper ────────────────────────────────────────────────────────
+
+function isSameOwner(repoA, repoB) {
+  if (!repoA || !repoB) return false;
+  return repoA.split('/')[0].toLowerCase() === repoB.split('/')[0].toLowerCase();
 }
 
 // ─── GitHub API ────────────────────────────────────────────────────────────────
@@ -305,16 +397,16 @@ function parsePackageJsonDeps(text) {
     }
   };
 
-  add(pkg.dependencies,    'dependency');
-  add(pkg.devDependencies, 'dev_dependency');
-  add(pkg.peerDependencies,'peer_dependency');
+  add(pkg.dependencies,     'dependency');
+  add(pkg.devDependencies,  'dev_dependency');
+  add(pkg.peerDependencies, 'peer_dependency');
 
   return { deps };
 }
 
 // Returns { deps: [{name, depType}], error }
 function parseRequirementsTxt(text) {
-  const deps = [];
+  const deps   = [];
   const errors = [];
 
   for (const rawLine of text.split('\n')) {
@@ -343,7 +435,7 @@ function parseRequirementsTxt(text) {
 // Returns { deps: [{name, depType}], error }
 // Handles both PEP 621 [project].dependencies array and Poetry [tool.poetry.dependencies] table.
 function parsePyprojectTomlDeps(text) {
-  const deps = [];
+  const deps   = [];
   const errors = [];
 
   // ── PEP 621: [project].dependencies = ["pkg>=1.0", ...] ──────────────────
@@ -355,8 +447,8 @@ function parsePyprojectTomlDeps(text) {
     const startM = section.match(/^dependencies\s*=\s*\[/im);
     if (startM) {
       const afterOpen = section.slice((section.indexOf(startM[0]) + startM[0].length));
-      const closeIdx = afterOpen.search(/^\]/m); // ']' at start of a line = array close
-      const block = closeIdx >= 0 ? afterOpen.slice(0, closeIdx) : afterOpen;
+      const closeIdx  = afterOpen.search(/^\]/m); // ']' at start of a line = array close
+      const block     = closeIdx >= 0 ? afterOpen.slice(0, closeIdx) : afterOpen;
       // Parse line-by-line: each line holds exactly one package spec.
       // Cross-line regex matching breaks on PEP 508 env markers like '; python_version<'3.10''.
       for (const line of block.split('\n')) {
@@ -366,7 +458,7 @@ function parsePyprojectTomlDeps(text) {
         const qm = lineT.match(/^["']([^"']+)/);
         if (!qm) continue;
         const raw = qm[1].trim();
-        const nm = raw.match(/^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?)/);
+        const nm  = raw.match(/^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?)/);
         if (nm) {
           deps.push({ name: nm[1], depType: 'dependency' });
         } else {
@@ -400,23 +492,23 @@ function parsePyprojectTomlDeps(text) {
 // ─── Matching ──────────────────────────────────────────────────────────────────
 
 function matchDeps(deps, depFile, scannedFullName, scannedStars, sourceTier, npmMap, pypiMap) {
-  const edges = [];
+  const edges       = [];
   const selfMatches = [];
 
   for (const { name, depType } of deps) {
     const registry = depFile === 'package.json' ? 'npm' : 'pypi';
-    let mapping = null;
+    let mapping    = null;
     let matchSource = null;
 
     if (registry === 'npm') {
       if (npmMap.has(name)) {
-        mapping = npmMap.get(name);
+        mapping     = npmMap.get(name);
         matchSource = 'exact';
       }
     } else {
       const norm = normalizePypiName(name);
       if (pypiMap.has(norm)) {
-        mapping = pypiMap.get(norm);
+        mapping     = pypiMap.get(norm);
         matchSource = norm === name ? 'exact' : 'normalized';
       }
     }
@@ -454,8 +546,8 @@ function matchDeps(deps, depFile, scannedFullName, scannedStars, sourceTier, npm
 
 // ─── Per-repo processing ───────────────────────────────────────────────────────
 
-// repoInfo: { github_full_name, stars? }  sourceTier: 'indexed' | 'search'
-async function processRepo(repoInfo, sourceTier, mappings, npmMap, pypiMap, token, stats) {
+// writeCtx: null (dry-run) | { supabase }
+async function processRepo(repoInfo, sourceTier, preset, mappings, npmMap, pypiMap, token, stats, writeCtx) {
   const fullName = repoInfo.github_full_name;
   const stars    = repoInfo.stars ?? null;
   process.stdout.write(`  [${fullName}] `);
@@ -474,7 +566,7 @@ async function processRepo(repoInfo, sourceTier, mappings, npmMap, pypiMap, toke
   process.stdout.write(`files=[${presentDepFiles.join(',') || 'none'}] `);
   stats.filesFetched += presentDepFiles.length;
 
-  const allEdges = [];
+  const allEdges       = [];
   const allSelfMatches = [];
 
   for (const depFile of presentDepFiles) {
@@ -497,18 +589,69 @@ async function processRepo(repoInfo, sourceTier, mappings, npmMap, pypiMap, toke
       continue;
     }
 
-    if (parsed.error) {
-      stats.parseErrors.push(`${fullName}/${depFile}: ${parsed.error}`);
-    }
+    if (parsed.error) stats.parseErrors.push(`${fullName}/${depFile}: ${parsed.error}`);
 
     const { edges, selfMatches } = matchDeps(
       parsed.deps, depFile, fullName, stars, sourceTier, npmMap, pypiMap
     );
     allEdges.push(...edges);
     allSelfMatches.push(...selfMatches);
+
+    // Write mode: upsert scan row, then edge rows.
+    if (writeCtx) {
+      let scanId = null;
+      try {
+        const scanRow = {
+          scanned_repo:       fullName,
+          source_tier:        sourceTier,
+          source_preset:      preset,
+          dep_file:           depFile,
+          snapshot_date:      SNAPSHOT_DATE,
+          scanned_repo_stars: stars,
+          raw_deps:           parsed.deps.map(d => d.name),
+          scan_status:        'ok',
+        };
+        scanId = await upsertScan(writeCtx.supabase, scanRow);
+        stats.scansWritten++;
+      } catch (err) {
+        stats.writeErrors.push(`scan ${fullName}/${depFile}: ${err.message}`);
+      }
+
+      if (edges.length > 0) {
+        const edgeRows = edges.map(e => ({
+          scanned_repo:                  e.scanned_repo,
+          source_tier:                   e.source_tier,
+          source_preset:                 preset,
+          matched_agent_id:              e.matched_agent_id,
+          registry:                      e.registry,
+          package_name:                  e.matched_package,
+          dep_file:                      e.dep_file,
+          dep_type:                      e.dep_type,
+          snapshot_date:                 SNAPSHOT_DATE,
+          scan_id:                       scanId,
+          scanned_repo_stars:            e.scanned_stars,
+          matched_agent_github_full_name: e.matched_github_full_name,
+          match_source:                  e.match_source,
+          mapping_confidence:            e.mapping_confidence,
+          same_repo:                     false,   // same_repo=true edges are in selfMatches, never written
+          same_owner:                    isSameOwner(e.scanned_repo, e.matched_github_full_name),
+          evidence: {
+            match_source:       e.match_source,
+            mapping_confidence: e.mapping_confidence,
+            scanned_repo_stars: e.scanned_stars,
+          },
+        }));
+
+        try {
+          await upsertEdgeBatch(writeCtx.supabase, edgeRows);
+          stats.edgesWritten += edgeRows.length;
+        } catch (err) {
+          stats.writeErrors.push(`edges ${fullName}/${depFile}: ${err.message}`);
+        }
+      }
+    }
   }
 
-  const matchCount = allEdges.length + allSelfMatches.length;
   process.stdout.write(`matches=${allEdges.length}${allSelfMatches.length > 0 ? ` self=${allSelfMatches.length}` : ''}\n`);
 
   return { edges: allEdges, selfMatches: allSelfMatches };
@@ -519,19 +662,22 @@ async function processRepo(repoInfo, sourceTier, mappings, npmMap, pypiMap, toke
 // agentHandleMap: Map<agent_id, string>
 // searchMeta: null for indexed, or { query, totalCount, rateLimitRemaining } for search
 function printReport(agentHandleMap, mappings, allEdges, allSelfMatches, stats, args, searchMeta) {
-  const isSearch = args.source === 'search';
+  const isSearch  = args.source === 'search';
+  const modeLabel = args.writeMode ? 'WRITE' : 'DRY-RUN';
 
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log(`  Dependency Graph Worker — DRY-RUN — source=${args.source}`);
+  console.log(`  Dependency Graph Worker — ${modeLabel} — source=${args.source}`);
   console.log('═══════════════════════════════════════════════════════════════');
   if (isSearch && searchMeta) {
+    console.log(`  preset                     ${searchMeta.preset}`);
     console.log(`  github_search_query        ${searchMeta.query}`);
     console.log(`  search_total_count         ${searchMeta.totalCount}`);
     if (searchMeta.rateLimitRemaining !== null) {
       console.log(`  rate_limit_remaining       ${searchMeta.rateLimitRemaining}`);
     }
   }
+  console.log(`  snapshot_date              ${SNAPSHOT_DATE}`);
   console.log(`  repos_checked              ${stats.reposChecked}`);
   console.log(`  files_fetched              ${stats.filesFetched}`);
   console.log(`  package_mappings_loaded    ${mappings.length}`);
@@ -539,6 +685,11 @@ function printReport(agentHandleMap, mappings, allEdges, allSelfMatches, stats, 
   console.log(`  self_matches_excluded      ${allSelfMatches.length}`);
   console.log(`  parse_errors               ${stats.parseErrors.length}`);
   console.log(`  fetch_errors               ${stats.fetchErrors.length}`);
+  if (args.writeMode) {
+    console.log(`  scans_written              ${stats.scansWritten}`);
+    console.log(`  edges_written              ${stats.edgesWritten}`);
+    console.log(`  write_errors               ${stats.writeErrors.length}`);
+  }
   console.log('');
 
   if (allEdges.length > 0) {
@@ -546,11 +697,12 @@ function printReport(agentHandleMap, mappings, allEdges, allSelfMatches, stats, 
     console.log('  ─────────────────────────────────────────────────────────────');
     for (const e of allEdges) {
       const matchedHandle = agentHandleMap.get(e.matched_agent_id) ?? e.matched_agent_id?.slice(0, 8);
-      const starsStr = e.scanned_stars !== null ? ` (⭐${e.scanned_stars})` : '';
+      const starsStr      = e.scanned_stars !== null ? ` (⭐${e.scanned_stars})` : '';
+      const ownerFlag     = isSameOwner(e.scanned_repo, e.matched_github_full_name) ? ' [same_owner]' : '';
       console.log(
         `  [${e.registry}] ${(e.scanned_repo + starsStr).padEnd(45)} ` +
         `→  ${e.matched_package.padEnd(22)} ` +
-        `(${matchedHandle})`
+        `(${matchedHandle})${ownerFlag}`
       );
       console.log(
         `           file=${e.dep_file}  dep_type=${e.dep_type}  ` +
@@ -613,7 +765,17 @@ function printReport(agentHandleMap, mappings, allEdges, allSelfMatches, stats, 
     console.log('');
   }
 
-  console.log('  No writes made. Dry-run complete.');
+  if (args.writeMode && stats.writeErrors.length > 0) {
+    console.log('  Write errors:');
+    for (const e of stats.writeErrors) console.log(`  ✗  ${e}`);
+    console.log('');
+  }
+
+  if (args.writeMode) {
+    console.log(`  Writes complete: ${stats.scansWritten} scan rows, ${stats.edgesWritten} edge rows.`);
+  } else {
+    console.log('  No writes made. Dry-run complete.');
+  }
   console.log('');
 }
 
@@ -625,7 +787,7 @@ async function main() {
     args = parseArgs(process.argv);
   } catch (err) {
     console.error(`Error: ${err.message}`);
-    console.error('Usage: dependency-graph-worker.mjs --dry-run --source indexed|search [--limit N]');
+    console.error('Usage: dependency-graph-worker.mjs --dry-run|--write --source indexed|search [--preset PRESET] [--limit N]');
     process.exit(1);
   }
 
@@ -638,8 +800,10 @@ async function main() {
     process.exit(1);
   }
 
-  const ghToken = process.env.GITHUB_TOKEN ?? null;
+  const ghToken  = process.env.GITHUB_TOKEN ?? null;
   const supabase = createClient(supabaseUrl, supabaseKey);
+
+  const writeCtx = args.writeMode ? { supabase } : null;
 
   // Load package mappings and build lookup maps.
   console.log('Loading high_auto package mappings…');
@@ -656,6 +820,9 @@ async function main() {
     filesFetched: 0,
     fetchErrors:  [],
     parseErrors:  [],
+    scansWritten: 0,
+    edgesWritten: 0,
+    writeErrors:  [],
   };
   const allEdges       = [];
   const allSelfMatches = [];
@@ -680,7 +847,7 @@ async function main() {
       stats.reposChecked++;
       const { edges, selfMatches } = await processRepo(
         { github_full_name: agent.github_full_name, stars: null },
-        'indexed', mappings, npmMap, pypiMap, ghToken, stats
+        'indexed', args.preset, mappings, npmMap, pypiMap, ghToken, stats, writeCtx
       );
       allEdges.push(...edges);
       allSelfMatches.push(...selfMatches);
@@ -688,12 +855,13 @@ async function main() {
 
   } else {
     // ── Search mode: scan external repos via GitHub topic search ──────────────
-    console.log(`\nSearching GitHub: ${SEARCH_QUERY}`);
+    const searchQuery = SEARCH_PRESETS[args.preset];
+    console.log(`\nSearching GitHub [preset=${args.preset}]: ${searchQuery}`);
     console.log(`  limit=${args.limit}  authenticated=${!!ghToken}`);
 
     const perPage = Math.min(args.limit, 100);
     const { items, totalCount, rateLimitRemaining, error: searchError } =
-      await ghSearch(SEARCH_QUERY, perPage, ghToken);
+      await ghSearch(searchQuery, perPage, ghToken);
 
     if (searchError) {
       console.error(`Search error: ${searchError}`);
@@ -701,7 +869,7 @@ async function main() {
     }
 
     const repos = items.slice(0, args.limit);
-    searchMeta = { query: SEARCH_QUERY, totalCount, rateLimitRemaining };
+    searchMeta  = { query: searchQuery, preset: args.preset, totalCount, rateLimitRemaining };
 
     console.log(`  found ${totalCount} total results; scanning first ${repos.length}`);
     if (rateLimitRemaining !== null) {
@@ -719,7 +887,7 @@ async function main() {
       stats.reposChecked++;
       const { edges, selfMatches } = await processRepo(
         { github_full_name: item.full_name, stars: item.stargazers_count },
-        'search', mappings, npmMap, pypiMap, ghToken, stats
+        'search', args.preset, mappings, npmMap, pypiMap, ghToken, stats, writeCtx
       );
       allEdges.push(...edges);
       allSelfMatches.push(...selfMatches);
