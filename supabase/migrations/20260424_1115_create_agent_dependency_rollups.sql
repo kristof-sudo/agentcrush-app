@@ -109,7 +109,7 @@ scored AS (
     agent_rollups.*,
     (
       external_dependent_repo_stars +
-      same_owner_dependent_repo_stars * 0.25 +
+      same_owner_dependent_repo_stars * 0.05 +
       external_dependent_repos * 100 +
       same_owner_dependent_repos * 25
     ) AS weighted_strength
