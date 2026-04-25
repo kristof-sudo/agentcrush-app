@@ -92,6 +92,18 @@ strongest_repos AS (
     ) AS rn
   FROM repo_rollups
 ),
+strongest_external_repos AS (
+  SELECT
+    agent_id,
+    scanned_repo AS strongest_external_dependent_repo,
+    repo_stars AS strongest_external_dependent_repo_stars,
+    ROW_NUMBER() OVER (
+      PARTITION BY agent_id
+      ORDER BY repo_stars DESC, latest_observed_at DESC, scanned_repo ASC
+    ) AS rn
+  FROM repo_rollups
+  WHERE same_owner = FALSE AND same_repo = FALSE
+),
 scored AS (
   SELECT
     agent_rollups.*,
@@ -112,9 +124,13 @@ SELECT
   scored.raw_edge_count,
   scored.total_dependent_repo_stars,
   scored.external_dependent_repo_stars,
+  scored.same_owner_dependent_repo_stars,
   strongest_repos.strongest_dependent_repo,
   strongest_repos.strongest_dependent_repo_stars,
+  strongest_external_repos.strongest_external_dependent_repo,
+  strongest_external_repos.strongest_external_dependent_repo_stars,
   scored.latest_observed_at,
+  scored.weighted_strength,
   ROUND(LN(1 + scored.weighted_strength)::numeric, 4) AS dependency_log_strength,
   LEAST(
     100,
@@ -123,4 +139,7 @@ SELECT
 FROM scored
 LEFT JOIN strongest_repos
   ON strongest_repos.agent_id = scored.agent_id
-  AND strongest_repos.rn = 1;
+  AND strongest_repos.rn = 1
+LEFT JOIN strongest_external_repos
+  ON strongest_external_repos.agent_id = scored.agent_id
+  AND strongest_external_repos.rn = 1;
