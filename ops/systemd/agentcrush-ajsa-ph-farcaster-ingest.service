@@ -1,0 +1,13 @@
+[Unit]
+Description=AgentCrush Ajsa PH / YZI / YC / Farcaster ingest
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/ajsa
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-ajsa-ph-farcaster-ingest.lock \
+  /usr/bin/node /opt/agentcrush/ajsa/ajsa-ingest-ph-farcaster.mjs --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-ajsa-ph-farcaster-ingest

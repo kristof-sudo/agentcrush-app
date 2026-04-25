@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush Ajsa PH / YZI / YC / Farcaster ingest — daily at 04:35 UTC
+Requires=agentcrush-ajsa-ph-farcaster-ingest.service
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+Persistent=false
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target
