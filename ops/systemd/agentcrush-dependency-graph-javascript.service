@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush dependency graph refresh — javascript preset
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/scanner
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-dependency-graph-javascript.lock \
+  /usr/bin/node /opt/agentcrush/scanner/signals/dependency-graph-worker.mjs \
+  --write --source search --preset javascript --limit 100
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-dependency-graph-javascript

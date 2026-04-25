@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush dependency graph refresh — multiagent preset
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/scanner
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-dependency-graph-multiagent.lock \
+  /usr/bin/node /opt/agentcrush/scanner/signals/dependency-graph-worker.mjs \
+  --write --source search --preset multiagent --limit 100
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-dependency-graph-multiagent

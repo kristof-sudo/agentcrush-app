@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush dependency graph refresh — multiagent preset (weekly Sunday 06:00 UTC)
+
+[Timer]
+OnCalendar=Sun *-*-* 06:00:00 UTC
+Persistent=false
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target
