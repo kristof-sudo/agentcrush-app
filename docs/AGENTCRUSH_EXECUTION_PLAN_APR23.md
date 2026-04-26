@@ -256,12 +256,12 @@ Your product is good enough to win if found. It's not found. Every distribution 
 - [ ] Commit to weekly cast cadence: every Monday morning "Rising Now" post (automated draft, manual approve)
 - [ ] Engage in /ai and /agents channels — 15 min/day, 4 days/week
 
-### 4C — Second x402 endpoint (verification-status at $0.005)
+### 4C — Second x402 endpoint (verification-status at $0.005) ✅ COMPLETE (Apr 26)
 
-- [ ] Build `/api/agent/[handle]/verification-status` endpoint (simple: handle, verified, claim_status, last_updated)
-- [ ] Wrap with x402 at $0.005
-- [ ] Add Bazaar metadata with category "reputation", tags ["identity", "verification", "kya"]
-- [ ] Deploy
+- [x] Build `/api/agent/[handle]/verification-status` endpoint ✅ Done — returns handle, verified, claim_status, last_updated, erc8004_registered
+- [x] Wrap with x402 at $0.005 ✅ Done
+- [x] Add Bazaar metadata with category "reputation", tags ["identity", "verification", "kya"] ✅ Done
+- [x] Deploy ✅ Done
 
 ### 4D — MCP server
 
@@ -285,10 +285,11 @@ Your product is good enough to win if found. It's not found. Every distribution 
 
 ### 4G — Comparison pages (SEO play)
 
-- [ ] Build `/compare/[handle1]-vs-[handle2]` dynamic route
-- [ ] Auto-generate for top 50 most-searched agent pairs (seeded from internal logic, not query logs we don't yet have)
-- [ ] Include: side-by-side scores, 30-day score charts, ecosystem overlap from agent_relationships, 200-word LLM-generated verdict (Kris approves via Telegram)
-- [ ] Submit updated sitemap to Google
+- [x] Build `/compare/[handle1]-vs-[handle2]` dynamic route ✅ Done — scaffold v1 live (Apr 26, commit 61947b0). Includes agent cards, score/rank, evidence signals (6 v2 bars), ERC-8004 trust context, 30d trend, recent events. 404 guards for invalid slugs, same handle, missing agents.
+- [ ] Sitemap entries for top 50 most-searched agent pairs — next sprint
+- [ ] Internal links from agent profile pages to comparison pages — next sprint
+- [ ] 200-word LLM-generated verdict (Kris approves via Telegram) — deferred until SEO value confirmed
+- [ ] Submit updated sitemap to Google — after sitemap generation done
 
 ### 4H — VS Code extension (lower priority, good attention play)
 
@@ -312,50 +313,67 @@ Each sub-section above is an independent Claude Code job. Ship in order 4A → 4
 
 ---
 
-## 5. ERC-8004 INTEGRATION EXPLORATION
+## 5. ERC-8004 INTEGRATION EXPLORATION ✅ v1 COMPLETE (Apr 26)
 
 **Priority: 4 (strategic, not urgent — exploration before commitment)**
-**Effort: 1 week exploration, then 1-2 weeks implementation if green-lit**
+**v1 status: SHIPPED — reader + storage + profile/API surface**
+**v2 status: gate reached, awaiting Kris go/no-go**
+**v3 status: deferred (v2 scoring must stabilize first)**
+
+Full design doc: `docs/ERC8004_INTEGRATION_EXPLORATION.md`
 
 ### The framing (clarified from prior conversation)
 
 AgentCrush stays multi-registry-neutral. ERC-8004 becomes one of several output channels, alongside Bazaar discovery, Fetch.ai Agentverse, and SEO. Integration = you publish attestations to ERC-8004 and read from it, not that you depend on it exclusively.
 
-### Exploration phase (before coding)
+### Exploration phase ✅ COMPLETE
 
-- [ ] Read ERC-8004 spec in full (Ethereum Foundation docs)
-- [ ] Read related: ERC-8183 (agentic commerce / Virtuals), ERC-8126 (agent verification / risk scoring)
-- [ ] Review 8004scan.io — look at existing agent registrations, what data is on-chain
-- [ ] Identify: which AgentCrush agents overlap with existing ERC-8004 registrations? (Cross-reference agent handles / GitHub names with registered agents)
-- [ ] Write 1-page "ERC-8004 integration design doc": what we read, what we write, architecture, costs, risks
-- [ ] Kris review design doc before green-lighting implementation
+- [x] Read ERC-8004 spec in full ✅ Done
+- [x] Read related: ERC-8183 (agentic commerce / Virtuals), ERC-8126 (agent verification / risk scoring) ✅ Done
+- [x] Review 8004scan.io ✅ Done — 163,000+ registered agents; public REST API available unauthenticated
+- [x] Identify overlapping agents ✅ Done — 2/20 evidence-ranked checked (10% overlap meets Phase 2 gate): agentlab + crewai
+- [x] Write ERC-8004 integration design doc ✅ Done — `docs/ERC8004_INTEGRATION_EXPLORATION.md`
 
-### Implementation phase (only if exploration concludes it's worth it)
+### v1 Implementation ✅ COMPLETE (Apr 26)
 
-- [ ] Register AgentCrush itself as an ERC-8004 agent (identity registration)
-- [ ] Build ERC-8004 reader: for each agent on AgentCrush, check if it has an ERC-8004 registration, pull on-chain reputation and validation data
-- [ ] Surface ERC-8004 state in agent profile pages (if agent has registration, show "Registered on ERC-8004" badge + link)
-- [ ] Surface ERC-8004 state in trust-summary API response
-- [ ] Build ERC-8004 writer: publish AgentCrush score as an on-chain reputation attestation (this is the value-add flow)
-- [ ] Gas budget: attestations cost gas. Start with top-100 agents only. Write attestations weekly, not per-scoring-run.
+- [x] Build ERC-8004 reader prototype (`scripts/erc8004-reader-prototype.mjs`) ✅ Done — queries 8004scan.io, read-only, no auth, no gas
+- [x] Migration: `agent_erc8004_registrations` table ✅ Applied
+- [x] Sync script (`scripts/sync-erc8004-registrations.mjs`) with `--write` mode ✅ Done — 2 rows upserted (agentlab, crewai)
+- [x] Surface ERC-8004 state in agent profile pages ✅ Done — "◆ ERC-8004 Registered" panel with chain, token, x402 support, source
+- [x] Surface ERC-8004 state in trust-summary API response ✅ Done — full `erc8004` object
+- [x] Surface ERC-8004 state in verification-status API response ✅ Done — `erc8004_registered: boolean`
+- [x] Bug fix: service role key required to bypass RLS on `agent_erc8004_registrations` ✅ Fixed (commit ec02916)
 
-### Strategic framing
+### v2 — Ingestion discovery (next, awaiting go/no-go)
 
-If ERC-8004 adoption scales, AgentCrush becomes the natural "reputation provider" for it — the project that makes ERC-8004 data useful rather than just present. That's the acquirable-asset positioning. Don't say that out loud.
+Gate: run sync against full evidence_ranked set (--limit 50), confirm ≥5 confirmed matches. Bring to Kris for single-sentence go/no-go.
 
-### Tasks for build chat / Claude Code
+- [ ] Run `scripts/sync-erc8004-registrations.mjs --limit 50 --write` against full evidence_ranked set
+- [ ] Confirm ≥5 confirmed matches (already at 2/20 → 10%, expect ≥5/50)
+- [ ] Kris go/no-go decision
+- [ ] If go: build ERC-8004 ingestion pipeline — new agents from ERC-8004 registry routed into review queue
+- [ ] Add `agent_registry_links` table (see design doc Section 5 schema)
 
-- [ ] [exploration tasks above]
-- [ ] Once green-lit: design ERC-8004 integration schema
-- [ ] Implement reader first (read-only is lower risk)
-- [ ] Implement writer after reader is stable (on-chain transactions)
-- [ ] Monitor gas costs, cap monthly spend
+### v3 — Writer (future, hard prerequisites)
+
+- [ ] v2 scoring confirmed stable across ≥8 consecutive Sunday tier-promotion runs
+- [ ] Score methodology public at `/how-we-rank`
+- [ ] Gas cap defined and enforced
+- [ ] Dedicated attestation wallet (separate from x402 seller wallet)
+- [ ] Legal review completed
+- [ ] Then: publish AgentCrush reputation attestations to ERC-8004 Reputation Registry (top-100 agents, weekly, Base mainnet first)
+
+### Register AgentCrush itself as ERC-8004 agent
+
+- [ ] Register AgentCrush as an ERC-8004 agent identity (symbolic positioning, makes AgentCrush the first AI ranking tool with on-chain identity)
+- [ ] Consider timing: announce alongside a catalyst event for maximum visibility
 
 ### Success criteria
 
-- Exploration doc delivered and reviewed within 10 days
-- If proceeded: ERC-8004 reader live, surfaces data for overlapping agents within 30 days
-- If proceeded: first reputation attestation published to ERC-8004 within 45 days
+- ✅ Exploration doc delivered and reviewed
+- ✅ v1 reader live, surfacing data for overlapping agents
+- ⬜ v2 ingestion pipeline (gate: Kris go/no-go after full evidence_ranked scan)
+- ⬜ First reputation attestation published (gate: v2 scoring stable + legal review)
 
 ---
 

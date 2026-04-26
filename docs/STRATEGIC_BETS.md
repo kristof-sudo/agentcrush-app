@@ -78,15 +78,25 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 - ERC-8004 transferability concerns (reputation can be moved with NFT transfer)
 - Solo builders and small teams may never care about being on-chain
 
+**Evidence for (updated Apr 26):**
+- ERC-8004 Phase 1 reader prototype complete: 8004scan.io public API accessible, no auth, 163,000+ registered agents
+- First overlap scan: 2/20 AgentCrush evidence-ranked agents matched (10% overlap rate — meets Phase 2 gate)
+  - `agentlab` → Ethereum mainnet, token #9634
+  - `crewai` → Base mainnet, token #17997, **x402_supported: true** (same stack as AgentCrush seller)
+- CrewAI's ERC-8004 registration on Base with x402 support is the first concrete evidence of ERC-8004 + x402 stack overlap in the wild
+- `agent_erc8004_registrations` table live; sync script writes confirmed matches; profile pages and trust-summary API now surface registration state
+
 **Dependent actions:**
-- ERC-8004 exploration phase (read spec, prototype reader, write design doc)
-- If exploration green-lit: ship ERC-8004 reader and writer
-- Fetch.ai / Agentverse registration in Weeks 2-3
-- Multi-registry architecture maintained in AgentCrush core schema
+- ✅ ERC-8004 exploration phase complete — `docs/ERC8004_INTEGRATION_EXPLORATION.md` written
+- ✅ ERC-8004 reader v1 shipped — storage, profile surface, API surface
+- ⬜ ERC-8004 v2 ingestion (go/no-go pending: run full evidence_ranked scan, present to Kris)
+- ⬜ ERC-8004 v3 writer (gate: v2 scoring stable ≥8 Sunday runs + legal review)
+- ⬜ Fetch.ai / Agentverse registration — not started
+- Multi-registry neutrality maintained in schema and strategy
 
 **Retirement criteria:** If by August 2026 ERC-8004 registrations plateau (under 10% quarterly growth) AND no meaningful application layer emerges on top of the standard AND a clear closed-ecosystem winner captures >80% of machine commerce volume, reduce this lane to maintenance-only.
 
-**Last reviewed:** April 24, 2026
+**Last reviewed:** April 26, 2026
 
 ---
 
@@ -178,6 +188,8 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 **April 24, 2026 (incremental update):** Added YZI Labs and Y Combinator to Bet D's potential acquirers/partners list. YZI Labs as strong potential acquirer aligned with crypto+AI thesis; YC as ecosystem-monitoring channel. No bet changes. Also clarified scoring signal architecture — Product Hunt and Farcaster confirmed as Ajsa monitoring inputs, not scoring signals. Reddit confirmed as the sole social/discourse scoring signal in current Layer 1B.
 
 **April 26, 2026 (Phase 5 update):** No bet changes. Confirming momentum on Bet A — tiered evidence-ranking model shipped, x402 trust-summary/history now return `tier` field, first machine payment landed Apr 22, Farcaster reactivated as distribution channel via Neynar. Bet A signals remain positive. Reddit scoring still blocked pending API approval; this affects Bet A's signal coverage but does not change the bet. HN signal integration live. Package-download timer active. v2 scoring stability to be confirmed over coming Sunday tier-promotion runs before any Bet A re-evaluation is warranted.
+
+**April 26, 2026 (ERC-8004 v1 + comparison pages update):** Bet B advances from exploration to v1 live. ERC-8004 reader prototype confirmed 10% overlap rate with evidence-ranked agents. `agent_erc8004_registrations` table live. Profile pages and trust-summary/verification-status APIs now surface ERC-8004 state via service role key. Key finding: CrewAI's ERC-8004 registration is on Base with `x402_supported: true` — this is the first confirmed real-world overlap between the ERC-8004 open ecosystem and the x402 closed ecosystem. Strengthens both Bet A and Bet B simultaneously. Phase 2 (ingestion discovery) go/no-go pending after full evidence_ranked scan. Comparison pages scaffold v1 also shipped — new SEO surface for discovery. No bet changes. Multi-registry neutrality confirmed.
 
 **Next monthly review:** First Sunday of June 2026
 
