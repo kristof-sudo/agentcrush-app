@@ -101,7 +101,7 @@ function getIndexedFreshnessMeta(value) {
   const ts = new Date(value).getTime()
   if (Number.isNaN(ts)) return null
   const diffHours = (Date.now() - ts) / 3600000
-  if (diffHours <= 48) {
+  if (diffHours <= 96) {
     return {
       label: `${formatRelativeTime(value)} · latest`,
       isStale: false,
@@ -539,14 +539,18 @@ export default async function Home() {
                 <div className="grid gap-3 sm:grid-cols-2">
 
                   {/* Just Indexed */}
-                  <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden">
+                  <div className="relative rounded-lg border border-white/[0.08] bg-[#0a0a14] overflow-hidden">
                     <CornerAccent />
                     <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[10px] text-amber-400">✦</span>
-                        <span className="font-mono text-xs font-bold text-white">RECENTLY INDEXED</span>
+                        <span className={`font-mono text-[10px] ${indexedFreshness?.isStale ? 'text-white/30' : 'text-amber-400'}`}>✦</span>
+                        <span className="font-mono text-xs font-bold text-white">{indexedFreshness?.isStale ? 'INDEX ACTIVITY' : 'RECENTLY INDEXED'}</span>
                       </div>
-                      <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">All →</Link>
+                      {indexedFreshness?.isStale ? (
+                        <Link href="/explore" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">Explore →</Link>
+                      ) : (
+                        <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">All →</Link>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-1.5 p-2">
                       {(recentAgents || []).slice(0, 12).map((a) => {
@@ -554,7 +558,7 @@ export default async function Home() {
                         const displayName = a.display_name || a.handle || '?'
                         return (
                           <Link key={a.id} href={`/agent/${encodeURIComponent(a.handle)}`}
-                            className="flex items-center gap-1.5 rounded border border-white/[0.05] bg-white/[0.015] px-2 py-1.5 hover:bg-white/[0.04] hover:border-white/[0.09] transition-colors min-w-0">
+                            className="flex items-center gap-1.5 rounded border border-white/[0.07] bg-white/[0.02] px-2 py-1.5 hover:bg-white/[0.04] hover:border-white/[0.09] transition-colors min-w-0">
                             <div className={`h-5 w-5 shrink-0 rounded overflow-hidden border border-white/[0.07] flex items-center justify-center ${!avatarUrl ? avatarColor(a.handle) : 'bg-white/[0.04]'}`}>
                               {avatarUrl ? (
                                 <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
@@ -563,9 +567,9 @@ export default async function Home() {
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="font-mono text-[10px] font-medium text-white/75 truncate">{displayName}</div>
+                              <div className="font-mono text-[10px] font-medium text-white/80 truncate">{displayName}</div>
                               {a.archetype && (
-                                <div className="font-mono text-[9px] text-white/25 truncate">{a.archetype}</div>
+                                <div className="font-mono text-[9px] text-white/35 truncate">{a.archetype}</div>
                               )}
                             </div>
                           </Link>
@@ -579,8 +583,12 @@ export default async function Home() {
                       ))}
                     </div>
                     <div className="border-t border-white/[0.04] px-3 py-1">
-                      {indexedFreshness ? (
-                        <span className={`font-mono text-[10px] ${indexedFreshness.isStale ? 'text-white/[0.28]' : 'text-white/20'}`}>
+                      {indexedFreshness?.isStale ? (
+                        <span className="font-mono text-[10px] text-white/30">
+                          {(agentCount ?? 0).toLocaleString()}+ agents tracked · indexing run pending
+                        </span>
+                      ) : indexedFreshness ? (
+                        <span className="font-mono text-[10px] text-white/35">
                           {indexedFreshness.label}
                         </span>
                       ) : null}
