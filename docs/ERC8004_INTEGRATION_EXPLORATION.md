@@ -485,6 +485,65 @@ Do not add `agent_registry_links` schema or surface ERC-8004 data on profile pag
 
 ---
 
+## 12. Storage + Sync (Phase 1 — Read-Only Integration)
+
+**Date:** April 26, 2026  
+**Status:** Migration written, not yet applied. Sync script ready. No DB writes made yet.
+
+### Storage table
+
+**Migration:** `supabase/migrations/20260426_1800_create_agent_erc8004_registrations.sql`  
+**Status:** Written. Must be applied manually via Supabase dashboard before `--write` mode works.
+
+Table: `agent_erc8004_registrations` — stores confident ERC-8004 matches for AgentCrush agents. Read-only external data. No scoring impact. Unique constraint: `(agent_id, chain_id, registry_address, token_id)`.
+
+Key columns: `agent_id` (FK → agents), `chain_id` (eip155:N), `registry_address`, `token_id`, `match_confidence` (0.0–1.0 numeric), `match_reasons` (text[]), `x402_supported` (bool), `source` (default 'scan'), `raw_reference` (jsonb).
+
+### Sync script
+
+**Path:** `scripts/sync-erc8004-registrations.mjs`
+
+```bash
+# Dry-run (no DB writes — safe to run anytime):
+node scripts/sync-erc8004-registrations.mjs --limit 20 --output /tmp/erc8004-sync-report.json
+
+# Single agent dry-run:
+node scripts/sync-erc8004-registrations.mjs --handle crewai
+
+# Write mode (requires migration applied + SUPABASE_SERVICE_ROLE_KEY in .env.local):
+node scripts/sync-erc8004-registrations.mjs --limit 50 --write --output /tmp/erc8004-sync-report.json
+```
+
+**Confidence thresholds:**
+- `high` (1.0), `medium-high` (0.75), `medium` (0.5) → written to DB in write mode
+- `low` (0.25) → report only, never written to DB
+
+**Write mode requirements:**
+- `supabase/migrations/20260426_1800_create_agent_erc8004_registrations.sql` must be applied
+- `SUPABASE_SERVICE_ROLE_KEY` must be set in `.env.local`
+- Uses Supabase upsert on conflict `(agent_id, chain_id, registry_address, token_id)`
+
+### What this does not do
+
+- Does not write to ERC-8004 contracts (no blockchain write, no private key)
+- Does not affect scoring, rankings, or public UI
+- Does not surface ERC-8004 data on agent profile pages (next step, not yet built)
+- Does not auto-ingest new ERC-8004 agents into the AgentCrush index
+- Does not run on a schedule yet (VPS worker not added)
+
+### Next step: public surfacing
+
+After the migration is applied and a first `--write` sync is verified:
+
+- [ ] Add `erc8004_registered` + `erc8004_chain` convenience columns to `agents` (optional, if badge display speed matters)
+- [ ] Surface a small "Registered on ERC-8004" chip on agent profile pages (read from `agent_erc8004_registrations`)
+- [ ] Add `erc8004` field to `trust-summary` x402 endpoint response
+- [ ] Add a VPS worker or cron job to keep `last_checked_at` fresh weekly
+
+Do not proceed to public surfacing until the first `--write` sync completes cleanly.
+
+---
+
 ## Sources
 
 Primary:

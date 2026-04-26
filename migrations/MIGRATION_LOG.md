@@ -8,6 +8,14 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-04-26
+- `supabase/migrations/20260426_1800_create_agent_erc8004_registrations.sql` — Read-only ERC-8004
+  identity registry match storage. Table `agent_erc8004_registrations` with FK to agents, unique
+  constraint on (agent_id, chain_id, registry_address, token_id), indexes on agent_id,
+  agent_handle, x402_supported, last_checked_at, chain_id, match_confidence. No scoring impact.
+  Populated by `scripts/sync-erc8004-registrations.mjs --write`.
+  **STATUS: Written, requires manual apply via Supabase dashboard.**
+
 ### 2026-04-25
 - `supabase/migrations/20260425_1600_add_agents_tier.sql` — Phase 5.1 tiered indexing foundation.
   Adds agents.tier (text NOT NULL DEFAULT 'indexed', CHECK IN evidence_ranked/indexed/archived),
