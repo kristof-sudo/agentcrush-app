@@ -713,9 +713,14 @@ export default async function AgentPage({ params }) {
   }
 
   // ERC-8004 registration context — read-only, no scoring impact
+  // Uses service role to bypass RLS (table has no public SELECT policy)
   let erc8004Registration = null
   try {
-    const { data: erc8004Row } = await supabase
+    const svcForErc = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+    const { data: erc8004Row } = await svcForErc
       .from('agent_erc8004_registrations')
       .select('erc8004_name, chain_id, chain_name, token_id, x402_supported, match_confidence, source')
       .eq('agent_id', agent.id)

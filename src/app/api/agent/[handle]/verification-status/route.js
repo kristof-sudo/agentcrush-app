@@ -47,11 +47,16 @@ export async function GET(_req, context) {
 
   let erc8004Registered = false
   try {
-    const { count } = await supabase
-      .from('agent_erc8004_registrations')
-      .select('id', { count: 'exact', head: true })
-      .eq('agent_handle', agent.handle)
-    erc8004Registered = (count || 0) > 0
+    const svcUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (svcUrl && svcKey) {
+      const svcDb = createClient(svcUrl, svcKey)
+      const { count } = await svcDb
+        .from('agent_erc8004_registrations')
+        .select('id', { count: 'exact', head: true })
+        .eq('agent_handle', agent.handle)
+      erc8004Registered = (count || 0) > 0
+    }
   } catch {
     // safe to ignore
   }

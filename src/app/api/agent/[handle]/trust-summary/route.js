@@ -64,22 +64,27 @@ export async function GET(_req, context) {
 
   let erc8004 = { registered: false, chain_id: null, chain_name: null, token_id: null, x402_supported: null, match_confidence: null, source: null }
   try {
-    const { data: erc8004Row } = await supabase
-      .from('agent_erc8004_registrations')
-      .select('chain_id, chain_name, token_id, x402_supported, match_confidence, source')
-      .eq('agent_id', agent.id)
-      .order('match_confidence', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (erc8004Row) {
-      erc8004 = {
-        registered:       true,
-        chain_id:         erc8004Row.chain_id,
-        chain_name:       erc8004Row.chain_name ?? null,
-        token_id:         erc8004Row.token_id,
-        x402_supported:   erc8004Row.x402_supported ?? null,
-        match_confidence: erc8004Row.match_confidence ?? null,
-        source:           erc8004Row.source ?? '8004scan',
+    const svcUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const svcKey  = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (svcUrl && svcKey) {
+      const svcDb = createClient(svcUrl, svcKey)
+      const { data: erc8004Row } = await svcDb
+        .from('agent_erc8004_registrations')
+        .select('chain_id, chain_name, token_id, x402_supported, match_confidence, source')
+        .eq('agent_id', agent.id)
+        .order('match_confidence', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (erc8004Row) {
+        erc8004 = {
+          registered:       true,
+          chain_id:         erc8004Row.chain_id,
+          chain_name:       erc8004Row.chain_name ?? null,
+          token_id:         erc8004Row.token_id,
+          x402_supported:   erc8004Row.x402_supported ?? null,
+          match_confidence: erc8004Row.match_confidence ?? null,
+          source:           erc8004Row.source ?? '8004scan',
+        }
       }
     }
   } catch {
