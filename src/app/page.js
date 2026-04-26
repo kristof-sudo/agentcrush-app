@@ -575,18 +575,18 @@ export default async function Home() {
                         const displayName = a.display_name || a.handle || '?'
                         return (
                           <Link key={a.id} href={`/agent/${encodeURIComponent(a.handle)}`}
-                            className="flex items-center gap-1.5 rounded border border-white/[0.07] bg-white/[0.02] px-2 py-1.5 hover:bg-white/[0.04] hover:border-white/[0.09] transition-colors min-w-0">
-                            <div className={`h-5 w-5 shrink-0 rounded overflow-hidden border border-white/[0.07] flex items-center justify-center ${!avatarUrl ? avatarColor(a.handle) : 'bg-white/[0.04]'}`}>
+                            className="flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.02] px-2 py-1.5 hover:bg-white/[0.04] hover:border-white/[0.13] transition-colors min-w-0">
+                            <div className={`h-6 w-6 shrink-0 rounded overflow-hidden border border-white/[0.09] flex items-center justify-center ${!avatarUrl ? avatarColor(a.handle) : 'bg-white/[0.04]'}`}>
                               {avatarUrl ? (
                                 <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
                               ) : (
-                                <span className="font-mono text-[7px] font-bold">{displayName[0].toUpperCase()}</span>
+                                <span className="font-mono text-[8px] font-bold">{displayName[0].toUpperCase()}</span>
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="font-mono text-[10px] font-medium text-white/80 truncate">{displayName}</div>
+                              <div className="font-mono text-xs font-semibold text-white/90 truncate">{displayName}</div>
                               {a.archetype && (
-                                <div className="font-mono text-[9px] text-white/35 truncate">{a.archetype}</div>
+                                <div className="font-mono text-[10px] text-white/40 truncate">{a.archetype}</div>
                               )}
                             </div>
                           </Link>
