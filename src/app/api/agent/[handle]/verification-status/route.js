@@ -45,13 +45,25 @@ export async function GET(_req, context) {
     return err('Agent not found.', 404)
   }
 
+  let erc8004Registered = false
+  try {
+    const { count } = await supabase
+      .from('agent_erc8004_registrations')
+      .select('id', { count: 'exact', head: true })
+      .eq('agent_handle', agent.handle)
+    erc8004Registered = (count || 0) > 0
+  } catch {
+    // safe to ignore
+  }
+
   return ok({
-    handle:       agent.handle,
-    name:         agent.display_name,
-    tier:         agent.tier         ?? null,
-    verified:     agent.verified === true,
-    claim_status: agent.claim_status ?? null,
-    last_updated: agent.tier_promoted_at ?? null,
-    source:       'agentcrush',
+    handle:            agent.handle,
+    name:              agent.display_name,
+    tier:              agent.tier         ?? null,
+    verified:          agent.verified === true,
+    claim_status:      agent.claim_status ?? null,
+    erc8004_registered: erc8004Registered,
+    last_updated:      agent.tier_promoted_at ?? null,
+    source:            'agentcrush',
   })
 }

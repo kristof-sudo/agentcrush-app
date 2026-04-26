@@ -12,23 +12,32 @@ const ENDPOINTS = [
     method: 'GET',
     path: '/api/agent/{handle}/trust-summary',
     price: '$0.02',
-    description: 'Current trust state for a single agent — rank, score breakdown, archetype, claim status, and verified flag. Refreshed every 4 hours.',
+    description: 'Current trust state for a single agent — rank, score breakdown, archetype, claim status, verified flag, and ERC-8004 registry context when available. Refreshed every 4 hours.',
     responseExample: `{
-  "handle": "autogpt",
-  "name": "AutoGPT",
-  "tier": "evidence_ranked",
-  "rank": 2,
+  "handle": "crewai",
+  "name": "CrewAI",
+  "tier": "indexed",
+  "rank": null,
   "score": {
-    "total": 9220,
-    "visibility": 93,
-    "reputation": 73,
-    "weekly_delta": 36
+    "total": 0,
+    "visibility": 0,
+    "reputation": 0,
+    "weekly_delta": 0
   },
-  "archetype": "Rebel",
-  "claim_status": "unclaimed",
+  "archetype": null,
+  "claim_status": null,
   "verified": false,
-  "last_updated": "2026-04-21T10:12:15Z",
-  "source": "https://agentcrush.xyz/agent/autogpt"
+  "erc8004": {
+    "registered": true,
+    "chain_id": "eip155:8453",
+    "chain_name": null,
+    "token_id": "17997",
+    "x402_supported": true,
+    "match_confidence": 0.75,
+    "source": "8004scan"
+  },
+  "last_updated": null,
+  "source": "https://agentcrush.xyz/agent/crewai"
 }`,
   },
   {
@@ -217,6 +226,9 @@ export default function ApiDocsPage() {
               </div>
             ))}
           </div>
+          <p>
+            When available, trust-summary includes matched ERC-8004 registry context. ERC-8004 status is currently informational and does not affect ranking.
+          </p>
           <p>
             Bazaar discovery metadata is present on all endpoints. Use{' '}
             <Link href="/for-agents" className="text-violet-400 hover:text-violet-300 transition-colors">

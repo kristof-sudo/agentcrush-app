@@ -712,6 +712,21 @@ export default async function AgentPage({ params }) {
     // claim_requests table may not be migrated yet — safe to ignore
   }
 
+  // ERC-8004 registration context — read-only, no scoring impact
+  let erc8004Registration = null
+  try {
+    const { data: erc8004Row } = await supabase
+      .from('agent_erc8004_registrations')
+      .select('erc8004_name, chain_id, chain_name, token_id, x402_supported, match_confidence, source')
+      .eq('agent_id', agent.id)
+      .order('match_confidence', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    erc8004Registration = erc8004Row ?? null
+  } catch {
+    // safe to ignore
+  }
+
   const displayName = getAgentDisplayName(agent)
   const archetype = getAgentArchetype(agent)
   const bioText = getAgentShortDescription(agent)
@@ -1062,6 +1077,30 @@ export default async function AgentPage({ params }) {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ── 5b. ERC-8004 REGISTRY CONTEXT ────────────────────────────── */}
+        {erc8004Registration && (
+          <div style={PANEL}>
+            <CornerAccentsServer color="#34d399" />
+            <div style={{ ...LABEL_STYLE, marginBottom: 8, color: '#34d399' }}>◆ ERC-8004 Registered</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px', marginBottom: 8 }}>
+              {[
+                { label: 'Chain', value: erc8004Registration.chain_name || erc8004Registration.chain_id },
+                { label: 'Token', value: `#${erc8004Registration.token_id}` },
+                ...(erc8004Registration.x402_supported ? [{ label: 'x402', value: 'Supported' }] : []),
+                { label: 'Source', value: erc8004Registration.source || '8004scan' },
+              ].map((row) => (
+                <div key={row.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={LABEL_STYLE}>{row.label}</span>
+                  <span style={{ fontSize: 12, color: row.label === 'x402' ? '#34d399' : '#e2e8f0' }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 10, color: 'rgba(226,232,240,0.30)', lineHeight: 1.5, margin: 0 }}>
+              This agent has a matched ERC-8004 registration. AgentCrush uses this as registry context only; it does not currently affect ranking.
+            </p>
           </div>
         )}
 
