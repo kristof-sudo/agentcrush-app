@@ -1156,6 +1156,31 @@ export default async function AgentPage({ params }) {
           </div>
         )}
 
+        {/* ── EMBED BADGE CTA ──────────────────────────────────────── */}
+        {agent.tier !== 'archived' && (
+          <div style={PANEL}>
+            <div style={{ ...LABEL_STYLE, marginBottom: 8 }}>Embed your rank</div>
+            <p style={{ fontSize: 10, color: 'rgba(226,232,240,0.35)', marginBottom: 8, lineHeight: 1.5 }}>
+              Show your AgentCrush rank on your own website or README.
+            </p>
+            <pre style={{
+              margin: 0,
+              fontSize: 9,
+              lineHeight: 1.7,
+              color: 'rgba(226,232,240,0.55)',
+              background: 'rgba(255,255,255,0.025)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 3,
+              padding: '8px 10px',
+              overflowX: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+            }}>{`<a href="https://www.agentcrush.xyz/agent/${agent.handle}?utm_source=badge&utm_medium=embed&utm_campaign=agent_badge">
+  <img src="https://www.agentcrush.xyz/embed/${agent.handle}.svg" alt="AgentCrush rank badge for ${displayName}" />
+</a>`}</pre>
+          </div>
+        )}
+
         <div style={{ height: 20 }} />
       </div>
 

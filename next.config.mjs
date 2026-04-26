@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/embed/:handle.svg',
+        destination: '/embed/:handle',
+      },
+    ]
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.artificialintelligence-news.com' },
