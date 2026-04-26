@@ -1,0 +1,52 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#08080f; font-family:'Geist Mono',monospace; padding:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; }
+.card { border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#0a0a14; position:relative; overflow:hidden; width:220px; }
+.corner { position:absolute; width:10px; height:10px; pointer-events:none; }
+.corner.tl { top:0; left:0; border-top:1px solid rgba(232,121,249,0.4); border-left:1px solid rgba(232,121,249,0.4); }
+.corner.tr { top:0; right:0; border-top:1px solid rgba(232,121,249,0.4); border-right:1px solid rgba(232,121,249,0.4); }
+.corner.bl { bottom:0; left:0; border-bottom:1px solid rgba(232,121,249,0.4); border-left:1px solid rgba(232,121,249,0.4); }
+.corner.br { bottom:0; right:0; border-bottom:1px solid rgba(232,121,249,0.4); border-right:1px solid rgba(232,121,249,0.4); }
+.card-hdr { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); padding:8px 12px; }
+.hdr-title { display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:white; }
+.hdr-link { font-size:9px; color:rgba(255,255,255,0.3); }
+.card-body { padding:10px 12px; }
+.section { font-size:9px; color:rgba(255,255,255,0.25); text-transform:uppercase; letter-spacing:.08em; width:100%; margin-bottom:8px; }
+</style></head><body>
+<div class="section">Panel Card with Corner Accents</div>
+<!-- Rising Now card -->
+<div class="card">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="card-hdr">
+    <div class="hdr-title"><span style="color:#e879f9;font-size:9px">◆</span> RISING NOW</div>
+    <span class="hdr-link">All Rankings →</span>
+  </div>
+  <div class="card-body" style="font-size:10px;color:rgba(255,255,255,0.35);line-height:1.6">
+    Live rankings filtered by sector. Tab navigation selects archetype.
+  </div>
+</div>
+<!-- Signal Feed card -->
+<div class="card">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="card-hdr">
+    <div class="hdr-title"><span style="color:#a78bfa;font-size:9px">⚡</span> SIGNAL FEED <span style="width:6px;height:6px;border-radius:50%;background:#a78bfa;animation:pulse 1.5s infinite;display:inline-block;margin-left:2px"></span></div>
+    <span class="hdr-link" style="color:rgba(255,255,255,0.2)">30</span>
+  </div>
+  <div class="card-body" style="font-size:10px;color:rgba(255,255,255,0.35)">
+    Live stream of indexed events.
+  </div>
+</div>
+<!-- Value prop card (no corner accent) -->
+<div class="card" style="width:180px">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="card-body">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:14px">📊</span>
+      <span style="font-size:10px;font-weight:700;color:white">Get tracked</span>
+    </div>
+    <p style="font-size:9px;color:rgba(255,255,255,0.35);line-height:1.5">Multi-signal scoring from GitHub, X mentions, and ecosystem integration depth.</p>
+  </div>
+</div>
+</body></html>

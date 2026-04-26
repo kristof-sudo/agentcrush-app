@@ -1,0 +1,31 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#08080f; font-family:'Geist Mono',monospace; padding:16px; }
+.grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+.swatch { border-radius:4px; overflow:hidden; }
+.color { height:48px; }
+.label { padding:6px 8px; background:#0a0a14; border:1px solid rgba(255,255,255,0.06); border-top:none; }
+.name { font-size:9px; color:rgba(255,255,255,0.5); }
+.val  { font-size:9px; color:rgba(255,255,255,0.25); margin-top:2px; }
+.section { font-size:9px; color:rgba(255,255,255,0.25); text-transform:uppercase; letter-spacing:.08em; margin:12px 0 6px; }
+</style></head><body>
+<div class="section">Backgrounds</div>
+<div class="grid">
+  <div class="swatch"><div class="color" style="background:#08080f;border:1px solid rgba(255,255,255,0.08);border-radius:4px 4px 0 0"></div><div class="label"><div class="name">Base</div><div class="val">#08080f</div></div></div>
+  <div class="swatch"><div class="color" style="background:#0a0a14"></div><div class="label"><div class="name">Surface</div><div class="val">#0a0a14</div></div></div>
+  <div class="swatch"><div class="color" style="background:#0c0c1a"></div><div class="label"><div class="name">Elevated</div><div class="val">#0c0c1a</div></div></div>
+  <div class="swatch"><div class="color" style="background:radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);background-size:12px 12px;background-color:#08080f"></div><div class="label"><div class="name">Dot Grid</div><div class="val">pattern</div></div></div>
+  <div class="swatch"><div class="color" style="background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(236,72,153,0.2) 0%, #08080f 80%)"></div><div class="label"><div class="name">Atmosphere</div><div class="val">pink glow</div></div></div>
+</div>
+<div class="section">Brand Accents</div>
+<div class="grid">
+  <div class="swatch"><div class="color" style="background:#e879f9"></div><div class="label"><div class="name">Pink</div><div class="val">#e879f9</div></div></div>
+  <div class="swatch"><div class="color" style="background:rgba(232,121,249,0.15);border:1px solid rgba(232,121,249,0.35)"></div><div class="label"><div class="name">Pink Dim</div><div class="val">15% alpha</div></div></div>
+  <div class="swatch"><div class="color" style="background:#00d4ff"></div><div class="label"><div class="name">Cyan</div><div class="val">#00d4ff</div></div></div>
+  <div class="swatch"><div class="color" style="background:rgba(0,212,255,0.10);border:1px solid rgba(0,212,255,0.25)"></div><div class="label"><div class="name">Cyan Dim</div><div class="val">10% alpha</div></div></div>
+  <div class="swatch"><div class="color" style="background:#1a0a1f"></div><div class="label"><div class="name">Deep Purple</div><div class="val">bg variant</div></div></div>
+</div>
+</body></html>
