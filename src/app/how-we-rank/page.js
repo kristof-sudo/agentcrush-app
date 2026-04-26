@@ -312,7 +312,7 @@ const SECTIONS = [
           },
           {
             label: 'Historical record',
-            desc: 'AgentCrush tracks daily movement over time, so rankings are not just a current snapshot — they become historical intelligence. Daily records have accumulated since April 2026 and cannot be recreated retroactively by future competitors.',
+            desc: 'AgentCrush tracks daily movement over time, so rankings are not just a current snapshot — they become a historical view of how agent activity, evidence, and reputation change. Daily records have accumulated since April 2026.',
           },
         ].map((item) => (
           <div

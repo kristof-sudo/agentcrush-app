@@ -508,7 +508,7 @@ export default async function Home() {
                 <span className="text-white/20">·</span>{' '}
                 <span className="text-white/60 tabular-nums">{snapshotCount.toLocaleString()}</span> daily agent records tracked
                 <span className="hidden sm:inline text-white/20"> · </span>
-                <span className="hidden sm:inline text-white/25">movement history competitors cannot recreate retroactively</span>
+                <span className="hidden sm:inline text-white/25">tracking how agent reputation changes over time</span>
               </p>
             </Container>
           </div>
