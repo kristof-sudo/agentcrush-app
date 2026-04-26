@@ -7,6 +7,7 @@ import { getAgentArchetype, getAgentDisplayName } from '@/lib/agent-quality'
 import { getSignalTag, getRowExplanation } from '@/lib/why-moving'
 import ScoreBreakdown from '@/components/ui/ScoreBreakdown'
 import EvidenceBadge from '@/components/ui/EvidenceBadge'
+import RankEvidence from '@/components/rankings/RankEvidence'
 
 // ── Category styles ────────────────────────────────────────────────────────
 const CATEGORY_STYLES = {
@@ -130,6 +131,12 @@ function AgentRow({ r, onNavigate, delay = 0 }) {
   const vis = r.score_visibility ?? r.visibility_score ?? 0
   const rep = r.score_reputation ?? r.reputation_score ?? 0
 
+  // Use real v2 signal scores when available (rankings page); fall back to legacy vis/rep (homepage widget)
+  const hasV2Signals = r.github_score != null || r.package_usage_score != null || r.ecosystem_score != null
+  const signalScores = hasV2Signals
+    ? { gh: r.github_score ?? null, pkg: r.package_usage_score ?? null, dep: r.dependency_score ?? null, doc: r.docs_quality_score ?? null, dis: r.hn_score ?? null, eco: r.ecosystem_score ?? null }
+    : { gh: vis || null, dis: rep || null }
+
   const tag         = getSignalTag(r.trending?.latest_event_type)
   const explanation = getRowExplanation(delta, r.trending?.latest_event_type)
   const isHot       = (delta >= 3 && !!tag) || delta >= 7
@@ -193,6 +200,7 @@ function AgentRow({ r, onNavigate, delay = 0 }) {
               ) : null}
             </div>
             <CategoryPill archetype={archetype} />
+            {r.coverage_tier && <RankEvidence row={r} />}
           </div>
         </div>
       </td>
@@ -212,7 +220,7 @@ function AgentRow({ r, onNavigate, delay = 0 }) {
 
       {/* Signal breakdown */}
       <td style={{ padding: '14px 12px', verticalAlign: 'middle', minWidth: 140 }} className="hidden lg:table-cell">
-        <ScoreBreakdown scores={{ gh: vis, dis: rep }} compact={false} />
+        <ScoreBreakdown scores={signalScores} compact={false} />
       </td>
 
       {/* Tier badge */}
@@ -351,6 +359,7 @@ export default function RankingTable({ rows = [] }) {
                   <CategoryPill archetype={archetype} />
                   <EvidenceBadge size="sm" />
                 </div>
+                {r.coverage_tier && <RankEvidence row={r} />}
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 {delta !== 0 ? (

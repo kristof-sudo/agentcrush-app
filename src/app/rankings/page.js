@@ -85,7 +85,7 @@ export default async function RankingsPage({ searchParams }) {
   // evidence_ready_for_public_rank=true this returns ALL evidence-ranked agents.
   const { data: v2Rows, error: v2Error } = await supabase
     .from('agent_score_v2_top50_public_candidate')
-    .select('handle, display_name, rank_v2_c_public, score_v2_c_public_candidate, active_weight_total, coverage_tier')
+    .select('handle, display_name, rank_v2_c_public, score_v2_c_public_candidate, active_weight_total, coverage_tier, github_score, package_usage_score, dependency_score, ecosystem_score, docs_quality_score, hn_score, trust_score')
     .eq('evidence_ready_for_public_rank', true)
     .order('rank_v2_c_public', { ascending: true })
 
@@ -151,6 +151,16 @@ export default async function RankingsPage({ searchParams }) {
       score_total: v2.score_v2_c_public_candidate ?? 0,
       visibility_score: 0,
       reputation_score: 0,
+      // v2 signal scores — null when signal has no data for this agent
+      github_score:        v2.github_score        ?? null,
+      package_usage_score: v2.package_usage_score ?? null,
+      dependency_score:    v2.dependency_score    ?? null,
+      ecosystem_score:     v2.ecosystem_score     ?? null,
+      docs_quality_score:  v2.docs_quality_score  ?? null,
+      hn_score:            v2.hn_score            ?? null,
+      trust_score:         v2.trust_score         ?? null,
+      coverage_tier:       v2.coverage_tier       ?? null,
+      active_weight_total: v2.active_weight_total ?? null,
     }
   })
 
