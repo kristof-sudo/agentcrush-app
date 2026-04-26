@@ -35,7 +35,7 @@ const ENDPOINTS = [
     id: 'history',
     method: 'GET',
     path: '/api/agent/{handle}/history',
-    price: '$0.10',
+    price: '$0.02',
     description: 'Rank and score history over the last 30 days. One row per day with visibility, reputation, and weekly delta. Includes a 30-day trend summary.',
     responseExample: `{
   "handle": "autogpt",
@@ -60,6 +60,22 @@ const ENDPOINTS = [
     "trend": "flat"
   },
   "source": "https://agentcrush.xyz/agent/autogpt"
+}`,
+  },
+  {
+    id: 'verification-status',
+    method: 'GET',
+    path: '/api/agent/{handle}/verification-status',
+    price: '$0.005',
+    description: 'Tier and verification state for a single agent — verified flag, claim status, and last tier update. Lightweight status check.',
+    responseExample: `{
+  "handle": "autogpt",
+  "name": "AutoGPT",
+  "tier": "evidence_ranked",
+  "verified": false,
+  "claim_status": "unclaimed",
+  "last_updated": "2026-04-22T00:00:00Z",
+  "source": "agentcrush"
 }`,
   },
 ]

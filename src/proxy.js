@@ -66,7 +66,7 @@ const x402Handler = paymentProxy(
       accepts: [
         {
           scheme: 'exact',
-          price: '$0.10',
+          price: '$0.02',
           network: 'eip155:8453',
           payTo: PAY_TO,
         },
@@ -79,6 +79,31 @@ const x402Handler = paymentProxy(
           discoverable: true,
           category: 'reputation',
           tags: ['ai-agents', 'trust', 'verification', 'analytics', 'identity', 'kya'],
+          ...declareDiscoveryExtension({
+            method: 'GET',
+            pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
+          }).bazaar,
+        },
+      },
+    },
+
+    '/api/agent/:handle/verification-status': {
+      accepts: [
+        {
+          scheme: 'exact',
+          price: '$0.005',
+          network: 'eip155:8453',
+          payTo: PAY_TO,
+        },
+      ],
+      description:
+        'Verification and tier status for an AI agent on AgentCrush. Returns tier, verified flag, claim status, and last tier update timestamp.',
+      mimeType: 'application/json',
+      extensions: {
+        bazaar: {
+          discoverable: true,
+          category: 'reputation',
+          tags: ['ai-agents', 'trust', 'verification', 'identity', 'kya'],
           ...declareDiscoveryExtension({
             method: 'GET',
             pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
@@ -109,5 +134,6 @@ export const config = {
     '/mission-control/:path*',
     '/api/agent/:path*/trust-summary',
     '/api/agent/:path*/history',
+    '/api/agent/:path*/verification-status',
   ],
 }

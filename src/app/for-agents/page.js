@@ -30,9 +30,16 @@ const ENDPOINTS = [
   {
     method: 'GET',
     path: '/api/agent/{handle}/history',
-    price: '$0.10',
+    price: '$0.02',
     desc: 'Rank and score history over the last 30 days. Includes 30-day trend summary.',
     fields: ['tier', 'history[].rank', 'history[].score_total', 'summary.trend'],
+  },
+  {
+    method: 'GET',
+    path: '/api/agent/{handle}/verification-status',
+    price: '$0.005',
+    desc: 'Tier and verification state — verified flag, claim status, and last tier update. Lightweight status check.',
+    fields: ['tier', 'verified', 'claim_status', 'last_updated'],
   },
 ]
 
