@@ -310,6 +310,10 @@ const SECTIONS = [
             label: 'v2 stability monitoring',
             desc: 'The v2 scoring model is being monitored for week-over-week consistency. Until several consecutive runs confirm stability, the legacy global_rank remains the canonical reference for displayed rankings.',
           },
+          {
+            label: 'Historical record',
+            desc: 'AgentCrush tracks daily movement over time, so rankings are not just a current snapshot — they become historical intelligence. Daily records have accumulated since April 2026 and cannot be recreated retroactively by future competitors.',
+          },
         ].map((item) => (
           <div
             key={item.label}

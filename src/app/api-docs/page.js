@@ -36,7 +36,7 @@ const ENDPOINTS = [
     method: 'GET',
     path: '/api/agent/{handle}/history',
     price: '$0.02',
-    description: 'Rank and score history over the last 30 days. One row per day with visibility, reputation, and weekly delta. Includes a 30-day trend summary.',
+    description: 'Rank and score history over the last 30 days. One row per day with visibility, reputation, and weekly delta. Includes a 30-day trend summary. This endpoint exposes part of AgentCrush\'s time-series reputation layer.',
     responseExample: `{
   "handle": "autogpt",
   "name": "AutoGPT",

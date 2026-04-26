@@ -289,9 +289,10 @@ export default async function Home() {
     supabase.from('agents').select('id', { count: 'exact', head: true }).eq('tier', 'evidence_ranked'),
   ])
 
-  const [xPostsToday, scheduledToday] = await Promise.all([
+  const [xPostsToday, scheduledToday, snapshotCount] = await Promise.all([
     safeCount(supabase, 'x_observed_posts', (q) => q.gte('created_at', todayStart.toISOString())),
     safeCount(supabase, 'scheduled_posts', (q) => q.gte('created_at', todayStart.toISOString())),
+    safeCount(supabase, 'agent_daily_snapshots', (q) => q),
   ])
 
   const { data: rawNewsItems } = await supabase
@@ -496,6 +497,22 @@ export default async function Home() {
 
         {/* ── INTEL TICKER ─────────────────────────────────────────────────── */}
         <IntelTicker newsItems={newsItems} />
+
+        {/* ── HISTORICAL SNAPSHOTS PROOF-POINT ─────────────────────────────── */}
+        {snapshotCount > 0 && (
+          <div className="border-b border-[rgba(167,139,250,0.1)] bg-[rgba(167,139,250,0.03)] py-2">
+            <Container>
+              <p className="font-mono text-[11px] text-white/40 text-center leading-relaxed">
+                <span style={{ color: '#a78bfa' }}>◆</span>{' '}
+                Historical snapshots since Apr 2026{' '}
+                <span className="text-white/20">·</span>{' '}
+                <span className="text-white/60 tabular-nums">{snapshotCount.toLocaleString()}</span> daily agent records tracked
+                <span className="hidden sm:inline text-white/20"> · </span>
+                <span className="hidden sm:inline text-white/25">movement history competitors cannot recreate retroactively</span>
+              </p>
+            </Container>
+          </div>
+        )}
 
         {/* ── MAIN CONTENT ─────────────────────────────────────────────────── */}
         <main style={{ position: 'relative', zIndex: 10 }}>
