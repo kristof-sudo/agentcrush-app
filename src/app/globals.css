@@ -36,8 +36,8 @@
   100% { opacity:1; transform:translateX(0); background:transparent; }
 }
 @keyframes glowBreathe {
-  0%,100% { text-shadow: 0 0 20px rgba(232,121,249,0.4); }
-  50%     { text-shadow: 0 0 40px rgba(232,121,249,0.7), 0 0 80px rgba(232,121,249,0.3); }
+  0%,100% { text-shadow: 0 0 20px rgba(233,30,128,0.4); }
+  50%     { text-shadow: 0 0 40px rgba(233,30,128,0.7), 0 0 80px rgba(233,30,128,0.3); }
 }
 @keyframes slideUp {
   0%   { opacity:0; transform:translateY(28px); }

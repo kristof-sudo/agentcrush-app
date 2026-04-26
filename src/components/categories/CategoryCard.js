@@ -44,12 +44,12 @@ export default function CategoryCard({ category }) {
         display: 'flex',
         flexDirection: 'column',
         background: 'rgba(255,255,255,0.02)',
-        border: `1px solid ${hovered ? '#e879f9' : 'rgba(255,255,255,0.06)'}`,
-        boxShadow: hovered ? '0 0 20px rgba(232,121,249,0.2), inset 0 0 12px rgba(232,121,249,0.05)' : 'none',
+        border: `1px solid ${hovered ? '#e91e80' : 'rgba(255,255,255,0.06)'}`,
+        boxShadow: hovered ? '0 0 20px rgba(233,30,128,0.2), inset 0 0 12px rgba(233,30,128,0.05)' : 'none',
         transition: 'all 0.2s',
       }}
     >
-      <CornerAccents color={hovered ? '#e879f9' : 'rgba(255,255,255,0.1)'} size={8} />
+      <CornerAccents color={hovered ? '#e91e80' : 'rgba(255,255,255,0.1)'} size={8} />
 
       {/* Card header — links to filtered rankings */}
       <Link

@@ -25,7 +25,7 @@ export default async function Header() {
   const trending = await getTrendingAgent()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[rgba(232,121,249,0.12)] bg-[#08080f]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-[rgba(233,30,128,0.12)] bg-[#08080f]/90 backdrop-blur-xl">
       <Container>
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-2.5 md:py-3">
 
@@ -60,7 +60,7 @@ export default async function Header() {
                 className="relative font-mono text-[12px] font-semibold text-white/50 transition hover:text-white group"
               >
                 {label}
-                <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-[#e879f9] transition-all group-hover:w-full" />
+                <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-[#e91e80] transition-all group-hover:w-full" />
               </Link>
             ))}
             <SearchBox />

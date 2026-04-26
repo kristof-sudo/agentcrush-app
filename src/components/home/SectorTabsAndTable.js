@@ -21,7 +21,7 @@ export default function SectorTabsAndTable({ rows = [], sectors = [] }) {
             onClick={() => setSelected(ALL_TAB)}
             className={`shrink-0 rounded border px-2.5 py-1 text-[11px] font-semibold transition-colors whitespace-nowrap ${
               selected === ALL_TAB
-                ? 'border-[rgba(232,121,249,0.6)] bg-[rgba(232,121,249,0.12)] text-[#e879f9]'
+                ? 'border-[rgba(233,30,128,0.6)] bg-[rgba(233,30,128,0.12)] text-[#e91e80]'
                 : 'border-white/[0.07] bg-white/[0.02] text-white/40 hover:border-white/[0.12] hover:text-white/60'
             }`}
           >
@@ -33,7 +33,7 @@ export default function SectorTabsAndTable({ rows = [], sectors = [] }) {
               onClick={() => setSelected(archetype)}
               className={`shrink-0 rounded border px-2.5 py-1 text-[11px] font-semibold transition-colors whitespace-nowrap ${
                 selected === archetype
-                  ? 'border-[rgba(232,121,249,0.6)] bg-[rgba(232,121,249,0.12)] text-[#e879f9]'
+                  ? 'border-[rgba(233,30,128,0.6)] bg-[rgba(233,30,128,0.12)] text-[#e91e80]'
                   : 'border-white/[0.07] bg-white/[0.02] text-white/40 hover:border-white/[0.12] hover:text-white/60'
               }`}
             >

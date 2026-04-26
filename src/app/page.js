@@ -36,7 +36,7 @@ function toPublicImageUrl(path) {
 
 // Signal type → dot color + label
 const SIGNAL_TYPE_STYLE = {
-  audience_spike:        { dot: '#e879f9', label: 'Audience Spike' },
+  audience_spike:        { dot: '#e91e80', label: 'Audience Spike' },
   ranking_jump:          { dot: '#39ff14', label: 'Rank Jump' },
   launch_buzz:           { dot: '#00d4ff', label: 'Launch Buzz' },
   new_collab:            { dot: '#f0a500', label: 'New Collab' },
@@ -44,7 +44,7 @@ const SIGNAL_TYPE_STYLE = {
   fresh_activity:        { dot: '#4ade80', label: 'Active' },
   joined:                { dot: '#fb923c', label: 'Just Joined' },
   repo_star_growth:      { dot: '#4ade80', label: 'star growth' },
-  repo_release:          { dot: '#e879f9', label: 'new release' },
+  repo_release:          { dot: '#e91e80', label: 'new release' },
   timeline_ping:         { dot: '#a78bfa', label: 'Eco Mention' },
   collab_win:            { dot: '#f0a500', label: 'New Collab' },
   daily_boost:           { dot: '#4ade80', label: 'Active' },
@@ -158,10 +158,10 @@ async function safeCount(supabase, table, filterFn) {
 function CornerAccent() {
   return (
     <>
-      <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(232,121,249,0.4)]" />
-      <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(232,121,249,0.4)]" />
-      <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(232,121,249,0.4)]" />
-      <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(232,121,249,0.4)]" />
+      <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(233,30,128,0.4)]" />
+      <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(233,30,128,0.4)]" />
+      <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(233,30,128,0.4)]" />
+      <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(233,30,128,0.4)]" />
     </>
   )
 }
@@ -416,7 +416,7 @@ export default async function Home() {
       <div className="relative">
 
         {/* ── HERO STAT STRIP ──────────────────────────────────────────────── */}
-        <div className="border-b border-[rgba(232,121,249,0.08)] bg-[rgba(232,121,249,0.02)]">
+        <div className="border-b border-[rgba(233,30,128,0.08)] bg-[rgba(233,30,128,0.02)]">
           {/* Mobile: scrolling ticker */}
           <div className="sm:hidden overflow-hidden py-1.5">
             <div className="flex whitespace-nowrap" style={{animation: 'ticker-scroll 28s linear infinite', width: 'max-content'}}>
@@ -502,7 +502,7 @@ export default async function Home() {
           {/* Ambient fog blobs between hero and rankings */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 400, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
             <div style={{ position: 'absolute', width: 800, height: 800, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(167,139,250,0.06) 0%, transparent 70%)', top: -300, left: '20%', animation: 'fogDrift 18s ease-in-out infinite' }} />
-            <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(232,121,249,0.05) 0%, transparent 70%)', top: -200, right: '10%', animation: 'fogDrift 24s ease-in-out infinite 6s' }} />
+            <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(233,30,128,0.05) 0%, transparent 70%)', top: -200, right: '10%', animation: 'fogDrift 24s ease-in-out infinite 6s' }} />
           </div>
           <Container>
             {/* Agent Intel news bar */}
@@ -523,7 +523,7 @@ export default async function Home() {
                   <CornerAccent />
                   <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[10px] font-bold text-[#e879f9]">◆</span>
+                      <span className="font-mono text-[10px] font-bold text-[#e91e80]">◆</span>
                       <span className="font-mono text-xs font-bold text-white tracking-wide">RISING NOW</span>
                     </div>
                     <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
@@ -675,11 +675,11 @@ export default async function Home() {
 
                 {/* Submit CTA */}
                 <Link href="/submit"
-                  className="relative rounded-lg border border-[rgba(232,121,249,0.35)] bg-[rgba(232,121,249,0.06)] px-3 py-2.5 hover:bg-[rgba(232,121,249,0.12)] transition-colors block group overflow-hidden">
+                  className="relative rounded-lg border border-[rgba(233,30,128,0.35)] bg-[rgba(233,30,128,0.06)] px-3 py-2.5 hover:bg-[rgba(233,30,128,0.12)] transition-colors block group overflow-hidden">
                   <CornerAccent />
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-[#e879f9]">Submit an Agent</span>
-                    <span className="font-mono text-[#e879f9] group-hover:translate-x-0.5 transition-transform">→</span>
+                    <span className="font-mono text-xs font-bold text-[#e91e80]">Submit an Agent</span>
+                    <span className="font-mono text-[#e91e80] group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
                   <div className="font-mono text-[10px] text-white/30 mt-0.5">List your agent in the index. Free.</div>
                 </Link>

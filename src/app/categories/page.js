@@ -23,7 +23,7 @@ const CATEGORY_STYLE = {
   Crypto:     { color: '#34d399', glowColor: 'rgba(52,211,153,0.4)',  icon: '⬡' },
   Developer:  { color: '#818cf8', glowColor: 'rgba(129,140,248,0.4)', icon: '⟨⟩' },
   Infra:      { color: '#f87171', glowColor: 'rgba(248,113,113,0.4)', icon: '⬡' },
-  Creator:    { color: '#e879f9', glowColor: 'rgba(232,121,249,0.4)', icon: '◈' },
+  Creator:    { color: '#e91e80', glowColor: 'rgba(233,30,128,0.4)', icon: '◈' },
   Rebel:      { color: '#fb923c', glowColor: 'rgba(251,146,60,0.4)',  icon: '✦' },
   Finance:    { color: '#facc15', glowColor: 'rgba(250,204,21,0.4)',  icon: '↗' },
   Socialite:  { color: '#f472b6', glowColor: 'rgba(244,114,182,0.4)', icon: '◉' },

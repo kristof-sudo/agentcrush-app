@@ -49,7 +49,7 @@ export default function SearchableRankings({ rows = [], initialQuery = '' }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name, handle, or category…"
-            className="w-full rounded-lg border bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] pl-9 pr-4 py-2 font-mono text-sm text-white/80 placeholder-white/25 outline-none transition focus:border-[rgba(232,121,249,0.4)] focus:shadow-[0_0_0_2px_rgba(232,121,249,0.08)]"
+            className="w-full rounded-lg border bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] pl-9 pr-4 py-2 font-mono text-sm text-white/80 placeholder-white/25 outline-none transition focus:border-[rgba(233,30,128,0.4)] focus:shadow-[0_0_0_2px_rgba(233,30,128,0.08)]"
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" width="14" height="14" viewBox="0 0 14 14" fill="none">
             <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" />
@@ -73,7 +73,7 @@ export default function SearchableRankings({ rows = [], initialQuery = '' }) {
               onClick={() => setFilter(f.key)}
               className={`px-3 py-1.5 rounded-md border font-mono text-xs transition-colors ${
                 filter === f.key
-                  ? 'border-[#e879f9] bg-[rgba(232,121,249,0.15)] text-[#e879f9]'
+                  ? 'border-[#e91e80] bg-[rgba(233,30,128,0.15)] text-[#e91e80]'
                   : 'border-white/10 bg-transparent text-white/50 hover:text-white'
               }`}
             >

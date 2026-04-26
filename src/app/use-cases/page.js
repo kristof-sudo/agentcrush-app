@@ -34,13 +34,13 @@ export default function UseCasesPage() {
           <Link
             key={slug}
             href={`/use-cases/${slug}`}
-            className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] px-4 py-3 overflow-hidden transition-all hover:border-[rgba(232,121,249,0.4)] hover:shadow-[0_0_20px_rgba(232,121,249,0.12)] group block"
+            className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] px-4 py-3 overflow-hidden transition-all hover:border-[rgba(233,30,128,0.4)] hover:shadow-[0_0_20px_rgba(233,30,128,0.12)] group block"
           >
             {/* Corner accents */}
-            <span className="pointer-events-none absolute top-0 left-0 w-2 h-2 border-t border-l border-[rgba(232,121,249,0.35)]" />
-            <span className="pointer-events-none absolute top-0 right-0 w-2 h-2 border-t border-r border-[rgba(232,121,249,0.35)]" />
-            <span className="pointer-events-none absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[rgba(232,121,249,0.35)]" />
-            <span className="pointer-events-none absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[rgba(232,121,249,0.35)]" />
+            <span className="pointer-events-none absolute top-0 left-0 w-2 h-2 border-t border-l border-[rgba(233,30,128,0.35)]" />
+            <span className="pointer-events-none absolute top-0 right-0 w-2 h-2 border-t border-r border-[rgba(233,30,128,0.35)]" />
+            <span className="pointer-events-none absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[rgba(233,30,128,0.35)]" />
+            <span className="pointer-events-none absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[rgba(233,30,128,0.35)]" />
 
             <div className="flex items-center gap-2.5 mb-2">
               <span className="text-lg">{USE_CASE_ICONS[slug]}</span>
@@ -51,7 +51,7 @@ export default function UseCasesPage() {
             <p className="font-mono text-xs text-white/50 leading-relaxed line-clamp-2">
               {uc.description}
             </p>
-            <div className="mt-2 font-mono text-xs text-[#e879f9]">
+            <div className="mt-2 font-mono text-xs text-[#e91e80]">
               {uc.handles.length} agents →
             </div>
           </Link>

@@ -22,7 +22,7 @@ const ARCHETYPES = [
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 
 const inputCls =
-  'w-full rounded-lg border border-white/[0.08] bg-[rgba(255,255,255,0.04)] px-3 py-2 font-mono text-sm text-white placeholder:text-white/20 outline-none transition focus:border-[rgba(232,121,249,0.4)]'
+  'w-full rounded-lg border border-white/[0.08] bg-[rgba(255,255,255,0.04)] px-3 py-2 font-mono text-sm text-white placeholder:text-white/20 outline-none transition focus:border-[rgba(233,30,128,0.4)]'
 
 const labelCls = 'font-mono text-xs text-white/50 uppercase tracking-wider'
 
@@ -102,10 +102,10 @@ export default function SubmitAgentForm() {
     <div className="max-w-lg">
       <div className="relative rounded-lg border border-white/[0.08] bg-[#0a0a14] px-4 py-4 overflow-hidden">
         {/* Corner accents */}
-        <span className="pointer-events-none absolute top-0 left-0 w-2 h-2 border-t border-l border-[rgba(232,121,249,0.35)]" />
-        <span className="pointer-events-none absolute top-0 right-0 w-2 h-2 border-t border-r border-[rgba(232,121,249,0.35)]" />
-        <span className="pointer-events-none absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[rgba(232,121,249,0.35)]" />
-        <span className="pointer-events-none absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[rgba(232,121,249,0.35)]" />
+        <span className="pointer-events-none absolute top-0 left-0 w-2 h-2 border-t border-l border-[rgba(233,30,128,0.35)]" />
+        <span className="pointer-events-none absolute top-0 right-0 w-2 h-2 border-t border-r border-[rgba(233,30,128,0.35)]" />
+        <span className="pointer-events-none absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[rgba(233,30,128,0.35)]" />
+        <span className="pointer-events-none absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[rgba(233,30,128,0.35)]" />
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           {/* Honeypot */}
           <input
@@ -164,7 +164,7 @@ export default function SubmitAgentForm() {
             <select
               value={form.archetype}
               onChange={(e) => updateField('archetype', e.target.value)}
-              className="w-full rounded-lg border border-white/[0.08] bg-[rgba(255,255,255,0.04)] px-3 py-2 font-mono text-sm text-white outline-none transition focus:border-[rgba(232,121,249,0.4)]"
+              className="w-full rounded-lg border border-white/[0.08] bg-[rgba(255,255,255,0.04)] px-3 py-2 font-mono text-sm text-white outline-none transition focus:border-[rgba(233,30,128,0.4)]"
             >
               <option value="">Select a category</option>
               {ARCHETYPES.map((item) => (
@@ -209,7 +209,7 @@ export default function SubmitAgentForm() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-md border border-[rgba(232,121,249,0.4)] bg-[rgba(232,121,249,0.1)] px-4 py-2 font-mono text-xs font-bold text-[#e879f9] transition-colors hover:bg-[rgba(232,121,249,0.18)] hover:border-[rgba(232,121,249,0.65)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md border border-[rgba(233,30,128,0.4)] bg-[rgba(233,30,128,0.1)] px-4 py-2 font-mono text-xs font-bold text-[#e91e80] transition-colors hover:bg-[rgba(233,30,128,0.18)] hover:border-[rgba(233,30,128,0.65)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Submitting…' : 'Submit for Review →'}
             </button>

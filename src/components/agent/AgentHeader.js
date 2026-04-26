@@ -11,7 +11,7 @@ const CAT_COLORS = {
   BUILDER:    { bg: 'rgba(52,211,153,0.12)',   text: '#34d399', glow: '#34d399' },
   FRAMEWORK:  { bg: 'rgba(99,102,241,0.14)',   text: '#818cf8', glow: '#818cf8' },
   AGENT:      { bg: 'rgba(0,229,255,0.09)',    text: '#67e8f9', glow: '#67e8f9' },
-  CREATOR:    { bg: 'rgba(232,121,249,0.12)',  text: '#e879f9', glow: '#e879f9' },
+  CREATOR:    { bg: 'rgba(233,30,128,0.12)',  text: '#e91e80', glow: '#e91e80' },
   FINANCE:    { bg: 'rgba(250,204,21,0.12)',   text: '#facc15', glow: '#facc15' },
   CRYPTO:     { bg: 'rgba(52,211,153,0.12)',   text: '#34d399', glow: '#34d399' },
   DEVELOPER:  { bg: 'rgba(129,140,248,0.14)',  text: '#818cf8', glow: '#818cf8' },

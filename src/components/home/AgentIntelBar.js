@@ -9,7 +9,7 @@ const SOURCE_COLORS = {
   TechCrunch:        { bg: 'rgba(255,80,80,0.12)',   text: '#ff5050' },
   'The Information': { bg: 'rgba(0,212,255,0.14)',   text: '#00d4ff' },
   Wired:             { bg: 'rgba(74,222,128,0.15)',  text: '#4ade80' },
-  Reuters:           { bg: 'rgba(232,121,249,0.15)', text: '#e879f9' },
+  Reuters:           { bg: 'rgba(233,30,128,0.15)', text: '#e91e80' },
 }
 
 function timeAgo(dateStr) {
@@ -89,7 +89,7 @@ export default function AgentIntelBar({ items = [], updatedAt = null }) {
 
           return item.url ? (
             <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer"
-              className="block hover:text-[#e879f9] transition-colors" style={{ textDecoration: 'none' }}>
+              className="block hover:text-[#e91e80] transition-colors" style={{ textDecoration: 'none' }}>
               {inner}
             </a>
           ) : (
