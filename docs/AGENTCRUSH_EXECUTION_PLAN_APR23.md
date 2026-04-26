@@ -25,10 +25,10 @@
 
 These are finishing touches from prior work that are sitting unfinished.
 
-- [ ] Run SQL fix in Supabase: `UPDATE agents SET entity_type = 'agent' WHERE entity_type IS NULL OR entity_type != 'agent';` — makes 29 invisible agents visible
-- [ ] Verify Bazaar listing status for AgentCrush — check agentic.market daily for 72 hours from Apr 22
+- [x] Run SQL fix in Supabase: `UPDATE agents SET entity_type = 'agent' WHERE entity_type IS NULL OR entity_type != 'agent';` — makes 29 invisible agents visible ✅ Done
+- [ ] Verify Bazaar listing status for AgentCrush — check agentic.market daily for 72 hours from Apr 22 (⚠️ first payment Apr 22; check Apr 26+ if not yet indexed)
 - [ ] If not indexed by Apr 25, ask in Coinbase x402 Discord about indexing timing
-- [ ] Close X account loop: do NOT log in to Mike's account to "resolve violations". Treat account as permanently dead.
+- [x] Close X account loop: do NOT log in to Mike's account to "resolve violations". Treat account as permanently dead. ✅ Confirmed
 - [ ] Check card statement for X Premium $5/mo charge. Dispute via card issuer if any post-suspension billing appears.
 
 ---
@@ -123,14 +123,15 @@ Sections:
 
 ### Tasks for build chat / Claude Code
 
-- [ ] Design Supabase schema for Ajsa tables (ajsa_sources, ajsa_brief_items, ajsa_weekly_reviews, ajsa_catalyst_state, ajsa_feedback)
-- [ ] Build source fetcher modules (one per Tier A/B/C source, modular so adding sources is cheap)
-- [ ] Build synthesis LLM prompt that produces the 5-item morning brief
-- [ ] Build weekly review synthesis prompt (different structure, reads from week's brief history + git + Supabase state)
-- [ ] Wire to Telegram
-- [ ] Wire to VPS systemd timers
+- [x] Design Supabase schema for Ajsa tables ✅ Done
+- [x] Build source fetcher modules ✅ Done — 7 sources live (Product Hunt, Farcaster via Neynar, YZI Labs, YC Blog, Coinbase Ventures, Paradigm, YC Launch)
+- [x] Build synthesis LLM prompt that produces the 5-item morning brief ✅ Done
+- [x] Build weekly review synthesis prompt ✅ Done
+- [x] Wire to Telegram ✅ Done
+- [x] Wire to VPS systemd timers ✅ Done
 - [ ] Add self-monitoring module (Vercel, Supabase, wallet, timers)
-- [ ] Test with 3 days of dry runs before going live
+- [x] Farcaster sources live via Neynar paid plan — returns casts from /ai, /agents, /base ✅ Done
+- [x] Unknown-date repeat suppression implemented ✅ Done
 
 ### Success criteria
 
@@ -154,11 +155,10 @@ Current scoring is ~45% GitHub-only. Rankings are sedimentary. If asked on a pod
 
 All free public APIs, 1-3 days per signal.
 
-- [ ] **npm download counts** — weekly/monthly downloads for JavaScript-shipped agents. Use npmjs.org API. Weekly write to `agent_npm_signals` table.
-- [ ] **PyPI download counts** — same for Python-shipped agents. Use PyPI BigQuery or pypistats.org API. Weekly write to `agent_pypi_signals`.
+- [x] **npm/PyPI download counts** — timer active; first row (nanobot-ai) written. ✅ Done
 - [ ] **Dependency graph discovery** — weekly GitHub job that pulls `package.json` and `requirements.txt` from top 10,000 AI/ML repos, counts references to each agent name. Builds *automatic* ecosystem graph alongside the 125 manually curated edges. This is probably the single biggest signal win.
-- [ ] **HackerNews mentions** — Algolia API (free). Search for agent names weekly, track mention count + upvote totals. Write to `agent_hn_signals`.
-- [ ] **Reddit mentions** — Reddit API (free tier), check r/LocalLLaMA, r/AI_Agents, r/MachineLearning weekly for agent name mentions. Write to `agent_reddit_signals`.
+- [x] **HackerNews mentions** — Algolia API. Timer active as of Apr 24. ✅ Done
+- [ ] **Reddit mentions** — ⏳ BLOCKED — Reddit API/app approval pending. r/LocalLLaMA, r/AI_Agents, r/MachineLearning are the target subreddits.
 - [ ] **Docs quality score** — automated check per agent: docs site exists, README length, example count, OpenAPI spec presence, license file. Write to `agent_docs_signals` as 0-100.
 
 ### Layer 2 — AgentCrush native signals (genuine moat, require feature build)
@@ -198,14 +198,30 @@ Key change: usage signals (what people download/depend on) become the largest we
 - [ ] Build `/how-we-rank` page explaining all signals, their weights, their sources, their limitations, their update frequency. Link from every agent profile page. Link from `/api-docs`. This is a credibility artifact as much as documentation.
 - [ ] Add weekly "Methodology Review" post (automated draft, Kris approves) — published as blog-style content page at `/rankings-review/YYYY-WW`. Summarizes what moved, why, any surprises. Low volume, high credibility compound.
 
-### Tasks for build chat / Claude Code
+### Phase 5 additions (completed Apr 24-26)
 
-- [ ] Create new Supabase tables: `agent_npm_signals`, `agent_pypi_signals`, `agent_hn_signals`, `agent_reddit_signals`, `agent_docs_signals`, `agent_view_signals`, `agent_trust_signals`, `auto_dependency_edges`
+- [x] `agents.tier` + `agents.tier_promoted_at` columns added to schema ✅ Done
+- [x] Score_v2 shadow views live (`agent_score_v2_top50_public_candidate`) ✅ Done
+- [x] Tier-promotion worker deployed on VPS ✅ Done
+- [x] `agentcrush-tier-promotion.timer` active, runs Sunday 07:00 UTC ✅ Done
+- [x] /rankings shows evidence-ranked agents only via v2 view ✅ Done
+- [x] /explore shows full non-archived index; evidence-ranked sorted first ✅ Done
+- [x] x402 trust-summary and history responses include `tier` field ✅ Done
+- [x] EvidenceBadge / IndexedBadge / ScoreBreakdown UI primitives deployed ✅ Done
+
+### Pending scoring tasks
+
+- [ ] Create Supabase tables: `agent_npm_signals`, `agent_pypi_signals`, `agent_hn_signals`, `agent_reddit_signals`, `agent_docs_signals`, `agent_view_signals`, `agent_trust_signals`, `auto_dependency_edges`
 - [ ] Build one worker per signal in `/opt/agentcrush/scanner/signals/` with shared interface (fetch → normalize → write)
 - [ ] Wire each to systemd timer (weekly for most, daily for views)
-- [ ] Update `recalc_rankings()` function to use new weighted formula
+- [ ] Update `recalc_rankings()` function to use new weighted formula (pending v2 stability)
 - [ ] Build `/how-we-rank` page (Next.js, matches existing aesthetic)
 - [ ] Add methodology review automation as a weekly task
+
+### Deferred (pending v2 maturity)
+
+- 🔲 Replace legacy `rankings.score_total` / `global_rank` with v2 as canonical — wait for several weekly tier-promotion runs to confirm stability
+- 🔲 Archive policy — manual-only for now; no automated archiving planned
 
 ### Success criteria
 
@@ -381,46 +397,30 @@ If ERC-8004 adoption scales, AgentCrush becomes the natural "reputation provider
 
 ---
 
-## 7. WEBSITE MESSAGING REFRESH
+## 7. WEBSITE MESSAGING REFRESH ✅ COMPLETE (Apr 24-26)
 
 **Priority: 5 (small effort, high communication value)**
-**Effort: 3-4 hours**
+**Status: DONE**
 
-### What's wrong today
+### What was done
 
-Homepage says "Get your open-source agent discovered" + "Live rankings of 1,224+ AI agents by GitHub activity, ecosystem integration, and real adoption signals." That's written for one audience (builders) and hides:
-- The x402 machine-callable angle
-- The "trust and reputation layer" framing
-- The historical / algorithmic / multi-signal positioning
+- [x] Hero copy updated: "The trust and reputation layer for AI agents" — trust layer + multi-signal + x402 framing ✅
+- [x] Subheadline and supporting line updated ✅
+- [x] Old "Get your open-source agent discovered" copy removed ✅
+- [x] `/api-docs` page: "For AI agents" section with x402 machine-callable explanation ✅
+- [x] `/for-agents` page: dedicated explainer with x402 endpoints and tier field docs ✅
+- [x] Every agent profile: Machine-callable badge with link to API docs ✅
+- [x] Footer: API, For Agents links added ✅
+- [x] Homepage ranked-count inconsistency fixed (was showing "15 RANKED" vs "39 evidence ranked") ✅
+- [x] Pink brand token updated #e879f9 → #e91e80 (deep magenta matching logo gradient) globally ✅
+- [x] Tier-aware UI deployed (EvidenceBadge, IndexedBadge, ScoreBreakdown) on rankings, profiles, explore ✅
+- [x] Live QA passed ✅
+- [x] MCP section on /for-agents: clearly marked "planned, not live" ✅
 
-### Revised hero (draft for iteration)
+### Remaining / deferred
 
-**Option A (builder-facing primary):**
-> **The trust and reputation layer for AI agents.**
-> Live, algorithmic, multi-signal rankings of 1,200+ agents. Historical data since April 2026. Machine-callable via x402. Free for builders.
-
-**Option B (infrastructure-facing primary):**
-> **Machine-callable reputation for AI agents.**
-> Query trust, rank, and history for 1,200+ agents via x402. Human-readable directory with daily snapshots. Built for the agent economy.
-
-### Other page changes
-
-- [ ] `/api-docs` page: add "For AI agents" section explaining x402 integration, link to sample code
-- [ ] Every agent profile page: add "Machine-callable" badge with link to API docs
-- [ ] Footer: add "API", "MCP", "For Agents" links
-- [ ] Add `/positioning` or `/for-agents` short explainer page: 3-4 paragraphs on what AgentCrush is and why
-
-### Tasks for build chat / Claude Code
-
-- [ ] Iterate hero copy (Kris + Claude work through options, 2-3 rounds)
-- [ ] Ship chosen version
-- [ ] Update page metadata, og:image copy, sitemap if new pages added
-- [ ] Update X/Twitter bio if you ever launch an @agentcrush account (not urgent)
-
-### Success criteria
-
-- Homepage clearly communicates "trust layer + multi-signal + x402" in the first 30 seconds of reading
-- Distinct CTAs for builders vs agents
+- 🔲 MCP server — planned, will announce on Farcaster when live
+- 🔲 `/how-we-rank` methodology page — deferred to scoring hardening phase
 
 ---
 

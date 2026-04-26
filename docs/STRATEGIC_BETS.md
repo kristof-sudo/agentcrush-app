@@ -1,6 +1,6 @@
 # AgentCrush — Strategic Bets
 **Created:** April 23, 2026
-**Last updated:** April 24, 2026
+**Last updated:** April 26, 2026
 **Owner:** Kris
 **Review cadence:** Weekly (Ajsa surfaces signals), Monthly (Kris reviews + prunes)
 **Companion documents:** `DASHBOARD_vN.md` (state), `EXECUTION_PLAN.md` (tasks)
@@ -175,9 +175,11 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 
 **April 23, 2026 (creation):** Four bets initialized. Bet A (A2A closed) is the most established — we have working product. Bet B (A2A open) is exploration-phase. Bet C (near-term cash) is unproven, has no signal yet but highest time-urgency. Bet D (acquihire) is posture, not action.
 
-**April 24, 2026 (incremental update):** Added YZI Labs and Y Combinator to Bet D's potential acquirers/partners list. YZI Labs as strong potential acquirer aligned with crypto+AI thesis; YC as ecosystem-monitoring channel. No bet changes. Also clarified scoring signal architecture — Product Hunt and Farcaster confirmed as Ajsa monitoring inputs, not scoring signals. Reddit confirmed as the sole social/discourse scoring signal in current Layer 1B. Status update: Reddit scoring worker is the next item in the build queue (Ajsa daily live, HN/docs/package mapping/dependency graph all live and scheduled).
+**April 24, 2026 (incremental update):** Added YZI Labs and Y Combinator to Bet D's potential acquirers/partners list. YZI Labs as strong potential acquirer aligned with crypto+AI thesis; YC as ecosystem-monitoring channel. No bet changes. Also clarified scoring signal architecture — Product Hunt and Farcaster confirmed as Ajsa monitoring inputs, not scoring signals. Reddit confirmed as the sole social/discourse scoring signal in current Layer 1B.
 
-**Next monthly review:** First Sunday of June 2026 (May was too close to creation to be meaningful)
+**April 26, 2026 (Phase 5 update):** No bet changes. Confirming momentum on Bet A — tiered evidence-ranking model shipped, x402 trust-summary/history now return `tier` field, first machine payment landed Apr 22, Farcaster reactivated as distribution channel via Neynar. Bet A signals remain positive. Reddit scoring still blocked pending API approval; this affects Bet A's signal coverage but does not change the bet. HN signal integration live. Package-download timer active. v2 scoring stability to be confirmed over coming Sunday tier-promotion runs before any Bet A re-evaluation is warranted.
+
+**Next monthly review:** First Sunday of June 2026
 
 ---
 

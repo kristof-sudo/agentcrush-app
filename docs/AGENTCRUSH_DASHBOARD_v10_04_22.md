@@ -1,7 +1,7 @@
 # AgentCrush — Master Dashboard & Operations Guide (COMPREHENSIVE)
 
-**Last Updated:** April 22, 2026
-**Status:** Post-X-suspension pivot. SEO infrastructure live. First x402 paid endpoint deployed to Base mainnet (trust-summary $0.02). Buyer loop debugging — payment signing returns `invalid_payload` on first test call, not yet resolved. Audience: solo/small-team OSS agent builders.
+**Last Updated:** April 26, 2026
+**Status:** Phase 5 complete — tiered evidence-ranking model live. 39 evidence-ranked agents, 1,186 indexed. /rankings shows v2 evidence-ranked agents only; /explore shows full index. x402 trust-summary/history both return `tier` field. Website messaging, homepage, agent profiles, and /for-agents all updated. Farcaster live via Neynar paid plan. Ajsa covering 7 sources. Reddit scoring blocked pending API approval.
 **Founder Role:** Intent + approval only (no transport, no low-level coordination)
 
 ---
@@ -61,39 +61,48 @@ AgentCrush doesn't need more AI agent power. It needs **stronger control, trust,
 **What is AgentCrush?**
 The market intelligence and trust/reputation layer for AI agents. Free directory for users and builders. Paid surfaces for companies with budgets (sponsored placements, B2B API licensing) and — newly — machine-callable paid endpoints for AI agents via x402.
 
-**Current Phase:** x402 bringup — first paid endpoint deployed Apr 21 on Base mainnet. First buyer-side test Apr 22 returned `invalid_payload` at facilitator validation; debugging in progress. No funds moved. Second endpoint (history) also deployed but unverified.
+**Current Phase:** Phase 5 complete — tiered evidence-ranking model shipped. 39 evidence_ranked, 1,186 indexed, 0 archived. x402 end-to-end payment verified Apr 22 (first machine-paid call on Base mainnet). Farcaster reactivated via Neynar paid plan.
 
 **Core Systems Status:**
-- ✅ Website with 1,225 agents indexed, ~100 ranked
+- ✅ Website with 1,225+ agents indexed; 39 evidence-ranked, 1,186 indexed
 - ✅ SEO infrastructure deployed (sitemap, robots.txt, og-images, JSON-LD, Vercel Analytics, Search Console submitted)
-- ✅ Homepage rewritten for OSS builder audience (Apr 20)
-- ✅ Agent Intel redesigned to single-column, freshness-gated (Apr 20)
-- ✅ All Mike references removed from public site (Apr 20)
+- ✅ Homepage rewritten for OSS builder audience; trust layer / machine-callable / x402 messaging live
+- ✅ Agent Intel redesigned to single-column, freshness-gated
+- ✅ All Mike references removed from public site
 - ✅ Supabase (Pro, $25/mo) as canonical state
 - ✅ CDP Server Wallet v2 created, funded with 4 USDC on Base mainnet (address `0x58e632Fa698383820FFC22156352C9836790E2c0`)
-- ✅ x402 seller middleware wired, `/api/agent/[handle]/trust-summary` returns 402 with valid payment instructions on Base mainnet
-- ✅ x402 seller middleware wired, `/api/agent/[handle]/history` returns 402
-- ⚠️ x402 buyer-side round trip **not yet verified** — first test Apr 22 returned `invalid_payload`, debugging in progress
-- ✅ Supabase tables populated (9,301 snapshot rows, 1,196 agents tracked daily)
-- ✅ Weekly agent ingestion pipeline — last run Apr 20 added 1 agent (awesome-llm-apps)
+- ✅ x402 seller middleware wired — trust-summary ($0.02) and history ($0.10) both live; both return `tier` field
+- ✅ x402 first end-to-end payment verified Apr 22 — $0.02 USDC on Base mainnet; Bazaar indexing triggered
+- ✅ Supabase tables populated (9,301+ snapshot rows, 1,225 agents tracked)
+- ✅ Weekly agent ingestion pipeline active (Monday 06:00 UTC)
 - ✅ News fetch moved to VPS systemd timer (every 4h)
+- ✅ **Phase 5: Tiered evidence-ranking model** — `agents.tier` + `agents.tier_promoted_at` columns live; `evidence_ranked` / `indexed` / `archived` enum; score_v2 shadow views live
+- ✅ **Phase 5: Tier-promotion worker** deployed on VPS; `agentcrush-tier-promotion.timer` active, runs Sunday 07:00 UTC
+- ✅ **Phase 5: /rankings** — now shows evidence-ranked agents only via v2 public evidence-ranking (`agent_score_v2_top50_public_candidate`)
+- ✅ **Phase 5: /explore** — shows all non-archived indexed agents; evidence-ranked sorted first; TIER 01/02 eyebrow design; top-4 featured strip
+- ✅ **Phase 5: Website messaging refresh** — homepage, /for-agents, /api-docs, agent profiles, footer, and x402 responses updated for "trust and reputation layer" / machine-callable / x402 framing
+- ✅ **Phase 5: Tier-aware UI** — EvidenceBadge (cyan pill), IndexedBadge (dashed gray), ScoreBreakdown (6-dim signal bars) — live on rankings table, agent profiles, /explore
+- ✅ **Farcaster reactivated** — Neynar paid plan active; Ajsa returns casts from /ai, /agents, /base channels
+- ✅ **Ajsa source expansion** — covers Product Hunt, Farcaster, YZI Labs, YC Blog, Coinbase Ventures, Paradigm, YC Launch (7 sources)
+- ✅ Unknown-date repeat suppression implemented
+- ✅ Package-download timer active; nanobot-ai download row written
+- ✅ `systemctl --failed` clean on VPS
 - ❌ Mike pipeline — ARCHIVED to `/opt/mike-archived/`
 - ❌ x-scanner.timer — DISABLED (credentials revoked by X)
-
-**Known site-level bug (identified Apr 21):**
-- The submission-approval route omits `entity_type: 'agent'` on insert → 29 approved agents currently invisible in UI (filtered out). Fix committed on VPS-side Claude Code. One-time SQL patch (`UPDATE agents SET entity_type = 'agent' WHERE entity_type IS NULL OR entity_type != 'agent';`) still pending.
+- ⏳ **Reddit scoring** — blocked pending Reddit API/app approval
 
 **Current Reality:**
-- Scoring pipeline: 45% of intended signal weight live (GitHub 25% + Ecosystem 20%). X (25%) offline permanently.
-- Zero public distribution via social — pivoting to SEO + x402 + Farcaster
+- Tiered model: 39 agents with enough evidence for public ranking; 1,186 indexed waiting for more signals
+- Scoring pipeline: GitHub + Ecosystem + Package downloads active. X offline. Reddit pending approval.
+- Farcaster active as distribution channel (Neynar paid plan, Ajsa monitors /ai /agents /base)
 - Infra cost: $40/mo (Vercel Hobby $0 + Supabase Pro $25 + DigitalOcean VPS $15)
-- Revenue: $0 (x402 not yet generating completed payments)
+- Revenue: First x402 payment received Apr 22 ($0.02 USDC)
 
 **Next bottlenecks:**
-1. Unblock x402 buyer-side payment flow (invalid_payload debug)
-2. First successful end-to-end x402 payment (will trigger Bazaar indexing)
+1. Reddit API/app approval (scoring signal)
+2. Week-over-week v2 rank stability (requires more signal history; initial runs will show volatility)
 3. Embeddable badge rollout (creates referral-link flywheel)
-4. Farcaster presence activation (replaces Mike-on-X as narrative channel)
+4. Eventual replacement of legacy `rankings.score_total` / `global_rank` with v2 as canonical — decision pending; old system can stay as fallback while v2 matures
 
 ---
 
@@ -239,7 +248,7 @@ Maps real score distribution (min 140 → 2.8, median 2744 → 6.4, max 9240 →
 
 ---
 
-## SCORING SYSTEM — APRIL 22 STATE
+## SCORING SYSTEM — APRIL 26 STATE
 
 ### Active Pipeline
 
@@ -257,33 +266,46 @@ Every 4 hours (agentcrush-news-fetch.timer, VPS):
 Every Monday 06:00 UTC (agentcrush-weekly-ingest.timer):
   → weekly-ingest-worker.mjs
   → GitHub discovery → insert agents → Telegram notification
+
+Package-download timer (schedule TBD, VPS):
+  → writes npm/PyPI download rows per agent
+  → nanobot-ai row already written as first test
+
+Sunday 07:00 UTC (agentcrush-tier-promotion.timer, VPS):
+  → tier-promotion-worker.mjs
+  → evaluates evidence_ready_for_public_rank flag per agent
+  → promotes / demotes agents between evidence_ranked and indexed
+  → updates agents.tier + agents.tier_promoted_at
 ```
+
+### Tiered Evidence Model (Phase 5)
+
+The scoring system now operates in two tiers:
+
+| Tier | Count (Apr 26) | Criteria | Public display |
+|------|----------------|----------|----------------|
+| `evidence_ranked` | **39** | `evidence_ready_for_public_rank = true` in shadow view | /rankings, agent profiles with EvidenceBadge |
+| `indexed` | **1,186** | Tracked but below evidence threshold | /explore (awaiting-evidence section), IndexedBadge on profiles |
+| `archived` | **0** | Reserved; manual promotion only | Hidden from all public routes |
+
+Score v2 shadow views (`agent_score_v2_top50_public_candidate`) are live. The view name is misleading — no LIMIT, returns all 39 evidence-ready agents filtered by `evidence_ready_for_public_rank = true`.
+
+The legacy `rankings.score_total` / `global_rank` columns remain as a fallback. Replacing them with v2 as canonical is deferred until v2 shows week-over-week stability (several weekly tier-promotion runs required).
 
 ### Signal Status
 
 | Signal | Weight | Status |
 |--------|--------|--------|
-| GitHub Activity | 25% | ✅ Live (38 agents with github_full_name) |
-| Ecosystem Integration Depth | 20% | ✅ Live (36 agents with qualifying relationships) |
+| GitHub Activity | 25% | ✅ Live |
+| Ecosystem Integration Depth | 20% | ✅ Live |
+| Package Downloads (npm/PyPI) | — | ✅ Timer active; first row written |
+| HackerNews mentions | — | ✅ Timer active (APR 24 build) |
+| Reddit mentions | — | ⏳ Blocked — Reddit API/app approval pending |
 | X/Twitter Mentions | 25% | ❌ Offline (credentials revoked Apr 15) |
-| AgentCrush Native Signal | 15% | 🔲 Planned |
-| HackerNews + Reddit | 10% | 🔲 Planned (priority X replacement) |
-| Builder Community Signals | 10% | 📅 Month 2+ |
+| AgentCrush Native Signal | 15% | 🔲 Planned (month 2+) |
+| Builder Community Signals | 10% | 📅 Month 3+ |
 
-Effective scoring weight: 45% of design target.
-
-### Daily Snapshot Coverage (Apr 22)
-
-| Days tracked | Number of agents |
-|--------------|------------------|
-| 9 (full) | 971 |
-| 8 | 29 |
-| 3 | 36 |
-| 2 | 62 |
-| 1 | 98 |
-| **Total tracked** | **1,196 of 1,225 (97%)** |
-
-The 29-agent gap is caused by missing `entity_type: 'agent'` on approval insert. Code fix committed on VPS side. Run `UPDATE agents SET entity_type = 'agent' WHERE entity_type IS NULL OR entity_type != 'agent';` in Supabase to repair existing rows.
+Effective scoring weight: 45-55% of design target (GitHub + Ecosystem + package downloads + HN).
 
 ---
 
@@ -308,6 +330,10 @@ The 29-agent gap is caused by missing `entity_type: 'agent'` on approval insert.
 | agentcrush-github-snapshot.timer | Every 4h | Scoring pipeline |
 | agentcrush-news-fetch.timer | Every 4h | News fetch trigger |
 | agentcrush-weekly-ingest.timer | Monday 06:00 UTC | GitHub discovery → agents |
+| agentcrush-tier-promotion.timer | Sunday 07:00 UTC | Promote/demote agents between tiers based on evidence score |
+| agentcrush-package-download.timer | (schedule active) | npm/PyPI download counts per agent |
+
+`systemctl --failed` is clean as of Apr 26.
 
 ### VPS Services — Disabled/Archived
 
@@ -398,25 +424,39 @@ AgentCrush now has two distinct monetization surfaces, serving different custome
 
 ## 90-DAY ROADMAP (Revised Apr 22)
 
-### This Week (Apr 22-27) — unblock x402 + site fixes
+### Week of Apr 22-27 — completed
 
 - ✅ x402 seller deployed (Apr 21)
-- ✅ First buyer test attempted (Apr 22) — invalid_payload, debugging
-- ⏳ Fix buyer-side x402 payload issue — decode full payment-required header, identify root cause (SDK mismatch vs. CDP signing format vs. EIP-3009 fields)
-- ⏳ First successful end-to-end x402 payment → triggers Bazaar indexing
-- ⏳ Run one-time SQL to fix 29 invisible agents: `UPDATE agents SET entity_type = 'agent' WHERE entity_type IS NULL OR entity_type != 'agent';`
-- ⏳ Monitor Vercel Analytics + Search Console daily (5 min)
-- ⚠️ No user-facing site changes (SEO settling)
-- 🔲 Farcaster presence: first post about x402 launch once loop is verified
+- ✅ First buyer test attempted (Apr 22) — `invalid_payload`, debugged
+- ✅ First successful end-to-end x402 payment on Base mainnet (Apr 22, $0.02 USDC)
+- ✅ entity_type SQL fix applied — 29 previously invisible agents visible
+- ✅ Farcaster reactivated via Neynar paid plan — Ajsa returns casts from /ai, /agents, /base
+- ✅ Ajsa source expansion — Product Hunt, Farcaster, YZI Labs, YC Blog, Coinbase Ventures, Paradigm, YC Launch (7 sources)
+- ✅ Unknown-date repeat suppression implemented
+- ✅ Package-download timer active; nanobot-ai row written
+- ✅ `systemctl --failed` clean
+- ✅ Score_v2 shadow views live
+- ✅ Tiered indexing model deployed — `agents.tier`, `agents.tier_promoted_at`; tier-promotion worker + Sunday 07:00 UTC timer
+- ✅ /rankings evidence-ranked only (v2 public evidence-ranking)
+- ✅ /explore full index (non-archived, evidence-ranked sorted first, TIER 01/02 eyebrows, top-4 featured strip)
+- ✅ Website messaging refresh — homepage, /for-agents, /api-docs, agent profiles, footer, x402 responses
+- ✅ x402 `tier` field added to trust-summary and history responses
+- ✅ Tier-aware UI — EvidenceBadge, IndexedBadge, ScoreBreakdown primitives; deployed on rankings table and agent profiles
+- ⏳ Bazaar listing — check agentic.market; first payment was Apr 22, should index within 72h
 
-### Week 2-3 (Apr 27 - May 11) — distribution surfaces
+### Pending: Reddit scoring (blocked)
+
+- 🔲 Reddit API/app approval → once approved, wire Reddit mention counts into scoring pipeline
+- Note: all other Layer 1B signals are live or in progress; Reddit is the only blocker
+
+### Next (Apr 27 - May 11) — distribution surfaces
 
 - 🔲 Embeddable badge component (`/embed/[handle]` SVG route)
-- 🔲 Ship `verification-status` at $0.005 (Phase 3 x402)
+- 🔲 Ship `verification-status` x402 endpoint at $0.005
 - 🔲 Revise `history` pricing to $0.02 (from $0.10)
 - 🔲 Public API docs expansion (buyer integration examples in 3 languages)
 - 🔲 "Embed your rank" CTA on every agent profile
-- 🔲 Farcaster cadence: 30 min/day, weekly "Rising Now" cast automated from existing data
+- 🔲 Farcaster cadence: weekly "Rising Now" cast from Ajsa data
 
 ### Week 3-6 (May 11 - Jun 1) — content surfaces
 
@@ -426,7 +466,7 @@ AgentCrush now has two distinct monetization surfaces, serving different custome
 
 ### Week 6-10 (Jun 1 - Jul 1) — B2B monetization
 
-- 🔲 First sponsored placement outreach (not cold outreach to builders; targeted pitch to agent-tooling companies)
+- 🔲 First sponsored placement outreach (targeted pitch to agent-tooling companies)
 - 🔲 B2B API tier definition + Stripe wiring
 - 🔲 Shortlist endpoints (free + intelligent tiers)
 
@@ -435,11 +475,17 @@ AgentCrush now has two distinct monetization surfaces, serving different custome
 - 🔲 Product Hunt (hook: "first AgentCrush trust data now machine-callable via x402")
 - 🔲 HN Show HN (hook: methodology + x402 + multi-signal scoring)
 
-### Signal Pipeline Backfill (Parallel Track)
+### Signal Pipeline (ongoing)
 
-- 🔲 HackerNews signal integration (free API, partial X replacement)
-- 🔲 Reddit signal integration (r/LocalLLaMA, r/AI_Agents)
-- 🔲 npm/PyPI download counts
+- ✅ HackerNews signal integration — live (APR 24)
+- ⏳ Reddit signal integration — blocked on API approval
+- ✅ npm/PyPI download counts — timer active
+
+### Future / Deferred (not blocking anything now)
+
+- 🔲 Replace legacy `rankings.score_total` / `global_rank` with v2 as canonical — defer until v2 shows several weeks of stability
+- 🔲 Archive policy (manual promotion only; no automated archiving planned)
+- 🔲 MCP server — planned, not yet started; will announce via Farcaster when live
 
 ### Deferred to Month 3+
 
@@ -503,20 +549,20 @@ AgentCrush now has two distinct monetization surfaces, serving different custome
 
 ## KEY METRICS & KPIs
 
-| Category | Current (Apr 22) | 1-Month Target | 6-Month Target |
+| Category | Current (Apr 26) | 1-Month Target | 6-Month Target |
 |----------|------------------|----------------|----------------|
-| Agents Indexed | 1,225 | 1,300+ | 2,000+ |
-| Agents Ranked | ~100 | 150+ | 500+ |
-| Agents Tracked Daily | 1,196 (97%) | 1,300+ (99%) | 2,000+ (99%) |
-| Scoring Sources Live | 2/6 (45% weight) | 3/6 (55%) | 5/6 (90%) |
-| Sitemap URLs Indexed (Google) | <100 (fresh submission) | 500+ | 1,000+ |
-| Website Monthly Visitors | unknown (analytics just wired) | baseline established | 10x baseline |
+| Agents Indexed (total) | 1,225+ | 1,300+ | 2,000+ |
+| Agents Evidence-Ranked | **39** (tier model) | 50+ | 150+ |
+| Agents Indexed (awaiting evidence) | 1,186 | 1,250+ | 1,800+ |
+| Scoring Sources Live | 3-4 (GitHub + Ecosystem + pkg + HN) | 5 (+ Reddit when approved) | 6+ |
+| Sitemap URLs Indexed (Google) | ~100-500 (settling) | 500+ | 1,000+ |
+| Website Monthly Visitors | baseline being established | baseline + 2x | 10x baseline |
 | Claimed Profiles | 0 | 5-15 | 100+ |
-| x402 Paid Calls (Base mainnet) | 0 (loop not yet verified) | 10-100 | 1,000+ |
-| x402 Revenue | $0 | <$10 | $100-500 |
+| x402 Paid Calls (Base mainnet) | 1 (first payment Apr 22) | 10-100 | 1,000+ |
+| x402 Revenue | $0.02 (first payment) | <$10 | $100-500 |
 | B2B Sponsored Placements | 0 | 0-1 | 3-5 |
 | Embedded Badges (external sites) | 0 | 10+ | 200+ |
-| Combined Monthly Revenue | $0 | $0-100 | $1.5K-3K |
+| Combined Monthly Revenue | ~$0 | $0-100 | $1.5K-3K |
 | Infra Cost | $40/mo | $40/mo | $40-80/mo |
 
 ### Retired KPIs
@@ -527,11 +573,12 @@ AgentCrush now has two distinct monetization surfaces, serving different custome
 
 ## NEXT IMMEDIATE ACTIONS
 
-### Today (Apr 22)
+### Now (Apr 26) — distribution + Reddit unblock
 
-1. Debug x402 buyer-side `invalid_payload` error — get full decoded payment-required header, identify root cause
-2. Run the entity_type SQL fix in Supabase (5 seconds, makes 29 agents visible)
-3. Verify x402 seller endpoints still return 402 after any buyer-side code changes
+1. Check Bazaar listing on agentic.market — if not visible, ask in x402 Discord (first payment was Apr 22, 72h window passed)
+2. Reddit API/app approval — follow up on pending application; this is the only scoring signal still blocked
+3. Embeddable badge (`/embed/[handle]` SVG route) — next distribution surface to ship
+4. Ship `verification-status` x402 endpoint at $0.005 — cheapest endpoint, front door for buyers
 
 ## x402 VERIFIED LIVE — APRIL 22, 2026
 
@@ -601,7 +648,8 @@ In KPIs: x402 Paid Calls (Base mainnet) goes from 0 to 1, and x402 Revenue goes 
 **Version history:**
 - v8 (Apr 13): Phase 3 complete — weekly ingest, ecosystem depth, per-agent snapshots live
 - v9 (Apr 20): Post-X-suspension pivot — SEO deployed, OSS builder positioning, Mike archived, monetization rethink
-- v10 (Apr 22): x402 seller deployed to Base mainnet, first buyer test failed (invalid_payload), service roadmap + pricing ladder defined, realistic year-1 revenue projection ($500-3K from x402 alone, B2B is the real revenue path)
+- v10 (Apr 22): x402 seller deployed to Base mainnet; first buyer test failed then fixed; first end-to-end machine payment on Base mainnet ($0.02 USDC); Bazaar indexing triggered
+- v11 (Apr 26): Phase 5 complete — tiered evidence-ranking model (39 evidence_ranked, 1,186 indexed); tier-promotion worker + Sunday timer; /rankings shows v2 evidence-ranked only; /explore full index; website messaging refresh (trust layer / x402 / machine-callable); Farcaster reactivated via Neynar; Ajsa 7-source expansion; package-download timer; HN signals live; Reddit still blocked; EvidenceBadge/IndexedBadge/ScoreBreakdown UI primitives deployed
 
 ---
 
@@ -615,8 +663,8 @@ In KPIs: x402 Paid Calls (Base mainnet) goes from 0 to 1, and x402 Revenue goes 
 
 ---
 
-**Last Edit:** April 22, 2026 — v10 x402 deployed, buyer loop debugging
-**Next Review:** April 27, 2026 (pending x402 end-to-end verification + first Bazaar listing)
+**Last Edit:** April 26, 2026 — v11 Phase 5 tiered evidence-ranking complete
+**Next Review:** First Sunday of May 2026 (Ajsa weekly review + check: Bazaar listing visible? Reddit API approved? v2 tier-promotion running stably?)
 
 
 
