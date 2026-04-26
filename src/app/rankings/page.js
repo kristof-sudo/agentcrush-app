@@ -196,7 +196,8 @@ export default async function RankingsPage({ searchParams }) {
 
       {/* Evidence explanation */}
       <div className="mb-4 rounded-lg border border-[rgba(57,255,20,0.15)] bg-[rgba(57,255,20,0.04)] px-4 py-3 font-mono text-[11px] text-white/50 leading-relaxed">
-        These rankings include only agents with enough public evidence to score reliably. Signals include GitHub activity, package usage, dependency adoption, docs quality, ecosystem relationships, and public discourse. The list grows automatically as indexed agents accumulate evidence.
+        These rankings include only agents with enough public evidence to score reliably. Signals include GitHub activity, package usage, dependency adoption, docs quality, ecosystem relationships, and public discourse. The list grows automatically as indexed agents accumulate evidence.{' '}
+        <Link href="/how-we-rank" className="text-white/40 hover:text-white/70 transition-colors underline underline-offset-2">How we rank →</Link>
       </div>
 
       {/* Weekly Narrative */}

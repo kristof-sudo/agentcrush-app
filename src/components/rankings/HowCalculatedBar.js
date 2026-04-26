@@ -51,7 +51,7 @@ export default function HowCalculatedBar() {
               ))}
             </ul>
             <a
-              href="/how-it-works"
+              href="/how-we-rank"
               className="mt-3 inline-block text-[10px] text-violet-400 hover:text-violet-300 transition-colors"
             >
               Full methodology →
