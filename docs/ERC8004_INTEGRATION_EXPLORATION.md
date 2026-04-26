@@ -421,6 +421,70 @@ Stage 4: Writer               ← only after v2 scoring stable + demand visible
 
 ---
 
+## 11. Prototype Status (Phase 1 — Reader)
+
+**Date:** April 26, 2026  
+**Status:** Prototype complete. Results sufficient to proceed to Phase 2 evaluation.
+
+### Script
+
+**Path:** `scripts/erc8004-reader-prototype.mjs`
+
+**How to run:**
+```bash
+# From project root (requires .env.local with Supabase anon key):
+node scripts/erc8004-reader-prototype.mjs --limit 50 --no-write --output /tmp/erc8004-reader-report.json
+
+# Single agent:
+node scripts/erc8004-reader-prototype.mjs --handle crewai --output /tmp/crewai.json
+```
+
+**Flags:**
+- `--limit N` — number of AgentCrush agents to check (default 50, prioritizes evidence_ranked)
+- `--handle HANDLE` — check a single agent
+- `--no-write` — accepted, no-op (script is always read-only)
+- `--output PATH` — report destination (default: `./erc8004-reader-report.json`)
+
+### What it does
+- Loads AgentCrush agents from Supabase using the public anon key (read-only)
+- Queries the 8004scan.io public API (`/api/v1/agents?search=…`) for each agent — no auth, no API key required
+- Applies conservative matching: exact handle/name, GitHub org in description, website domain in description/image URL
+- Writes a JSON report: `generated_at`, `agents_checked`, `matches_found`, `uncertain_matches`, `errors`, `matches[]`
+- Never writes to Supabase. No on-chain operations. No private keys.
+
+### What it intentionally does not do
+- Does not write to Supabase or any database
+- Does not fetch raw `agentURI` JSON from on-chain (that would require RPC calls; 8004scan summary API is sufficient for Phase 1 overlap detection)
+- Does not make ERC-8004 state affect any AgentCrush ranking or score
+- Does not use fuzzy matching (Levenshtein) — only exact normalization and substring containment, to keep false-positive rate low at 181k-record scale
+- Does not auto-ingest any ERC-8004 records into the AgentCrush index
+
+### Access source quality
+**Reliable.** `8004scan.io/api/v1/agents` is a public, unauthenticated REST API returning structured JSON. No rate-limiting observed in testing. 181,204 total registrations. The script is polite (350ms delay between calls).
+
+### First-run results (April 26, 2026)
+- 20 AgentCrush agents checked (evidence_ranked set, alphabetical)
+- 22 API searches made
+- **2 confident matches (10% overlap rate):**
+  - `agentlab` → "AgentLab" · Ethereum mainnet · token 9634 · exact name match
+  - `crewai` → "crew ai" · Base mainnet (eip155:8453) · token 17997 · exact name match · `x402_supported: true`
+- 0 uncertain matches, 0 errors
+
+**Notable:** CrewAI's ERC-8004 registration is on Base and has `x402_supported: true` — the same stack AgentCrush uses for payments. This is a meaningful data point.
+
+### Next decision gate
+
+The first-run 10% overlap rate on evidence-ranked agents meets the ≥5% threshold from Section 10. Before proceeding to Phase 2 (ingestion pipeline / schema migration):
+
+- [ ] Kris reviews this doc and provides a single-sentence **go / no-go** for Phase 2
+- [ ] Run the script against the full evidence_ranked set (`--limit 50`) and confirm ≥5 confirmed matches
+- [ ] Decide whether to expand to `indexed` tier agents (much larger set, lower overlap expected)
+- [ ] Decide which chains to prioritize beyond Ethereum mainnet and Base (currently 30+ chains in 8004scan)
+
+Do not add `agent_registry_links` schema or surface ERC-8004 data on profile pages until Kris approves Phase 2.
+
+---
+
 ## Sources
 
 Primary:
