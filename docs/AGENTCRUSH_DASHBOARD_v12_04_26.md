@@ -15,6 +15,10 @@
 | x402 endpoints live | **3** — trust-summary ($0.02), history ($0.02), verification-status ($0.005) |
 | ERC-8004 matched agents | **2** (agentlab, crewai) — Phase 1 complete |
 | Comparison pages | **scaffold v1 live** — `/compare/[slug]` routing works |
+| Dependency graph evidence | **Collecting** — shadow only, no scoring impact |
+| Docs-quality evidence | **Collecting** — shadow only, no scoring impact |
+| Homepage positioning | **Updated** — "Market intelligence for the agent economy" (commit 0d21b2b) |
+| Methodology copy | **Updated** — /how-we-rank + /how-it-works reflect collecting/shadow status |
 | VPS workers active | github-snapshot, weekly-ingest, HN signal, npm/PyPI timer, tier-promotion, Ajsa |
 | Bazaar listing | posted, indexing status to verify |
 | Farcaster | active via Neynar |
@@ -30,7 +34,7 @@ GitHub-only evidence ranking, manual agent ingestion, Supabase backend, basic pr
 Live x402 seller on Base mainnet at `0x58e632Fa698383820FFC22156352C9836790E2c0`. Two endpoints: trust-summary, history. First machine payment Apr 22. Bazaar listing submitted.
 
 ### Phase 3 — Signal Expansion (in progress)
-npm/PyPI download timer active. HN mentions timer active. Reddit API approval pending. Dependency graph worker deferred. Docs quality signal not yet built.
+npm/PyPI download timer active. HN mentions timer active. Reddit API approval pending. Dependency graph evidence now collecting (shadow only — no scoring impact). Docs-quality evidence now collecting (shadow only — no scoring impact). Neither replaces the current public ranking formula; both feed the next scoring hardening cycle.
 
 ### Phase 4 — Ajsa Intelligence Layer (complete — v1)
 Daily 7:00 Budapest Telegram brief. Weekly Sunday review. Sources: Product Hunt, Farcaster (Neynar), YZI Labs, YC Blog, Coinbase Ventures, Paradigm, YC Launch. Repeat suppression live. Self-monitoring module not yet built.
@@ -128,11 +132,13 @@ Daily 7:00 Budapest Telegram brief. Weekly Sunday review. Sources: Product Hunt,
 
 ## Multi-Registry Strategy (current position)
 
-AgentCrush is multi-registry-neutral. ERC-8004 is one registry; Bazaar (x402/Coinbase) is another; Fetch.ai Agentverse is a third. The positioning:
+AgentCrush is protocol-neutral. ERC-8004 is one registry; Bazaar (x402/Coinbase) is another; Fetch.ai Agentverse is a third. The positioning:
 
-**AgentCrush is the readable, ranked, decision-grade layer on top of raw on-chain identity.**
+**AgentCrush is the protocol-neutral market intelligence layer for the agent economy.**
 
-ERC-8004 provides a portable on-chain handle — it does not rank, score, or make trust decisions. AgentCrush fills that gap. The goal: become the credit bureau that reads identity from multiple registries, aggregates evidence, and publishes structured trust data.
+ERC-8004 provides a portable on-chain handle — it does not rank, score, or make trust decisions. AgentCrush reads from multiple registries, aggregates evidence, and publishes structured agent intelligence. The goal: become the neutral cross-protocol index, not a layer inside any one ecosystem.
+
+**Positioning rule:** Say "tracks across," not "built on." Say "reads from ERC-8004," not "the ERC-8004 trust provider." Product-level terms — trust-summary endpoint, Trust Context panel, credibility signals — remain fine descriptively. The restriction is on claiming AgentCrush is the protocol-level trust/reputation/identity layer.
 
 Current registry coverage:
 | Registry | Status | Integration depth |
@@ -181,8 +187,8 @@ Hard rules (repeated from ERC-8004 exploration doc):
 2. **Comparison pages interlinking** — add "Compare" CTA on agent profile pages → comparison route
 3. **Comparison sitemap** — generate entries for top 50 agent pairs by combined score; submit to Google
 4. **ERC-8004 v2 gate check** — run sync against full evidence_ranked set (--limit 50); confirm ≥5 matches; bring to Kris for Phase 2 go/no-go
-5. **Dependency graph signal** — highest scoring signal win not yet built; builds automatic ecosystem graph alongside the 125 manual edges
-6. **Docs quality signal** — automated README length, example count, OpenAPI spec detection per agent
+5. **Dependency graph signal** — evidence collection live (shadow). Next: validate data quality and wire into scoring formula once v2 stability is confirmed.
+6. **Docs quality signal** — evidence collection live (shadow). Next: validate signal coverage and wire into scoring formula alongside dep graph.
 7. **Comparison LLM verdict** — integrate after sitemap/SEO value is confirmed and structure is stable
 
 ---

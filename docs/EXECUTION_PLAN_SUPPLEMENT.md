@@ -39,6 +39,8 @@ Avoid language like:
 - “the x402 reputation provider”
 - “the ERC-8004 trust provider”
 
+**Clarification:** “trust” can still be used descriptively for product outputs such as trust-summary, trust context, and credibility signals. The restriction is on positioning AgentCrush as the protocol-level trust/reputation/identity layer. Endpoint names (trust-summary), UI labels (Trust Context panel), and evidence descriptions (machine-readable credibility signals) are all fine.
+
 AgentCrush can use x402, read ERC-8004, monitor Virtuals ACP, ingest Agentverse, expose MCP, index Daydreams agents, watch OpenServ startups, and enrich from SURF — but its own identity remains independent.
 
 ---
