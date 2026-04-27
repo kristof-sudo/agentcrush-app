@@ -319,7 +319,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
             maxWidth: 760,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .1s',
           }}>
-            Market intelligence<br />
+            Strategic market intelligence<br />
             for the{' '}
             <span style={{ color: '#e91e80', animation: 'glowBreathe 3s ease-in-out infinite' }}>
               agent economy.
