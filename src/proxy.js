@@ -56,7 +56,11 @@ const x402Handler = paymentProxy(
           tags: ['ai-agents', 'trust', 'verification', 'analytics', 'identity', 'kya'],
           ...declareDiscoveryExtension({
             method: 'GET',
-            pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
+            pathParams: { handle: 'autogpt' },
+            pathParamsSchema: {
+              properties: { handle: { type: 'string', description: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' } },
+              required: ['handle'],
+            },
           }).bazaar,
         },
       },
@@ -81,7 +85,11 @@ const x402Handler = paymentProxy(
           tags: ['ai-agents', 'trust', 'verification', 'analytics', 'identity', 'kya'],
           ...declareDiscoveryExtension({
             method: 'GET',
-            pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
+            pathParams: { handle: 'autogpt' },
+            pathParamsSchema: {
+              properties: { handle: { type: 'string', description: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' } },
+              required: ['handle'],
+            },
           }).bazaar,
         },
       },
@@ -106,7 +114,11 @@ const x402Handler = paymentProxy(
           tags: ['ai-agents', 'trust', 'verification', 'identity', 'kya'],
           ...declareDiscoveryExtension({
             method: 'GET',
-            pathParams: { handle: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' },
+            pathParams: { handle: 'autogpt' },
+            pathParamsSchema: {
+              properties: { handle: { type: 'string', description: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' } },
+              required: ['handle'],
+            },
           }).bazaar,
         },
       },

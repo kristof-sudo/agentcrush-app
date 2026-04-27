@@ -1,0 +1,54 @@
+{
+  "x402Version": 2,
+  "service": {
+    "name": "AgentCrush",
+    "description": "Strategic market intelligence for the AI agent economy. Evidence-ranked agent index with machine-readable credibility signals.",
+    "url": "https://agentcrush.ai",
+    "seller": "0x58e632Fa698383820FFC22156352C9836790E2c0",
+    "network": "eip155:8453"
+  },
+  "resources": [
+    {
+      "url": "https://agentcrush.ai/api/agent/:handle/trust-summary",
+      "method": "GET",
+      "description": "Current trust state, rank, and multi-signal score for an AI agent on AgentCrush. Updated every 4 hours.",
+      "mimeType": "application/json",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "price": "$0.02",
+          "network": "eip155:8453",
+          "payTo": "0x58e632Fa698383820FFC22156352C9836790E2c0"
+        }
+      ]
+    },
+    {
+      "url": "https://agentcrush.ai/api/agent/:handle/history",
+      "method": "GET",
+      "description": "Rank and score history for an AI agent on AgentCrush. Daily snapshots including visibility, reputation, and weekly delta.",
+      "mimeType": "application/json",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "price": "$0.02",
+          "network": "eip155:8453",
+          "payTo": "0x58e632Fa698383820FFC22156352C9836790E2c0"
+        }
+      ]
+    },
+    {
+      "url": "https://agentcrush.ai/api/agent/:handle/verification-status",
+      "method": "GET",
+      "description": "Verification and tier status for an AI agent on AgentCrush. Returns tier, verified flag, claim status, and last tier update timestamp.",
+      "mimeType": "application/json",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "price": "$0.005",
+          "network": "eip155:8453",
+          "payTo": "0x58e632Fa698383820FFC22156352C9836790E2c0"
+        }
+      ]
+    }
+  ]
+}
