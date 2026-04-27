@@ -148,11 +148,51 @@ export default async function sitemap() {
     }
   }
 
+  // Comparison pages — top evidence-ranked pairs from v2
+  let compareEntries = []
+  if (supabase) {
+    const { data: v2Rows } = await supabase
+      .from('agent_score_v2_top50_public_candidate')
+      .select('handle')
+      .eq('evidence_ready_for_public_rank', true)
+      .order('rank_v2_c_public', { ascending: true })
+      .limit(50)
+
+    const handles = (v2Rows || []).map((r) => r.handle).filter(Boolean)
+    const handleSet = new Set(handles)
+    const seen = new Set()
+    const pairs = []
+
+    const addPair = (a, b) => {
+      if (!a || !b || a === b) return
+      const key = [a, b].sort().join('--')
+      if (seen.has(key)) return
+      seen.add(key)
+      pairs.push([a, b])
+    }
+
+    for (let i = 0; i < handles.length - 1; i++) {
+      addPair(handles[i], handles[i + 1])
+    }
+
+    for (const [a, b] of [['crewai', 'autogpt'], ['langgraph', 'crewai'], ['langchainagents', 'langgraph']]) {
+      if (handleSet.has(a) && handleSet.has(b)) addPair(a, b)
+    }
+
+    compareEntries = pairs.slice(0, 50).map(([a, b]) => ({
+      url: `${BASE_URL}/compare/${a}-vs-${b}`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    }))
+  }
+
   return [
     ...staticEntries,
     ...agentEntries,
     ...categoryEntries,
     ...useCaseEntries,
     ...layerEntries,
+    ...compareEntries,
   ]
 }

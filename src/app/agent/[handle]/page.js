@@ -601,6 +601,14 @@ export default async function AgentPage({ params }) {
     .order('global_rank', { ascending: true })
     .limit(14)
 
+  const { data: v2CompareRaw } = await supabase
+    .from('agent_score_v2_top50_public_candidate')
+    .select('handle, display_name, rank_v2_c_public')
+    .eq('evidence_ready_for_public_rank', true)
+    .neq('handle', agent.handle)
+    .order('rank_v2_c_public', { ascending: true })
+    .limit(5)
+
     const { data: categoryLinks } = await supabase
     .from('agent_categories')
     .select(`
@@ -879,6 +887,11 @@ export default async function AgentPage({ params }) {
       }
     })
     .filter(Boolean)
+
+  const compareLinks = (v2CompareRaw || []).slice(0, 3).map((r) => ({
+    handle: r.handle,
+    display_name: r.display_name || r.handle,
+  }))
 
   // Why trending: derive from most recent event type + weekly_delta
   const latestEventType = recentEvents?.[0]?.event_type || null
@@ -1196,6 +1209,24 @@ export default async function AgentPage({ params }) {
                   </Link>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ── COMPARE LINKS ────────────────────────────────────────── */}
+        {compareLinks.length > 0 && (
+          <div style={PANEL}>
+            <div style={{ ...LABEL_STYLE, marginBottom: 8 }}>Compare</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {compareLinks.map((c) => (
+                <Link
+                  key={c.handle}
+                  href={`/compare/${encodeURIComponent(agent.handle)}-vs-${encodeURIComponent(c.handle)}`}
+                  style={{ fontSize: 11, color: 'rgba(167,139,250,0.7)', textDecoration: 'none' }}
+                >
+                  {displayName} vs {c.display_name} →
+                </Link>
+              ))}
             </div>
           </div>
         )}
