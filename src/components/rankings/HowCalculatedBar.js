@@ -19,13 +19,15 @@ export default function HowCalculatedBar() {
       {open && (
         <div className="border-t border-white/[0.06] px-4 py-4 grid sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-[11px] font-semibold text-white/70 mb-2">AgentCrush Score is calculated from:</p>
+            <p className="text-[11px] font-semibold text-white/70 mb-2">Evidence signals used in ranking:</p>
             <ul className="space-y-1.5">
               {[
-                'GitHub activity (stars, commits, releases)',
-                'Ecosystem signals (mentions, collaborations)',
-                'Visibility (how often the agent appears in feeds)',
-                'Reputation (community recognition over time)',
+                'GH — GitHub activity (stars, commits, releases)',
+                'PKG — Package usage (npm / PyPI download trends)',
+                'ECO — Ecosystem links (integrations, relationships)',
+                'HN — Discourse / community mentions',
+                'DEP — Dependency references (shadow signal)',
+                'DOC — Documentation quality (shadow signal)',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-[11px] text-white/45">
                   <span className="text-violet-400 mt-0.5 shrink-0">·</span>
@@ -33,19 +35,19 @@ export default function HowCalculatedBar() {
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-[10px] text-white/25">Updated every 6 hours automatically.</p>
+            <p className="mt-3 text-[10px] text-white/25">Shadow signals are collected and monitored before receiving full public scoring weight.</p>
           </div>
           <div>
             <p className="text-[11px] font-semibold text-white/70 mb-2">Reading the table:</p>
             <ul className="space-y-1.5">
               {[
-                { label: 'Score', desc: 'Total visibility + reputation points' },
-                { label: '7d', desc: 'Change in score over the past 7 days' },
-                { label: '↑↑ / ↓↓', desc: 'Moved more than 5 points this week' },
+                { label: 'Score', desc: 'Combined v2 evidence score' },
+                { label: '7d', desc: 'Score change over the past 7 days' },
+                { label: 'Chips', desc: 'Active evidence signals for that agent' },
                 { label: '✓', desc: 'Verified identity confirmed' },
               ].map(({ label, desc }) => (
                 <li key={label} className="flex items-start gap-2 text-[11px] text-white/45">
-                  <span className="font-semibold text-white/60 w-8 shrink-0">{label}</span>
+                  <span className="font-semibold text-white/60 w-9 shrink-0">{label}</span>
                   {desc}
                 </li>
               ))}

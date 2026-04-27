@@ -264,25 +264,30 @@ export default function RankingTable({ rows = [] }) {
       <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderBottom: '2px solid rgba(233,30,128,0.35)', borderRight: '2px solid rgba(233,30,128,0.35)', borderRadius: '0 0 16px 0', pointerEvents: 'none', zIndex: 1 }} />
 
       {/* Header */}
-      <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e91e80', textShadow: '0 0 20px #e91e80', marginBottom: 4 }}>
-            ◆ Live Rankings
+      <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e91e80', textShadow: '0 0 20px #e91e80', marginBottom: 4 }}>
+              ◆ Live Rankings
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.01em', fontFamily: "var(--font-michroma, 'Michroma', sans-serif)" }}>
+              Rising Now
+            </div>
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.01em', fontFamily: "var(--font-michroma, 'Michroma', sans-serif)" }}>
-            Rising Now
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span style={{ fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 13, color: '#374151' }}>
+              {rows.length} agents
+            </span>
+            <Link
+              href="/rankings"
+              style={{ fontSize: 13, fontWeight: 600, color: '#e91e80', textDecoration: 'none', letterSpacing: '0.05em' }}
+            >
+              All →
+            </Link>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 13, color: '#374151' }}>
-            {rows.length} agents
-          </span>
-          <Link
-            href="/rankings"
-            style={{ fontSize: 13, fontWeight: 600, color: '#e91e80', textDecoration: 'none', letterSpacing: '0.05em' }}
-          >
-            All →
-          </Link>
+        <div style={{ fontFamily: "var(--font-mono,'Geist Mono',monospace)", fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.04em', lineHeight: 1.8, flexWrap: 'wrap' }}>
+          {'GH = GitHub activity · PKG = package usage · DEP = dependencies · DOC = docs quality · HN = discourse/community · ECO = ecosystem links · TRUST = registry context'}
         </div>
       </div>
 

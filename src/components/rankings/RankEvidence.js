@@ -2,13 +2,13 @@ const FONT = "var(--font-mono,'Geist Mono',monospace)"
 
 // Signal chips — ordered by weight (most impactful first)
 const SIGNALS = [
-  { key: 'github_score',        short: 'GH',   col: '#00d4ff' },
-  { key: 'package_usage_score', short: 'PKG',  col: '#a78bfa' },
-  { key: 'dependency_score',    short: 'DEP',  col: '#e91e80' },
-  { key: 'ecosystem_score',     short: 'ECO',  col: '#fb7185' },
-  { key: 'docs_quality_score',  short: 'DOC',  col: '#39ff14' },
-  { key: 'hn_score',            short: 'HN',   col: '#fbbf24' },
-  { key: 'trust_score',         short: 'TRUST',col: '#94a3b8' },
+  { key: 'github_score',        short: 'GH',    label: 'GitHub activity',                col: '#00d4ff' },
+  { key: 'package_usage_score', short: 'PKG',   label: 'Package usage',                  col: '#a78bfa' },
+  { key: 'dependency_score',    short: 'DEP',   label: 'Dependency references',           col: '#e91e80' },
+  { key: 'ecosystem_score',     short: 'ECO',   label: 'Ecosystem links',                 col: '#fb7185' },
+  { key: 'docs_quality_score',  short: 'DOC',   label: 'Documentation quality',           col: '#39ff14' },
+  { key: 'hn_score',            short: 'HN',    label: 'Discourse / community mentions',  col: '#fbbf24' },
+  { key: 'trust_score',         short: 'TRUST', label: 'Verification / registry context', col: '#94a3b8' },
 ]
 
 const COVERAGE_META = {
@@ -29,7 +29,7 @@ export default function RankEvidence({ row }) {
       {active.map(s => (
         <span
           key={s.key}
-          title={`${s.short}: ${Math.round(row[s.key])}/100`}
+          title={`${s.label}: ${Math.round(row[s.key])}/100`}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 3,
             padding: '1px 5px', borderRadius: 3,
