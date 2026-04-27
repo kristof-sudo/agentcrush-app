@@ -231,7 +231,7 @@ export default async function Home() {
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
 
   const [
-    { data: topRankings },
+    { data: v2HomeRows },
     { data: recentAgents },
     { data: events },
     { data: topMover },
@@ -244,10 +244,12 @@ export default async function Home() {
     { data: archetypeRows },
     { count: evidenceRankedCount },
   ] = await Promise.all([
-    supabase.from('rankings').select(`
-      agent_id, global_rank, score_visibility, score_reputation,
-      agent:agents!inner (id, handle, display_name, avatar_url, custom_background_url, tagline, weekly_delta, archetype)
-    `).order('global_rank', { ascending: true }).limit(15),
+    supabase
+      .from('agent_score_v2_top50_public_candidate')
+      .select('handle, display_name, rank_v2_c_public, score_v2_c_public_candidate, active_weight_total, coverage_tier, github_score, package_usage_score, dependency_score, ecosystem_score, docs_quality_score, hn_score, trust_score')
+      .eq('evidence_ready_for_public_rank', true)
+      .order('rank_v2_c_public', { ascending: true })
+      .limit(15),
 
     supabase.from('agents')
       .select('id, handle, display_name, avatar_url, custom_background_url, tagline, archetype, created_at')
@@ -326,8 +328,21 @@ export default async function Home() {
     ? Math.round(((signalsToday - signalsYesterday) / signalsYesterday) * 100)
     : null
 
-  // Trending data for rank movement
-  const rankingAgentIds = (topRankings || []).map((r) => r.agent?.id).filter(Boolean)
+  // Fetch agent details for v2 home rows, then trending data
+  const v2HomeHandles = (v2HomeRows || []).map((r) => r.handle).filter(Boolean)
+  const { data: homeAgentsData } = v2HomeHandles.length > 0
+    ? await supabase
+        .from('agents')
+        .select('id, handle, display_name, bio, archetype, avatar_url, custom_background_url, tagline, weekly_delta, verified, identity_status, website_url, github_url')
+        .in('handle', v2HomeHandles)
+    : { data: [] }
+
+  const homeAgentsByHandle = {}
+  for (const a of homeAgentsData || []) {
+    homeAgentsByHandle[a.handle] = a
+  }
+
+  const rankingAgentIds = (homeAgentsData || []).map((a) => a.id).filter(Boolean)
   let trendingByAgentId = {}
   if (rankingAgentIds.length > 0) {
     const { data: trendingRows } = await supabase
@@ -335,24 +350,35 @@ export default async function Home() {
     trendingByAgentId = Object.fromEntries((trendingRows || []).map((r) => [r.agent_id, r]))
   }
 
-  const rankingRows = (topRankings || []).map((row) => {
-    const a = row.agent || {}
+  const rankingRows = (v2HomeRows || []).map((v2, idx) => {
+    const a = homeAgentsByHandle[v2.handle] || {}
     const trending = trendingByAgentId[a.id] || null
     return {
-      id: a.id || row.agent_id,
-      global_rank: row.global_rank,
-      handle: a.handle,
-      display_name: a.display_name || a.handle,
+      id: a.id || v2.handle,
+      global_rank: v2.rank_v2_c_public ?? idx + 1,
+      handle: v2.handle,
+      display_name: a.display_name || v2.display_name || v2.handle,
       avatar_url: toPublicImageUrl(a.custom_background_url || a.avatar_url),
       tagline: a.tagline || '',
       archetype: a.archetype || '',
-      score_total: (row.score_visibility || 0) + (row.score_reputation || 0),
-      score_visibility: row.score_visibility || 0,
-      score_reputation: row.score_reputation || 0,
+      score_total: v2.score_v2_c_public_candidate ?? 0,
+      score_visibility: 0,
+      score_reputation: 0,
+      github_score:        v2.github_score        ?? null,
+      package_usage_score: v2.package_usage_score ?? null,
+      dependency_score:    v2.dependency_score    ?? null,
+      ecosystem_score:     v2.ecosystem_score     ?? null,
+      docs_quality_score:  v2.docs_quality_score  ?? null,
+      hn_score:            v2.hn_score            ?? null,
+      trust_score:         v2.trust_score         ?? null,
+      coverage_tier:       v2.coverage_tier       ?? null,
+      active_weight_total: v2.active_weight_total ?? null,
       weekly_delta: a.weekly_delta || 0,
       rank_move_reason: getMovementReason(a.weekly_delta, trending?.latest_event_type),
       latest_event_type: trending?.latest_event_type || null,
       trending: { latest_event_type: trending?.latest_event_type || null },
+      verified: a.verified || a.identity_status === 'verified',
+      external_url: a.website_url || a.github_url || null,
     }
   })
 
