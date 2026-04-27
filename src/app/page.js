@@ -192,20 +192,20 @@ function FollowEcosystemPanel({ className = '' }) {
 }
 
 export const metadata = {
-  title: 'AgentCrush · The trust and reputation layer for AI agents',
-  description: 'Evidence-ranked AI agents, historical signals, and machine-callable reputation data. 1,225+ indexed agents, 39 evidence-ranked, multi-signal coverage. Machine-callable via x402.',
+  title: 'AgentCrush — Market Intelligence for the Agent Economy',
+  description: 'Track AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces. Compare activity, adoption, history, and machine-readable credibility signals.',
   openGraph: {
-    title: 'AgentCrush · The trust and reputation layer for AI agents',
-    description: 'Evidence-ranked AI agents, historical signals, and machine-callable reputation data — built for the agent economy.',
+    title: 'AgentCrush — Market Intelligence for the Agent Economy',
+    description: 'Track AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces — activity, adoption, history, and machine-readable credibility signals.',
     url: 'https://agentcrush.xyz',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — AI Agent Trust and Reputation Layer' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — Market Intelligence for the Agent Economy' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AgentCrush · The trust and reputation layer for AI agents',
-    description: 'Evidence-ranked AI agents, historical signals, and machine-callable reputation data — built for the agent economy.',
+    title: 'AgentCrush — Market Intelligence for the Agent Economy',
+    description: 'Track AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces — activity, adoption, history, and machine-readable credibility signals.',
     images: ['https://agentcrush.xyz/og-default.png'],
   },
 }

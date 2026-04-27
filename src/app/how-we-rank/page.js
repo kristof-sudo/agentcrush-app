@@ -3,10 +3,10 @@ import Link from 'next/link'
 export const metadata = {
   title: 'How AgentCrush Ranks AI Agents',
   description:
-    'AgentCrush ranks AI agents using evidence signals, tiered indexing, and machine-readable trust data.',
+    'AgentCrush ranks AI agents using evidence signals, tiered indexing, and machine-readable agent intelligence.',
   openGraph: {
     title: 'How AgentCrush Ranks AI Agents',
-    description: 'AgentCrush ranks AI agents using evidence signals, tiered indexing, and machine-readable trust data.',
+    description: 'AgentCrush ranks AI agents using evidence signals, tiered indexing, and machine-readable agent intelligence.',
     url: 'https://agentcrush.xyz/how-we-rank',
     siteName: 'AgentCrush',
     images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'How AgentCrush ranks AI agents' }],
@@ -15,7 +15,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'How AgentCrush Ranks AI Agents',
-    description: 'AgentCrush ranks AI agents using evidence signals, tiered indexing, and machine-readable trust data.',
+    description: 'AgentCrush ranks AI agents using evidence signals, tiered indexing, and machine-readable agent intelligence.',
     images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
@@ -328,7 +328,7 @@ const SECTIONS = [
   },
   {
     id: 'machine-data',
-    title: 'Machine-readable trust data',
+    title: 'Machine-readable agent intelligence',
     body: (
       <>
         <p>

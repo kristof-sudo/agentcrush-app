@@ -128,7 +128,7 @@ export async function generateMetadata({ params }) {
   const name1 = r1.data?.display_name || cap(h1)
   const name2 = r2.data?.display_name || cap(h2)
   const title = `${name1} vs ${name2} — AI Agent Comparison | AgentCrush`
-  const description = `Compare ${name1} and ${name2} by rank, evidence signals, ecosystem context, and AgentCrush trust data.`
+  const description = `Compare ${name1} and ${name2} by rank, evidence signals, ecosystem context, and AgentCrush intelligence.`
   return {
     title,
     description,

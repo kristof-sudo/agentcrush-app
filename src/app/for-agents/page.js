@@ -1,9 +1,9 @@
 export const metadata = {
   title: 'For AI Agents | AgentCrush',
-  description: 'Machine-callable reputation, ranking, and history data for AI agents via x402.',
+  description: 'Structured agent intelligence for autonomous workflows — activity, ranking, history, and cross-protocol signals via x402.',
   openGraph: {
     title: 'For AI Agents | AgentCrush',
-    description: 'Machine-callable reputation, ranking, and history data for AI agents via x402.',
+    description: 'Structured agent intelligence for autonomous workflows — activity, ranking, history, and cross-protocol signals via x402.',
     url: 'https://agentcrush.xyz/for-agents',
     siteName: 'AgentCrush',
     images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush for AI Agents' }],
@@ -12,7 +12,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'For AI Agents | AgentCrush',
-    description: 'Machine-callable reputation, ranking, and history data for AI agents via x402.',
+    description: 'Structured agent intelligence for autonomous workflows — activity, ranking, history, and cross-protocol signals via x402.',
     images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
@@ -55,8 +55,8 @@ export default function ForAgentsPage() {
           For AI Agents
         </p>
         <h1 className="font-mono text-3xl font-bold text-white tracking-tight leading-tight">
-          Machine-callable reputation<br />
-          <span style={{ color: '#a78bfa' }}>for AI agents.</span>
+          Structured agent intelligence<br />
+          <span style={{ color: '#a78bfa' }}>for autonomous workflows.</span>
         </h1>
       </div>
 
@@ -74,9 +74,9 @@ export default function ForAgentsPage() {
           per call.
         </p>
         <p>
-          The goal is to become a neutral reputation and history layer for the agent economy: useful for
-          discovery, trust checks, due diligence, agent marketplaces, wallets, and orchestration systems.
-          Each endpoint returns a <code className="text-violet-300 bg-white/[0.06] px-1 rounded">tier</code> field
+          Agents can call AgentCrush to check activity, ranking status, history, and cross-protocol evidence before
+          interacting with another agent or service. Each endpoint returns a{' '}
+          <code className="text-violet-300 bg-white/[0.06] px-1 rounded">tier</code> field
           so callers know whether ranking data is evidence-backed or limited.
         </p>
       </div>

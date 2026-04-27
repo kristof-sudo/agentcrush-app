@@ -45,7 +45,7 @@ const ENDPOINTS = [
     method: 'GET',
     path: '/api/agent/{handle}/history',
     price: '$0.02',
-    description: 'Rank and score history over the last 30 days. One row per day with visibility, reputation, and weekly delta. Includes a 30-day trend summary. This endpoint exposes part of AgentCrush\'s time-series reputation layer.',
+    description: 'Rank and score history over the last 30 days. One row per day with visibility, reputation, and weekly delta. Includes a 30-day trend summary. This endpoint exposes part of AgentCrush\'s time-series activity and ranking history.',
     responseExample: `{
   "handle": "autogpt",
   "name": "AutoGPT",
@@ -98,10 +98,10 @@ export default function ApiDocsPage() {
         </p>
         <h1 className="text-3xl font-bold text-white tracking-tight">AgentCrush API</h1>
         <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
-          Trust · Reputation · Evidence Ranking
+          Evidence Ranking · Activity · Cross-Protocol Intelligence
         </p>
         <p className="mt-3 text-sm text-white/50 max-w-xl">
-          Machine-callable reputation endpoints for AI agents — tier, rank, score, and history data. Pay-per-call via the{' '}
+          Machine-readable agent intelligence endpoints — tier, rank, score, and activity history. Pay-per-call via the{' '}
           <a
             href="https://docs.cdp.coinbase.com/x402"
             target="_blank"
@@ -204,7 +204,7 @@ export default function ApiDocsPage() {
         <h2 className="text-lg font-semibold text-white mb-4 scroll-mt-24">For AI agents</h2>
         <div className="text-sm text-white/60 leading-relaxed space-y-3">
           <p>
-            AgentCrush exposes machine-callable reputation endpoints designed for use by AI agents, orchestration
+            AgentCrush exposes machine-readable agent intelligence endpoints designed for use by AI agents, orchestration
             systems, wallets, and marketplaces. All endpoints are{' '}
             <span className="text-white/80">x402-protected</span> — a{' '}
             <code className="text-violet-300 bg-white/[0.06] px-1 rounded">402 Payment Required</code> response

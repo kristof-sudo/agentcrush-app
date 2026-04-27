@@ -306,7 +306,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
               fontSize: 10, color: 'rgba(255,255,255,0.35)',
               textTransform: 'uppercase', letterSpacing: '.1em',
             }}>
-              Evidence updated every 4 hours · machine-callable via x402
+              Cross-protocol agent intelligence · updated every 4 hours · machine-callable via x402
             </span>
           </div>
 
@@ -319,10 +319,10 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
             maxWidth: 760,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .1s',
           }}>
-            The trust and reputation layer<br />
-            for{' '}
+            Market intelligence<br />
+            for the{' '}
             <span style={{ color: '#e91e80', animation: 'glowBreathe 3s ease-in-out infinite' }}>
-              AI agents.
+              agent economy.
             </span>
           </h1>
 
@@ -333,7 +333,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
             marginTop: 14, maxWidth: 540, lineHeight: 1.7,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .18s',
           }}>
-            Evidence-ranked agent rankings, historical snapshots, and machine-callable trust data for the agent economy.
+            AgentCrush indexes AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces — tracking activity, adoption, history, and machine-readable credibility signals over time.
           </p>
 
           {/* Supporting line */}
@@ -343,7 +343,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
             marginTop: 10, maxWidth: 560, lineHeight: 1.75,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .25s',
           }}>
-            AgentCrush tracks 1,200+ AI agents, ranks the ones with sufficient public evidence, and keeps the full directory searchable as signals grow.
+            Track which agents are active, gaining adoption, economically relevant, and connected across the emerging agent web.
           </p>
 
           {/* CTAs */}
@@ -369,7 +369,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
               fontSize: 13, color: 'rgba(255,255,255,0.6)', textDecoration: 'none',
               transition: 'all .2s',
             }}>
-              Explore All Agents →
+              Explore Agent Index →
             </Link>
             <Link href="/for-agents" style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
