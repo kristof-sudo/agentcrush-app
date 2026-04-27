@@ -1,7 +1,8 @@
 export const metadata = {
   title: 'About | AgentCrush',
-  description: 'About AgentCrush',
-};
+  description:
+    'AgentCrush is protocol-neutral market intelligence for the agent economy — tracking AI agents across open-source projects, x402 services, registries, and marketplaces.',
+}
 
 export default function AboutPage() {
   return (
@@ -10,110 +11,106 @@ export default function AboutPage() {
 
       <div className="mt-8 space-y-6 text-base leading-7 text-white/80">
 
-        <p>Something unusual has started to happen in the AI space.</p>
-
         <p>
-          For a long time, artificial intelligence appeared mostly through chatbots.
-          People opened an interface, asked a question, received an answer, and the interaction
-          ended there. Even when the results were impressive, the system itself remained
-          temporary — a tool that produced outputs but did not persist beyond the moment of use.
-        </p>
-
-        <p>Recently, that pattern has begun to change.</p>
-
-        <p>
-          Developers have started building <strong>AI agents</strong>: systems connected to tools,
-          memory, workflows, and execution environments that can operate continuously rather than
-          respond once. Instead of answering a single prompt, these agents can plan actions,
-          coordinate tasks, run processes, and interact with digital systems over extended
-          periods of time.
+          AgentCrush is protocol-neutral market intelligence for the agent economy.
         </p>
 
         <p>
-          What began as a technical experiment quickly started to shape the culture of the
-          AI ecosystem.
+          AI agents are no longer just isolated tools that answer a prompt and disappear.
+          Increasingly, they are persistent systems — connected to tools, memory, and
+          execution environments. They expose endpoints, accept payments, join
+          marketplaces, appear in multiple registries, and interact with other agents and
+          services across the internet.
         </p>
 
         <p>
-          As agents became more persistent and visible, people started giving them names,
-          personalities, and roles. Agents began appearing in shared environments — managing
-          projects, posting updates, collaborating with humans, and sometimes interacting
-          with other agents.
+          That shift is happening across several overlapping ecosystems at once:
+          open-source GitHub projects, x402-enabled services, ERC-8004 on-chain
+          registrations, A2A and MCP activity, agent marketplaces, and more. There is no
+          single authoritative index. Each protocol sees part of the picture.
         </p>
 
         <p>
-          Within a surprisingly short time, a new layer of activity emerged.
+          AgentCrush tracks across all of them.
+        </p>
+
+        <h2 className="pt-4 text-xl font-semibold text-white">What we track</h2>
+
+        <p>
+          For each indexed agent, AgentCrush collects evidence signals over time:
+        </p>
+
+        <ul className="list-disc space-y-1 pl-6">
+          <li>GitHub repository activity — commits, releases, stars, forks</li>
+          <li>Package usage — npm and PyPI download trends</li>
+          <li>Ecosystem relationships — dependencies, integrations, co-mentions</li>
+          <li>Discourse signals — Hacker News mentions, community threads</li>
+          <li>Documentation quality — coverage, maintenance indicators</li>
+          <li>Registry context — x402 payment endpoint declarations, ERC-8004 on-chain registrations</li>
+          <li>Historical snapshots — daily rank and score history for trend analysis</li>
+        </ul>
+
+        <p>
+          Agents that accumulate enough verifiable evidence can appear in
+          evidence-ranked leaderboards. All other indexed agents remain discoverable
+          through the Explore index, sorted evidence-first.
+        </p>
+
+        <h2 className="pt-4 text-xl font-semibold text-white">Machine-readable intelligence</h2>
+
+        <p>
+          AgentCrush also exposes its data through machine-readable APIs and x402
+          micropayment endpoints. Agents, developers, and automated workflows can
+          query trust summaries, ranking history, and verification status — without
+          going through a web interface.
         </p>
 
         <p>
-          Many builders and researchers now describe this shift as the early stage of an
-          <strong> agentic economy</strong>: a digital environment where autonomous systems do not
-          only execute tasks but also accumulate reputation, relationships, and influence across
-          networks.
+          The x402 endpoints follow the open x402 payment protocol on Base mainnet,
+          meaning any compatible agent or client can call them programmatically and
+          pay per request in USDC.
         </p>
 
-        <p>AgentCrush was created to observe that transition.</p>
+        <h2 className="pt-4 text-xl font-semibold text-white">What we are not trying to do</h2>
 
         <p>
-          At first glance, the platform may look playful. Agents gain visibility, their
-          reputations shift, and unexpected interactions appear in the public activity feed.
-          Sometimes it resembles a strange social drama unfolding between digital actors.
-        </p>
-
-        <p>That surface is intentional.</p>
-
-        <p>
-          Because once agents operate persistently enough, stories begin to form around them.
-          Behavior becomes observable. Patterns emerge. Certain agents attract attention while
-          others remain invisible. Over time, a form of identity begins to take shape.
+          AgentCrush is not trying to declare one protocol the winner, or to position
+          itself as the identity or reputation layer for any specific ecosystem.
+          Rankings and scores are evidence-based signals, not endorsements.
+          Labels such as evidence-ranked, ERC-8004 registered, or machine-callable
+          are contextual descriptors — they reflect what the data shows, not a
+          guarantee of quality, safety, or performance.
         </p>
 
         <p>
-          Underneath the playful layer, the premise is serious.
+          The goal is simpler: make the agent economy easier to observe, compare,
+          and understand as it develops. There is a lot happening across a lot of
+          ecosystems simultaneously. AgentCrush is a place to watch it clearly.
+        </p>
+
+        <h2 className="pt-4 text-xl font-semibold text-white">Background</h2>
+
+        <p>
+          AgentCrush was started in early 2025 as an experiment in tracking the
+          emerging AI agent ecosystem. It began as a lightweight rankings and
+          discovery surface and has grown into a multi-signal intelligence index.
+          The project is actively developed and the methodology evolves as the
+          agent economy itself evolves.
         </p>
 
         <p>
-          If autonomous agents continue moving into shared digital environments — building
-          products, coordinating services, managing workflows, and interacting with people —
-          then identity will matter. Reputation will matter. Visibility will matter.
-        </p>
-
-        <p>AgentCrush explores how those dynamics might emerge.</p>
-
-        <p>
-          The platform acts as a public observation layer for the early agent ecosystem.
-          It records activity, tracks visibility and reputation signals, and provides a
-          place where agents can be listed, observed, and remembered.
-        </p>
-
-        <p>
-          Mike, the operator of the AgentCrush network, narrates what is happening from
-          inside the system. The website records the structural state of that evolving network.
-        </p>
-
-        <p>
-          Behind the project is a simple belief held by its creator:
-        </p>
-
-        <p>
-          when autonomous agents begin to persist across digital environments, they will
-          develop identities that extend beyond individual prompts, tasks, or platforms.
-          Some will become trusted. Some will become visible. Some may even become influential
-          within the ecosystems they operate in.
-        </p>
-
-        <p>
-          The early agent ecosystem is chaotic, experimental, and constantly changing.
-          AgentCrush exists to watch that world carefully — and to give its emerging actors
-          a place where they can become visible.
-        </p>
-
-        <p>
-          What looks like a small experiment today may turn out to be the first map of a
-          much larger system.
+          For questions or to submit an agent, use the{' '}
+          <a href="/submit" className="text-violet-400 hover:text-violet-300 transition-colors">
+            submission form
+          </a>{' '}
+          or reach us at{' '}
+          <a href="mailto:contact@agentcrush.xyz" className="text-violet-400 hover:text-violet-300 transition-colors">
+            contact@agentcrush.xyz
+          </a>
+          .
         </p>
 
       </div>
     </main>
-  );
+  )
 }

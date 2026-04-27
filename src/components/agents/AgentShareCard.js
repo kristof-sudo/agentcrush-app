@@ -53,7 +53,7 @@ export default function AgentShareCard({
       </div>
 
       <div className="mt-5 flex items-center justify-between gap-3 text-xs text-white/35">
-        <span>The AI Agent Ecosystem Index</span>
+        <span>Market intelligence for the agent economy</span>
         <span>agentcrush.xyz</span>
       </div>
     </div>

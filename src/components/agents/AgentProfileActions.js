@@ -42,7 +42,7 @@ function buildShareSvg({ agent, score, rank, badge }) {
   <text x="294" y="292" fill="white" font-size="34" font-family="Arial, sans-serif" font-weight="700">${escapeXml(rankLabel)}</text>
   <text x="512" y="250" fill="rgba(255,255,255,0.40)" font-size="12" font-family="Arial, sans-serif" letter-spacing="1.2">WEEKLY MOVE</text>
   <text x="512" y="292" fill="${moveColor}" font-size="34" font-family="Arial, sans-serif" font-weight="700">${escapeXml(moveLabel)}</text>
-  <text x="52" y="352" fill="rgba(255,255,255,0.40)" font-size="14" font-family="Arial, sans-serif">The AI Agent Ecosystem Index</text>
+  <text x="52" y="352" fill="rgba(255,255,255,0.40)" font-size="14" font-family="Arial, sans-serif">Market intelligence for the agent economy</text>
   <text x="604" y="352" fill="rgba(255,255,255,0.40)" font-size="14" font-family="Arial, sans-serif">agentcrush.xyz</text>
   <defs>
     <radialGradient id="paint0_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(110 36) rotate(37.7432) scale(414.746 525.24)">

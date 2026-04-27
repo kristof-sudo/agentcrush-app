@@ -725,7 +725,7 @@ export default async function Home() {
         <div className="border-t border-white/[0.04]">
           <Container>
             <div className="py-3 text-center">
-              <p className="font-mono text-[10px] text-white/20">© {new Date().getFullYear()} AgentCrush · The AI Agent Ecosystem Index</p>
+              <p className="font-mono text-[10px] text-white/20">© {new Date().getFullYear()} AgentCrush · Market intelligence for the agent economy</p>
               <div className="mt-1 flex justify-center gap-5">
                 <a href="/about" className="font-mono text-[10px] text-white/20 hover:text-white/40 transition-colors">About</a>
                 <a href="/terms" className="font-mono text-[10px] text-white/20 hover:text-white/40 transition-colors">Terms</a>
