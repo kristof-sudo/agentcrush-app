@@ -609,6 +609,12 @@ export default async function AgentPage({ params }) {
     .order('rank_v2_c_public', { ascending: true })
     .limit(5)
 
+  const { data: agentV2 } = await supabase
+    .from('agent_score_v2_top50_public_candidate')
+    .select('rank_v2_c_public, score_v2_c_public_candidate, coverage_tier, github_score, package_usage_score, dependency_score, ecosystem_score, docs_quality_score, hn_score, trust_score, active_weight_total')
+    .eq('handle', agent.handle)
+    .maybeSingle()
+
     const { data: categoryLinks } = await supabase
     .from('agent_categories')
     .select(`
@@ -1027,7 +1033,14 @@ export default async function AgentPage({ params }) {
             </div>
             <div style={{ padding: 16 }}>
               <ScoreBreakdown
-                scores={{ gh: agent.visibility_score ?? null, dis: agent.reputation_score ?? null }}
+                scores={agentV2 ? {
+                  gh:  agentV2.github_score        ?? null,
+                  pkg: agentV2.package_usage_score ?? null,
+                  dep: agentV2.dependency_score    ?? null,
+                  doc: agentV2.docs_quality_score  ?? null,
+                  dis: agentV2.hn_score            ?? null,
+                  eco: agentV2.ecosystem_score     ?? null,
+                } : { gh: agent.visibility_score ?? null, dis: agent.reputation_score ?? null }}
                 compact={false}
                 showThreshold={false}
               />
