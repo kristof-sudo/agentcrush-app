@@ -91,7 +91,7 @@ export default function AboutPage() {
         <h2 className="pt-4 text-xl font-semibold text-white">Background</h2>
 
         <p>
-          AgentCrush was started in early 2025 as an experiment in tracking the
+          AgentCrush was started in early 2026 as an experiment in tracking the
           emerging AI agent ecosystem. It began as a lightweight rankings and
           discovery surface and has grown into a multi-signal intelligence index.
           The project is actively developed and the methodology evolves as the
