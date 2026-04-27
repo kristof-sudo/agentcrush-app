@@ -63,7 +63,7 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 
 ### Bet B: A2A open-source ecosystem (Fetch.ai / ERC-8004 / decentralized agent economy)
 
-**Thesis:** A parallel open-standard stack for agent identity, coordination, and commerce develops alongside the closed Coinbase-led ecosystem. Winner is not determined yet; being present on both sides preserves optionality. AgentCrush stays multi-registry-neutral, publishing reputation attestations to ERC-8004 and registering on Agentverse while keeping Bazaar as the primary commerce surface.
+**Thesis:** A parallel open-standard stack for agent identity, coordination, and commerce develops alongside the closed Coinbase-led ecosystem. Winner is not determined yet; being present on both sides preserves optionality. AgentCrush stays protocol-neutral — reading from ERC-8004, monitoring Agentverse, indexing ACP/Virtuals activity — without identifying as a project inside any one of them. Bazaar remains the primary commerce surface. AgentCrush is the funnel, not the faction.
 
 **Evidence for:**
 - 70,000+ agents registered across ERC-8004 on Ethereum, Base, BNB (March 2026)
@@ -90,9 +90,11 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 - ✅ ERC-8004 exploration phase complete — `docs/ERC8004_INTEGRATION_EXPLORATION.md` written
 - ✅ ERC-8004 reader v1 shipped — storage, profile surface, API surface
 - ⬜ ERC-8004 v2 ingestion (go/no-go pending: run full evidence_ranked scan, present to Kris)
-- ⬜ ERC-8004 v3 writer (gate: v2 scoring stable ≥8 Sunday runs + legal review)
+- ⬜ ERC-8004 v3 writer — do not rush; writing attestations too early makes AgentCrush look like an ERC-8004-native layer; gate: v2 scoring stable ≥8 Sunday runs + legal review + clear value case
 - ⬜ Fetch.ai / Agentverse registration — not started
-- Multi-registry neutrality maintained in schema and strategy
+- ⬜ Virtuals / ACP activity monitoring via Ajsa — add to Ajsa source list
+- ⬜ Daydreams / OpenServ / Giza adapters — medium priority; track via Ajsa first
+- Protocol-neutral adapter architecture: every source goes through `external source → normalized source table → AgentCrush evidence graph → public/API surface`
 
 **Retirement criteria:** If by August 2026 ERC-8004 registrations plateau (under 10% quarterly growth) AND no meaningful application layer emerges on top of the standard AND a clear closed-ecosystem winner captures >80% of machine commerce volume, reduce this lane to maintenance-only.
 
@@ -178,6 +180,9 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 - **Mike persona revival on X** — account permanently dead. Confirmed Apr 23.
 - **Automated X scoring signal** — deferred indefinitely. X's own pricing makes API automation expensive (per-URL post pricing); risk of new account suspensions remains. Rejected Apr 24.
 - **Product Hunt and Farcaster as scoring signals** — these are Ajsa monitoring inputs (catalyst/event evidence), NOT scoring signals. Cleaner separation: hard evidence (GitHub, downloads, dependency graph, docs, HN, Reddit) feeds the scoring formula; catalyst signals (Product Hunt, Farcaster) feed Ajsa's brief. Decided Apr 24.
+- **Positioning as "the trust layer" / "the reputation layer" / "the identity layer"** — rejected Apr 27. ERC-8004 and ERC-8126 already own that framing at the protocol level. AgentCrush must say "across," not "inside." Correct north star: "protocol-neutral market intelligence for the agent economy."
+- **Full aGDP clone** — Virtuals Protocol already owns "aGDP" framing strongly. Use "Agent Economy Index" or "Agentic Activity Index" instead. Rejected Apr 27.
+- **ERC-8004 writer before clear demand** — rushing on-chain attestations risks looking like an ERC-8004-native layer and locks in a protocol-specific identity before the ecosystem consolidates. Deferred until v2 scoring stable + legal review + visible demand. Decided Apr 27.
 
 ---
 
@@ -190,6 +195,8 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 **April 26, 2026 (Phase 5 update):** No bet changes. Confirming momentum on Bet A — tiered evidence-ranking model shipped, x402 trust-summary/history now return `tier` field, first machine payment landed Apr 22, Farcaster reactivated as distribution channel via Neynar. Bet A signals remain positive. Reddit scoring still blocked pending API approval; this affects Bet A's signal coverage but does not change the bet. HN signal integration live. Package-download timer active. v2 scoring stability to be confirmed over coming Sunday tier-promotion runs before any Bet A re-evaluation is warranted.
 
 **April 26, 2026 (ERC-8004 v1 + comparison pages update):** Bet B advances from exploration to v1 live. ERC-8004 reader prototype confirmed 10% overlap rate with evidence-ranked agents. `agent_erc8004_registrations` table live. Profile pages and trust-summary/verification-status APIs now surface ERC-8004 state via service role key. Key finding: CrewAI's ERC-8004 registration is on Base with `x402_supported: true` — this is the first confirmed real-world overlap between the ERC-8004 open ecosystem and the x402 closed ecosystem. Strengthens both Bet A and Bet B simultaneously. Phase 2 (ingestion discovery) go/no-go pending after full evidence_ranked scan. Comparison pages scaffold v1 also shipped — new SEO surface for discovery. No bet changes. Multi-registry neutrality confirmed.
+
+**April 27, 2026 (strategic correction + supplement):** North star revised. "The trust and reputation layer for AI agents" retired — ERC-8004 / ERC-8126 already occupy that framing at the protocol level, and positioning AgentCrush there makes it look like a competitor rather than a complement. New north star: "protocol-neutral market intelligence for the agent economy." Homepage repositioning shipped (commit 0d21b2b). Bet B thesis updated: AgentCrush reads ERC-8004 as one registry among many; does not rush writer/attestation functionality. Supplement adds three new build directions: Agent Economy Index (/agent-economy-index), AgentCrush Labs (/labs, services arm), and Evaluator Agent Index (month 2+). Traditional-industry A2A bridge identified as a services opportunity leveraging Kris's logistics/trade domain experience. Protocol-neutral adapter architecture formalized: every source goes through normalization before touching the evidence graph. No bet changes. Bet C strengthened by Labs framing and traditional-industry wedge.
 
 **Next monthly review:** First Sunday of June 2026
 
