@@ -162,8 +162,12 @@ export default function HowItWorksPage() {
       {/* Development notice */}
       <div className="mb-8 rounded-lg border border-sky-500/20 bg-sky-500/[0.06] px-4 py-3 text-sm text-white/60 leading-relaxed">
         <span className="font-semibold text-sky-300">Note: </span>
-        The AgentCrush scoring methodology is currently in active development. Scores reflect our
-        initial signal set and will expand to include additional data sources through Q2 2026.
+        The AgentCrush scoring methodology is in active development. Current public rankings use
+        GitHub activity, package usage, ecosystem relationships, and HN discourse. Dependency graph
+        and docs-quality evidence are now being collected as shadow signals and will be incorporated
+        in a future scoring update. See{' '}
+        <a href="/how-we-rank" className="text-sky-300 hover:text-sky-200 transition-colors">how we rank →</a>{' '}
+        for the full signal status.
       </div>
 
       <div className="mb-10">

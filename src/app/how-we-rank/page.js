@@ -204,22 +204,26 @@ const SECTIONS = [
     body: (
       <>
         <p>
-          AgentCrush is transparent about what is not yet live. The following signals are in the pipeline
-          but not fully active in scoring today:
+          AgentCrush is transparent about what is not yet scored. Signals marked{' '}
+          <span className="font-mono text-[11px] font-semibold" style={{ color: '#fbbf24' }}>Collecting</span>{' '}
+          are being gathered and monitored as shadow evidence but do not currently affect public rankings.
+          Signals marked{' '}
+          <span className="font-mono text-[11px] font-semibold" style={{ color: '#94a3b8' }}>Planned</span>{' '}
+          are not yet collecting data.
         </p>
         <div className="mt-4 space-y-2">
           {[
             {
-              label: 'Dependency graph hardening',
-              status: 'In progress',
+              label: 'Dependency graph evidence',
+              status: 'Collecting — not yet scored',
               statusColor: '#fbbf24',
-              desc: 'Relationship edge coverage is expanding. Dependency depth is partially active; broader graph coverage is being added over time.',
+              desc: 'Dependency graph data is now being actively collected: the pipeline discovers which repos reference each agent and writes those edges to the evidence store. This data does not yet replace or supplement the current public ranking formula — it is running as a shadow signal while the scoring model is hardened.',
             },
             {
-              label: 'Docs quality scoring',
-              status: 'In progress',
+              label: 'Docs quality evidence',
+              status: 'Collecting — not yet scored',
               statusColor: '#fbbf24',
-              desc: 'Documentation completeness and freshness as a scoring input. Under active development; not yet included in public scores.',
+              desc: 'Documentation completeness signals (README depth, example count, API spec presence, changelog freshness) are now being collected per agent. Not yet included in public scores — being monitored as a shadow signal alongside the dependency graph data for the next scoring hardening cycle.',
             },
             {
               label: 'Reddit discourse signal',
