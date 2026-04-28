@@ -120,7 +120,7 @@ function DeltaDisplay({ delta }) {
 
 // ── Desktop row ────────────────────────────────────────────────────────────
 
-function AgentRow({ r, onNavigate, delay = 0 }) {
+function AgentRow({ r, onNavigate, delay = 0, compact = false }) {
   const [hovered, setHovered] = useState(false)
   const [visible, setVisible] = useState(false)
   const rowRef = useRef()
@@ -219,7 +219,7 @@ function AgentRow({ r, onNavigate, delay = 0 }) {
       </td>
 
       {/* Signal breakdown */}
-      <td style={{ padding: '14px 12px', verticalAlign: 'middle', minWidth: 140 }} className="hidden lg:table-cell">
+      <td style={{ padding: '14px 12px', verticalAlign: 'middle', minWidth: 140 }} className={compact ? 'hidden' : 'hidden lg:table-cell'}>
         <ScoreBreakdown scores={signalScores} compact={false} />
       </td>
 
@@ -251,7 +251,7 @@ function AgentRow({ r, onNavigate, delay = 0 }) {
 
 // ── Main export ────────────────────────────────────────────────────────────
 
-export default function RankingTable({ rows = [] }) {
+export default function RankingTable({ rows = [], compact = false }) {
   const router = useRouter()
 
   return (
@@ -301,7 +301,7 @@ export default function RankingTable({ rows = [] }) {
                 { label: 'AGENT', style: { padding: '8px 12px',                       textAlign: 'left'  } },
                 { label: '7D',    style: { padding: '8px 12px',                       textAlign: 'right' } },
                 { label: 'SCORE', style: { padding: '8px 12px', minWidth: 72,        textAlign: 'right' } },
-                { label: 'SIGNALS', style: { padding: '8px 12px', minWidth: 140, textAlign: 'left' }, className: 'hidden lg:table-cell' },
+                { label: 'SIGNALS', style: { padding: '8px 12px', minWidth: 140, textAlign: 'left' }, className: compact ? 'hidden' : 'hidden lg:table-cell' },
                 { label: 'TIER',    style: { padding: '8px 12px', textAlign: 'left'  }, className: 'hidden lg:table-cell' },
                 { label: '',      style: { padding: '8px 16px', width: 36                                } },
               ].map(({ label, style, className }) => (
@@ -318,6 +318,7 @@ export default function RankingTable({ rows = [] }) {
                 r={r}
                 delay={i * 60}
                 onNavigate={() => router.push(`/agent/${encodeURIComponent(r.handle)}`)}
+                compact={compact}
               />
             ))}
             {rows.length === 0 && (

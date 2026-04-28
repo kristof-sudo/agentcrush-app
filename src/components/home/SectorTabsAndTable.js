@@ -44,7 +44,7 @@ export default function SectorTabsAndTable({ rows = [], sectors = [] }) {
       )}
 
       <div className="overflow-x-auto">
-        <RankingTable rows={filtered} />
+        <RankingTable rows={filtered} compact />
       </div>
       <div className="mt-2 text-right">
         <a href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
