@@ -45,6 +45,48 @@ Every entry must answer:
 
 ---
 
+### 2026-04-28 — HeadlessOracle / environment-state constraints for agent commerce
+
+**Status:** Monitor
+
+**What happened?**
+HeadlessOracle published an architectural argument around x402 + environment-state composition, with two RFCs on Mastercard's Verifiable Intent repository for `environment.market_state` and `environment.wallet_state`. Reference implementation reportedly runs on Cloudflare Workers + Base + Ed25519.
+
+**Why does it matter for AgentCrush?**
+If agent commerce matures, agents may need to evaluate not only identity/payment capability, but whether external conditions permit an action: wallet state, market state, constraints, and verification context. This could become a future evidence category or Ajsa watch item.
+
+**What could AgentCrush do?**
+- Monitor the RFCs and adoption
+- Add "environment-state / constraint primitives" to Ajsa watchlist
+- Later consider whether services/agents expose constraint metadata useful for AgentCrush profiles
+
+**Decision:** Monitor. Do not build now.
+
+**If promoted:** → Ajsa watchlist, Agent Economy Index V1/V2, or future scoring/evidence taxonomy
+
+---
+
+### 2026-04-28 — Future distribution loop: builder outreach
+
+**Status:** Build later
+
+**What happened?**
+Idea: once profiles, badges, claim flow, and MCP/developer docs are stable, contact top evidence-ranked builders and tell them they are ranked. Provide a shareable profile link, badge link, and optional claim link.
+
+**Why does it matter for AgentCrush?**
+Ranked builders have an external reason to share AgentCrush. Each share brings inbound from the builder's own audience — a distribution loop driven by the index itself rather than by paid or Mike-only distribution.
+
+**What could AgentCrush do?**
+- Identify top evidence-ranked agents whose builders have a public contact point (GitHub, X, email in profile)
+- Send a short outreach message: "You're ranked on AgentCrush. Here's your profile, badge, and claim link."
+- Measure whether outreach recipients share or claim
+
+**Decision:** Build later. Do not start outreach until claim flow and profile/badge presentation are polished enough that the link landing is worth sharing.
+
+**If promoted:** → Distribution (outreach campaign) or growth loop tracking
+
+---
+
 ### 2026-04-28 — AgentCash / no-API-key paid API access
 
 **Status:** Monitor
