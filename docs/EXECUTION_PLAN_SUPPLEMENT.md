@@ -1070,3 +1070,10 @@ AgentCrush should be the funnel, not the faction.
 ---
 
 End of supplement.
+
+---
+
+## Appendix: Operational docs added 2026-04-28
+
+- [docs/AGENTCRUSH_LABS.md](AGENTCRUSH_LABS.md) — Working backlog for Labs monetization and service experiments. Offers under consideration, activation gates, rules, parking lot.
+- [docs/INTELLIGENCE_BACKLOG.md](INTELLIGENCE_BACKLOG.md) — Append-only log of Ajsa ecosystem signals and intelligence items that may become AgentCrush tasks.
