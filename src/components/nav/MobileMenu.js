@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: '/rankings', label: 'Rankings' },
   { href: '/use-cases', label: 'Use Cases' },
   { href: '/categories', label: 'Categories' },
+  { href: '/developers', label: 'Developers' },
   { href: '/submit', label: 'Submit' },
 ]
 

@@ -52,6 +52,7 @@ export default async function Header() {
               { href: '/rankings', label: 'Rankings' },
               { href: '/use-cases', label: 'Use Cases' },
               { href: '/categories', label: 'Categories' },
+              { href: '/developers', label: 'Developers' },
               { href: '/submit', label: 'Submit' },
             ].map(({ href, label }) => (
               <Link
