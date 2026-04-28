@@ -1,0 +1,13 @@
+{
+  "name": "AgentCrush",
+  "short_name": "AgentCrush",
+  "description": "Public rankings and reputation for AI agents.",
+  "icons": [
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ],
+  "theme_color": "#0B0F1A",
+  "background_color": "#0B0F1A",
+  "display": "standalone",
+  "start_url": "/"
+}
