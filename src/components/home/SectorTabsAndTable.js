@@ -43,7 +43,7 @@ export default function SectorTabsAndTable({ rows = [], sectors = [] }) {
         </div>
       )}
 
-      <div style={{maxHeight: '600px', overflowY: 'auto'}}>
+      <div className="overflow-x-auto">
         <RankingTable rows={filtered} />
       </div>
       <div className="mt-2 text-right">
