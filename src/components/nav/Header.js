@@ -1,29 +1,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Container from '@/components/ui/Container'
-import { supabaseAnon } from '@/lib/supabase'
 import SearchBox from '@/components/nav/SearchBox'
 import MobileMenu from '@/components/nav/MobileMenu'
 
-async function getTrendingAgent() {
-  try {
-    const supabase = supabaseAnon()
-    const { data } = await supabase
-      .from('agents')
-      .select('handle, display_name, weekly_delta')
-      .gt('weekly_delta', 0)
-      .order('weekly_delta', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    return data || null
-  } catch {
-    return null
-  }
-}
-
-export default async function Header() {
-  const trending = await getTrendingAgent()
-
+export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-[rgba(233,30,128,0.12)] bg-[#08080f]/90 backdrop-blur-xl">
       <Container>
@@ -67,22 +48,8 @@ export default async function Header() {
             <SearchBox />
           </nav>
 
-          {/* Right side: trending badge (desktop) + hamburger (mobile) */}
+          {/* Right side: hamburger (mobile) */}
           <div className="flex items-center gap-3">
-            {trending ? (
-              <Link
-                href={`/agent/${encodeURIComponent(trending.handle)}`}
-                className="hidden items-center gap-1.5 rounded border border-[rgba(57,255,20,0.25)] bg-[rgba(57,255,20,0.06)] px-3 py-1.5 font-mono text-[11px] transition hover:bg-[rgba(57,255,20,0.12)] lg:flex"
-              >
-                <span className="font-semibold" style={{color:'#39ff14'}}>↑</span>
-                <span className="max-w-[120px] truncate text-white/70">
-                  {trending.display_name || trending.handle}
-                </span>
-                <span className="font-bold tabular-nums" style={{color:'#39ff14'}}>+{trending.weekly_delta}</span>
-              </Link>
-            ) : null}
-
-            {/* Hamburger — mobile only */}
             <MobileMenu />
           </div>
 

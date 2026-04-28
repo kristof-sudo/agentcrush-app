@@ -173,7 +173,7 @@ function Scanline() {
 }
 
 /* ── Main export ───────────────────────────────────────────────────────── */
-export default function HeroSection({ agentCount, signalsToday, topMover, evidenceRankedCount }) {
+export default function HeroSection({ agentCount, signalsToday, evidenceRankedCount }) {
   const [mouse, setMouse] = useState({ x: 0, y: 0 })
   const heroRef = useRef()
 
@@ -195,12 +195,6 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
     evidenceRankedCount != null ? { label: 'evidence ranked', value: evidenceRankedCount, color: '#00d4ff' } : null,
     { label: 'signals today', value: signalsToday || 0, color: '#e91e80' },
     { label: 'machine-callable', value: null, extra: 'MCP + X402', color: 'rgba(167,139,250,0.8)', href: '/developers' },
-    topMover ? {
-      label: 'top mover',
-      value: null,
-      extra: `+${topMover.weekly_delta} ${topMover.display_name || topMover.handle}`,
-      color: '#39ff14',
-    } : null,
   ].filter(Boolean)
 
   return (

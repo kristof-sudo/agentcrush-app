@@ -516,8 +516,6 @@ export default async function Home() {
         <HeroSection
           agentCount={agentCount}
           signalsToday={signalsToday}
-
-          topMover={topMover}
           evidenceRankedCount={evidenceRankedCount}
         />
 
