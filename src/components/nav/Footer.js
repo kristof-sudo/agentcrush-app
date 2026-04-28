@@ -12,7 +12,7 @@ export default function Footer() {
           <Link href="/use-cases" className="text-xs text-white/35 hover:text-white/70 transition-colors">Use Cases</Link>
           <Link href="/for-agents" className="text-xs text-white/35 hover:text-white/70 transition-colors">For Agents</Link>
           <Link href="/api-docs" className="text-xs text-white/35 hover:text-white/70 transition-colors">API</Link>
-          <Link href="/developers/mcp" className="text-xs text-white/35 hover:text-white/70 transition-colors">MCP</Link>
+          <Link href="/developers" className="text-xs text-white/35 hover:text-white/70 transition-colors">Developers</Link>
           <Link href="/submit" className="text-xs text-white/35 hover:text-white/70 transition-colors">Submit Agent</Link>
           <Link href="/agent-economy-index" className="text-xs text-white/35 hover:text-white/70 transition-colors">Agent Economy Index</Link>
         </nav>
