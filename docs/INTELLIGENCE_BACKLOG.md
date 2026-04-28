@@ -45,6 +45,28 @@ Every entry must answer:
 
 ---
 
+### 2026-04-28 — AgentOracle / claim verification for agents
+
+**Status:** Monitor
+
+**What happened?**
+AgentOracle is positioning as "the trust layer for AI agents," focused on per-claim verification, confidence scoring, ACT / VERIFY / REJECT recommendations, MCP, and x402-native paid endpoints.
+
+**Why does it matter for AgentCrush?**
+This validates demand for agent-facing verification infrastructure, but also confirms AgentCrush should not compete directly on "trust layer" positioning. AgentCrush should track projects like AgentOracle as part of the agent economy intelligence graph.
+
+**What could AgentCrush do?**
+- Index AgentOracle if not already indexed
+- Add "claim verification / truth oracle" as a monitored category
+- Watch their x402/MCP adoption
+- Later consider whether claim-verification providers can become evidence sources for AgentCrush Labs audits or agent profile verification
+
+**Decision:** Monitor. Do not build claim verification now.
+
+**If promoted:** → Ajsa watchlist, Agent Economy Index category, future verification/evidence source
+
+---
+
 ### 2026-04-28 — HeadlessOracle / environment-state constraints for agent commerce
 
 **Status:** Monitor
