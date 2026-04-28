@@ -241,6 +241,7 @@ Append-only log at `docs/INTELLIGENCE_BACKLOG.md`. Captures Ajsa signals that ma
 | v2 scoring stability | Need ≥8 clean Sunday runs before ERC-8004 v3 writer or legacy rank replacement | Ongoing |
 
 *Resolved since v12:* Bazaar indexing, comparison pages no sitemap/interlinking, homepage/profile scoring inconsistency, stale $0.10 price.
+*Resolved Apr 28:* H1 repo move out of iCloud (symlink at old path for compatibility).
 
 ---
 
@@ -254,13 +255,14 @@ Append-only log at `docs/INTELLIGENCE_BACKLOG.md`. Captures Ajsa signals that ma
 | x402 seller wallet | Active — 0x58e632Fa698383820FFC22156352C9836790E2c0 |
 | Farcaster (Neynar) | Active |
 | Telegram approval gate | Active |
-| iCloud repo path | Still at `/Users/pk/Documents/New project` — **H1 migration not done** |
+| Main repo path | **`/Users/pk/projects/agentcrush-app`** — H1 complete (Apr 28) |
+| Old path symlink | `/Users/pk/Documents/New project` → `/Users/pk/projects/agentcrush-app` |
 
 **Infrastructure backlog (H-series):**
 | Item | Status |
 |---|---|
-| H1: repo move out of iCloud → `/Users/pk/projects/agentcrush-app` | **Not done — next infra task** |
-| H2: predictable VPS deploy | Not done |
+| H1: repo move out of iCloud → `/Users/pk/projects/agentcrush-app` | **Done — Apr 28** |
+| H2: predictable VPS deploy | Not done — next infra task |
 | H3: dry-run flags | Partially improved as workers are touched |
 | CI | Not done |
 
@@ -268,8 +270,7 @@ Append-only log at `docs/INTELLIGENCE_BACKLOG.md`. Captures Ajsa signals that ma
 
 ## Next Actions (priority order)
 
-1. **H1 — repo move out of iCloud** (`/Users/pk/Documents/New project` → `/Users/pk/projects/agentcrush-app`) — next major infra task; reduces risk of iCloud sync interference
-2. **MCP server v0** — next serious distribution surface; enables agent-native discovery
+1. **MCP server v0** — next serious distribution surface; enables agent-native discovery
 3. **Agentverse / Fetch.ai exploration** — registry adapter; low effort to investigate
 4. **Let shadow evidence accumulate** — dep-graph and docs-quality signals collecting; do not wire into scoring until v2 stability is confirmed (≥8 Sunday runs)
 5. **Dashboard/source doc refresh** — after next major sprint
@@ -288,7 +289,6 @@ Append-only log at `docs/INTELLIGENCE_BACKLOG.md`. Captures Ajsa signals that ma
 - B2B API tier / enterprise pricing
 - Labs landing page (`/labs`)
 - x402 post-mortem article
-- H1 repo move out of iCloud
 - H2 predictable VPS deploy
 - Reddit signal
 - v2 scoring canonical replacement (legacy rank columns)
