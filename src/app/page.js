@@ -197,16 +197,16 @@ export const metadata = {
   openGraph: {
     title: 'AgentCrush — Strategic Market Intelligence for the Agent Economy',
     description: 'Track AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces — activity, adoption, history, and machine-readable credibility signals.',
-    url: 'https://agentcrush.xyz',
+    url: 'https://www.agentcrush.xyz',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — Strategic Market Intelligence for the Agent Economy' }],
+    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — Strategic Market Intelligence for the Agent Economy' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AgentCrush — Strategic Market Intelligence for the Agent Economy',
     description: 'Track AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces — activity, adoption, history, and machine-readable credibility signals.',
-    images: ['https://agentcrush.xyz/og-default.png'],
+    images: ['https://www.agentcrush.xyz/og-default.png'],
   },
 }
 
