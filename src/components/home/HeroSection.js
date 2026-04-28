@@ -194,7 +194,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
     { label: 'agents indexed', value: agentCount || 0 },
     evidenceRankedCount != null ? { label: 'evidence ranked', value: evidenceRankedCount, color: '#00d4ff' } : null,
     { label: 'signals today', value: signalsToday || 0, color: '#e91e80' },
-    { label: 'machine-callable', value: null, extra: 'x402 enabled', color: 'rgba(167,139,250,0.8)' },
+    { label: 'machine-callable', value: null, extra: 'MCP + X402', color: 'rgba(167,139,250,0.8)', href: '/developers' },
     topMover ? {
       label: 'top mover',
       value: null,
@@ -306,7 +306,7 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
               fontSize: 10, color: 'rgba(255,255,255,0.35)',
               textTransform: 'uppercase', letterSpacing: '.1em',
             }}>
-              Cross-protocol agent intelligence · updated every 4 hours · machine-callable via x402
+              Cross-protocol agent intelligence · free MCP + paid x402 APIs · updated every 4 hours
             </span>
           </div>
 
@@ -389,26 +389,37 @@ export default function HeroSection({ agentCount, signalsToday, topMover, eviden
             marginTop: 40, display: 'flex', gap: 20, flexWrap: 'wrap',
             animation: 'fadeIn 1s ease both .6s',
           }}>
-            {stats.map(s => (
-              <div key={s.label} style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-                <span style={{
-                  fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-                  fontSize: s.value != null ? 20 : 16,
-                  fontWeight: 700,
-                  color: s.color || 'white',
-                  fontVariantNumeric: 'tabular-nums',
-                }}>
-                  {s.value != null ? <Counter target={s.value} /> : s.extra}
-                </span>
-                <span style={{
-                  fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-                  fontSize: 10, color: 'rgba(255,255,255,0.3)',
-                  textTransform: 'uppercase', letterSpacing: '.07em',
-                }}>
-                  {s.label}
-                </span>
-              </div>
-            ))}
+            {stats.map(s => {
+              const inner = (
+                <>
+                  <span style={{
+                    fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                    fontSize: s.value != null ? 20 : 16,
+                    fontWeight: 700,
+                    color: s.color || 'white',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {s.value != null ? <Counter target={s.value} /> : s.extra}
+                  </span>
+                  <span style={{
+                    fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                    fontSize: 10, color: 'rgba(255,255,255,0.3)',
+                    textTransform: 'uppercase', letterSpacing: '.07em',
+                  }}>
+                    {s.label}
+                  </span>
+                </>
+              )
+              return s.href ? (
+                <Link key={s.label} href={s.href} style={{ display: 'flex', alignItems: 'baseline', gap: 7, textDecoration: 'none' }}>
+                  {inner}
+                </Link>
+              ) : (
+                <div key={s.label} style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+                  {inner}
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
