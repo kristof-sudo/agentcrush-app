@@ -45,6 +45,51 @@ Every entry must answer:
 
 ---
 
+### 2026-04-29 — Google AP2 donated to FIDO Alliance
+
+**Status:** Investigate
+
+**What happened?**
+Google donated Agent Payments Protocol (AP2) to the FIDO Alliance. AP2 v0.2 adds Human Not Present payments, and Mastercard's Verifiable Intent framework is being contributed alongside it.
+
+**Why does it matter for AgentCrush?**
+AP2 may become the institutional authorization / intent / payment-governance layer for agent commerce, while x402 remains important for HTTP-native machine payments and stablecoin settlement. AgentCrush should track both as separate but related surfaces.
+
+AP2 answers:
+- Did the user authorize this agent action?
+- What constraints did the user give?
+- Can a merchant/payment provider verify intent?
+- Who is accountable if something goes wrong?
+- Can autonomous "human not present" payments be audited?
+
+x402 answers:
+- Can this HTTP resource ask for payment?
+- Can an agent pay per request?
+- Can the payment settle cheaply and programmatically?
+- Can a service be discovered as machine-payable?
+- Can APIs monetize without API keys or subscriptions?
+
+AgentCrush should track:
+- AP2 support / FIDO alignment
+- x402 support / Bazaar or CDP discovery
+- Verifiable Intent support
+- payment method support: stablecoin, card, wallet, bank rails
+- human-present vs human-not-present payment capability
+- whether the service exposes machine-readable metadata
+- whether the service has observable usage/payment evidence
+
+**What could AgentCrush do?**
+- Add AP2/FIDO/Verifiable Intent to Ajsa watchlist
+- Add AP2 as a tracked protocol on Agent Economy Index V1
+- Write a short AP2 vs x402 brief
+- Later track agents/services that support AP2, x402, or both
+
+**Decision:** Investigate. Do not build an adapter yet. AgentCrush does not choose AP2 or x402 — AgentCrush tracks both.
+
+**If promoted:** → Agent Economy Index V1, Ajsa watchlist, payment protocol taxonomy, future Labs audit checklist
+
+---
+
 ### 2026-04-28 — AgentOracle / claim verification for agents
 
 **Status:** Monitor
