@@ -291,6 +291,36 @@ export const metadata = {
     description: 'Track AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces — activity, adoption, history, and machine-readable credibility signals.',
     images: ['https://www.agentcrush.xyz/og-default.png'],
   },
+  other: {
+    'fc:miniapp': JSON.stringify({
+      version: '1',
+      imageUrl: 'https://www.agentcrush.xyz/og-default.png',
+      button: {
+        title: 'Open AgentCrush',
+        action: {
+          type: 'launch_miniapp',
+          name: 'AgentCrush',
+          url: 'https://www.agentcrush.xyz',
+          splashImageUrl: 'https://www.agentcrush.xyz/agentcrush-logo.png',
+          splashBackgroundColor: '#08080f',
+        },
+      },
+    }),
+    'fc:frame': JSON.stringify({
+      version: '1',
+      imageUrl: 'https://www.agentcrush.xyz/og-default.png',
+      button: {
+        title: 'Open AgentCrush',
+        action: {
+          type: 'launch_frame',
+          name: 'AgentCrush',
+          url: 'https://www.agentcrush.xyz',
+          splashImageUrl: 'https://www.agentcrush.xyz/agentcrush-logo.png',
+          splashBackgroundColor: '#08080f',
+        },
+      },
+    }),
+  },
 }
 
 export const dynamic = 'force-dynamic'

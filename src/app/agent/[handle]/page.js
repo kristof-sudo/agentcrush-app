@@ -496,6 +496,30 @@ export async function generateMetadata({ params }) {
     image = 'https://agentcrush.xyz/og-default.png'
   }
 
+  const agentUrl = `https://www.agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`
+  const ogImageUrl = `https://www.agentcrush.xyz/api/og/agent/${encodeURIComponent(agent.handle)}`
+
+  const embedAction = {
+    type: 'launch_miniapp',
+    name: 'AgentCrush',
+    url: agentUrl,
+    splashImageUrl: 'https://www.agentcrush.xyz/agentcrush-logo.png',
+    splashBackgroundColor: '#08080f',
+  }
+
+  const miniappEmbed = JSON.stringify({
+    version: '1',
+    imageUrl: ogImageUrl,
+    button: { title: 'View on AgentCrush', action: embedAction },
+  })
+
+  // fc:frame is the backward-compat tag for older Farcaster clients
+  const frameEmbed = JSON.stringify({
+    version: '1',
+    imageUrl: ogImageUrl,
+    button: { title: 'View on AgentCrush', action: { ...embedAction, type: 'launch_frame' } },
+  })
+
   return {
     title,
     description: description.slice(0, 160),
@@ -504,14 +528,18 @@ export async function generateMetadata({ params }) {
       description: description.slice(0, 160),
       type: 'profile',
       siteName: 'AgentCrush',
-      url: `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
-      images: [{ url: image, width: 1200, height: 630, alt: `${name} on AgentCrush` }],
+      url: agentUrl,
+      images: [{ url: ogImageUrl, width: 1200, height: 800, alt: `${name} on AgentCrush` }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description: description.slice(0, 160),
-      images: [image],
+      images: [ogImageUrl],
+    },
+    other: {
+      'fc:miniapp': miniappEmbed,
+      'fc:frame': frameEmbed,
     },
   }
 }
