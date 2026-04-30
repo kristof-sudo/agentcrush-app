@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: '/categories', label: 'Categories' },
   { href: '/developers', label: 'Developers' },
   { href: '/submit', label: 'Submit' },
+  { href: '/blog', label: 'Blog' },
 ]
 
 export default function MobileMenu() {

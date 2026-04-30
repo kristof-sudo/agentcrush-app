@@ -35,6 +35,7 @@ export default function Header() {
               { href: '/categories', label: 'Categories' },
               { href: '/developers', label: 'Developers' },
               { href: '/submit', label: 'Submit' },
+              { href: '/blog', label: 'Blog' },
             ].map(({ href, label }) => (
               <Link
                 key={href}
