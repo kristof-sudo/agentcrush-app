@@ -255,7 +255,11 @@ export default function X402DiscoveryPostmortem() {
         </p>
 
         <p>
-          If you&apos;re thinking about shipping an x402 endpoint of your own, my DMs are open. I&apos;m one person running AgentCrush from Budapest, and I learned most of this the slow way.
+          Credit where it&apos;s due — the x402 channel on Coinbase&apos;s Developer Platform (CDP) Discord was helpful while I was debugging this. Good community there if you&apos;re shipping x402.
+        </p>
+
+        <p>
+          If you&apos;re thinking about shipping an x402 endpoint of your own, my DMs are open.
         </p>
 
       </div>
