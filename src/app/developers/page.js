@@ -194,6 +194,19 @@ export default function DevelopersPage() {
         </div>
       </div>
 
+      {/* Case study */}
+      <div className="mt-4 px-1">
+        <p className="text-xs text-white/25">
+          Case study:{' '}
+          <Link
+            href="/blog/x402-discovery-postmortem"
+            className="text-violet-400/60 hover:text-violet-300 transition-colors"
+          >
+            x402 discovery post-mortem →
+          </Link>
+        </p>
+      </div>
+
     </main>
   )
 }

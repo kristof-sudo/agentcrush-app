@@ -14,6 +14,7 @@ export default function Footer() {
           <Link href="/api-docs" className="text-xs text-white/35 hover:text-white/70 transition-colors">API</Link>
           <Link href="/developers" className="text-xs text-white/35 hover:text-white/70 transition-colors">Developers</Link>
           <Link href="/submit" className="text-xs text-white/35 hover:text-white/70 transition-colors">Submit Agent</Link>
+          <Link href="/blog" className="text-xs text-white/35 hover:text-white/70 transition-colors">Blog</Link>
           <Link href="/agent-economy-index" className="text-xs text-white/35 hover:text-white/70 transition-colors">Agent Economy Index</Link>
         </nav>
       </div>
