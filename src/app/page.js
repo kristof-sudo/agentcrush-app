@@ -191,6 +191,89 @@ function FollowEcosystemPanel({ className = '' }) {
   )
 }
 
+// ── What can you do section ────────────────────────────────────────────────
+function WhatCanYouDo() {
+  const cards = [
+    {
+      verb: 'Get your agent indexed',
+      sub: 'Submit your agent or claim your existing profile.',
+      href: '/submit',
+      linkLabel: 'Submit agent →',
+    },
+    {
+      verb: 'Query agent intelligence from your workflows',
+      sub: 'Free MCP server + paid x402 endpoints. Machine-callable.',
+      href: '/developers',
+      linkLabel: 'View developer docs →',
+    },
+    {
+      verb: 'Track which agents are gaining adoption',
+      sub: 'Evidence-ranked across protocols, registries, and marketplaces.',
+      href: '/agent-economy-index',
+      linkLabel: 'View Agent Economy Index →',
+    },
+    {
+      verb: 'Compare two agents head-to-head',
+      sub: 'Score, history, signals, ecosystem links — side by side.',
+      href: '/compare/crewai-vs-langchainagents',
+      linkLabel: 'Try a comparison →',
+    },
+  ]
+  return (
+    <div className="py-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {cards.map((card) => (
+          <div key={card.href}
+            className="relative rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-4 hover:border-[rgba(233,30,128,0.3)] transition-colors overflow-hidden">
+            <CornerAccent />
+            <p className="font-mono text-sm font-bold text-[#e91e80] leading-snug mb-1.5">{card.verb}</p>
+            <p className="font-mono text-[11px] text-white/40 leading-relaxed mb-3">{card.sub}</p>
+            <Link href={card.href}
+              className="font-mono text-[11px] font-semibold text-[#39ff14] hover:opacity-80 transition-opacity">
+              {card.linkLabel}
+            </Link>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Comparison widget ──────────────────────────────────────────────────────
+function ComparisonWidget() {
+  const comparisons = [
+    { a: 'crewai', labelA: 'CrewAI', b: 'langchainagents', labelB: 'LangChain Agents' },
+    { a: 'openclaw', labelA: 'OpenClaw Agents', b: 'dspy', labelB: 'DSPy' },
+    { a: 'autogpt', labelA: 'AutoGPT', b: 'openhands', labelB: 'OpenHands' },
+  ]
+  return (
+    <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden">
+      <CornerAccent />
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-[10px] text-[#e91e80]">⇄</span>
+          <span className="font-mono text-xs font-bold text-white tracking-wide">COMPARE</span>
+        </div>
+        <Link href="/explore" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
+          Compare any two →
+        </Link>
+      </div>
+      <div className="divide-y divide-white/[0.04]">
+        {comparisons.map(({ a, labelA, b, labelB }) => (
+          <Link key={`${a}-${b}`}
+            href={`/compare/${a}-vs-${b}`}
+            className="flex items-center gap-2 px-3 py-2.5 hover:bg-white/[0.025] transition-colors group">
+            <span className="font-mono text-[11px] text-white/70 group-hover:text-white/90 transition-colors truncate">{labelA}</span>
+            <span className="font-mono text-[10px] text-[#e91e80] shrink-0 px-0.5">vs</span>
+            <span className="font-mono text-[11px] text-white/70 group-hover:text-white/90 transition-colors truncate">{labelB}</span>
+            <span className="ml-auto font-mono text-[10px] text-white/20 group-hover:text-white/50 transition-colors shrink-0">→</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export const metadata = {
   title: 'AgentCrush — Strategic Market Intelligence for the Agent Economy',
   description: 'Track AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces. Compare activity, adoption, history, and machine-readable credibility signals.',
@@ -249,7 +332,7 @@ export default async function Home() {
       .select('handle, display_name, rank_v2_c_public, score_v2_c_public_candidate, active_weight_total, coverage_tier, github_score, package_usage_score, dependency_score, ecosystem_score, docs_quality_score, hn_score, trust_score')
       .eq('evidence_ready_for_public_rank', true)
       .order('rank_v2_c_public', { ascending: true })
-      .limit(15),
+      .limit(10),
 
     supabase.from('agents')
       .select('id, handle, display_name, avatar_url, custom_background_url, tagline, archetype, created_at')
@@ -304,8 +387,6 @@ export default async function Home() {
     .order('published_at', { ascending: false })
     .limit(25)
 
-  // Deduplicate to max 1 item per source so no single outlet dominates
-  // Also filter to items published within the last 48 hours (reuse twoDaysAgo = midnight 2 days ago ≈ 48h)
   const _seenSources = new Set()
   const newsItems = (rawNewsItems || []).filter((item) => {
     if (_seenSources.has(item.source)) return false
@@ -328,7 +409,6 @@ export default async function Home() {
     ? Math.round(((signalsToday - signalsYesterday) / signalsYesterday) * 100)
     : null
 
-  // Fetch agent details for v2 home rows, then trending data
   const v2HomeHandles = (v2HomeRows || []).map((r) => r.handle).filter(Boolean)
   const { data: homeAgentsData } = v2HomeHandles.length > 0
     ? await supabase
@@ -403,7 +483,6 @@ export default async function Home() {
     }
   })
 
-  // Activity rows with avatars
   const eventAgentIds = [...new Set((events || []).map((e) => e.agent_id).filter(Boolean))]
   const { data: eventAgents } = eventAgentIds.length
     ? await supabase.from('agents').select('id, handle, display_name, avatar_url, custom_background_url').in('id', eventAgentIds)
@@ -425,7 +504,6 @@ export default async function Home() {
 
   const ecosystemFeedRows = buildContentFeed(deduped, recentAgents || [], 30)
 
-  // Archetype counts for sectors
   const archetypeCounts = {}
   for (const r of (archetypeRows || [])) {
     if (r.archetype) archetypeCounts[r.archetype] = (archetypeCounts[r.archetype] || 0) + 1
@@ -540,7 +618,7 @@ export default async function Home() {
 
         {/* ── MAIN CONTENT ─────────────────────────────────────────────────── */}
         <main style={{ position: 'relative', zIndex: 10 }}>
-          {/* Ambient fog blobs between hero and rankings */}
+          {/* Ambient fog blobs */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 400, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
             <div style={{ position: 'absolute', width: 800, height: 800, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(167,139,250,0.06) 0%, transparent 70%)', top: -300, left: '20%', animation: 'fogDrift 18s ease-in-out infinite' }} />
             <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(233,30,128,0.05) 0%, transparent 70%)', top: -200, right: '10%', animation: 'fogDrift 24s ease-in-out infinite 6s' }} />
@@ -554,12 +632,75 @@ export default async function Home() {
               />
             </div>
 
+            {/* ── WHAT CAN YOU DO ─────────────────────────────────────────── */}
+            <WhatCanYouDo />
+
             <div className="pb-3 grid grid-cols-12 gap-3" style={{alignItems: 'start'}}>
 
-              {/* ── LEFT COL (8): Sector Tabs + RankingTable ── */}
+              {/* ── LEFT COL (8) ── */}
               <div className="col-span-12 lg:col-span-8 flex flex-col gap-3">
 
-                {/* Sector tabs + filtered RankingTable */}
+                {/* Comparison widget */}
+                <ComparisonWidget />
+
+                {/* Recently Indexed (above Rising Now) */}
+                <div className="relative rounded-lg border border-white/[0.08] bg-[#0a0a14] overflow-hidden">
+                  <CornerAccent />
+                  <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`font-mono text-[10px] ${indexedFreshness?.isStale ? 'text-white/30' : 'text-amber-400'}`}>✦</span>
+                      <span className="font-mono text-xs font-bold text-white">{indexedFreshness?.isStale ? 'INDEX ACTIVITY' : 'RECENTLY INDEXED'}</span>
+                    </div>
+                    {indexedFreshness?.isStale ? (
+                      <Link href="/explore" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">Explore →</Link>
+                    ) : (
+                      <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">All →</Link>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 p-2">
+                    {(recentAgents || []).slice(0, 12).map((a) => {
+                      const avatarUrl = toPublicImageUrl(a.custom_background_url || a.avatar_url)
+                      const displayName = a.display_name || a.handle || '?'
+                      return (
+                        <Link key={a.id} href={`/agent/${encodeURIComponent(a.handle)}`}
+                          className="flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.02] px-2 py-1.5 hover:bg-white/[0.04] hover:border-white/[0.13] transition-colors min-w-0">
+                          <div className={`h-6 w-6 shrink-0 rounded overflow-hidden border border-white/[0.09] flex items-center justify-center ${!avatarUrl ? avatarColor(a.handle) : 'bg-white/[0.04]'}`}>
+                            {avatarUrl ? (
+                              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="font-mono text-[8px] font-bold">{displayName[0].toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-mono text-xs font-semibold text-white/90 truncate">{displayName}</div>
+                            {a.archetype && (
+                              <div className="font-mono text-[10px] text-white/40 truncate">{a.archetype}</div>
+                            )}
+                          </div>
+                        </Link>
+                      )
+                    })}
+                    {Array.from({ length: Math.max(0, 12 - (recentAgents || []).slice(0, 12).length) }).map((_, i) => (
+                      <Link key={`placeholder-${i}`} href="/submit"
+                        className="flex items-center justify-center gap-1 rounded border border-dashed border-white/[0.06] bg-transparent px-2 py-1.5 hover:border-white/[0.12] hover:bg-white/[0.02] transition-colors min-w-0">
+                        <span className="font-mono text-[9px] text-white/20">+ Submit an agent →</span>
+                      </Link>
+                    ))}
+                  </div>
+                  <div className="border-t border-white/[0.04] px-3 py-1">
+                    {indexedFreshness?.isStale ? (
+                      <span className="font-mono text-[10px] text-white/30">
+                        {(agentCount ?? 0).toLocaleString()}+ agents tracked · indexing run pending
+                      </span>
+                    ) : indexedFreshness ? (
+                      <span className="font-mono text-[10px] text-white/35">
+                        {indexedFreshness.label}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Rising Now (10 rows) */}
                 <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden">
                   <CornerAccent />
                   <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
@@ -576,109 +717,48 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Bottom row: Just Indexed + Biggest Movers */}
-                <div className="grid gap-3 sm:grid-cols-2">
-
-                  {/* Just Indexed */}
-                  <div className="relative rounded-lg border border-white/[0.08] bg-[#0a0a14] overflow-hidden">
-                    <CornerAccent />
-                    <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`font-mono text-[10px] ${indexedFreshness?.isStale ? 'text-white/30' : 'text-amber-400'}`}>✦</span>
-                        <span className="font-mono text-xs font-bold text-white">{indexedFreshness?.isStale ? 'INDEX ACTIVITY' : 'RECENTLY INDEXED'}</span>
-                      </div>
-                      {indexedFreshness?.isStale ? (
-                        <Link href="/explore" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">Explore →</Link>
-                      ) : (
-                        <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">All →</Link>
-                      )}
+                {/* Biggest Movers (below Rising Now, ~15% smaller) */}
+                <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden">
+                  <CornerAccent />
+                  <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[10px]" style={{color:'#39ff14'}}>↑</span>
+                      <span className="font-mono text-xs font-bold text-white">BIGGEST MOVERS</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-1.5 p-2">
-                      {(recentAgents || []).slice(0, 12).map((a) => {
-                        const avatarUrl = toPublicImageUrl(a.custom_background_url || a.avatar_url)
-                        const displayName = a.display_name || a.handle || '?'
-                        return (
-                          <Link key={a.id} href={`/agent/${encodeURIComponent(a.handle)}`}
-                            className="flex items-center gap-1.5 rounded border border-white/[0.09] bg-white/[0.02] px-2 py-1.5 hover:bg-white/[0.04] hover:border-white/[0.13] transition-colors min-w-0">
-                            <div className={`h-6 w-6 shrink-0 rounded overflow-hidden border border-white/[0.09] flex items-center justify-center ${!avatarUrl ? avatarColor(a.handle) : 'bg-white/[0.04]'}`}>
-                              {avatarUrl ? (
-                                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                              ) : (
-                                <span className="font-mono text-[8px] font-bold">{displayName[0].toUpperCase()}</span>
-                              )}
+                    <span className="font-mono text-[9px] text-white/20">7d delta</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 divide-y divide-white/[0.04] sm:divide-y-0 sm:divide-x sm:divide-white/[0.04]">
+                    {biggestMoverRows.map((agent) => {
+                      const avatarUrl = toPublicImageUrl(agent.custom_background_url || agent.avatar_url)
+                      const displayName = agent.display_name || agent.handle || '?'
+                      return (
+                        <Link key={agent.id} href={`/agent/${encodeURIComponent(agent.handle)}`}
+                          className="flex items-center gap-1.5 px-2.5 py-2 hover:bg-white/[0.025] transition-colors">
+                          <div className={`h-6 w-6 shrink-0 rounded overflow-hidden border border-white/[0.08] flex items-center justify-center ${!avatarUrl ? avatarColor(agent.handle) : 'bg-white/[0.04]'}`}>
+                            {avatarUrl ? (
+                              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="font-mono text-[8px] font-bold">{displayName[0].toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-mono text-[11px] font-semibold text-white/90 truncate">{displayName}</div>
+                            <div className="font-mono text-[9px] text-white/30 tabular-nums">
+                              {agent.global_rank ? `#${agent.global_rank}` : '—'}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="font-mono text-xs font-semibold text-white/90 truncate">{displayName}</div>
-                              {a.archetype && (
-                                <div className="font-mono text-[10px] text-white/40 truncate">{a.archetype}</div>
-                              )}
-                            </div>
-                          </Link>
-                        )
-                      })}
-                      {Array.from({ length: Math.max(0, 12 - (recentAgents || []).slice(0, 12).length) }).map((_, i) => (
-                        <Link key={`placeholder-${i}`} href="/submit"
-                          className="flex items-center justify-center gap-1 rounded border border-dashed border-white/[0.06] bg-transparent px-2 py-1.5 hover:border-white/[0.12] hover:bg-white/[0.02] transition-colors min-w-0">
-                          <span className="font-mono text-[9px] text-white/20">+ Submit an agent →</span>
+                          </div>
+                          <span className="shrink-0 rounded border border-[rgba(57,255,20,0.25)] bg-[rgba(57,255,20,0.08)] px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums" style={{color:'#39ff14'}}>
+                            +{agent.weekly_delta}
+                          </span>
                         </Link>
-                      ))}
-                    </div>
-                    <div className="border-t border-white/[0.04] px-3 py-1">
-                      {indexedFreshness?.isStale ? (
-                        <span className="font-mono text-[10px] text-white/30">
-                          {(agentCount ?? 0).toLocaleString()}+ agents tracked · indexing run pending
-                        </span>
-                      ) : indexedFreshness ? (
-                        <span className="font-mono text-[10px] text-white/35">
-                          {indexedFreshness.label}
-                        </span>
-                      ) : null}
-                    </div>
+                      )
+                    })}
+                    {biggestMoverRows.length === 0 ? (
+                      <div className="col-span-2 sm:col-span-4 px-3 py-4 font-mono text-xs text-white/25">No positive movers yet.</div>
+                    ) : null}
                   </div>
-
-                  {/* Biggest Movers */}
-                  <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden">
-                    <CornerAccent />
-                    <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[10px]" style={{color:'#39ff14'}}>↑</span>
-                        <span className="font-mono text-xs font-bold text-white">BIGGEST MOVERS</span>
-                      </div>
-                      <span className="font-mono text-[9px] text-white/20">7d delta</span>
-                    </div>
-                    <div className="divide-y divide-white/[0.04]">
-                      {biggestMoverRows.map((agent) => {
-                        const avatarUrl = toPublicImageUrl(agent.custom_background_url || agent.avatar_url)
-                        const displayName = agent.display_name || agent.handle || '?'
-                        return (
-                          <Link key={agent.id} href={`/agent/${encodeURIComponent(agent.handle)}`}
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-white/[0.025] transition-colors">
-                            <div className={`h-7 w-7 shrink-0 rounded overflow-hidden border border-white/[0.08] flex items-center justify-center ${!avatarUrl ? avatarColor(agent.handle) : 'bg-white/[0.04]'}`}>
-                              {avatarUrl ? (
-                                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                              ) : (
-                                <span className="font-mono text-[9px] font-bold">{displayName[0].toUpperCase()}</span>
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="font-mono text-xs font-semibold text-white/90 truncate">{displayName}</div>
-                              <div className="font-mono text-[10px] text-white/30 tabular-nums">
-                                {agent.global_rank ? `#${agent.global_rank}` : '—'} · score {agent.score_total || 0}
-                              </div>
-                            </div>
-                            <span className="shrink-0 rounded border border-[rgba(57,255,20,0.25)] bg-[rgba(57,255,20,0.08)] px-2 py-0.5 font-mono text-xs font-bold tabular-nums" style={{color:'#39ff14'}}>
-                              +{agent.weekly_delta}
-                            </span>
-                          </Link>
-                        )
-                      })}
-                      {biggestMoverRows.length === 0 ? (
-                        <div className="px-3 py-5 font-mono text-xs text-white/25">No positive movers yet.</div>
-                      ) : null}
-                    </div>
-                  </div>
-
                 </div>
+
               </div>
 
               {/* ── RIGHT COL (4): Signal Feed + Submit CTA + Follow ── */}
@@ -698,7 +778,6 @@ export default async function Home() {
                       const sig = getSignalStyle(row.event_type)
                       return (
                         <div key={row.id} className="flex items-start gap-2 px-3 py-2 hover:bg-white/[0.02] transition-colors">
-                          {/* Signal dot */}
                           <span className="mt-1 h-1.5 w-1.5 rounded-full shrink-0" style={{background: sig.dot, boxShadow: `0 0 4px ${sig.dot}`}} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-baseline gap-1 min-w-0">

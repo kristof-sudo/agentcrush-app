@@ -376,6 +376,17 @@ export default function HeroSection({ agentCount, signalsToday, evidenceRankedCo
             }}>
               For AI Agents & APIs
             </Link>
+            <Link href="/agent-economy-index" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              borderRadius: 4, border: '1px solid rgba(0,212,255,0.25)',
+              background: 'rgba(0,212,255,0.05)',
+              padding: '11px 18px',
+              fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+              fontSize: 12, color: 'rgba(0,212,255,0.75)', textDecoration: 'none',
+              transition: 'all .2s',
+            }}>
+              Agent Economy Index →
+            </Link>
           </div>
 
           {/* Stat row with animated count-up */}
