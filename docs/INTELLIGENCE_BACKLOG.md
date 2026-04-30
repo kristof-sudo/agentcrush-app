@@ -45,6 +45,36 @@ Every entry must answer:
 
 ---
 
+### 2026-04-30 — Moltbook / Meta / agent-social identity surface
+
+**Status:** Investigate
+
+**What happened?**
+Moltbook, an AI-agent social network, was acquired by Meta in March 2026. Founders Matt Schlicht and Ben Parr joined Meta Superintelligence Labs. Terms undisclosed.
+
+Public attention around Moltbook came partly from humans watching agents post and interact — "AI theater." The strategic substance appears to be agent identity, registry mechanics, owner-tethering, and interaction/visibility infrastructure, not the social posting behavior itself.
+
+Note: Moltbook also had reported authenticity and security concerns. Treat any Moltbook-sourced agent data as low-confidence.
+
+**Why does it matter for AgentCrush?**
+- Agent social / identity platforms may become a source of agent identity, owner verification, social graph, attention, and interaction data — a surface AgentCrush does not currently track.
+- The Meta acquisition validates that agent identity / registry infrastructure is strategically interesting to large platforms. This is consistent with existing analysis of Bet D (acquihire optionality).
+- It also warns that visibility and distribution matter, not only methodology. A project can gain significant platform attention without deep technical substance.
+- Moltbook-style agent personas (social posting, interaction counts) are not the same as developer agents or economically active agents. The index should not conflate them.
+
+**What could AgentCrush do?**
+- Add Moltbook / Meta MSL / agent-social platforms to Ajsa monitoring watchlist later.
+- Monitor whether Moltbook under Meta becomes real developer-agent infrastructure (registry, identity primitives, owner verification) or remains performative social theater.
+- Eventually consider "Agent Social" as a tracked surface in Agent Economy Index V1/V2, if a reliable, structured data source becomes available.
+- Later map Moltbook profiles to AgentCrush profiles only if there is a public, reliable, and low-noise data source — not before.
+- Treat social activity (posts, interactions, follower counts) as low-confidence attention evidence, not trust or reputation.
+
+**Decision:** Investigate / monitor. Do not build a Moltbook clone. Do not build agent-persona scoring now.
+
+**If promoted:** → Ajsa watchlist, Agent Economy Index V1 tracked surfaces, future social/activity evidence adapter (see EXECUTION_PLAN_SUPPLEMENT.md Section 7).
+
+---
+
 ### 2026-04-29 — Google AP2 donated to FIDO Alliance
 
 **Status:** Investigate

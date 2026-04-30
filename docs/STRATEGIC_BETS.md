@@ -78,6 +78,9 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 - ERC-8004 transferability concerns (reputation can be moved with NFT transfer)
 - Solo builders and small teams may never care about being on-chain
 
+**Evidence for (updated Apr 30):**
+- The definition of "agent" is broadening beyond GitHub/npm/PyPI software projects. Future economically relevant agents may be registry-native, wallet-native, endpoint-native, marketplace-native, or social/identity-platform-native. The Moltbook acquisition by Meta is one signal: an agent-social/identity platform attracted a large platform acquirer, suggesting that agent registry and identity surfaces hold strategic value independent of the underlying protocol. This reinforces the protocol-neutral adapter architecture — no single registry or platform should define what counts as an agent in the AgentCrush index.
+
 **Evidence for (updated Apr 26):**
 - ERC-8004 Phase 1 reader prototype complete: 8004scan.io public API accessible, no auth, 163,000+ registered agents
 - First overlap scan: 2/20 AgentCrush evidence-ranked agents matched (10% overlap rate — meets Phase 2 gate)
@@ -138,6 +141,7 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 **Potential strategic acquirers / partners (mental list, not pitch list):**
 - **Kite AI** — direct architectural fit, $368M cap, known to acquire data/methodology layers
 - **Coinbase or Coinbase-portfolio company** — natural for x402-era trust infrastructure; Coinbase Ventures has agent-economy thesis
+- **Meta / Meta Superintelligence Labs** — acquired Moltbook (March 2026, terms undisclosed); founders Matt Schlicht and Ben Parr joined Meta Superintelligence Labs. Strategic substance appears to be agent identity, registry mechanics, owner-tethering, and interaction/visibility infrastructure. First large-platform acquisition explicitly at the agent identity/registry layer.
 - **YZI Labs (formerly Binance Labs)** — actively investing in agentic infrastructure, RWA, and crypto+AI intersection. Portfolio companies frequently become acquirers themselves. Their thesis overlap with AgentCrush is strong.
 - **Y Combinator / YC alumni network** — less acquisition path, more partnership/customer/competitive intel. Each batch surfaces 3-5 AI agent companies that could become AgentCrush customers, partners, or competitors. Worth monitoring as ecosystem signal.
 - **ERC-8004 ecosystem company** — whichever player builds the dominant reputation/identity application layer on the standard
@@ -149,11 +153,13 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 - Small strategic acquisitions in this space happen regularly ($500K-$5M range for early teams with unique data)
 - AgentCrush data moat (historical daily snapshots, ecosystem graph) is inherently uncopyable
 - Multiple potential acquirers in active investment posture (YZI Labs, Coinbase Ventures, Paradigm portfolio)
+- Moltbook acquired by Meta (March 2026, terms undisclosed); founders joined Meta Superintelligence Labs. Public coverage framed it as an "AI agent social network," but the strategic substance is agent identity, registry primitives, owner-tethering, and audience/visibility infrastructure — not proof that "agent social" is the destination, but evidence that large platforms are willing to acquire teams working at the agent identity/registry layer.
 
 **Evidence against:**
 - Most "built to acquire" founders don't get acquired; intentional acquihires are rare
 - Window closes if a $300M+ player decides to build the same thing in-house
 - Exit-focused thinking can lead to shipping the wrong things (theater for buyers vs. utility for users)
+- Moltbook also demonstrates that visibility and momentum can matter as much as technical purity — AgentCrush should not chase AI theater, but should not underinvest in distribution. Moltbook also had authenticity/security concerns; treat any Moltbook-sourced agent data as low-confidence if it ever becomes a source candidate.
 
 **Dependent actions:**
 - Never say this bet out loud publicly
@@ -197,6 +203,8 @@ Maximum active bets: 8. If you need to add a ninth, retire one first.
 **April 26, 2026 (ERC-8004 v1 + comparison pages update):** Bet B advances from exploration to v1 live. ERC-8004 reader prototype confirmed 10% overlap rate with evidence-ranked agents. `agent_erc8004_registrations` table live. Profile pages and trust-summary/verification-status APIs now surface ERC-8004 state via service role key. Key finding: CrewAI's ERC-8004 registration is on Base with `x402_supported: true` — this is the first confirmed real-world overlap between the ERC-8004 open ecosystem and the x402 closed ecosystem. Strengthens both Bet A and Bet B simultaneously. Phase 2 (ingestion discovery) go/no-go pending after full evidence_ranked scan. Comparison pages scaffold v1 also shipped — new SEO surface for discovery. No bet changes. Multi-registry neutrality confirmed.
 
 **April 27, 2026 (strategic correction + supplement):** North star revised. "The trust and reputation layer for AI agents" retired — ERC-8004 / ERC-8126 already occupy that framing at the protocol level, and positioning AgentCrush there makes it look like a competitor rather than a complement. New north star: "protocol-neutral market intelligence for the agent economy." Homepage repositioning shipped (commit 0d21b2b). Bet B thesis updated: AgentCrush reads ERC-8004 as one registry among many; does not rush writer/attestation functionality. Supplement adds three new build directions: Agent Economy Index (/agent-economy-index), AgentCrush Labs (/labs, services arm), and Evaluator Agent Index (month 2+). Traditional-industry A2A bridge identified as a services opportunity leveraging Kris's logistics/trade domain experience. Protocol-neutral adapter architecture formalized: every source goes through normalization before touching the evidence graph. No bet changes. Bet C strengthened by Labs framing and traditional-industry wedge.
+
+**April 30, 2026 (Moltbook/Meta signal):** Moltbook (an AI-agent social network) was acquired by Meta in March 2026; founders Matt Schlicht and Ben Parr joined Meta Superintelligence Labs. Terms undisclosed — do not speculate on price. Public framing was "agent social network," but the strategic substance appears to be agent identity, registry mechanics, owner-tethering, and visibility/attention infrastructure. Added Meta/MSL to Bet D's mental acquirers list. Added Moltbook→Meta as fresh evidence in Bet D's "Evidence for" section. Added a distribution caution to Bet D's "Evidence against": Moltbook shows that visibility and momentum can matter as much as technical purity; AgentCrush should not chase AI theater but should not underinvest in distribution. Added an "Evidence for (updated Apr 30)" note to Bet B: the definition of "agent" is broadening beyond software-project registries, which supports the existing protocol-neutral adapter architecture. No bet thesis changes.
 
 **Next monthly review:** First Sunday of June 2026
 

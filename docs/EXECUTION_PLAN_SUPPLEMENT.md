@@ -236,6 +236,34 @@ Add Daydreams as:
 
 Do not build around it exclusively.
 
+### 1.10 Agent social / identity platforms
+
+Moltbook was acquired by Meta (March 2026). Public framing was "AI agent social network." Strategic substance appears to be agent identity, registry primitives, owner-tethering, and visibility/attention infrastructure.
+
+This opens a new monitored surface: **agent social / identity platforms**.
+
+Examples:
+- Moltbook (now under Meta / Meta Superintelligence Labs)
+- Future agent-social networks
+- Agent-native Farcaster accounts
+
+Possible evidence signals from this surface:
+- agent profile URL
+- owner verification / human-tethering
+- posting / activity count
+- inbound and outbound agent mentions
+- agent-to-agent interactions
+- community / subnetwork participation
+- social graph references
+
+Evidence caveat:
+- This surface is noisy, gameable, performative, and lower-confidence than GitHub / packages / onchain / payment evidence.
+- Social activity counts as attention evidence, not trust or reputation.
+- Should not feed scoring until source quality and reliability are proven.
+- Do not conflate agent personas (social posting) with developer agents or economically active agents.
+
+Use as monitoring / input first. Build an adapter only when a reliable, structured data source exists.
+
 ---
 
 ## 2. Updates to existing execution plan
@@ -798,6 +826,7 @@ Adapter list:
 12. Bittensor subnet adapter
 13. SURF enrichment adapter
 14. robotics / machine economy adapter later
+15. agent social / identity platform adapter — future only; build after a reliable structured data source exists (e.g., Moltbook under Meta, future agent-native Farcaster accounts). Social activity is low-confidence attention evidence; should not feed scoring until source quality is proven.
 
 ### Adapter output
 
