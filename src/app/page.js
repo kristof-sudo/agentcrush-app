@@ -196,25 +196,25 @@ function WhatCanYouDo() {
   const cards = [
     {
       verb: 'Get your agent indexed',
-      sub: 'Submit your agent or claim your existing profile.',
+      sub: 'Submit your agent, claim your profile, embed your rank, and compare yourself against nearby agents.',
       href: '/submit',
       linkLabel: 'Submit agent →',
     },
     {
       verb: 'Query agent intelligence from your workflows',
-      sub: 'Free MCP server + paid x402 endpoints. Machine-callable.',
+      sub: 'Free MCP server and paid x402 endpoints. Machine-callable from your AI agents and workflows.',
       href: '/developers',
       linkLabel: 'View developer docs →',
     },
     {
       verb: 'Track which agents are gaining adoption',
-      sub: 'Evidence-ranked across protocols, registries, and marketplaces.',
+      sub: 'Track which agent projects are gaining evidence, adoption, protocol presence, and economic activity.',
       href: '/agent-economy-index',
       linkLabel: 'View Agent Economy Index →',
     },
     {
       verb: 'Compare two agents head-to-head',
-      sub: 'Score, history, signals, ecosystem links — side by side.',
+      sub: 'Score, 30-day history, signals, ecosystem links, and ERC-8004 mappings — side by side.',
       href: '/compare/crewai-vs-langchainagents',
       linkLabel: 'Try a comparison →',
     },
@@ -532,10 +532,10 @@ export default async function Home() {
                   <span className="font-mono text-[11px] text-white/50">⚡ <span className="text-white font-bold tabular-nums">{signalsToday}</span> <span className="text-white/30">SIGNALS</span></span>
                   <span className="text-white/15">·</span>
                   <span className="font-mono text-[11px] text-white/50">↑ <span className="text-white font-bold tabular-nums">{evidenceRankedCount ?? 0}</span> <span className="text-white/30">EVIDENCE RANKED</span></span>
-                  {topMover ? (
+                  {newestAgent ? (
                     <>
                       <span className="text-white/15">·</span>
-                      <span className="font-mono text-[11px] text-white/50">🔥 <span className="text-[#39ff14] font-semibold">{topMover.display_name || topMover.handle} +{topMover.weekly_delta}</span></span>
+                      <span className="font-mono text-[11px] text-white/50">✦ <Link href={`/agent/${encodeURIComponent(newestAgent.handle)}`} className="text-amber-400/80 font-semibold hover:text-amber-300 transition-colors">{newestAgent.display_name || newestAgent.handle}</Link></span>
                     </>
                   ) : null}
                 </div>
@@ -557,14 +557,13 @@ export default async function Home() {
                   } : null}
                 />
                 <StatPill label="EVIDENCE RANKED" value={evidenceRankedCount ?? 0} />
-                {topMover ? (
+                {newestAgent ? (
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="font-mono text-[10px] text-white/25 uppercase tracking-wider">Top Mover</span>
-                    <Link href={`/agent/${encodeURIComponent(topMover.handle)}`}
+                    <span className="font-mono text-[10px] text-amber-400/60 uppercase tracking-wider">✦ Just Indexed</span>
+                    <Link href={`/agent/${encodeURIComponent(newestAgent.handle)}`}
                       className="font-mono text-[11px] font-bold text-white hover:text-white/80 transition truncate max-w-[120px]">
-                      {topMover.display_name || topMover.handle}
+                      {newestAgent.display_name || newestAgent.handle}
                     </Link>
-                    <span className="font-mono text-[11px] font-bold tabular-nums" style={{color:'#39ff14'}}>+{topMover.weekly_delta}</span>
                   </div>
                 ) : null}
                 {topFaller ? (
@@ -717,48 +716,6 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Biggest Movers (below Rising Now, ~15% smaller) */}
-                <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden">
-                  <CornerAccent />
-                  <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[10px]" style={{color:'#39ff14'}}>↑</span>
-                      <span className="font-mono text-xs font-bold text-white">BIGGEST MOVERS</span>
-                    </div>
-                    <span className="font-mono text-[9px] text-white/20">7d delta</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 divide-y divide-white/[0.04] sm:divide-y-0 sm:divide-x sm:divide-white/[0.04]">
-                    {biggestMoverRows.map((agent) => {
-                      const avatarUrl = toPublicImageUrl(agent.custom_background_url || agent.avatar_url)
-                      const displayName = agent.display_name || agent.handle || '?'
-                      return (
-                        <Link key={agent.id} href={`/agent/${encodeURIComponent(agent.handle)}`}
-                          className="flex items-center gap-1.5 px-2.5 py-2 hover:bg-white/[0.025] transition-colors">
-                          <div className={`h-6 w-6 shrink-0 rounded overflow-hidden border border-white/[0.08] flex items-center justify-center ${!avatarUrl ? avatarColor(agent.handle) : 'bg-white/[0.04]'}`}>
-                            {avatarUrl ? (
-                              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                            ) : (
-                              <span className="font-mono text-[8px] font-bold">{displayName[0].toUpperCase()}</span>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-mono text-[11px] font-semibold text-white/90 truncate">{displayName}</div>
-                            <div className="font-mono text-[9px] text-white/30 tabular-nums">
-                              {agent.global_rank ? `#${agent.global_rank}` : '—'}
-                            </div>
-                          </div>
-                          <span className="shrink-0 rounded border border-[rgba(57,255,20,0.25)] bg-[rgba(57,255,20,0.08)] px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums" style={{color:'#39ff14'}}>
-                            +{agent.weekly_delta}
-                          </span>
-                        </Link>
-                      )
-                    })}
-                    {biggestMoverRows.length === 0 ? (
-                      <div className="col-span-2 sm:col-span-4 px-3 py-4 font-mono text-xs text-white/25">No positive movers yet.</div>
-                    ) : null}
-                  </div>
-                </div>
-
               </div>
 
               {/* ── RIGHT COL (4): Signal Feed + Submit CTA + Follow ── */}
@@ -800,6 +757,45 @@ export default async function Home() {
                     ) : null}
                   </div>
                 </div>
+
+                {/* Biggest Movers */}
+                {biggestMoverRows.length > 0 && (
+                  <div className="relative rounded-lg border border-white/[0.06] bg-[#0a0a14] overflow-hidden">
+                    <CornerAccent />
+                    <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[10px]" style={{color:'#39ff14'}}>↑</span>
+                        <span className="font-mono text-xs font-bold text-white">BIGGEST MOVERS</span>
+                      </div>
+                      <span className="font-mono text-[9px] text-white/20">7d delta</span>
+                    </div>
+                    <div className="divide-y divide-white/[0.04]">
+                      {biggestMoverRows.slice(0, 6).map((agent) => {
+                        const avatarUrl = toPublicImageUrl(agent.custom_background_url || agent.avatar_url)
+                        const displayName = agent.display_name || agent.handle || '?'
+                        return (
+                          <Link key={agent.id} href={`/agent/${encodeURIComponent(agent.handle)}`}
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-white/[0.025] transition-colors">
+                            <div className={`h-6 w-6 shrink-0 rounded overflow-hidden border border-white/[0.08] flex items-center justify-center ${!avatarUrl ? avatarColor(agent.handle) : 'bg-white/[0.04]'}`}>
+                              {avatarUrl ? (
+                                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                              ) : (
+                                <span className="font-mono text-[8px] font-bold">{displayName[0].toUpperCase()}</span>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-mono text-[11px] font-semibold text-white/90 truncate">{displayName}</div>
+                              <div className="font-mono text-[9px] text-white/30 tabular-nums">{agent.global_rank ? `#${agent.global_rank}` : '—'}</div>
+                            </div>
+                            <span className="shrink-0 rounded border border-[rgba(57,255,20,0.25)] bg-[rgba(57,255,20,0.08)] px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums" style={{color:'#39ff14'}}>
+                              +{agent.weekly_delta}
+                            </span>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Submit CTA */}
                 <Link href="/submit"
