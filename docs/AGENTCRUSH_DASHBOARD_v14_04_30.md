@@ -288,6 +288,7 @@ Append-only log at `docs/INTELLIGENCE_BACKLOG.md`. Captures Ajsa signals that ma
 | Telegram approval gate | Active |
 | Main repo path | `/Users/pk/projects/agentcrush-app` |
 | Old path symlink | `/Users/pk/Documents/New project` → `/Users/pk/projects/agentcrush-app` |
+| Claude execution SOPs | `docs/CLAUDE_WORKFLOW_SKILLS.md` |
 
 **Infrastructure backlog (H-series):**
 | Item | Status |
