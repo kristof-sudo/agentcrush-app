@@ -45,6 +45,36 @@ Every entry must answer:
 
 ---
 
+### 2026-05-01 — x402 builder pain: indexing gaps and transaction-risk primitives
+
+**Status:** Monitor
+
+**What happened?**
+
+- Multiple x402 builders continue reporting Bazaar/Agentic.Market indexing gaps even after successful settlements and valid discovery metadata.
+- Strale floated an x402-native onchain counterparty assurance service for Agentic Wallet / AgentKit flows.
+- AgentOracle published signed receipt/JWKS examples for non-binary verification/confidence outputs.
+- Builder feedback emphasized verdict + reason code over heavy audit trail in agent runtime flows.
+
+**Why it matters for AgentCrush?**
+
+- AgentCrush's x402 post-mortem remains useful because the indexing path is still non-deterministic for builders.
+- Agent transaction-risk and signed evidence receipts may become an important category in agent-commerce infrastructure.
+- AgentCrush may eventually need to track risk/verdict providers and possibly sign its own evidence outputs, but not now.
+
+**What could AgentCrush do with it?**
+
+- Monitor x402 indexing pain as a Labs lead signal.
+- Track transaction-risk / counterparty-assurance services as a future Agent Economy Index category.
+- Add "verdict + reason code + evidence URL" as a future response-design pattern for AgentCrush APIs.
+- Monitor signed receipt / JWKS patterns for future verifiable evidence snapshots.
+
+**Decision:** Monitor. No build now.
+
+**If promoted:** Agent Economy Index V1/V2, Labs audit checklist, future verifiable evidence API design.
+
+---
+
 ### 2026-05-01 — Stripe Link / Visa / Kite agent-commerce stack acceleration
 
 **Status:** Investigate
