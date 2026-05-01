@@ -77,7 +77,7 @@ Note: Moltbook also had reported authenticity and security concerns. Treat any M
 
 ### 2026-04-29 — Google AP2 donated to FIDO Alliance
 
-**Status:** Investigate
+**Status:** Converted to task → [docs/AP2_X402_TRACKING_BRIEF.md](AP2_X402_TRACKING_BRIEF.md) (created May 1, 2026)
 
 **What happened?**
 Google donated Agent Payments Protocol (AP2) to the FIDO Alliance. AP2 v0.2 adds Human Not Present payments, and Mastercard's Verifiable Intent framework is being contributed alongside it.
