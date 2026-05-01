@@ -44,12 +44,14 @@ Short window: early implementations will drive differentiation. Demand will grow
 
 **Target:** AI agent startups, API/data providers, crypto AI projects, traditional companies exploring agentic commerce
 
+**Supporting evidence (May 2026):** The agent-commerce stack is expanding beyond x402. Stripe now offers Link / Single-Purpose Tokens for consumer-agent purchasing through existing merchant rails. Visa's stablecoin settlement infrastructure covers nine blockchains including Base at $7B+ annualized run rate. Kite Mainnet launched Agent Passport as a programmable wallet / spending-control layer. Businesses now need to answer whether agents can discover, understand, pay for, and verify their services across Stripe Link/SPT, x402, AP2, Kite Passport, MCP, and other rails. The audit scope — and the value of getting it right — has grown.
+
 **Deliverable:** 5–8 page report covering:
 - Can an agent discover your service? (x402.json, Bazaar, MCP, A2A, Agentverse)
 - Can an agent understand your API? (schema, docs, machine-readable spec)
-- Can an agent pay you? (x402, ERC-8004, ACP, or none)
+- Can an agent pay you? (x402, Stripe Link/SPT, Kite Passport, ERC-8004, ACP, or none)
 - Can an agent verify what it received? (response schema, evidence format)
-- Is there a human override path?
+- Is there a human override / authorization path? (AP2, Verifiable Intent, spending controls)
 - What protocol surfaces should you support first?
 - Prioritized implementation recommendation
 

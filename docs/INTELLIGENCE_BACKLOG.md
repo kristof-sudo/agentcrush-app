@@ -45,6 +45,41 @@ Every entry must answer:
 
 ---
 
+### 2026-05-01 — Stripe Link / Visa / Kite agent-commerce stack acceleration
+
+**Status:** Investigate
+
+**What happened?**
+
+Three signals arrived in close succession, suggesting the agent-commerce infrastructure stack is consolidating faster than expected.
+
+**Stripe Link wallet for agents:** Stripe announced Link as a purchaser wallet for AI agents — enabling agents to complete purchases through existing merchant checkout flows using one-time-use virtual cards and Single-Purpose Tokens (SPTs). Human approval and future spending-control layers are part of the design. This is consumer-agent purchasing routed through Stripe's existing merchant and card rails, not a new payment protocol.
+
+**Visa stablecoin settlement expansion:** Visa disclosed that its stablecoin settlement infrastructure now covers nine blockchains, with a $7B annualized settlement run rate. Base is explicitly named as one of the supported networks and framed in the context of agentic commerce. This is institutional confirmation that stablecoin settlement on Base is a serious payment surface, not a crypto experiment.
+
+**Kite Mainnet / Agent Passport:** Kite shipped its mainnet and "Agent Passport" — a programmable wallet, identity, and spending-control layer for agents. Kite positions around interoperability with x402, AP2, MPP, and MCP. Agent Passport is essentially scoped spending sessions: agents operate within constraints set by humans, with programmable governance at the wallet layer.
+
+**Why it matters for AgentCrush?**
+- Agent commerce is becoming a stack, not a single protocol. The emerging layers are: Stripe Link/Issuing (consumer purchasing through existing rails) → x402 (HTTP-native paid resources) → AP2 (intent/authorization/auditability) → Kite Passport (scoped wallet governance) → Visa settlement (institutional stablecoin abstraction).
+- This validates Bet A (x402 institutional momentum) and Bet D (Kite as potential strategic acquirer/partner) simultaneously.
+- Kite's direct positioning around x402 + AP2 + MCP interoperability makes it a closer strategic watch item.
+- Visa's Base settlement volume is the strongest institutional signal yet that stablecoin payment on Base is production-grade.
+- The audit question for AgentCrush Labs now spans multiple rails — not just "does this API support x402?" but "which rails can agents use to pay for this service, and at what governance level?"
+
+**What could AgentCrush do?**
+- Update `docs/AP2_X402_TRACKING_BRIEF.md` to reflect the full agent-commerce stack (done in this commit).
+- Add Stripe Link / Kite / Visa Base settlement to Ajsa watchlist.
+- Add Stripe Link SPT and Kite Passport as tracked protocol surfaces in Agent Economy Index V1.
+- Add multi-rail commerce readiness to the Labs audit checklist (can agents pay via Link/SPT, x402, Kite Passport, or other rails — and which does the service support?).
+- Monitor Kite Passport adoption among evidence-ranked AgentCrush agents.
+- No integration or adapter yet. Observe first.
+
+**Decision:** Investigate. Use for positioning and audit checklist expansion. No new adapters or scoring changes.
+
+**If promoted:** → Agent Economy Index V1 protocol taxonomy, Ajsa watchlist, Labs audit checklist (multi-rail), `AP2_X402_TRACKING_BRIEF.md` expansion (done), Bet A/D review at next monthly strategy review.
+
+---
+
 ### 2026-04-30 — Moltbook / Meta / agent-social identity surface
 
 **Status:** Investigate
