@@ -36,8 +36,8 @@ for (let i = 0; i < rawArgs.length; i++) {
   else if (rawArgs[i] === '--min-confidence' && rawArgs[i + 1]) { minConfidence = rawArgs[++i] }
 }
 
-const CONFIDENCE_RANK = { high: 2, medium: 1, low: 0 }
-const minScore = minConfidence === 'high' ? 700 : minConfidence === 'medium' ? 400 : 0
+const CONFIDENCE_TIERS = { high: ['high'], medium: ['high', 'medium'], low: ['high', 'medium', 'low'] }
+const allowedTiers = CONFIDENCE_TIERS[minConfidence] ?? ['high']
 
 // ── Supabase client ───────────────────────────────────────────────────────────
 
@@ -57,8 +57,7 @@ const { data, error } = await supabase
   .from('agent_github_mapping_candidates')
   .select('id, handle, candidate_github_full_name, confidence_tier, confidence_score, evidence_signals, website_url, probe_run_date, review_status')
   .eq('review_status', status)
-  .eq('confidence_tier', minConfidence === 'low' ? undefined : minConfidence)
-  .gte('confidence_score', minScore)
+  .in('confidence_tier', allowedTiers)
   .order('confidence_score', { ascending: false })
   .limit(limit)
 
