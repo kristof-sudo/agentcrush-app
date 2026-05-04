@@ -51,6 +51,7 @@ Short window: early implementations will drive differentiation. Demand will grow
 - Can an agent understand your API? (schema, docs, machine-readable spec, MCP tool definitions)
 - Can an agent pay you? (x402, Stripe ACP / SPTs, ERC-8183 escrow, Visa CLI, Tempo MPP, or none)
 - Can an agent verify what it received? (response schema, evidence format, ERC-8004 reputation surface)
+- Can a merchant trust the agent? (Experian Agent Trust / KYA, Visa Trusted Agent Protocol, Skyfire — TradFi-side agent identity layer launched April 30, 2026; parallel to crypto-side ERC-8004)
 - Is there a human override path? (CROPS-aligned: Censorship Resistance, Open-source, Privacy, Security)
 - Which protocol surfaces should you support first, given your audience and risk profile?
 - Prioritized implementation roadmap with cost/effort estimates per surface

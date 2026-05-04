@@ -45,6 +45,27 @@ Every entry must answer:
 
 ---
 
+### 2026-05-04 — Experian Agent Trust + KYA framework
+
+**Status:** Investigate
+
+**What happened?**
+Experian launched an "Agent Trust" and Know-Your-Agent (KYA) framework on April 30, 2026. Part of a TradFi-side trust ecosystem alongside Visa's Trusted Agent Protocol, Cloudflare, and Skyfire. This is a parallel trust/identity layer for agents built on traditional financial infrastructure rather than on-chain registries.
+
+**Why does it matter for AgentCrush?**
+Direct conceptual overlap with AgentCrush's agent registry positioning. The TradFi side (Experian/Visa/Cloudflare/Skyfire) is building an agent trust layer simultaneously with the crypto side (ERC-8004/x402/ACP). AgentCrush's protocol-neutral positioning means this is a surface to index and understand, not ignore. If their registry can be probed, it's a new evidence source. If their identifier format is standardized, it's a new field to track.
+
+**What could AgentCrush do?**
+- Probe whether Experian Agent Trust / Visa Trusted Agent Protocol endpoints are publicly accessible
+- Determine the agent-identifier format used (DID? proprietary?)
+- Assess whether this registry can be indexed as an evidence surface
+- Add Experian/Visa/Skyfire to the Labs Offer 1 audit scope (trust verification section)
+- Consider a future Wednesday methodology post: TradFi trust layer vs. crypto trust layer — why neither wins alone
+
+**Where does it move if promoted?** Agent Economy Index tracked surfaces, evidence pipeline, Labs Offer 1 scope, Ajsa monitoring.
+
+---
+
 ### 2026-05-04 — AI inference aggregators with crypto payment (b.ai, Chutes, OpenRouter)
 
 **Status:** Monitor
