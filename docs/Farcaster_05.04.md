@@ -1,7 +1,7 @@
 # Farcaster.md
 
 **Created:** April 30, 2026
-**Last updated:** April 30, 2026
+**Last updated:** May 4, 2026
 **Owner:** Kristof
 **Purpose:** Working strategy and execution doc for AgentCrush's Farcaster presence.
 **Status:** Active. First public moment: Monday May 4, 2026 (x402 post-mortem cast thread).
@@ -50,6 +50,29 @@ To finalize before Monday May 4:
 - A major catalyst-tied moment that beats the post-mortem for a "start here" purpose
 
 The pinned cast matters because every profile visitor at low follower count needs a clear "start here." Don't leave the pin empty.
+
+---
+
+## Launch day log — May 4, 2026
+
+First public moment fired. Recording state for later review.
+
+**Posted:**
+- Cast 1 (the hook with post-mortem link) — main feed, pinned
+- Cast 2 (the checklist) — reply to Cast 1
+- Cast 3 (3 endpoints + MCP + soft DM line) — reply to Cast 2
+- x402 Discord drop in CDP server, ~6 hours after the thread
+
+**Did not post to channels.** /base channel returned "Not available" for new accounts; channel posting deferred until @agentcrush has reputation gating cleared. This is a known Warpcast pattern at zero followers, not a problem to solve today.
+
+**Share Cards verified working.** Pasting an agentcrush.xyz URL into a Warpcast composer rendered as a styled card with AgentCrush brand image, page title, and the meta-description. The fc:miniapp metadata + signed manifest at /.well-known/farcaster.json are functioning correctly.
+
+**Baseline numbers (end of day):**
+- Followers: [fill in]
+- Casts posted: 3 (the thread)
+- Replies posted: [fill in — target was 3-5 substantive]
+- Replies received on the thread: [fill in]
+- Named ecosystem account interactions (recast / reply / follow): [fill in]
 
 ---
 
@@ -200,6 +223,135 @@ This turns Farcaster from a one-way broadcast into an input layer for product im
 
 ---
 
+## Evidence Check loop (reactive distribution)
+
+The Monday/Wednesday/Friday cadence is *proactive* distribution — casts AgentCrush originates. The Evidence Check loop is the *reactive* counterpart — AgentCrush appearing where evidence improves an existing conversation about an agent.
+
+This loop runs in parallel with the cadence. Both compound. Neither is sufficient alone.
+
+### The principle
+
+AgentCrush should not behave like "here's our weekly post." It should behave like "evidence requested." Reactive first; automation later.
+
+### How it works (v0 — manual)
+
+1. **Daily radar (~5 min, morning).** Use Neynar AI to surface 3-5 substantive Farcaster threads from the past 24-72h that discuss x402, MCP, ERC-8004, agent commerce, or specific frameworks (CrewAI, LangGraph, AutoGen, OpenHands, Aider).
+
+2. **Filter for "evidence improves the discussion."** Skip hype threads, meme threads, low-signal token chatter, generic "AI is the future" takes. Reply only where AgentCrush data adds state clarity.
+
+3. **Reply with an Evidence Check or Evidence Comparison card** (schemas below). Neutral tone. State, not judgment.
+
+4. **Track engagement.** Likes, recasts, bookmarks, builder acknowledgment. Note what works.
+
+### Activation threshold for automation
+
+Build automated `@agentcrush check [handle]` reply bot only when the loop is genuinely demand-pulled. Suggested threshold: ~15 organic mentions of @agentcrush in 30 days, OR persistent manual friction (finding yourself wishing you didn't have to pull data manually for the third check that day).
+
+Until then: stay manual. Bot-flavored replies signal "automated account" and dissolve the gravity that makes AgentCrush a reference layer.
+
+### Pace
+
+Realistic: 3-5 evidence checks per week. Not 50 in 6 weeks. Farcaster's volume on x402 / MCP / ERC-8004 specifically is thin — there aren't 50 high-signal threads per six weeks without diluting the bar. Restraint is what builds authority; this loop has scarcity baked in by design.
+
+### Reactive ≠ replacement for proactive
+
+The Mon/Wed/Fri cadence creates the threads that the Evidence Check loop later participates in. If the proactive cadence slows, the reactive loop has less ground to grow on. Run both.
+
+---
+
+## Card schemas
+
+### Evidence Check card
+
+Used for single-agent evidence replies. Neutral state description, not judgment.
+```
+Evidence check: [Agent name]
+Indexed: yes/no
+Tier: indexed / evidence-ranked
+Rank: #X (only if evidence-ranked)
+Last updated: [date]
+Signal coverage:
+  GitHub: active / detected / missing
+  Package usage: detected / missing
+  Dependency graph: detected / shadow / missing
+  Docs quality: strong / partial / missing
+  HN/discourse: detected / missing
+  Ecosystem links: detected / missing
+Protocol/context:
+  MCP: detected / not detected
+  x402/CDP: detected / not detected
+  ERC-8004: registered / not registered
+  Agentic.Market/Bazaar: listed / not listed
+Full profile: agentcrush.xyz/[handle]
+[Caveat line if coverage is partial]
+```
+
+**Tone rules:**
+- Header: "Evidence check: X" — never "AgentCrush rates X"
+- No adjectives like "top," "leading," "best"
+- No bullish/bearish language
+- Binary detection where possible (detected / not detected)
+- Use AgentCrush's actual public states (indexed, evidence-ranked, signal coverage fields). Do not invent tiers like A1/B2 — those don't exist in the product.
+
+### Evidence Comparison card
+
+Used for two-agent comparison replies. Reads like a terminal diff, not a marketing graphic.
+```
+Evidence comparison: [Agent A] vs [Agent B]
+Indexed:
+  [A]: evidence-ranked (#X) / indexed / not indexed
+  [B]: evidence-ranked (#Y) / indexed / not indexed
+Last updated: [date]
+Development signals:
+  GitHub:        [A]: active        | [B]: active
+  Dependency:    [A]: detected      | [B]: detected
+  Package usage: [A]: detected      | [B]: missing
+  Docs quality:  [A]: strong        | [B]: partial
+  HN/Discourse:  [A]: detected      | [B]: missing
+Protocol surface:
+  MCP:           [A]: detected      | [B]: not detected
+  x402/CDP:      [A]: detected      | [B]: not detected
+  ERC-8004:      [A]: registered    | [B]: not registered
+  Agentic.Mkt:   [A]: listed        | [B]: not listed
+Full profiles:
+  agentcrush.xyz/[A]
+  agentcrush.xyz/[B]
+```
+
+**Tone rules:**
+- Symmetrical layout — feels neutral
+- No adjectives, no "winner"
+- Lets the reader draw the conclusion
+- Turns subjective debates into structured contrast
+
+---
+
+## Neynar AI usage rules
+
+Neynar AI is a Farcaster radar. Strategy stays in Claude strategy chats. Posting stays manual.
+
+### Use Neynar AI for
+
+- **Daily radar:** "Find casts from the last 24-72h in /base, /coinbase, /ai, /agents about [topic]. Filter for casts with at least 1 reply or recast — signal, not voice-in-the-void posts. Show me the 3-5 highest-signal ones."
+- **Account discovery:** "Find Farcaster accounts that have posted 3+ substantive casts in the past 30 days about [topic] in [channel]. Skip recast-only and comment-only accounts."
+- **Mention monitoring:** "Show me casts from the past 7 days that mention 'agentcrush' or link to agentcrush.xyz that I haven't replied to."
+
+### Do not use Neynar AI for
+
+- ❌ Drafting replies. Substance + specificity is AgentCrush's moat. Bot-flavored replies, even good ones, signal automation.
+- ❌ Strategy questions. It doesn't know AgentCrush's bets, the dashboard state, or the cross-protocol thesis.
+- ❌ Posting on AgentCrush's behalf.
+
+### When Neynar AI returns zero results
+
+Don't read it as failure. Read it as "Farcaster's volume on this niche is low this window." Two responses:
+- Widen the time window (24h → 72h → 7d)
+- Switch to a different topic from the target list
+
+If still zero after both, that's a reply-light day. Fine.
+
+---
+
 ## CTAs by post type
 
 Each lane has one intended behavior. No hard selling — just a clear next step.
@@ -305,6 +457,9 @@ Topics for the Wednesday lane. Pull one each week. Update list as new ideas surf
 - Why subscription pricing beats token incentives for an intelligence layer (calibrated against SURF model)
 - **[Top-tier] The trust layer is being built twice — TradFi side (Experian/Visa/Cloudflare/Skyfire) and crypto side (ERC-8004/x402/ACP). Why neither will win alone, and what builders should support first.**
 - Why we publish AgentCrush as an OpenClaw skill, a Claude Code skill, and a uAgents skill — same data, three surfaces, zero ecosystem allegiance (Future Wednesday topic)
+- **Builder Brain — what listening to builder discourse teaches us about agent commerce friction** (post when Builder Brain has 2+ weeks of data)
+- The Belief Mechanism: why every audit pitch should lead with the post-mortem, not bury it
+- Why blog posts are the top-of-funnel assets and Farcaster is the distribution layer (an essay on how AgentCrush allocates writing time)
 
 ---
 
@@ -340,6 +495,9 @@ These blog posts are queued for the next 2–4 weeks. Each one becomes Farcaster
 2. **"Agent Commerce Readiness Audit — CrewAI"** — first free audit case study. Public methodology, public findings. ETA: within 2 weeks.
 3. **"Agent Commerce Readiness Audit — [target #2]"** — second free audit case study. ETA: within 3 weeks.
 4. **"State of Autonomous Software Factories — May 2026"** — coverage of OpenClaw ecosystem agents using AgentCrush data. Cites Khala's Feb 26 catalysts and evaluates which hit. ETA: after Ajsa OpenClaw scan completes.
+5. **"Frontier AI fails to identify which agents are real X% of the time"** — small benchmark post in the SURF/CAIA shape. Methodology + sample evaluation. Highly citable; positions AgentCrush as why-this-exists. ETA: within 4-6 weeks, after Builder Brain produces example failures.
+6. **Builder Brain launch post** — methodology + first week of "builder pain language" examples. Cross-promotes the listening surface, not just the index. ETA: after Builder Brain ships and has 2 weeks of data.
+7. **The cross-protocol stack post (long-form)** — an expanded version of the Friday cast on agent commerce splitting into layers. Each layer (MCP, x402, AP2, Kite Passport, ERC-8004, ERC-8183, Visa/Stripe) gets its own paragraph + which AgentCrush surface tracks it. ETA: within 3-4 weeks; informed by the Friday cast's reception.
 
 Each post triggers: Farcaster cast thread (publication day), Wednesday methodology spin-off (following week), 1+ AEB item (next available Monday).
 
