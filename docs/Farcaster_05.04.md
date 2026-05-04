@@ -303,6 +303,7 @@ Topics for the Wednesday lane. Pull one each week. Update list as new ideas surf
 - Why "open-source" isn't the same as "verifiable" for agents
 - The four-standard stack — and which one most teams skip first
 - Why subscription pricing beats token incentives for an intelligence layer (calibrated against SURF model)
+- Why we publish AgentCrush as an OpenClaw skill, a Claude Code skill, and a uAgents skill — same data, three surfaces, zero ecosystem allegiance (Future Wednesday topic)
 
 ---
 

@@ -45,6 +45,43 @@ Every entry must answer:
 
 ---
 
+### 2026-05-04 — AI inference aggregators with crypto payment (b.ai, Chutes, OpenRouter)
+
+**Status:** Monitor
+
+**What happened?**
+AI inference aggregators — b.ai, Chutes, OpenRouter — are emerging as multi-model API gateways with crypto payment options. These services sit between agent developers and underlying models, potentially becoming x402-relevant aggregation points.
+
+**Why does it matter for AgentCrush?**
+If inference aggregators adopt x402 as a payment rail, they become a high-traffic node in the agent commerce stack — and a class of agent worth indexing and tracking separately. First movers here may become comparison targets.
+
+**What could AgentCrush do?**
+- Monitor b.ai, Chutes, OpenRouter for x402 integration announcements
+- If any adopt x402: index as evidence-ranked agents, surface in AEB
+
+**Where does it move if promoted?** Ingestion / evidence pipeline, AEB content backlog.
+
+---
+
+### 2026-05-04 — Fetch.ai uAgents Payment Protocol
+
+**Status:** Investigate
+
+**What happened?**
+Fetch.ai's uAgents framework includes a payment protocol for agent-to-agent payments. Positioned as an alternative to x402 within the Fetch.ai / Agentverse ecosystem.
+
+**Why does it matter for AgentCrush?**
+Competitive context for x402: if uAgents payment is gaining traction, it's another protocol surface AgentCrush should understand and potentially track. Fetch.ai / Agentverse is already in scope for agent discovery.
+
+**What could AgentCrush do?**
+- Read the Innovation Lab docs section for uAgents payment protocol within 2 weeks
+- Assess: does this merit a tracked surface on the Agent Economy Index?
+- Assess: is there a discovery / machine-payable endpoint pattern here worth indexing?
+
+**Where does it move if promoted?** Agent Economy Index tracked surfaces, Ajsa monitoring.
+
+---
+
 ### 2026-05-04 — Pantera + Coinbase Ventures + DCG coordinated agent-infra investment pattern
 
 **Status:** Monitor
