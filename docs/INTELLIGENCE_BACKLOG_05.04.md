@@ -45,6 +45,91 @@ Every entry must answer:
 
 ---
 
+### 2026-05-04 — Pantera + Coinbase Ventures + DCG coordinated agent-infra investment pattern
+
+**Status:** Monitor
+
+**What happened?**
+Three investors — Pantera Capital, Coinbase Ventures, and DCG — appear repeatedly across recent agent-infrastructure rounds. Confirmed: SURF AI ($15M Dec 2025, Pantera lead), OpenMind ($20M Aug 2025, Pantera lead). Pattern of co-investment across the agent commerce + decentralized robotics stack.
+
+**Why does it matter for AgentCrush?**
+Two implications:
+1. These three firms have a thesis on "agent-economy infrastructure" and are funding the data, identity, and embodied-AI layers in parallel. AgentCrush sits structurally above their portfolio — protocol-neutral intelligence that maps across what they fund.
+2. Bet D (acquihire optionality) signal: track which of their portfolio companies emerge as natural acquirers or partners. Coinbase Ventures portfolio is the most aligned given x402.
+
+**What could AgentCrush do?**
+- Add Pantera, Coinbase Ventures, DCG portfolio moves to Ajsa monitoring
+- When they fund a new agent-infra company, log it and assess whether the company is something AgentCrush should index
+- No public mention of this pattern (per Bet D rule: never say acquihire bet out loud)
+
+**Decision:** Monitor via Ajsa. Add as named investor watchlist.
+
+**If promoted:** → Ajsa source list update; STRATEGIC_BETS.md Bet D evidence section
+
+---
+
+### 2026-05-04 — OpenClaw ecosystem catalyst tracker (Feb 26 → May 4)
+
+**Status:** Investigate
+
+**What happened?**
+Khala's Feb 26, 2026 OpenClaw report flagged specific catalysts to watch for KellyClaude, Clawd, Felix, Clawnch, AntiHunter. ~10 weeks later, those catalysts are now evaluable: KellyClaude 2nd App Store approval; Felix month-2 revenue sustainability; Clawnch Clawtomaton developer adoption (not just token launches); AntiHunter first profitable cash-returning exit. Also flagged in original article: OpenClaw founder Steinberger left for OpenAI; CVE-2026-25253 security vulnerability; competing forks (NanoClaw, ZeroClaw, PicoClaw).
+
+**Why does it matter for AgentCrush?**
+These projects are exactly the agent class AgentCrush exists to track. Whether they hit their catalysts is direct signal on the "external revenue at scale" question for autonomous software factories. A coverage page (`/category/autonomous-software-factories`) is queued; this entry funds that page with current data.
+
+**What could AgentCrush do?**
+- Have Ajsa scan for: KellyClaude App Store presence (current count of approved apps), Felix Stripe revenue dashboard (current rate), Clawnch SDK adoption beyond token launches, AntiHunter buyback/burn cadence
+- Index all five plus the OpenClaw forks; surface evidence and current state on the new category page
+- Publish a "State of Autonomous Software Factories — May 2026" post citing the data
+
+**Decision:** Investigate. Ask Ajsa to run the scan in next morning brief.
+
+**If promoted:** → New category page (`/category/autonomous-software-factories`); blog post; Bet B+C signal
+
+---
+
+### 2026-05-04 — Messari x402 pay-per-call launch (March 2026)
+
+**Status:** Monitor
+
+**What happened?**
+Per Khala's SURF report (April 2026), Messari launched x402 pay-per-call access to its institutional research data in March 2026, packaged as an agent skill for Claude Code and OpenClaw. This puts a well-funded incumbent (Messari ~$21.5M ARR, ~120 staff) on the same x402 surface AgentCrush operates.
+
+**Why does it matter for AgentCrush?**
+Different products, different buyers (Messari = institutional research; AgentCrush = agent-graph + cross-protocol intelligence), but they now sit on the same payment rail. Worth tracking whether Messari's x402 surface generates meaningful agent-driven revenue, and whether their endpoints appear adjacent to AgentCrush's in CDP discovery / Agentic.Market.
+
+**What could AgentCrush do?**
+- Probe `/.well-known/x402` on messari.io and confirm endpoint shape
+- Add Messari to the comparison surface area in the methodology page (we are not the only x402 intelligence provider — be honest about it)
+- Watch for Messari's CDP discovery presence vs ours over 90 days
+
+**Decision:** Monitor. No build action.
+
+**If promoted:** → Comparison content; competitive context for Labs audit framing
+
+---
+
+### 2026-05-04 — ERC-8183 reader adapter (promoted to Build next)
+
+**Status:** Build next — queued after GitHub mapping Batch 2 + tier-promotion run
+
+**What happened?**
+Castle Labs' April 2026 piece "The Beginning of Agentic Finance" articulated the four-standard agent-commerce stack: x402 (payments) + ERC-8004 (trust/identity) + ERC-8183 (commerce/escrow) + ERC-8211 (execution). AgentCrush has reader v1 for ERC-8004; ERC-8183 is the next protocol surface to map.
+
+**Why does it matter for AgentCrush?**
+ERC-8183 defines the "Job" primitive (Open → Funded → Submitted → Terminal) co-developed by Virtuals + EF dAI team. Agents using ERC-8183 are doing actual commerce work, not just registration. This is higher-signal evidence than ERC-8004 presence alone.
+
+**What could AgentCrush do?**
+- Mirror the ERC-8004 reader pattern: read on-chain Job events, store in `agent_erc8183_jobs` table, surface job count + completion rate on agent profiles
+- No scoring impact in v1; informational surface only
+
+**Decision:** Build next, after GitHub mapping Batch 2 + evidence pipeline run + tier-promotion dry-run completes.
+
+**If promoted:** → New adapter; Agent Economy Index "ACP / commerce jobs tracked" KPI gets first real data
+
+---
+
 ### 2026-05-01 — x402 builder pain: indexing gaps and transaction-risk primitives
 
 **Status:** Monitor
@@ -77,7 +162,7 @@ Every entry must answer:
 
 ### 2026-05-01 — Stripe Link / Visa / Kite agent-commerce stack acceleration
 
-**Status:** Investigate
+**Status:** Build next — Tempo/MPP signal source for Ajsa
 
 **What happened?**
 
@@ -107,6 +192,8 @@ Three signals arrived in close succession, suggesting the agent-commerce infrast
 **Decision:** Investigate. Use for positioning and audit checklist expansion. No new adapters or scoring changes.
 
 **If promoted:** → Agent Economy Index V1 protocol taxonomy, Ajsa watchlist, Labs audit checklist (multi-rail), `AP2_X402_TRACKING_BRIEF.md` expansion (done), Bet A/D review at next monthly strategy review.
+
+**Promoted May 4 strategy session.** Build scope: Add Tempo (Stripe + Paradigm L1) update feed and Stripe Machine Payments Protocol (MPP) news source to Ajsa monitoring. Watch for: named enterprise integrations, MPP volume disclosure, Anthropic/OpenAI launch-partner activity.
 
 ---
 

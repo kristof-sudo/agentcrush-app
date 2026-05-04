@@ -6,6 +6,35 @@
 
 ---
 
+## May 4 Strategy Session Addendum
+
+**Trigger:** Read of four ecosystem articles (Castle Labs agentic finance; Khala on OpenClaw, SURF, Bittensor, Robotics).
+
+**Net-new build directions accepted:**
+- `payment_rails_supported` agent profile field (1–2 day build) — surfaces protocol-neutral position
+- `/category/autonomous-software-factories` page (1–2 day build) — coverage of OpenClaw ecosystem agents
+- Builder-outreach agent (1–2 week build) — single autonomous loop, reuses Ajsa + Telegram substrate
+
+**Net-new content directions accepted:**
+- Blog post: "First cross-protocol agent" (CrewAI ERC-8004 + x402) — drafted this week
+- Blog post: "State of Autonomous Software Factories — May 2026" — after Ajsa OpenClaw catalyst scan
+- Free Agent Commerce Readiness Audit on CrewAI + 1 more agent → publish as case studies
+
+**Net-new revenue path:**
+- Goal: ONE paying Agent Commerce Readiness Audit customer by July 4, 2026
+- Channels: Coinbase DevRel Discord, x402 Foundation, Daydreams, Virtuals, Farcaster /base /agents /coinbase
+- Validates Bet C if hit; revisit channel mix if zero by ~September
+
+**Reaffirmed (no change):**
+- AgentCrush does NOT join OpenClaw ecosystem — protocol-neutral position holds
+- No native token, no second SaaS, no VC money
+- Distribution > internal build; stay the course on Farcaster cadence
+
+**Strategic insight (worth keeping in mind):**
+SURF is the closest comp for AgentCrush architecture (specialized data → MCP/Skills → agent consumption). They reached $3M ARR with no token. Their pricing tiers (Free / $9 / $29 / $299) are the calibration anchor for AgentCrush's eventual paid tier — Pro at ~$29/mo for "agent commerce intelligence + API access", not Max-equivalent.
+
+---
+
 ## North Star (current public framing)
 
 **AgentCrush is the protocol-neutral market intelligence layer for the agent economy.**
@@ -421,6 +450,15 @@ Append-only log at `docs/INTELLIGENCE_BACKLOG.md`. Captures Ajsa signals that ma
 - VPS-only diagnostic scripts not yet synced to main repo
 - Token
 - CLI
+- `payment_rails_supported` field on agent profiles
+- `/category/autonomous-software-factories` page
+- Builder-outreach agent (single-purpose autonomous loop)
+- ERC-8183 reader adapter
+- Tempo/MPP signal source in Ajsa
+- Free Agent Commerce Readiness Audit case studies (2 targets: CrewAI + TBD)
+- Cross-protocol follow-up blog post
+- "State of Autonomous Software Factories" blog post
+- First paying Labs audit customer
 
 ---
 
@@ -434,6 +472,13 @@ Append-only log at `docs/INTELLIGENCE_BACKLOG.md`. Captures Ajsa signals that ma
 6. **H2 predictable VPS deploy** — needed to safely sync VPS-only scripts (Ajsa audit, evidence probe) into main repo workflow
 7. **Agentverse / Fetch.ai exploration** — registry adapter; after evidence Batch 2 and Ajsa observation
 8. **Do not change scoring weights** — evidence data for new anchors still accumulating; wait for ≥2 promotion cycles
+9. **Update Labs audit scope** (this session) — full agent-commerce stack coverage in Offer 1
+10. **Free audit case studies** — CrewAI + 1 more, ship as `/blog` posts within 2 weeks
+11. **Cross-protocol follow-up blog post** — CrewAI ERC-8004 + x402 worked example, this week
+12. **`payment_rails_supported` field build** — after Batch 2 + tier-promotion completes
+13. **`/category/autonomous-software-factories` page build** — after Batch 2 + tier-promotion completes
+14. **Builder-outreach agent build** — 1–2 week build, after the two field/page builds above
+15. **Public audit pitch** — once 2 case studies are live, pitch in DevRel/Foundation/community channels
 
 ---
 

@@ -46,14 +46,17 @@ Short window: early implementations will drive differentiation. Demand will grow
 
 **Supporting evidence (May 2026):** The agent-commerce stack is expanding beyond x402. Stripe now offers Link / Single-Purpose Tokens for consumer-agent purchasing through existing merchant rails. Visa's stablecoin settlement infrastructure covers nine blockchains including Base at $7B+ annualized run rate. Kite Mainnet launched Agent Passport as a programmable wallet / spending-control layer. Businesses now need to answer whether agents can discover, understand, pay for, and verify their services across Stripe Link/SPT, x402, AP2, Kite Passport, MCP, and other rails. The audit scope — and the value of getting it right — has grown.
 
-**Deliverable:** 5–8 page report covering:
-- Can an agent discover your service? (x402.json, Bazaar, MCP, A2A, Agentverse)
-- Can an agent understand your API? (schema, docs, machine-readable spec)
-- Can an agent pay you? (x402, Stripe Link/SPT, Kite Passport, ERC-8004, ACP, or none)
-- Can an agent verify what it received? (response schema, evidence format)
-- Is there a human override / authorization path? (AP2, Verifiable Intent, spending controls)
-- What protocol surfaces should you support first?
-- Prioritized implementation recommendation
+**Deliverable:** 5–8 page report covering the full agent-commerce stack:
+- Can an agent discover your service? (x402.json, Bazaar, MCP, A2A, Agentverse, Tempo MPP)
+- Can an agent understand your API? (schema, docs, machine-readable spec, MCP tool definitions)
+- Can an agent pay you? (x402, Stripe ACP / SPTs, ERC-8183 escrow, Visa CLI, Tempo MPP, or none)
+- Can an agent verify what it received? (response schema, evidence format, ERC-8004 reputation surface)
+- Is there a human override path? (CROPS-aligned: Censorship Resistance, Open-source, Privacy, Security)
+- Which protocol surfaces should you support first, given your audience and risk profile?
+- Prioritized implementation roadmap with cost/effort estimates per surface
+- Explicit "skip this" list — which standards you can safely ignore today
+
+**Positioning:** "Most teams adopting agent commerce don't know which of x402, ACP, ERC-8004, ERC-8183, ERC-8211, MCP, Tempo MPP, or Visa CLI they actually need. We tell you which to ship, in what order, and which to ignore. We've done it ourselves on AgentCrush — three live x402 endpoints on Base mainnet, two confirmed ERC-8004 cross-protocol matches, MCP server v0 — and we have the post-mortem and case studies to prove it."
 
 **Pricing draft:**
 - Free teardown for 1–2 public examples (content / case study)
@@ -61,7 +64,14 @@ Short window: early implementations will drive differentiation. Demand will grow
 - $1,000+ implementation roadmap for companies
 - Custom quote if build support is wanted
 
-**Activation:** One public case study exists. See activation gates below.
+**Pricing rationale:** $299 is calibrated to be a no-friction decision for a funded agent project; $1,000+ implementation roadmap is for teams that want a written plan, not just a diagnosis. Keep both prices stable through first 5 audits before reviewing.
+
+**Activation gates (current state):**
+- ✅ Public case study #1: x402 discovery post-mortem (live at /blog/x402-discovery-postmortem)
+- ⬜ Public case study #2: First cross-protocol agent (CrewAI ERC-8004 + x402 worked example) — in draft
+- ⬜ Public case study #3: Free Agent Commerce Readiness Audit on a high-visibility agent — in draft
+- ⬜ First inbound interest from public outreach (Coinbase DevRel Discord, x402 Foundation, Daydreams, Virtuals communities)
+- ⬜ First paying audit customer — target by July 4, 2026
 
 ---
 

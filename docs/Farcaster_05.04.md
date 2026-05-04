@@ -297,6 +297,12 @@ Topics for the Wednesday lane. Pull one each week. Update list as new ideas surf
 - Why we don't auto-archive dead agents
 - The case for tracking *across* protocols rather than picking one
 - Why Reddit signal is still pending (and what that says about the scoring stack)
+- Why ERC-8183 closes the gap that x402 + ERC-8004 don't (the "Job" primitive explained)
+- What CROPS gets right about agent infrastructure (Censorship-Resistant / Open-source / Private / Secure)
+- Why we don't pick ecosystems: tracking across OpenClaw, Bazaar, ACP, ERC-8004, Bittensor
+- Why "open-source" isn't the same as "verifiable" for agents
+- The four-standard stack — and which one most teams skip first
+- Why subscription pricing beats token incentives for an intelligence layer (calibrated against SURF model)
 
 ---
 
@@ -315,6 +321,25 @@ Themes for Monday Agent Economy Briefs. Each AEB pulls 5 items across themes.
 - Quarterly retrospective items (every 12-13 weeks)
 - Trajectory observations on persistent top movers (e.g. Autonolas's 3-week run)
 - MCP server activity — new tools, query patterns observed
+- OpenClaw ecosystem catalyst check-ins (KellyClaude approvals, Felix revenue, Clawd burn rate, etc.)
+- Cross-protocol agents — agents that support 2+ standards (x402 + ERC-8004 + ACP + …)
+- New x402 endpoints listed in CDP discovery week-over-week
+- Tempo/MPP launch partners and named integrations as they appear
+- Comparison spotlights drawn from new `/category/autonomous-software-factories` page
+- Builder-outreach agent activity — first responses, claim conversions
+
+---
+
+## Upcoming long-form posts (cross-promotion)
+
+These blog posts are queued for the next 2–4 weeks. Each one becomes Farcaster content (cast threads, Wednesday methodology spin-offs, AEB callouts).
+
+1. **"The first cross-protocol agent: mapping ERC-8004 to x402 in production"** — CrewAI worked example. Cites Castle Labs' four-standard frame. Tags @davide.crapis (EF dAI lead) and Castle Labs at publish time. ETA: this week.
+2. **"Agent Commerce Readiness Audit — CrewAI"** — first free audit case study. Public methodology, public findings. ETA: within 2 weeks.
+3. **"Agent Commerce Readiness Audit — [target #2]"** — second free audit case study. ETA: within 3 weeks.
+4. **"State of Autonomous Software Factories — May 2026"** — coverage of OpenClaw ecosystem agents using AgentCrush data. Cites Khala's Feb 26 catalysts and evaluates which hit. ETA: after Ajsa OpenClaw scan completes.
+
+Each post triggers: Farcaster cast thread (publication day), Wednesday methodology spin-off (following week), 1+ AEB item (next available Monday).
 
 ---
 
