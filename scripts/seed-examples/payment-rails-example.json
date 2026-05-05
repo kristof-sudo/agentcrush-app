@@ -1,0 +1,38 @@
+{
+  "_comment": "Example payment_rails_supported entries. Do not run writes without explicit approval. Use apply-approved-github-mappings.mjs pattern — manual update via Supabase dashboard or a dedicated seed script with --write flag.",
+  "_handle": "agentcrush",
+  "payment_rails_supported": [
+    {
+      "rail": "x402",
+      "status": "verified",
+      "evidence_tier": "verified_api",
+      "source_url": "https://www.agentcrush.xyz/.well-known/x402.json",
+      "last_checked_at": "2026-05-05",
+      "notes": "3 live endpoints on Base mainnet: trust-summary ($0.02), history ($0.02), verification-status ($0.005). All indexed in CDP merchant discovery."
+    },
+    {
+      "rail": "mcp",
+      "status": "verified",
+      "evidence_tier": "verified_api",
+      "source_url": "https://www.agentcrush.xyz/api/mcp",
+      "last_checked_at": "2026-05-05",
+      "notes": "MCP server v0. POST /api/mcp JSON-RPC. 4 read-only tools: lookup_agent, search_agents, compare_agents, get_history. No auth, no payment."
+    },
+    {
+      "rail": "erc8004",
+      "status": "detected",
+      "evidence_tier": "onchain",
+      "source_url": "https://8004scan.xyz",
+      "last_checked_at": "2026-05-05",
+      "notes": "AgentCrush reads ERC-8004 registrations but is not itself registered on-chain."
+    },
+    {
+      "rail": "agentic_market_bazaar",
+      "status": "verified",
+      "evidence_tier": "marketplace",
+      "source_url": "https://agentic.market",
+      "last_checked_at": "2026-05-05",
+      "notes": "verification-status endpoint surfaced in Agentic.Market UI. All 3 routes in CDP discovery."
+    }
+  ]
+}

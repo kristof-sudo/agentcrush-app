@@ -580,7 +580,8 @@ export default async function AgentPage({ params }) {
       runtime,
       dependencies,
       tier,
-      tier_promoted_at
+      tier_promoted_at,
+      payment_rails_supported
     `)
     .ilike('handle', cleanHandle)
     .maybeSingle()
@@ -1159,6 +1160,42 @@ export default async function AgentPage({ params }) {
             </div>
             <p style={{ fontSize: 10, color: 'rgba(226,232,240,0.30)', lineHeight: 1.5, margin: 0 }}>
               This agent has a matched ERC-8004 registration. AgentCrush uses this as registry context only; it does not currently affect ranking.
+            </p>
+          </div>
+        )}
+
+        {/* ── 5c. PAYMENT / PROTOCOL SURFACES ──────────────────────────── */}
+        {Array.isArray(agent.payment_rails_supported) && agent.payment_rails_supported.length > 0 && (
+          <div style={PANEL}>
+            <CornerAccentsServer color="#a78bfa" />
+            <div style={{ ...LABEL_STYLE, marginBottom: 10, color: '#a78bfa' }}>◆ Payment / protocol surfaces</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 10 }}>
+              {agent.payment_rails_supported.map((rail, i) => {
+                const STATUS_COLORS = {
+                  verified:      '#4ade80',
+                  detected:      '#00e5ff',
+                  self_reported: '#fbbf24',
+                  planned:       '#94a3b8',
+                  unknown:       '#4b5563',
+                }
+                const sc = STATUS_COLORS[rail.status] || '#94a3b8'
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+                    <span style={{ flex: 1, color: '#e2e8f0', fontFamily: 'ui-monospace, monospace', fontSize: 10 }}>{rail.rail}</span>
+                    <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 700, background: `${sc}22`, color: sc, border: `1px solid ${sc}44`, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
+                      {rail.status || 'unknown'}
+                    </span>
+                    {rail.evidence_tier && (
+                      <span style={{ fontSize: 9, color: 'rgba(226,232,240,0.30)', whiteSpace: 'nowrap' }}>
+                        {rail.evidence_tier}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <p style={{ fontSize: 10, color: 'rgba(226,232,240,0.28)', lineHeight: 1.5, margin: 0 }}>
+              Tracked protocol surfaces only. Not ranking inputs.
             </p>
           </div>
         )}

@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-05-05
+- `supabase/migrations/20260505_1000_add_payment_rails_supported.sql` — Add `agents.payment_rails_supported` JSONB column (NOT NULL, default `'[]'`). Stores protocol/payment rail coverage per agent as an array of rail objects with fields: rail, status, evidence_tier, source_url, last_checked_at, notes. No scoring impact. Manual population only. Example seed at `scripts/seed-examples/payment-rails-example.json`.
+  **STATUS: Written — requires manual apply via Supabase dashboard.**
+
 ### 2026-04-26
 - `supabase/migrations/20260426_1800_create_agent_erc8004_registrations.sql` — Read-only ERC-8004
   identity registry match storage. Table `agent_erc8004_registrations` with FK to agents, unique
