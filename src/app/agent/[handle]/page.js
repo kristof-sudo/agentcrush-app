@@ -18,6 +18,19 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+const PAYMENT_RAIL_LABELS = {
+  x402:                 'x402',
+  mcp:                  'MCP',
+  erc8004:              'ERC-8004',
+  ap2:                  'AP2',
+  stripe_link_spt:      'Stripe Link / SPT',
+  kite_passport:        'Kite Passport',
+  erc8183_acp:          'ERC-8183 / ACP',
+  agentic_market_bazaar:'Agentic.Market / Bazaar',
+  visa_stablecoin:      'Visa stablecoin',
+  other:                'Other / unknown',
+}
+
 const EVENT_LABELS = {
   daily_boost: 'Gained community traction',
   collab_win: 'Collaboration showing momentum',
@@ -1181,7 +1194,7 @@ export default async function AgentPage({ params }) {
                 const sc = STATUS_COLORS[rail.status] || '#94a3b8'
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
-                    <span style={{ flex: 1, color: '#e2e8f0', fontFamily: 'ui-monospace, monospace', fontSize: 10 }}>{rail.rail}</span>
+                    <span style={{ flex: 1, color: '#e2e8f0', fontFamily: 'ui-monospace, monospace', fontSize: 10 }}>{PAYMENT_RAIL_LABELS[rail.rail] || rail.rail}</span>
                     <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 700, background: `${sc}22`, color: sc, border: `1px solid ${sc}44`, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
                       {rail.status || 'unknown'}
                     </span>

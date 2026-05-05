@@ -551,7 +551,7 @@ export default async function Home() {
       <div className="relative">
 
         {/* ── HERO STAT STRIP ──────────────────────────────────────────────── */}
-        <div className="border-b border-[rgba(233,30,128,0.08)] bg-[rgba(233,30,128,0.02)]">
+        <div className="relative z-10 border-b border-[rgba(233,30,128,0.08)] bg-[rgba(233,30,128,0.02)]">
           {/* Mobile: scrolling ticker */}
           <div className="sm:hidden overflow-hidden py-1.5">
             <div className="flex whitespace-nowrap" style={{animation: 'ticker-scroll 28s linear infinite', width: 'max-content'}}>
@@ -620,11 +620,15 @@ export default async function Home() {
         </div>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
-        <HeroSection
-          agentCount={agentCount}
-          signalsToday={signalsToday}
-          evidenceRankedCount={evidenceRankedCount}
-        />
+        {/* -mt-7 on mobile pulls the hero up by the ticker height (~28px), keeping
+            hero content visible at the fold. sm:mt-0 resets on desktop. */}
+        <div className="-mt-7 sm:mt-0">
+          <HeroSection
+            agentCount={agentCount}
+            signalsToday={signalsToday}
+            evidenceRankedCount={evidenceRankedCount}
+          />
+        </div>
 
         {/* ── INTEL TICKER ─────────────────────────────────────────────────── */}
         <IntelTicker newsItems={newsItems} />
