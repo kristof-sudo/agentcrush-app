@@ -184,3 +184,148 @@ Ideas that may become offers later. Not prioritized.
 - Exclusive partnership with any single protocol (x402, ERC-8004, ACP, etc.)
 - Labs as a separate brand or domain
 - Any offer requiring expensive infrastructure before revenue
+
+---
+
+## Monetization + distribution backlog (May 5 snapshot)
+
+These are ideas evaluated during the May 5 strategy session that
+were not scheduled for May 6–8 execution. They are logged here so
+they aren't lost or re-derived. Status defines what triggers a
+revisit; do not promote items without the gate condition being met.
+
+| ID | Idea | Effort | Status | Gate (when to revisit) |
+|---|---|---|---|---|
+| A1 | Paid tier on existing x402 endpoints (premium = deeper data) | 1–2 days | Build later | Confirmed buyer demand from existing endpoint usage logs (≥10 paid calls/week on at least one endpoint) |
+| A2 | Methodology-as-a-service x402 endpoint (versioned, machine-readable) | 1 day | Build later | At least one external request for machine-readable methodology JSON |
+| A4 | Paid MCP tools (hybrid free/paid; e.g. get_history_timeseries, forecast_trajectory, evidence-tier-filtered compares) | 2 days | Build later | ≥3 paid x402 customers exist — proves payment muscle before splitting MCP surface |
+| B2 | Vault / company-brain structure as Gumroad product ($19–49 one-time) | 1 day to package | Build later — clarify | Edge case vs. not-now list "second product" rule. Revisit only after explicit re-evaluation in a strategy session |
+| B3 | Quiet investor / fund-side briefings (Pantera, Coinbase Ventures, DCG, YZI Labs) | 1 day per scoping | Response offer only | Inbound from a fund. Never proactively scoped or marketed. Aligns with Bet D rule (see STRATEGIC_BETS.md) |
+| C1 | Discovery-as-a-Service: register a client across Bazaar + Agentverse + ERC-8004 + Kite Passport-aware catalogs, with one dashboard | 1 day per client | Build later | At least one inbound asking for Bazaar listing help OR audit customer asks for implementation. Pricing target: $499–$999 |
+| C3 | Expedited claim verification ($49 one-time, speed-only, no ranking effect) | 1 day | Monitor | Depends on auth layer build. Narrowly distinct from rejected $29/mo badge — one-time and speed-only, not subscription |
+| D2 | x402 endpoint over agent_erc8183_jobs data (`/api/jobs/[handle]`) | +0 days downstream of reader | Build later | ERC-8183 reader passes go/no-go (cross-ref INTELLIGENCE_BACKLOG.md ERC-8183 entry). Reader build first, endpoint second |
+| D3b | OpenClaw "agentcrush" skill on ClawHub | 1 day | Monitor | Coverage-not-membership scoping needed first. Confirm posture won't read as ecosystem allegiance before publishing |
+| D3c | uAgents-compatible skill / Agentverse adapter for AgentCrush data | 1–2 days | Monitor | Wait for signal that Agentverse is driving real traffic / inbound to @agentcrush profile |
+
+### Notes per ID
+
+**A1 — Paid tier on x402 endpoints.** Same code path, gated by
+payment amount. Premium returns longer history window, cross-protocol
+joins, raw signal breakdowns. Differentiator that doesn't require
+new endpoints. Don't build until usage logs show buyer demand.
+
+**A2 — Methodology-as-a-service.** Pay-per-call endpoint returning
+the current scoring methodology JSON (weights, signals, last-updated,
+version). Buyers: framework builders, audit clients, competitors
+seeking transparent benchmarking. Differentiated from `/how-we-rank`
+because it is machine-readable, versioned, and supports agent
+self-monitoring.
+
+**A4 — Paid MCP tools.** Hybrid free/paid MCP servers are rare.
+Aligns with the "AgentCrush as machine-readable intelligence"
+positioning. Holding until paid x402 motion is proven, so we don't
+fragment the buyer surface.
+
+**B2 — Vault as Gumroad product.** Lab 1 outputs (CLAUDE.md template,
+folder structure, lint prompt, lab-session-template, Cross-Lab
+Decision Table) could be packaged as a digital download for other
+solo founders. Edge case versus the not-now list rejection of
+"second product" — this is one-time download, not SaaS, not
+white-label index, but the rule is broad enough that an explicit
+re-evaluation is required before building.
+
+**B3 — Quiet investor briefings.** Bet D mental list explicitly
+includes Pantera, Coinbase Ventures, DCG, YZI Labs. AgentCrush has
+unique data on which agents are real and which catalysts hit.
+Quarterly briefings are something funds pay for. The rule is
+strict: never proactively scoped, never marketed, never promised.
+This is a response offer only — only build the briefing if a fund
+inbounds asking for one. Visible scoping risks performing Bet D.
+
+**C1 — Discovery-as-a-Service.** Reuses adapter infrastructure
+already on the build queue. High fit because it operationalizes
+the "publish AgentCrush across multiple registries" methodology
+into a paid service for clients who want the same coverage.
+
+**C3 — Expedited claim verification.** Schema already has
+claim_requests. The previously rejected $29/mo badge would have
+affected ranking perception; this offer is one-time, speed-only,
+and grants no score bonus. Worth scoping if/when the auth layer
+is built.
+
+**D2 — ERC-8183 jobs endpoint.** Once ERC-8183 reader passes
+go/no-go, agent_erc8183_jobs data feeds a paid `/api/jobs/[handle]`
+endpoint. Zero incremental build cost beyond the reader. Already
+implicit in INTELLIGENCE_BACKLOG.md ERC-8183 entry; this is the
+explicit downstream monetization surface.
+
+**D3b — OpenClaw skill.** Publishing a `agentcrush` skill on
+ClawHub follows the fetch-agents pattern: SKILL.md + scripts +
+bash wrappers. The hesitation is positioning — AgentCrush has
+declined to "join" OpenClaw as a faction. A published skill is
+coverage, not membership, but the framing needs to be deliberate
+to avoid reading as ecosystem allegiance. Re-scope before publishing.
+
+**D3c — uAgents / Agentverse adapter.** AgentCrush is now
+registered on Agentverse (May 5). The skill / adapter would let
+other Agentverse agents query AgentCrush data via ACP shape.
+Hold until Agentverse traffic to @agentcrush profile shows it's
+worth the build.
+
+---
+
+## Rejected (logged with reason)
+
+These ideas were evaluated and rejected. They are recorded here
+so future strategy sessions don't re-derive and re-evaluate them
+from scratch. Revisit only if the rejection reason changes.
+
+| ID | Idea | Rejection reason |
+|---|---|---|
+| B4 | Frame-based AEB premium subscription | Functionally a paid newsletter. Inherits the existing newsletter rejection |
+| C4 | Sponsored slots on comparison pages (clearly labeled) | Too close to ranking-influence territory at current trust level. Revisit only after first paying audit closes |
+| E1 | Free REST API mirror of indexed data | Dilutes paid x402 endpoint demand. The free MCP server already serves read-only access |
+| E2 | Affiliate links to indexed agents | Affects ranking trust. Hard rejection — same family as paid placement |
+| E3 | Email newsletter | Pre-existing rejection. Still rejected |
+
+---
+
+## How to use this backlog
+
+- **Don't pull from this list speculatively.** Each item has a
+  gate. Wait for the gate.
+- **When a gate trips,** promote the item from this section into
+  one of the active offer sections above with an Activation Gates
+  block.
+- **Update this section** when ideas are added, when statuses
+  change, and when items are rejected. Newest at top within each
+  table.
+- **Cross-reference,** don't duplicate: if an item has a home
+  elsewhere (ERC-8183 in INTELLIGENCE_BACKLOG, Bet D in
+  STRATEGIC_BETS), reference rather than re-explain.
+
+---
+
+## Operating note: scheduled May 6–8 (not in this backlog)
+
+These items were scheduled for May 6–8 execution and are tracked
+in the dashboard, not in this backlog:
+
+- **C2** — Reframe verification-status endpoint as x402 onboarding
+  tool. Folded into the cross-protocol blog post and `/developers`
+  page on May 6.
+- **B1** — Field Lab outputs explicitly tied to Farcaster
+  cross-promotion. Wired into Field Lab session prompts and
+  Farcaster doc on May 7.
+- **D1** — Lab 5 → CrewAI audit case study #2 pipeline
+  operationalized. Wired into Lab 5 prompt and audit outline on
+  May 7.
+- **D3a** — Claude Code skill (the first of three D3 sub-items).
+  Selected as the highest-leverage skill packaging because it eats
+  AgentCrush's own dog food and matches the existing user base.
+  Build target: after A3 ships.
+- **A3** — Agent Economy Index machine-readable x402 endpoint.
+  Build target: May 8, conditional on F shipping cleanly on May 6.
+
+If any of the May 6–8 items slip, slide subsequent items by the
+same delay. F always wins; A3 always slips first.
