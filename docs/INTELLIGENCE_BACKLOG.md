@@ -45,6 +45,84 @@ Every entry must answer:
 
 ---
 
+### 2026-05-05 — Kite Passport test cohort: applied
+
+**Status:** Pending review
+
+**What happened?**
+Submitted the Kite Passport test user typeform. Application framed
+read-only: index Passport-enabled agents into AgentCrush's
+cross-protocol surface alongside x402, ERC-8004, AP2, MCP. Submission
+confirmation: "3-5 days, notify accepted testers via email."
+
+**Why does it matter for AgentCrush?**
+- Bet B (open ecosystem): early-cohort presence on a named acquihire-
+  candidate platform without commitment to building on it.
+- Audit credibility: when the Agent Commerce Readiness Audit pitches
+  Kite Passport as a tracked rail, "we are in their test cohort"
+  beats "we read their docs."
+- Bet D positioning: AgentCrush in Kite's funnel without ever
+  saying acquihire out loud.
+
+**What could AgentCrush do?**
+- Wait for email response (3-5 days)
+- If accepted: take SDK access, document the Passport API surface,
+  add Passport to payment_rails_supported field options, scope a
+  read-only adapter
+- If not accepted: re-apply to next cohort or wait for public access
+
+**Decision:** Passive monitor. Check email through May 10.
+
+**If promoted:** → New rail in `payment_rails_supported`; scoping doc
+similar to ERC-8183; Wednesday methodology cast about the scoped-
+wallet-governance layer of the agent commerce stack.
+
+---
+
+### 2026-05-05 — Agentverse registration: complete
+
+**Status:** Done
+
+**What happened?**
+@agentcrush registered on Agentverse via External Integration →
+Custom Integration → register_chat_agent (uagents-core 0.4.4).
+Agent address: agent1qg...dcv6wg (full address in 1Password).
+Endpoint declared: https://agentcrush.xyz/api/mcp.
+Active flag: true. Registration confirmed by Almanac sync.
+Profile setup completed: avatar, bio, README, handle. Checklist
+at ~85% (skipped 10-interactions item — requires test traffic from
+other agents; defer).
+
+Plumbing note: required pyenv-installed Python 3.12 (Homebrew
+python@3.12 has a libexpat link bug on this macOS version that
+breaks pyexpat). Future Python work on this Mac should use
+~/.pyenv/versions/3.12.7/bin/python3.
+
+**Why does it matter for AgentCrush?**
+@agentcrush handle reserved on the Fetch ecosystem agent registry.
+Bet B presence ticked off without committing AgentCrush to building
+on Fetch. Endpoint pointed at the existing MCP server — no new
+infrastructure. Registry is forward-compatible: if AgentCrush ever
+exposes a real ACP-shaped endpoint, the same registration can be
+updated rather than re-registered.
+
+**What could AgentCrush do?**
+- Add Agentverse to the Wednesday methodology backlog: "Why we
+  publish AgentCrush across multiple agent registries (Bazaar,
+  Agentverse, ERC-8004, future Kite Passport-aware catalogs)."
+- Eventually: index Agentverse-listed agents in AgentCrush. Their
+  search API at POST agentverse.ai/v1/search/agents is public and
+  no-auth. Adapter scope similar to the ERC-8004 reader.
+- When/if AgentCrush exposes a real ACP-conformant endpoint at
+  /api/agentverse, update the registration to point there instead
+  of /api/mcp.
+
+**Decision:** Keep handle live. No further build action this week.
+
+**If promoted:** → Agentverse adapter (read-only); Wednesday cast.
+
+---
+
 ### 2026-05-04 — Experian Agent Trust + KYA framework
 
 **Status:** Investigate

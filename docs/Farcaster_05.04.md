@@ -460,6 +460,7 @@ Topics for the Wednesday lane. Pull one each week. Update list as new ideas surf
 - **Builder Brain — what listening to builder discourse teaches us about agent commerce friction** (post when Builder Brain has 2+ weeks of data)
 - The Belief Mechanism: why every audit pitch should lead with the post-mortem, not bury it
 - Why blog posts are the top-of-funnel assets and Farcaster is the distribution layer (an essay on how AgentCrush allocates writing time)
+- Why we publish AgentCrush across multiple agent registries (Bazaar, Agentverse, ERC-8004, future Kite Passport-aware catalogs) — same data, multiple surfaces, zero ecosystem allegiance.
 
 ---
 

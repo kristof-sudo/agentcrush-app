@@ -506,7 +506,7 @@ Append-only log at `docs/INTELLIGENCE_BACKLOG.md`. Captures Ajsa signals that ma
 - x402 / MCP signal ingestion tables not created
 - partial_evidence tier not created
 - H2 predictable VPS deploy not done
-- Agentverse / Fetch.ai exploration not started
+- Kite Passport SDK access pending — applied May 5
 - ERC-8004 scheduled sync
 - ERC-8004 writer / attestations
 - B2B API tier / enterprise pricing
