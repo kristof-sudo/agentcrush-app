@@ -31,6 +31,13 @@ export const metadata = {
 
 const POSTS = [
   {
+    slug: 'first-cross-protocol-agent',
+    title: 'The first cross-protocol agent: CrewAI on ERC-8004 and x402',
+    date: 'May 8, 2026',
+    summary:
+      'A worked example of an agent active on two protocol surfaces at once — CrewAI registered on ERC-8004 (Base, token #17997) with x402_supported: true. What AgentCrush sees when we cross the data, and why multi-rail becomes the default.',
+  },
+  {
     slug: 'x402-discovery-postmortem',
     title: "Working x402 payment isn't the same as working x402 discovery",
     date: 'April 30, 2026',
