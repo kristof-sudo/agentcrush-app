@@ -119,6 +119,57 @@ AgentCrush tracks. AgentCrush does not choose.
 
 ---
 
+## AWS Bedrock AgentCore Payments
+
+**Launched:** May 7, 2026 (preview)
+**Built with:** Coinbase, Stripe (Privy)
+**Layer:** Managed agent runtime — wraps payment + discovery +
+governance + observability into one platform-level service.
+
+**Why it belongs in this brief:**
+AWS is the first major cloud platform to ship a managed agent
+payment runtime. Preview supports x402 first, with additional
+protocols on the roadmap. This makes x402 the institutional
+default for the agent payment layer at AWS-scale.
+
+**Key components:**
+- **Wallet connection:** Coinbase CDP wallet or Stripe Privy
+  wallet. Stablecoin or fiat funding via debit card.
+- **Authorization:** End user must explicitly authorize the
+  agent to access and use their wallet. Spending limits
+  enforced per session.
+- **Discovery:** Coinbase x402 Bazaar MCP server exposed
+  through AgentCore Gateway. Agents can search, discover, and
+  pay for x402 endpoints without developers hardcoding
+  integrations.
+- **Observability:** Every transaction visible through
+  AgentCore's existing logs, metrics, traces.
+
+**Implications for AgentCrush:**
+- AgentCrush's existing Agentic.Market/Bazaar listing
+  (verification-status endpoint) could be discoverable to
+  Bedrock-built agents through the AgentCore Gateway exposure.
+  Verify once Bazaar pushes through to AgentCore.
+- The "discovery, payment, governance, observability"
+  framing AgentCrush has been using is now AWS's framing.
+  Less framing work, more execution work.
+- Future protocol additions (ACP, MPP, AP2 expected on the
+  roadmap) will broaden the runtime. Track AWS announcements
+  for the next protocol AgentCore Payments adds.
+
+**Open questions:**
+- Will AgentCore Payments expose a public registry of agents
+  that have transacted, or stay private to the deployer?
+- Does Bazaar surfacing through AgentCore privilege Bazaar-
+  listed sellers over directly-discoverable x402 endpoints?
+- Timeline for fiat support beyond stablecoin micropayments.
+
+**Source:** https://aws.amazon.com/blogs/machine-learning/agents-that-transact-introducing-amazon-bedrock-agentcore-payments-built-with-coinbase-and-stripe/
+
+**Last updated:** May 8, 2026
+
+---
+
 ## What AgentCrush should track per agent / service
 
 | Signal | Notes |

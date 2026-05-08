@@ -45,6 +45,69 @@ Every entry must answer:
 
 ---
 
+### 2026-05-08 — AWS Bedrock AgentCore Payments launched (preview)
+
+**Status:** Build next / Ajsa source candidate
+
+**What happened?**
+AWS launched Amazon Bedrock AgentCore Payments in preview on
+May 7, 2026, in partnership with Coinbase and Stripe. Preview
+supports x402 protocol first, with additional protocols on the
+roadmap. The Coinbase x402 Bazaar MCP server is exposed through
+AgentCore Gateway so agents can search, discover, and pay for
+x402 endpoints. Wallet infrastructure: Coinbase CDP wallet or
+Stripe Privy wallet. Spending limits enforced per session.
+Available in 4 AWS regions at preview.
+
+Quote from announcement: "agents will discover, evaluate, and
+pay for resources when they need, all within a single
+execution loop."
+
+Customer references: Cox Automotive, Thomson Reuters, PGA TOUR,
+Warner Bros. Discovery (Mit Majithia, EVP), Heurist AI (JW
+Wang, Founder).
+
+**Why does it matter for AgentCrush?**
+- Institutional validation of x402 specifically as the first
+  agent payment protocol AWS supports — bigger than any
+  previous endorsement.
+- AWS literally describes the agent commerce stack
+  (discovery + payment + governance + observability) the way
+  AgentCrush has been positioning around. The framing is now
+  industry-standard, not AgentCrush-internal.
+- The Bazaar MCP server exposure through AgentCore Gateway
+  means AgentCrush's existing Bazaar listing (verification-
+  status endpoint) could become discoverable to Bedrock-built
+  agents by extension. Worth verifying once Bazaar updates
+  show through to AgentCore.
+- Strengthens the cross-protocol thesis the May 8 blog post
+  is built on. Multi-rail moves from "we expect" to "yesterday
+  it shipped at AWS scale."
+
+**What could AgentCrush do?**
+- Add AWS Bedrock AgentCore Payments / AgentCore docs as an
+  Ajsa source if there is an RSS or changelog feed.
+- Update AP2_X402_TRACKING_BRIEF.md to add Bedrock AgentCore
+  Payments as a tracked surface in the agent commerce stack.
+- Use as Friday May 8 / cross-protocol blog post talking
+  point (done — referenced in prediction #4 of the post).
+- Include as Item #1 in first AEB (May 11) — this is the
+  ecosystem signal for the week.
+- Watch for first published x402 endpoints by AgentCore-built
+  agents. If the volume of x402 sellers spikes in
+  Agentic.Market over the next 30 days, AgentCore is the
+  cause. Track week-over-week.
+
+**Decision:** Build next — add to Ajsa source list this week
+if a feed exists; surface in AEB Item #1; track downstream
+Bazaar volume effect over the next 30 days.
+
+**If promoted:** → AP2_X402_TRACKING_BRIEF.md update; Ajsa
+source addition; future Agent Economy Index metric (count of
+x402 sellers in Bazaar week-over-week post-AgentCore launch).
+
+---
+
 ### 2026-05-05 — Kite Passport test cohort: applied
 
 **Status:** Pending review
