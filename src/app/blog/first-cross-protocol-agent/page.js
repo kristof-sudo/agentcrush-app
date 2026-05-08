@@ -54,7 +54,7 @@ export default function FirstCrossProtocolAgent() {
       <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-mono text-white/30">
         <span>May 8, 2026</span>
         <span className="text-white/15">·</span>
-        <span>Kris — AgentCrush</span>
+        <span>Kris</span>
       </div>
 
       <hr className="my-8 border-white/[0.06]" />
