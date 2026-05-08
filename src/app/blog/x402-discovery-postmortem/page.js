@@ -63,7 +63,7 @@ export default function X402DiscoveryPostmortem() {
       <div className="space-y-5 text-[15px] text-white/65 leading-[1.75]">
 
         <p>
-          AgentCrush is now visible on Agentic.Market. Behind it are three x402 endpoints I shipped on Base mainnet over the past week. CDP merchant discovery now sees all three; the Agentic.Market UI currently surfaces one.
+          AgentCrush is now visible on Agentic.Market. Behind it are three x402 endpoints I shipped on Base mainnet over the past week. CDP merchant discovery now sees all three; the Agentic.Market UI now surfaces all three.
         </p>
 
         <p>
@@ -122,7 +122,7 @@ export default function X402DiscoveryPostmortem() {
         </p>
 
         <p>
-          AgentCrush currently has all three x402 routes in CDP discovery. The Agentic.Market UI is currently surfacing one of them.
+          AgentCrush currently has all three x402 routes in CDP discovery. The Agentic.Market UI is currently surfacing all three.
         </p>
 
         <p>Two things were wrong, both in the discovery metadata.</p>
