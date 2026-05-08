@@ -45,6 +45,43 @@ Every entry must answer:
 
 ---
 
+### 2026-05-08 — Multi-platform content automation (rejected)
+
+**Status:** Rejected — distribution mismatch
+
+**What is it?**
+Open-source Claude Code-native content pipeline that scrapes
+viral content from YouTube/X/TikTok, generates platform-native
+drafts (LinkedIn, TikTok EN/DE, Instagram), and schedules via
+Postiz. Reference: github.com/robinsadeghpour/content-workflow.
+
+**Why rejected:**
+- AgentCrush's audience (~5K agent-economy builders, protocol
+  researchers, DevRel teams) lives on Farcaster, GitHub, Discord,
+  long-form blog — not TikTok/Instagram/LinkedIn.
+- The mindshare-arbitrage model rewards novelty and timing;
+  AgentCrush sells citable depth.
+- Setup cost is 1–2 weeks plus 5+ third-party skills with ongoing
+  maintenance burden. Wrong allocation versus the 60-day Bet C
+  validation clock.
+- Direct conflict with Farcaster_05_04.md decision: "consistent
+  depth, not viral spikes."
+- Mike's X account was killed deliberately. This system would
+  effectively replicate that motion across more platforms.
+
+**What was kept:**
+- Critic checklist concept (hook / accuracy / economy) applied
+  manually to AgentCrush long-form pieces.
+- Voice-profile concept — codify in docs/AGENTCRUSH_VOICE.md as
+  a one-page file when time permits.
+
+**Revisit only if:** AgentCrush has 5K+ Farcaster followers, the
+audit motion is generating $5K+/mo predictable revenue, and a
+distinct B2C content layer becomes strategically necessary. None
+of those conditions are remotely close.
+
+---
+
 ### 2026-05-08 — AWS Bedrock AgentCore Payments launched (preview)
 
 **Status:** Build next / Ajsa source candidate
