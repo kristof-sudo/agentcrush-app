@@ -8,6 +8,28 @@ AgentCrush is an identity, reputation, and discovery index for the AI agent ecos
 
 **Mike** is the narrative/operator layer (not an engineering agent). The engineering agents are here to reduce founder (Kristof) manual relay work.
 
+## Brain-first session protocol
+
+There is a separate PRIVATE repo, `agentcrush-brain`, that is the canonical operating brain.
+
+At the start of any AgentCrush session:
+
+1. `cd /Users/pk/projects/agentcrush-brain`
+2. `git pull origin main`
+3. Read `Home.md`
+4. Read `STATE.md`
+5. Read `Memory.md`
+6. Read `Queue/open.md`
+7. Read the relevant project page in `Projects/`
+
+Then return to `agentcrush-app` for product/code work.
+
+Do not ask Kris to paste context that exists in the brain.
+
+After material work, append a short entry to `agentcrush-brain/Log.md`.
+
+If the brain repo is not cloned locally, stop and ask Kris before proceeding.
+
 ## Commands
 
 ```bash
