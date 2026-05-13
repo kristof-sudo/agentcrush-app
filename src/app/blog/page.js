@@ -32,6 +32,8 @@ export const metadata = {
 const POSTS = [
   {
     slug: 'agent-commerce-readiness-three-audits',
+    image: '/og-three-audits.png',
+    imageAlt: 'The state of agent commerce readiness: three audits, three shapes of unfinished',
     title: 'The state of agent commerce readiness: three audits, three shapes of unfinished',
     date: 'May 13, 2026',
     summary:
@@ -39,6 +41,8 @@ const POSTS = [
   },
   {
     slug: 'first-cross-protocol-agent',
+    image: '/og-cross-protocol-agent.png',
+    imageAlt: 'First cross-protocol agent indexed: CrewAI on ERC-8004 and x402',
     title: 'The first cross-protocol agent: CrewAI on ERC-8004 and x402',
     date: 'May 8, 2026',
     summary:
@@ -46,6 +50,8 @@ const POSTS = [
   },
   {
     slug: 'x402-discovery-postmortem',
+    image: '/og-x402-postmortem.png',
+    imageAlt: "Working x402 payment isn't the same as working x402 discovery",
     title: "Working x402 payment isn't the same as working x402 discovery",
     date: 'April 30, 2026',
     summary:
@@ -73,24 +79,33 @@ export default function BlogIndexPage() {
         {POSTS.map((post) => (
           <article
             key={post.slug}
-            className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-5 py-5 hover:border-white/[0.12] transition-colors"
+            className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden hover:border-white/[0.12] transition-colors"
           >
-            <time className="text-xs font-mono text-white/25 block mb-2">{post.date}</time>
-            <h2 className="text-base font-semibold text-white leading-snug mb-2">
+            <Link href={`/blog/${post.slug}`} className="block">
+              <img
+                src={post.image}
+                alt={post.imageAlt}
+                className="w-full h-auto"
+              />
+            </Link>
+            <div className="px-5 py-5">
+              <time className="text-xs font-mono text-white/25 block mb-2">{post.date}</time>
+              <h2 className="text-base font-semibold text-white leading-snug mb-2">
+                <Link
+                  href={`/blog/${post.slug}`}
+                  className="hover:text-[#e91e80] transition-colors"
+                >
+                  {post.title}
+                </Link>
+              </h2>
+              <p className="text-sm text-white/45 leading-relaxed mb-4">{post.summary}</p>
               <Link
                 href={`/blog/${post.slug}`}
-                className="hover:text-[#e91e80] transition-colors"
+                className="text-xs font-mono text-violet-400/70 hover:text-violet-300 transition-colors"
               >
-                {post.title}
+                Read →
               </Link>
-            </h2>
-            <p className="text-sm text-white/45 leading-relaxed mb-4">{post.summary}</p>
-            <Link
-              href={`/blog/${post.slug}`}
-              className="text-xs font-mono text-violet-400/70 hover:text-violet-300 transition-colors"
-            >
-              Read →
-            </Link>
+            </div>
           </article>
         ))}
       </div>
