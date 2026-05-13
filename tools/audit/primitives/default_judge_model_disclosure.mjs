@@ -42,7 +42,19 @@ const MODEL_RE = new RegExp(
 );
 
 // Identifiers in proximity to a model name that suggest "judge / eval / grader".
-const JUDGE_RE = /\b(judge|grader|scorer|llm[_-]?as[_-]?judge|autoeval|auto_eval|rubric|eval(?:uator|uation)?)\b/i;
+// NOTE: bare `eval` is intentionally excluded — it false-positives on JSONPath /
+// JMESPath / query-DSL evaluators (e.g. daydreamsai/daydreams
+// packages/core/src/parsing/jsonpath.ts uses `eval(` for expression evaluation,
+// not LLM evaluation). We require the longer forms `evaluator` / `evaluation`
+// or one of the explicit judge/grader/scorer/rubric/autoeval signals.
+const JUDGE_RE = /\b(judge|grader|scorer|llm[_-]?as[_-]?judge|autoeval|auto_eval|rubric|evaluator|evaluation)\b/i;
+
+// Files / directories that match `fileHintsJudge` by coincidence but are not
+// LLM-as-judge surfaces. Query-DSL evaluators (JSONPath, JMESPath, etc.) are
+// the canonical false-positive class — they expose an `eval` method for
+// expression evaluation, not for model scoring.
+const QUERY_DSL_FILE_RE =
+  /(^|\/)(jsonpath|jmespath|jq|xpath|jsonata)(\.|[_-])|(^|\/)(query|filter|expr|dsl|parsing)\//i;
 
 // Default-ish: assignments like DEFAULT_MODEL, default_model, JUDGE_MODEL, etc.
 const DEFAULT_NAME_RE = /\b(default[_-]?model|judge[_-]?model|grader[_-]?model|scorer[_-]?model|eval[_-]?model|model[_-]?default)\b/i;
@@ -73,6 +85,7 @@ export async function run(target) {
   let sawEnvOrConfig = false;
   let sawDocDisclosure = false;
   let sawCodeCommentDisclosure = false;
+  let suppressedQueryDslFiles = 0;
 
   for await (const { rel, abs } of walk(target.path)) {
     const text = await readText(abs);
@@ -80,6 +93,14 @@ export async function run(target) {
     const lines = text.split("\n");
     const lowerRel = rel.toLowerCase();
     const isDoc = DOC_FILE_RE.test(lowerRel);
+    const isQueryDsl = QUERY_DSL_FILE_RE.test(lowerRel);
+    if (isQueryDsl && !isDoc) {
+      // Query-DSL evaluators (JSONPath, JMESPath, etc.) commonly expose an
+      // `eval` method; this is not an LLM-as-judge surface. Skip the code scan
+      // entirely for these files to avoid false positives.
+      suppressedQueryDslFiles++;
+      continue;
+    }
     // Test files are noisy and don't reflect product surface. Skip for code scans.
     const isTest =
       /(^|\/)tests?\//.test(lowerRel) ||
@@ -174,10 +195,15 @@ export async function run(target) {
   // Decide status.
   let status;
   let notes;
+  const dslSuffix = suppressedQueryDslFiles
+    ? ` (${suppressedQueryDslFiles} JSONPath/query-DSL file${suppressedQueryDslFiles === 1 ? "" : "s"} skipped as known non-judge surface)`
+    : "";
+
   if (!sawJudgeContext && !sawHardcodedDefault && !sawDocDisclosure) {
     status = "not_applicable";
     notes =
-      "No LLM-as-judge / grader / scorer pattern detected in this source tree. Primitive does not apply.";
+      "No LLM-as-judge / grader / scorer pattern detected in this source tree. Primitive does not apply." +
+      dslSuffix;
   } else if (sawDocDisclosure && (sawEnvOrConfig || !sawHardcodedDefault)) {
     status = "disclosed";
     notes =
@@ -199,7 +225,8 @@ export async function run(target) {
   } else {
     status = "undisclosed";
     notes =
-      "Judge/eval surface exists in code, but no documentation of the default and no user-facing config knob were found.";
+      "Judge/eval surface exists in code, but no documentation of the default and no user-facing config knob were found." +
+      dslSuffix;
   }
 
   return {
