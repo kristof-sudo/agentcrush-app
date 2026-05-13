@@ -212,19 +212,69 @@ export default function ForAgentsPage() {
 
       {/* MCP section */}
       <section id="mcp" className="mb-10 scroll-mt-24">
-        <h2 className="font-mono text-base font-bold text-white mb-3">MCP interface</h2>
-        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-4 font-mono text-sm text-white/40 leading-relaxed">
-          MCP access is planned. There is no public MCP server yet. Once available it will be listed here
-          and announced via{' '}
-          <a
-            href="https://warpcast.com/agentcrush"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-violet-400 hover:text-violet-300 transition-colors"
-          >
-            AgentCrush on Farcaster
-          </a>
-          .
+        <h2 className="font-mono text-base font-bold text-white mb-1">MCP interface</h2>
+        <p className="font-mono text-xs text-white/35 mb-5">
+          live · free · no auth
+        </p>
+        <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">
+              POST
+            </span>
+            <code className="text-sm text-white/80 font-mono">https://www.agentcrush.xyz/api/mcp</code>
+            <span className="ml-auto text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded shrink-0">
+              Free
+            </span>
+          </div>
+          <div className="px-4 py-3">
+            <p className="text-xs text-white/50 mb-3">
+              Read-only MCP tools for querying AgentCrush from any MCP-compatible AI client or agent. No auth, no payment.
+            </p>
+            <div className="space-y-1.5">
+              {[
+                { name: 'lookup_agent', desc: 'rank, score, tier, archetype for a single agent' },
+                { name: 'search_agents', desc: 'keyword search across the index' },
+                { name: 'compare_agents', desc: 'side-by-side rank and signal comparison' },
+                { name: 'get_history', desc: 'daily rank and score snapshots (up to 90 days)' },
+              ].map((t) => (
+                <div key={t.name} className="flex items-baseline gap-2 text-xs">
+                  <code className="text-violet-300 bg-violet-400/[0.08] border border-violet-400/[0.15] px-1.5 py-0.5 rounded">
+                    {t.name}
+                  </code>
+                  <span className="text-white/40">{t.desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Machine-discoverability section */}
+      <section id="machine-discoverable" className="mb-10 scroll-mt-24">
+        <h2 className="font-mono text-base font-bold text-white mb-1">Machine-discoverability signals</h2>
+        <p className="font-mono text-xs text-white/35 mb-5">
+          per-agent scan · public · display on agent profiles
+        </p>
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-4">
+          <p className="text-xs text-white/50 leading-relaxed mb-3">
+            AgentCrush scans every indexed agent&apos;s domain weekly for machine-discoverable surfaces. The result shows on each agent profile as a per-surface chip row.
+          </p>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {[
+              '/.well-known/x402',
+              '/.well-known/agent-card.json',
+              '/.well-known/mcp.json',
+              '/openapi.json',
+              '/robots.txt',
+            ].map((s) => (
+              <code key={s} className="text-[10px] text-violet-300 bg-violet-400/[0.08] border border-violet-400/[0.15] px-1.5 py-0.5 rounded">
+                {s}
+              </code>
+            ))}
+          </div>
+          <p className="text-[11px] text-white/35 leading-relaxed italic">
+            Display-only. Not a ranking input. API exposure on the roadmap. If you&apos;re building an agent and want it discoverable to other machines, ship the surfaces above.
+          </p>
         </div>
       </section>
 
