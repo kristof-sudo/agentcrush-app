@@ -97,6 +97,7 @@ export default async function RankingsPage({ searchParams }) {
     { data: agentsData },
     { data: latestRanking },
     { count: totalIndexed },
+    { data: allAgentArchetypes },
   ] = await Promise.all([
     handles.length > 0
       ? supabase
@@ -113,7 +114,21 @@ export default async function RankingsPage({ searchParams }) {
     supabase
       .from('agents')
       .select('id', { count: 'exact', head: true }),
+    supabase
+      .from('agents')
+      .select('archetype')
+      .not('archetype', 'is', null),
   ])
+
+  // Per-category agent counts — mirrors src/app/categories/page.js
+  const totalByArchetype = {}
+  for (const row of allAgentArchetypes || []) {
+    const key = row.archetype || 'Other'
+    totalByArchetype[key] = (totalByArchetype[key] || 0) + 1
+  }
+  const categoryCounts = Object.entries(totalByArchetype)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
 
   const agentsByHandle = {}
   for (const a of agentsData || []) {
@@ -250,6 +265,26 @@ export default async function RankingsPage({ searchParams }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Per-category counts — display only, mirrors /categories source-of-truth */}
+      {categoryCounts.length > 0 && (
+        <div className="mb-4">
+          <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30 mb-2">
+            Indexed by category
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {categoryCounts.map((c) => (
+              <span
+                key={c.name}
+                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 font-mono text-[11px] text-white/60"
+              >
+                <span>{c.name}</span>
+                <span className="tabular-nums text-white/40">{c.count}</span>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
