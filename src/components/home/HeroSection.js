@@ -320,72 +320,102 @@ export default function HeroSection({ agentCount, signalsToday, evidenceRankedCo
             </span>
           </h1>
 
-          {/* Subheadline */}
+          {/* Plain-language tagline */}
           <p style={{
             fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
             fontSize: 13, color: 'rgba(255,255,255,0.55)',
-            marginTop: 14, maxWidth: 540, lineHeight: 1.7,
+            marginTop: 14, maxWidth: 560, lineHeight: 1.7,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .18s',
           }}>
-            AgentCrush indexes AI agents across open-source, x402, ERC-8004, A2A, MCP, and agent marketplaces — tracking activity, adoption, history, and machine-readable credibility signals over time.
+            Whether you&apos;re looking for an agent to use, building one, or watching the ecosystem — we help you make sense of it.
           </p>
 
-          {/* Supporting line */}
+          {/* Intent question */}
           <p style={{
             fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-            fontSize: 11, color: 'rgba(255,255,255,0.30)',
-            marginTop: 10, maxWidth: 560, lineHeight: 1.75,
-            animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .25s',
+            fontSize: 11, color: 'rgba(255,255,255,0.35)',
+            marginTop: 28, textTransform: 'uppercase', letterSpacing: '.12em',
+            animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .3s',
           }}>
-            Track which agents are active, gaining adoption, economically relevant, and connected across the emerging agent web.
+            What brings you here?
           </p>
 
-          {/* CTAs */}
-          <div style={{ marginTop: 28, display: 'flex', gap: 12, flexWrap: 'wrap', animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .4s' }}>
+          {/* Three intent paths */}
+          <div style={{
+            marginTop: 12,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 10,
+            maxWidth: 880,
+            animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .4s',
+          }}>
             <Link href="/rankings" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              borderRadius: 4, border: '1px solid rgba(57,255,20,0.6)',
-              background: 'rgba(57,255,20,0.1)',
-              padding: '11px 22px',
-              fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-              fontSize: 13, fontWeight: 700, color: '#39ff14', textDecoration: 'none',
-              boxShadow: '0 0 20px rgba(57,255,20,0.12)',
+              display: 'block',
+              borderRadius: 6, border: '1px solid rgba(57,255,20,0.35)',
+              background: 'rgba(57,255,20,0.06)',
+              padding: '14px 16px',
+              textDecoration: 'none',
               transition: 'all .2s',
             }}>
-              Browse Evidence Rankings →
+              <div style={{
+                fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                fontSize: 13, fontWeight: 700, color: '#39ff14',
+                marginBottom: 4,
+              }}>
+                I&apos;m looking for an agent to use →
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5,
+              }}>
+                Browse evidence-ranked agents by category, score, and ecosystem signals.
+              </div>
             </Link>
-            <Link href="/explore" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              borderRadius: 4, border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(255,255,255,0.04)',
-              padding: '11px 22px',
-              fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-              fontSize: 13, color: 'rgba(255,255,255,0.6)', textDecoration: 'none',
-              transition: 'all .2s',
-            }}>
-              Explore Agent Index →
-            </Link>
+
             <Link href="/for-agents" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              borderRadius: 4, border: '1px solid rgba(167,139,250,0.3)',
+              display: 'block',
+              borderRadius: 6, border: '1px solid rgba(167,139,250,0.35)',
               background: 'rgba(167,139,250,0.06)',
-              padding: '11px 18px',
-              fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-              fontSize: 12, color: 'rgba(167,139,250,0.8)', textDecoration: 'none',
+              padding: '14px 16px',
+              textDecoration: 'none',
               transition: 'all .2s',
             }}>
-              For AI Agents & APIs
+              <div style={{
+                fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                fontSize: 13, fontWeight: 700, color: '#a78bfa',
+                marginBottom: 4,
+              }}>
+                I&apos;m building an agent →
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5,
+              }}>
+                Free MCP server, paid x402 endpoints, machine-discoverability checks.
+              </div>
             </Link>
+
             <Link href="/agent-economy-index" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              borderRadius: 4, border: '1px solid rgba(0,212,255,0.25)',
-              background: 'rgba(0,212,255,0.05)',
-              padding: '11px 18px',
-              fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
-              fontSize: 12, color: 'rgba(0,212,255,0.75)', textDecoration: 'none',
+              display: 'block',
+              borderRadius: 6, border: '1px solid rgba(0,212,255,0.35)',
+              background: 'rgba(0,212,255,0.06)',
+              padding: '14px 16px',
+              textDecoration: 'none',
               transition: 'all .2s',
             }}>
-              Agent Economy Index →
+              <div style={{
+                fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                fontSize: 13, fontWeight: 700, color: '#00d4ff',
+                marginBottom: 4,
+              }}>
+                I want to understand the ecosystem →
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5,
+              }}>
+                Cross-protocol agent intelligence: x402, ERC-8004, MCP, Bazaar.
+              </div>
             </Link>
           </div>
 
