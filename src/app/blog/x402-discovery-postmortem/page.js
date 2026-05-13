@@ -15,10 +15,10 @@ export const metadata = {
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://www.agentcrush.xyz/og-default.png',
-        width: 1200,
-        height: 630,
-        alt: 'AgentCrush — AI Agent Rankings',
+        url: 'https://www.agentcrush.xyz/og-x402-postmortem.png',
+        width: 1731,
+        height: 909,
+        alt: "Working x402 payment isn't the same as working x402 discovery — AgentCrush",
       },
     ],
     type: 'article',
@@ -29,7 +29,7 @@ export const metadata = {
     title: "Working x402 payment isn't the same as working x402 discovery — AgentCrush",
     description:
       "Notes from getting AgentCrush indexed on Agentic.Market: the boring metadata gotchas that almost stopped me, and the checklist that finally worked.",
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://www.agentcrush.xyz/og-x402-postmortem.png'],
   },
 }
 
@@ -55,6 +55,15 @@ export default function X402DiscoveryPostmortem() {
         <span>April 30, 2026</span>
         <span className="text-white/15">·</span>
         <span>Kris</span>
+      </div>
+
+      {/* Hero image */}
+      <div className="mt-8 rounded-xl overflow-hidden">
+        <img
+          src="/og-x402-postmortem.png"
+          alt="Working x402 payment isn't the same as working x402 discovery"
+          className="w-full h-auto"
+        />
       </div>
 
       <hr className="my-8 border-white/[0.06]" />

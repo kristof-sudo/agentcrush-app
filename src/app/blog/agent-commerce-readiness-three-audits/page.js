@@ -15,10 +15,10 @@ export const metadata = {
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://www.agentcrush.xyz/og-default.png',
-        width: 1200,
-        height: 630,
-        alt: 'AgentCrush — AI Agent Rankings',
+        url: 'https://www.agentcrush.xyz/og-three-audits.png',
+        width: 1731,
+        height: 909,
+        alt: 'The state of agent commerce readiness: three audits, three shapes of unfinished — AgentCrush',
       },
     ],
     type: 'article',
@@ -29,7 +29,7 @@ export const metadata = {
     title: "The state of agent commerce readiness: three audits, three shapes of unfinished — AgentCrush",
     description:
       "We audited aixbt, Coral Protocol, and Daydreams / Lucid Agents in one pass. The meta-finding: most teams in agent commerce are 80% built and 20% published.",
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://www.agentcrush.xyz/og-three-audits.png'],
   },
 }
 
@@ -59,6 +59,15 @@ export default function AgentCommerceReadinessThreeAudits() {
         <span>May 13, 2026</span>
         <span className="text-white/15">·</span>
         <span>AgentCrush</span>
+      </div>
+
+      {/* Hero image */}
+      <div className="mt-8 rounded-xl overflow-hidden">
+        <img
+          src="/og-three-audits.png"
+          alt="The state of agent commerce readiness: three audits, three shapes of unfinished"
+          className="w-full h-auto"
+        />
       </div>
 
       <hr className="my-8 border-white/[0.06]" />
