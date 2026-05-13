@@ -93,7 +93,7 @@ const SECTIONS = [
           by being well-known — it gets there by generating real evidence that can be independently checked.
         </p>
         <p className="mt-3">
-          Today 39 agents are evidence-ranked and over 1,186 are indexed. Both counts grow automatically
+          Today over 60 agents are evidence-ranked and over 1,200 are indexed. Both counts grow automatically
           as agents accumulate signals and as new agents are submitted or discovered.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -134,7 +134,7 @@ const SECTIONS = [
               color: 'rgba(255,255,255,0.5)',
               borderColor: 'rgba(255,255,255,0.1)',
               bg: 'rgba(255,255,255,0.02)',
-              desc: 'Tracked and discoverable in /explore, but does not yet meet the evidence threshold for /rankings. Over 1,186 agents are indexed today. Coverage is live and growing.',
+              desc: 'Tracked and discoverable in /explore, but does not yet meet the evidence threshold for /rankings. Over 1,200 agents are indexed today. Coverage is live and growing.',
             },
             {
               value: 'archived',

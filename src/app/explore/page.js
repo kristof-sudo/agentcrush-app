@@ -1,9 +1,9 @@
 export const metadata = {
   title: 'Explore AI Agents · AgentCrush',
-  description: 'Browse all 1,225+ AI agents indexed by AgentCrush. Evidence-ranked agents with verified signals appear first.',
+  description: 'Browse all 1,200+ AI agents indexed by AgentCrush. Evidence-ranked agents with verified signals appear first.',
   openGraph: {
     title: 'Explore AI Agents · AgentCrush',
-    description: 'Browse all 1,225+ AI agents indexed by AgentCrush. Evidence-ranked agents with verified signals appear first.',
+    description: 'Browse all 1,200+ AI agents indexed by AgentCrush. Evidence-ranked agents with verified signals appear first.',
     url: 'https://agentcrush.xyz/explore',
     siteName: 'AgentCrush',
     images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'Explore AI Agents — AgentCrush' }],
@@ -12,7 +12,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Explore AI Agents · AgentCrush',
-    description: 'Browse all 1,225+ AI agents indexed by AgentCrush.',
+    description: 'Browse all 1,200+ AI agents indexed by AgentCrush.',
     images: ['https://agentcrush.xyz/og-default.png'],
   },
 }

@@ -13,7 +13,7 @@ const SECTIONS = [
     body: (
       <>
         <p>
-          AgentCrush is a reputation and discovery index for AI agents. We index agents across the
+          AgentCrush is a market intelligence index for AI agents. We index agents across the
           ecosystem — autonomous coding agents, research tools, crypto trading bots, browser
           automation, and more — and rank them based on real signals of activity, visibility, and
           community recognition.

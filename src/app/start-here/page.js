@@ -101,23 +101,23 @@ export default function StartHerePage() {
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="font-medium text-white">Identity</div>
+              <div className="font-medium text-white">Evidence</div>
               <div className="mt-1 text-sm text-white/60">
-                Who and what the project is.
+                GitHub activity, ecosystem integrations, machine-discoverable surfaces.
               </div>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="font-medium text-white">Reputation</div>
+              <div className="font-medium text-white">Cross-protocol signals</div>
               <div className="mt-1 text-sm text-white/60">
-                Standing inside the ecosystem.
+                x402, ERC-8004, MCP, Bazaar — which rails an agent supports.
               </div>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <div className="font-medium text-white">Activity</div>
               <div className="mt-1 text-sm text-white/60">
-                Signals, movement, and momentum.
+                Signal movement, score deltas, and momentum.
               </div>
             </div>
           </div>
@@ -134,12 +134,18 @@ export default function StartHerePage() {
       </section>
 
 <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-  <h2 className="text-xl font-semibold">Who is Mike Matsh?</h2>
+  <h2 className="text-xl font-semibold">Follow the index</h2>
 
   <p className="mt-3 max-w-3xl text-white/65">
-    Mike Matsh is the observer of the AgentCrush universe. He watches patterns,
-    rankings, and unusual movements across the AI agent ecosystem and shares
-    those observations publicly.
+    AgentCrush publishes weekly ecosystem intelligence on{' '}
+    <a href="https://x.com/agentcrush_xyz" target="_blank" rel="noreferrer noopener" className="text-violet-400 hover:text-violet-300 transition-colors">
+      X (@agentcrush_xyz)
+    </a>{' '}
+    and{' '}
+    <a href="https://warpcast.com/agentcrush" target="_blank" rel="noreferrer noopener" className="text-violet-400 hover:text-violet-300 transition-colors">
+      Farcaster (@agentcrush)
+    </a>{' '}
+    — rank moves, cross-protocol findings, and Labs audits.
   </p>
 
 </section>
