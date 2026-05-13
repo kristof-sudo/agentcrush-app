@@ -41,15 +41,35 @@ import path from 'node:path';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
+// Same contract address is deployed on Base and Ethereum mainnet.
 const CONTRACT_ADDRESS = '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432';
-const CHAIN_NAME = 'base';
-const DEFAULT_RPC = 'https://base-rpc.publicnode.com';
+
+// Per-chain config. AgentCrush is protocol-neutral — we index both chains
+// without picking favorites.
+const CHAINS = {
+  base: {
+    name: 'base',
+    rpc: 'https://base-rpc.publicnode.com',
+    // Approx Base block where ERC-8004 went live (Jan 2026). Used only on
+    // first run when no checkpoint exists.
+    defaultFromBlock: 26000000,
+  },
+  ethereum: {
+    name: 'ethereum',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // Conservative lower bound — Ethereum mainnet block early Jan 2026.
+    defaultFromBlock: 21500000,
+  },
+};
+
 const RATE_LIMIT_PER_SEC = 50;
 const MIN_INTERVAL_MS = Math.ceil(1000 / RATE_LIMIT_PER_SEC); // 20ms
 const DEFAULT_WINDOW = 50000;
-// Approx Base block where ERC-8004 went live (Jan 2026); conservative lower bound.
-// First registration block can be tightened later via checkpoint.
-const DEFAULT_FROM_BLOCK = 26000000;
+
+// Per-run mutable: set at the start of each chain's run by runChain().
+// The helpers below (rpcCall, etc.) close over these.
+let RPC_URL = null;
+let CHAIN_NAME = null;
 
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const ZERO_TOPIC     = '0x0000000000000000000000000000000000000000000000000000000000000000';
@@ -77,12 +97,12 @@ const MAX_TOKENS = (() => {
   const n = parseInt(v, 10);
   return Number.isFinite(n) && n > 0 ? n : Infinity;
 })();
-const RPC_URL = argValue('--rpc', DEFAULT_RPC);
-const FROM_BLOCK = (() => {
+const RPC_OVERRIDE = argValue('--rpc', null);
+const FROM_BLOCK_OVERRIDE = (() => {
   const v = argValue('--from-block');
-  if (!v) return DEFAULT_FROM_BLOCK;
+  if (!v) return null;
   const n = parseInt(v, 10);
-  return Number.isFinite(n) ? n : DEFAULT_FROM_BLOCK;
+  return Number.isFinite(n) ? n : null;
 })();
 const BLOCK_WINDOW = (() => {
   const v = argValue('--window');
@@ -90,6 +110,14 @@ const BLOCK_WINDOW = (() => {
   const n = parseInt(v, 10);
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_WINDOW;
 })();
+
+// Which chains to sync. Default: both. --chain base or --chain ethereum to limit.
+const CHAIN_FILTER = argValue('--chain', null);
+const CHAINS_TO_RUN = CHAIN_FILTER
+  ? (CHAINS[CHAIN_FILTER]
+      ? [CHAINS[CHAIN_FILTER]]
+      : (() => { console.error(`[erc8004-sync] Unknown --chain ${CHAIN_FILTER}. Valid: ${Object.keys(CHAINS).join(', ')}`); process.exit(1); })())
+  : Object.values(CHAINS);
 
 if (!isDryRun && !isWrite) {
   console.error('[erc8004-sync] ERROR: Must specify --dry-run or --write.');
@@ -102,10 +130,10 @@ if (isDryRun && isWrite) {
 
 const MODE = isDryRun ? 'DRY-RUN' : 'WRITE';
 console.log(`[erc8004-sync] Mode: ${MODE}`);
-console.log(`[erc8004-sync] Contract: ${CONTRACT_ADDRESS} (${CHAIN_NAME})`);
-console.log(`[erc8004-sync] RPC: ${RPC_URL}`);
-console.log(`[erc8004-sync] from-block: ${FROM_BLOCK}  window: ${BLOCK_WINDOW}`);
-if (MAX_TOKENS !== Infinity) console.log(`[erc8004-sync] Capping at ${MAX_TOKENS} tokens`);
+console.log(`[erc8004-sync] Contract: ${CONTRACT_ADDRESS}`);
+console.log(`[erc8004-sync] Chains: ${CHAINS_TO_RUN.map(c => c.name).join(', ')}`);
+console.log(`[erc8004-sync] window: ${BLOCK_WINDOW}`);
+if (MAX_TOKENS !== Infinity) console.log(`[erc8004-sync] Capping at ${MAX_TOKENS} tokens per chain`);
 if (skipMetadata) console.log(`[erc8004-sync] --skip-metadata: tokenURI/metadata fetch disabled`);
 
 // ── Env loading (write mode only) ─────────────────────────────────────────────
@@ -358,17 +386,96 @@ function extractAgentName(meta) {
   return meta.name || meta.agent_name || meta.agentName || null;
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Per-chain run ─────────────────────────────────────────────────────────────
 
-async function main() {
-  const latestBlock = await getBlockNumber();
-  console.log(`[erc8004-sync] latest block: ${latestBlock}`);
+async function readCheckpoint(chainName) {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('erc8004_sync_state')
+    .select('last_scanned_block')
+    .eq('chain', chainName)
+    .maybeSingle();
+  if (error) {
+    console.warn(`[erc8004-sync][${chainName}] checkpoint read failed: ${error.message}`);
+    return null;
+  }
+  return data?.last_scanned_block ?? null;
+}
 
-  console.log(`[erc8004-sync] Enumerating token IDs from mint logs…`);
-  const allIds = await enumerateTokenIds(FROM_BLOCK, latestBlock);
+async function writeCheckpoint(chainName, contract, rpc, lastScannedBlock, totalTokens, status, errorMsg, durationMs) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('erc8004_sync_state')
+    .upsert({
+      chain: chainName,
+      contract_address: contract,
+      rpc_url: rpc,
+      last_scanned_block: lastScannedBlock,
+      total_tokens_seen: totalTokens,
+      last_run_at: new Date().toISOString(),
+      last_run_status: status,
+      last_run_error: errorMsg,
+      last_run_duration_ms: durationMs,
+    }, { onConflict: 'chain' });
+  if (error) {
+    console.warn(`[erc8004-sync][${chainName}] checkpoint write failed: ${error.message}`);
+  }
+}
+
+async function runChain(chainConfig) {
+  const startedAt = Date.now();
+  CHAIN_NAME = chainConfig.name;
+  RPC_URL = RPC_OVERRIDE || chainConfig.rpc;
+
+  console.log(`\n[erc8004-sync][${CHAIN_NAME}] ── start ──`);
+  console.log(`[erc8004-sync][${CHAIN_NAME}] RPC: ${RPC_URL}`);
+
+  // Determine fromBlock priority: --from-block override > checkpoint+1 > default
+  let fromBlock;
+  if (FROM_BLOCK_OVERRIDE != null) {
+    fromBlock = FROM_BLOCK_OVERRIDE;
+    console.log(`[erc8004-sync][${CHAIN_NAME}] from-block: ${fromBlock} (override)`);
+  } else {
+    const checkpoint = await readCheckpoint(CHAIN_NAME);
+    if (checkpoint != null) {
+      // Resume from one block after the last scanned block. Small safety margin
+      // in case of mid-block reorg edge cases.
+      fromBlock = Math.max(0, checkpoint - 5);
+      console.log(`[erc8004-sync][${CHAIN_NAME}] from-block: ${fromBlock} (resume from checkpoint ${checkpoint})`);
+    } else {
+      fromBlock = chainConfig.defaultFromBlock;
+      console.log(`[erc8004-sync][${CHAIN_NAME}] from-block: ${fromBlock} (default — first run)`);
+    }
+  }
+
+  let latestBlock;
+  try {
+    latestBlock = await getBlockNumber();
+  } catch (err) {
+    console.error(`[erc8004-sync][${CHAIN_NAME}] FATAL fetching latest block: ${err.message}`);
+    if (isWrite) {
+      await writeCheckpoint(CHAIN_NAME, CONTRACT_ADDRESS, RPC_URL, fromBlock, 0, 'error', err.message, Date.now() - startedAt);
+    }
+    return { chain: CHAIN_NAME, status: 'error', error: err.message };
+  }
+  console.log(`[erc8004-sync][${CHAIN_NAME}] latest block: ${latestBlock}`);
+
+  console.log(`[erc8004-sync][${CHAIN_NAME}] Enumerating token IDs from mint logs…`);
+  // Enumerate with block tracking so we can record mint_block per token.
+  const idToBlock = new Map();
+  let allIds;
+  try {
+    allIds = await enumerateTokenIdsWithBlocks(fromBlock, latestBlock, idToBlock);
+  } catch (err) {
+    console.error(`[erc8004-sync][${CHAIN_NAME}] enumeration failed: ${err.message}`);
+    if (isWrite) {
+      await writeCheckpoint(CHAIN_NAME, CONTRACT_ADDRESS, RPC_URL, fromBlock, 0, 'error', err.message, Date.now() - startedAt);
+    }
+    return { chain: CHAIN_NAME, status: 'error', error: err.message };
+  }
   const cap = MAX_TOKENS === Infinity ? allIds.length : Math.min(MAX_TOKENS, allIds.length);
   const ids = allIds.slice(0, cap);
-  console.log(`[erc8004-sync] discovered ${allIds.length} unique token IDs (will process ${ids.length})`);
+  console.log(`[erc8004-sync][${CHAIN_NAME}] discovered ${allIds.length} unique token IDs (will process ${ids.length})`);
 
   const rows = [];
   const samples = [];
@@ -395,8 +502,10 @@ async function main() {
         metaHash = meta ? hashJson(meta) : null;
       }
 
+      const mintBlock = idToBlock.get(id.toString()) ?? null;
+
       const row = {
-        token_id: Number(id), // Postgres BIGINT — safe for typical ERC-8004 ids
+        token_id: Number(id),
         owner_address: owner,
         metadata_uri: uri || null,
         agent_name: agentName,
@@ -404,30 +513,33 @@ async function main() {
         x402_supported: x402,
         metadata_hash: metaHash,
         chain: CHAIN_NAME,
+        mint_block: mintBlock,
       };
       rows.push(row);
       if (samples.length < 3) samples.push(row);
       okCount++;
     } catch (err) {
       errCount++;
-      if (errCount <= 5) console.warn(`[erc8004-sync] token ${id}: ${err.message}`);
+      if (errCount <= 5) console.warn(`[erc8004-sync][${CHAIN_NAME}] token ${id}: ${err.message}`);
     }
 
     if (okCount > 0 && okCount % 100 === 0) {
-      console.log(`[erc8004-sync] progress: ${okCount}/${ids.length} tokens read…`);
+      console.log(`[erc8004-sync][${CHAIN_NAME}] progress: ${okCount}/${ids.length} tokens read…`);
     }
   }
 
-  console.log(`[erc8004-sync] scan complete: ${okCount} ok, ${errCount} errors`);
-  console.log(`[erc8004-sync] sample (first ${samples.length}):`);
-  console.log(JSON.stringify(samples, null, 2));
-
-  if (isDryRun) {
-    console.log(`[erc8004-sync] DRY-RUN complete. No DB writes.`);
-    return;
+  console.log(`[erc8004-sync][${CHAIN_NAME}] scan complete: ${okCount} ok, ${errCount} errors`);
+  if (samples.length > 0) {
+    console.log(`[erc8004-sync][${CHAIN_NAME}] sample (first ${samples.length}):`);
+    console.log(JSON.stringify(samples, null, 2));
   }
 
-  // WRITE: pull existing token_id + metadata_hash for change tracking
+  if (isDryRun) {
+    console.log(`[erc8004-sync][${CHAIN_NAME}] DRY-RUN complete. No DB writes.`);
+    return { chain: CHAIN_NAME, status: 'ok-dryrun', scanned: okCount };
+  }
+
+  // WRITE: pull existing token_id + metadata_hash for THIS chain only.
   const existing = new Map();
   {
     const pageSize = 1000;
@@ -436,6 +548,7 @@ async function main() {
       const { data, error } = await supabase
         .from('erc8004_registry')
         .select('token_id,metadata_hash')
+        .eq('chain', CHAIN_NAME)
         .range(from, from + pageSize - 1);
       if (error) throw new Error(`Supabase select failed: ${error.message}`);
       if (!data || data.length === 0) break;
@@ -456,7 +569,6 @@ async function main() {
     else if (prev.metadata_hash !== r.metadata_hash) changedCount++;
     else unchangedCount++;
     const base = { ...r, last_seen_at: now };
-    // Only set registered_at on insert; default fires when omitted on new rows.
     if (!prev) base.registered_at = now;
     return base;
   });
@@ -466,11 +578,23 @@ async function main() {
     const batch = upserts.slice(i, i + batchSize);
     const { error } = await supabase
       .from('erc8004_registry')
-      .upsert(batch, { onConflict: 'token_id' });
+      .upsert(batch, { onConflict: 'token_id,chain' });
     if (error) throw new Error(`Upsert batch ${i} failed: ${error.message}`);
   }
 
-  console.log(`[erc8004-sync] Summary:`);
+  // Update checkpoint to latest block scanned successfully.
+  await writeCheckpoint(
+    CHAIN_NAME,
+    CONTRACT_ADDRESS,
+    RPC_URL,
+    latestBlock,
+    okCount,
+    errCount > 0 ? 'partial' : 'ok',
+    errCount > 0 ? `${errCount} per-token errors` : null,
+    Date.now() - startedAt
+  );
+
+  console.log(`[erc8004-sync][${CHAIN_NAME}] Summary:`);
   console.log(`  discovered:   ${allIds.length}`);
   console.log(`  processed:    ${ids.length}`);
   console.log(`  scanned ok:   ${okCount}`);
@@ -478,6 +602,74 @@ async function main() {
   console.log(`  new:          ${newCount}`);
   console.log(`  changed:      ${changedCount}`);
   console.log(`  unchanged:    ${unchangedCount}`);
+  console.log(`  checkpoint -> ${latestBlock}`);
+
+  return {
+    chain: CHAIN_NAME,
+    status: errCount > 0 ? 'partial' : 'ok',
+    scanned: okCount,
+    errors: errCount,
+    newCount,
+    changedCount,
+    unchangedCount,
+  };
+}
+
+// Enumerate token IDs while tracking the block each was minted in.
+// Returns an array of token IDs (as bigints/strings — same shape as
+// enumerateTokenIds) and populates idToBlock map with id->blockNumber.
+async function enumerateTokenIdsWithBlocks(fromBlock, latestBlock, idToBlock) {
+  const ids = new Set();
+  let from = fromBlock;
+  let dynamicWindow = BLOCK_WINDOW;
+
+  while (from <= latestBlock) {
+    const to = Math.min(from + dynamicWindow - 1, latestBlock);
+    let logs;
+    try {
+      logs = await getMintLogs(from, to);
+    } catch (err) {
+      const msg = String(err.message || '');
+      if (/range/i.test(msg) && dynamicWindow > 1000) {
+        dynamicWindow = Math.max(1000, Math.floor(dynamicWindow / 2));
+        console.log(`[erc8004-sync][${CHAIN_NAME}] window shrunk to ${dynamicWindow} blocks after RPC complaint`);
+        continue;
+      }
+      throw err;
+    }
+    for (const log of logs) {
+      const idHex = log.topics?.[3];
+      if (!idHex) continue;
+      const id = BigInt(idHex).toString();
+      ids.add(id);
+      // Track first seen block for this id
+      const blockNum = parseInt(log.blockNumber, 16);
+      if (!idToBlock.has(id) || blockNum < idToBlock.get(id)) {
+        idToBlock.set(id, blockNum);
+      }
+    }
+    from = to + 1;
+  }
+
+  return [...ids];
+}
+
+async function main() {
+  const results = [];
+  for (const chain of CHAINS_TO_RUN) {
+    try {
+      const result = await runChain(chain);
+      results.push(result);
+    } catch (err) {
+      console.error(`[erc8004-sync][${chain.name}] runChain crashed: ${err.message}`);
+      results.push({ chain: chain.name, status: 'error', error: err.message });
+    }
+  }
+
+  console.log(`\n[erc8004-sync] ── done ── ${results.length} chain(s)`);
+  for (const r of results) {
+    console.log(`  ${r.chain}: ${r.status}${r.scanned != null ? ` (${r.scanned} scanned)` : ''}${r.error ? ' — ' + r.error : ''}`);
+  }
 }
 
 main().catch((err) => {
