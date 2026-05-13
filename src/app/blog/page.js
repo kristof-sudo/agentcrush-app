@@ -31,6 +31,13 @@ export const metadata = {
 
 const POSTS = [
   {
+    slug: 'agent-commerce-readiness-three-audits',
+    title: 'The state of agent commerce readiness: three audits, three shapes of unfinished',
+    date: 'May 13, 2026',
+    summary:
+      'We ran the Agent Commerce Readiness Audit against aixbt, Coral Protocol, and Daydreams / Lucid Agents in one pass. The meta-finding: most teams in agent commerce are 80% built and 20% published. Spectrum, evidence, and roadmaps.',
+  },
+  {
     slug: 'first-cross-protocol-agent',
     title: 'The first cross-protocol agent: CrewAI on ERC-8004 and x402',
     date: 'May 8, 2026',
