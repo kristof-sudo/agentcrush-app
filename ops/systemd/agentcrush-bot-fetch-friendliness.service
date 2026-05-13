@@ -1,0 +1,13 @@
+[Unit]
+Description=AgentCrush bot-fetch-friendliness scanner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-bot-fetch-friendliness.lock \
+    /usr/bin/node /opt/agentcrush/runtime/bot-fetch-friendliness-scanner.mjs
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-bot-fetch-friendliness

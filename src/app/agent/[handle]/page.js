@@ -594,7 +594,9 @@ export default async function AgentPage({ params }) {
       dependencies,
       tier,
       tier_promoted_at,
-      payment_rails_supported
+      payment_rails_supported,
+      bot_fetch_friendliness,
+      bot_fetch_friendliness_score
     `)
     .ilike('handle', cleanHandle)
     .maybeSingle()
@@ -1209,6 +1211,48 @@ export default async function AgentPage({ params }) {
             </div>
             <p style={{ fontSize: 10, color: 'rgba(226,232,240,0.28)', lineHeight: 1.5, margin: 0 }}>
               Tracked protocol surfaces only. Not ranking inputs.
+            </p>
+          </div>
+        )}
+
+        {/* ── 5d. MACHINE-DISCOVERABLE ──────────────────────────────────── */}
+        {agent.bot_fetch_friendliness && (
+          <div style={PANEL}>
+            <CornerAccentsServer color="#00e5ff" />
+            <div style={{ ...LABEL_STYLE, marginBottom: 10, color: '#00e5ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+              <span>◆ Machine-discoverable</span>
+              <span
+                title="Sum of public discovery surfaces present on this agent's domain. Machine-discoverability only; not a ranking signal."
+                style={{ fontSize: 11, fontWeight: 700, color: '#00e5ff', background: 'rgba(0,229,255,0.10)', border: '1px solid rgba(0,229,255,0.30)', padding: '2px 8px', borderRadius: 4, letterSpacing: '0.04em' }}
+              >
+                {agent.bot_fetch_friendliness.score ?? agent.bot_fetch_friendliness_score ?? 0}/5
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+              {[
+                { key: 'has_well_known_x402',  label: '/.well-known/x402',        tip: 'x402 payment discovery file present' },
+                { key: 'has_agent_card',       label: 'agent-card.json',          tip: 'A2A-style agent card published at /.well-known/agent-card.json' },
+                { key: 'has_mcp_manifest',     label: 'mcp.json',                 tip: 'MCP manifest published at /.well-known/mcp.json' },
+                { key: 'has_openapi',          label: 'openapi',                  tip: '/openapi.json or /openapi.yaml present' },
+                { key: 'has_robots_txt_allow', label: 'robots: allow',            tip: 'robots.txt does not block all crawlers' },
+              ].map((s) => {
+                const on = !!agent.bot_fetch_friendliness[s.key];
+                const fg = on ? '#00e5ff' : 'rgba(226,232,240,0.32)';
+                const bg = on ? 'rgba(0,229,255,0.10)' : 'rgba(226,232,240,0.04)';
+                const bd = on ? 'rgba(0,229,255,0.30)' : 'rgba(226,232,240,0.10)';
+                return (
+                  <span
+                    key={s.key}
+                    title={s.tip}
+                    style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontFamily: 'ui-monospace, monospace', color: fg, background: bg, border: `1px solid ${bd}`, whiteSpace: 'nowrap' }}
+                  >
+                    {on ? '✓' : '·'} {s.label}
+                  </span>
+                )
+              })}
+            </div>
+            <p style={{ fontSize: 10, color: 'rgba(226,232,240,0.30)', lineHeight: 1.5, margin: 0 }}>
+              Machine-discoverability surfaces detected on this agent&apos;s domain. Display only — not a ranking signal.
             </p>
           </div>
         )}

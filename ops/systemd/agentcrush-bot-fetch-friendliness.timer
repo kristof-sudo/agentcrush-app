@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush bot-fetch-friendliness scanner – weekly Sunday scan (Budapest local)
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00:00
+Persistent=false
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target

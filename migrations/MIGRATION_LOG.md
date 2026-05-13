@@ -9,6 +9,8 @@ Older historical DB changes existed before this process was formalized and may n
 ## Entries
 
 ### 2026-05-13
+- `migrations/20260513_1500_add_bot_fetch_friendliness.sql` — Add `agents.bot_fetch_friendliness` (jsonb) and `agents.bot_fetch_friendliness_score` (smallint) plus index `idx_agents_bot_fetch_friendliness_score`. Stores per-agent machine-discoverability scan results: presence of `/.well-known/x402`, `/.well-known/agent-card.json`, `/.well-known/mcp.json`, OpenAPI spec, and permissive robots.txt. Display-only — NOT a ranking input. Populated by `runtime/bot-fetch-friendliness-scanner.mjs`.
+  **STATUS: Written — requires manual apply via Supabase dashboard.**
 - `migrations/20260513_1235_create_bazaar_resources.sql` — Create `bazaar_resources` table for the CDP Bazaar `/discovery/resources` adapter v0. Read-only mirror of Coinbase's public Bazaar index; one row per `resource_url`. Stores normalized fields (description, accepts, declared_schema, quality, last_updated_at) plus raw_payload and a payload_hash for change detection. Idempotent upserts; missing rows on subsequent runs get `removed_at` set. No scoring impact. Populated by `runtime/bazaar-resources-adapter.mjs`.
   **STATUS: Written — requires manual apply via Supabase dashboard.**
 
