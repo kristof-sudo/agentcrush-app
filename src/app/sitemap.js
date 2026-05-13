@@ -15,7 +15,9 @@ const STATIC_PAGES = [
   { path: '/for-agents',  priority: 0.7, changeFrequency: 'monthly'},
   { path: '/submit',       priority: 0.7, changeFrequency: 'monthly'},
   { path: '/compare',      priority: 0.7, changeFrequency: 'daily'  },
+  { path: '/labs',         priority: 0.8, changeFrequency: 'monthly'},
   { path: '/blog',         priority: 0.6, changeFrequency: 'monthly'},
+  { path: '/blog/agent-commerce-readiness-three-audits', priority: 0.7, changeFrequency: 'monthly'},
   { path: '/blog/first-cross-protocol-agent', priority: 0.6, changeFrequency: 'monthly'},
   { path: '/blog/x402-discovery-postmortem', priority: 0.6, changeFrequency: 'monthly'},
 ]
