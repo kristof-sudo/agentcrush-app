@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush ERC-8004 AgentRegistry daily sync — 06:00 Budapest local
+
+[Timer]
+OnCalendar=*-*-* 06:00:00
+Persistent=false
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=AgentCrush ERC-8004 AgentRegistry daily on-chain sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-erc8004-registry-sync.lock \
+    /usr/bin/node /opt/agentcrush/runtime/erc8004-registry-sync.mjs --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-erc8004-registry-sync
