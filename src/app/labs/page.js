@@ -180,10 +180,10 @@ export default function LabsPage() {
         </p>
         <div className="flex flex-wrap gap-4">
           <a
-            href="mailto:kristof@patyi.co"
+            href="mailto:contact@agentcrush.xyz"
             className="text-xs font-mono text-violet-400 hover:text-violet-300 transition-colors"
           >
-            kristof@patyi.co
+            contact@agentcrush.xyz
           </a>
           <a
             href="https://warpcast.com/agentcrush"
