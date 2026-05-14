@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush Virtuals Protocol agents daily sync — 05:00 Budapest local
+
+[Timer]
+OnCalendar=*-*-* 05:00:00
+Persistent=false
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

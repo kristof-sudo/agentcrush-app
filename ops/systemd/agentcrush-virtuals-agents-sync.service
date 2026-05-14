@@ -1,0 +1,13 @@
+[Unit]
+Description=AgentCrush Virtuals Protocol agents daily mirror
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-virtuals-agents-sync.lock \
+    /usr/bin/node /opt/agentcrush/runtime/virtuals-agents-adapter.mjs --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-virtuals-agents-sync
