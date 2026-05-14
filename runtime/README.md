@@ -105,6 +105,43 @@ Table `agentverse_agents` columns: `agentverse_id` (PK, bech32 address),
 Scheduled by `ops/systemd/agentcrush-agentverse-agents-sync.{service,timer}`
 — daily 05:30 Budapest.
 
+## virtuals-agents-adapter.mjs
+
+Read-only mirror of the public Virtuals Protocol agent index
+(`https://api.virtuals.io/api/virtuals`) into the `virtuals_agents` table.
+One row per Virtuals numeric id (~40k as of 2026-05).
+
+Dry-run:
+```
+node runtime/virtuals-agents-adapter.mjs --dry-run --limit-pages 2
+```
+
+Production write:
+```
+node runtime/virtuals-agents-adapter.mjs --write
+```
+
+Flags: `--dry-run | --write`, `--max N`, `--limit-pages N`. Paginated at
+100 items/page with a 1s delay between pages. Idempotent: PK is
+`virtuals_id`, re-runs bump `last_seen_at` and overwrite normalized
+columns; `payload_hash` (sha256 of canonical raw payload) supports change
+detection.
+
+Table `virtuals_agents` columns include: `virtuals_id` (PK), `name`,
+`ticker`, `description`, `token_address`, `chain` (default `base`),
+`status`, market metrics denominated in VIRTUAL token
+(`market_cap_virtual`, `fdv_virtual`, `tvl_virtual`, `token_price_virtual`)
+and in USD (`liquidity_usd`, `volume_24h_usd`), `holders`,
+`top10_holder_pct`, `price_change_pct_24h`, `category`, `archetype`
+(from `role`), `image_url`, `website_url`, `twitter_url`, plus
+`raw_payload` (jsonb) and `first_seen_at` / `last_seen_at`.
+
+No scoring impact. Surfaces Virtuals-ecosystem agent tokens alongside the
+rest of the discovery index.
+
+Scheduled by `ops/systemd/agentcrush-virtuals-agents-sync.{service,timer}`
+— daily 05:00 Budapest.
+
 ## Not versioned here
 - .env files
 - node_modules
