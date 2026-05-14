@@ -49,27 +49,37 @@ const CONTRACT_ADDRESS = '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432';
 const CHAINS = {
   base: {
     name: 'base',
-    rpc: 'https://base-rpc.publicnode.com',
-    // Approx Base block where ERC-8004 went live (Jan 2026). Used only on
-    // first run when no checkpoint exists.
+    // RPC failover list — tried in order on hard errors (filter errors, etc.)
+    rpcs: [
+      'https://base-rpc.publicnode.com',
+      'https://base.llamarpc.com',
+      'https://1rpc.io/base',
+      'https://mainnet.base.org',
+    ],
     defaultFromBlock: 26000000,
   },
   ethereum: {
     name: 'ethereum',
-    rpc: 'https://ethereum-rpc.publicnode.com',
-    // Conservative lower bound — Ethereum mainnet block early Jan 2026.
+    rpcs: [
+      'https://ethereum-rpc.publicnode.com',
+      'https://eth.llamarpc.com',
+      'https://1rpc.io/eth',
+      'https://eth.drpc.org',
+    ],
     defaultFromBlock: 21500000,
   },
 };
 
 const RATE_LIMIT_PER_SEC = 50;
 const MIN_INTERVAL_MS = Math.ceil(1000 / RATE_LIMIT_PER_SEC); // 20ms
-const DEFAULT_WINDOW = 50000;
+const DEFAULT_WINDOW = 10000; // publicnode caps eth_getLogs around 10k blocks; can grow via flag
 
 // Per-run mutable: set at the start of each chain's run by runChain().
 // The helpers below (rpcCall, etc.) close over these.
 let RPC_URL = null;
 let CHAIN_NAME = null;
+let RPC_LIST = [];       // current chain's failover list
+let RPC_INDEX = 0;       // which RPC in RPC_LIST is currently in use
 
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const ZERO_TOPIC     = '0x0000000000000000000000000000000000000000000000000000000000000000';
@@ -246,16 +256,42 @@ function decodeString(hex) {
 
 let rpcId = 1;
 async function rpcCall(method, params) {
-  await throttle();
-  const res = await fetch(RPC_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: rpcId++, method, params }),
-  });
-  if (!res.ok) throw new Error(`RPC HTTP ${res.status}`);
-  const body = await res.json();
-  if (body.error) throw new Error(`RPC error: ${JSON.stringify(body.error)}`);
-  return body.result;
+  // Try current RPC, fail over to next on hard errors. Up to RPC_LIST.length attempts.
+  let lastErr = null;
+  for (let attempt = 0; attempt < RPC_LIST.length; attempt++) {
+    await throttle();
+    try {
+      const res = await fetch(RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: rpcId++, method, params }),
+      });
+      if (!res.ok) throw new Error(`RPC HTTP ${res.status}`);
+      const body = await res.json();
+      if (body.error) throw new Error(`RPC error: ${JSON.stringify(body.error)}`);
+      return body.result;
+    } catch (err) {
+      lastErr = err;
+      const msg = String(err.message || '');
+      // Hard errors that warrant failover to next RPC endpoint
+      const isHard = (
+        /internal filter error/i.test(msg) ||
+        /method not found/i.test(msg) ||
+        /not allowed/i.test(msg) ||
+        /forbidden/i.test(msg) ||
+        /HTTP 40[0-9]/.test(msg) ||
+        /ENOTFOUND/i.test(msg)
+      );
+      if (isHard && attempt + 1 < RPC_LIST.length) {
+        RPC_INDEX = (RPC_INDEX + 1) % RPC_LIST.length;
+        RPC_URL = RPC_LIST[RPC_INDEX];
+        console.log(`[erc8004-sync][${CHAIN_NAME}] RPC failover -> ${RPC_URL} after: ${msg.slice(0, 80)}`);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr || new Error('RPC failed after all failover attempts');
 }
 
 async function ethCall(data) {
@@ -425,10 +461,14 @@ async function writeCheckpoint(chainName, contract, rpc, lastScannedBlock, total
 async function runChain(chainConfig) {
   const startedAt = Date.now();
   CHAIN_NAME = chainConfig.name;
-  RPC_URL = RPC_OVERRIDE || chainConfig.rpc;
+  // Build per-chain RPC failover list. CLI --rpc overrides; if set, it's the
+  // only RPC tried.
+  RPC_LIST = RPC_OVERRIDE ? [RPC_OVERRIDE] : (chainConfig.rpcs || [chainConfig.rpc]);
+  RPC_INDEX = 0;
+  RPC_URL = RPC_LIST[0];
 
   console.log(`\n[erc8004-sync][${CHAIN_NAME}] ── start ──`);
-  console.log(`[erc8004-sync][${CHAIN_NAME}] RPC: ${RPC_URL}`);
+  console.log(`[erc8004-sync][${CHAIN_NAME}] RPC primary: ${RPC_URL}${RPC_LIST.length > 1 ? ` (+${RPC_LIST.length - 1} failovers)` : ''}`);
 
   // Determine fromBlock priority: --from-block override > checkpoint+1 > default
   let fromBlock;
@@ -576,10 +616,28 @@ async function runChain(chainConfig) {
   const batchSize = 500;
   for (let i = 0; i < upserts.length; i += batchSize) {
     const batch = upserts.slice(i, i + batchSize);
-    const { error } = await supabase
-      .from('erc8004_registry')
-      .upsert(batch, { onConflict: 'token_id,chain' });
-    if (error) throw new Error(`Upsert batch ${i} failed: ${error.message}`);
+    let lastErr = null;
+    let success = false;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const { error } = await supabase
+          .from('erc8004_registry')
+          .upsert(batch, { onConflict: 'token_id,chain' });
+        if (error) {
+          lastErr = new Error(error.message);
+        } else {
+          success = true;
+          break;
+        }
+      } catch (err) {
+        lastErr = err;
+      }
+      // Backoff: 1s, 2s, 4s, 8s
+      const backoff = 1000 * Math.pow(2, attempt);
+      console.warn(`[erc8004-sync][${CHAIN_NAME}] upsert batch ${i} attempt ${attempt + 1}/5 failed: ${lastErr.message.slice(0, 100)} — retrying in ${backoff}ms`);
+      await sleep(backoff);
+    }
+    if (!success) throw new Error(`Upsert batch ${i} failed after 5 attempts: ${lastErr?.message}`);
   }
 
   // Update checkpoint to latest block scanned successfully.
@@ -622,17 +680,37 @@ async function enumerateTokenIdsWithBlocks(fromBlock, latestBlock, idToBlock) {
   const ids = new Set();
   let from = fromBlock;
   let dynamicWindow = BLOCK_WINDOW;
+  let consecutiveFailures = 0;
 
   while (from <= latestBlock) {
     const to = Math.min(from + dynamicWindow - 1, latestBlock);
     let logs;
     try {
       logs = await getMintLogs(from, to);
+      consecutiveFailures = 0; // reset on success
     } catch (err) {
       const msg = String(err.message || '');
-      if (/range/i.test(msg) && dynamicWindow > 1000) {
-        dynamicWindow = Math.max(1000, Math.floor(dynamicWindow / 2));
-        console.log(`[erc8004-sync][${CHAIN_NAME}] window shrunk to ${dynamicWindow} blocks after RPC complaint`);
+      // Halve on: explicit range complaints, 5xx, timeouts, generic fetch failures
+      const isTransient = (
+        /range/i.test(msg) ||
+        /50[0-9]/.test(msg) ||
+        /timeout/i.test(msg) ||
+        /fetch failed/i.test(msg) ||
+        /ECONNRESET|ETIMEDOUT|ENOTFOUND/i.test(msg)
+      );
+      if (isTransient && dynamicWindow > 500) {
+        dynamicWindow = Math.max(500, Math.floor(dynamicWindow / 2));
+        console.log(`[erc8004-sync][${CHAIN_NAME}] window shrunk to ${dynamicWindow} after: ${msg.slice(0, 80)}`);
+        await sleep(1000); // brief pause before retry
+        continue;
+      }
+      if (isTransient) {
+        consecutiveFailures++;
+        if (consecutiveFailures >= 5) {
+          throw new Error(`Persistent RPC failures after window shrunk to ${dynamicWindow}: ${msg}`);
+        }
+        console.log(`[erc8004-sync][${CHAIN_NAME}] transient (try ${consecutiveFailures}/5): ${msg.slice(0, 80)} — sleeping 3s`);
+        await sleep(3000);
         continue;
       }
       throw err;
@@ -642,7 +720,6 @@ async function enumerateTokenIdsWithBlocks(fromBlock, latestBlock, idToBlock) {
       if (!idHex) continue;
       const id = BigInt(idHex).toString();
       ids.add(id);
-      // Track first seen block for this id
       const blockNum = parseInt(log.blockNumber, 16);
       if (!idToBlock.has(id) || blockNum < idToBlock.get(id)) {
         idToBlock.set(id, blockNum);
