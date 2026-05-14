@@ -60,6 +60,33 @@ const SCAN_DELAY_MS = 350
 const SOURCE = '8004scan'
 const MIN_CONFIDENCE_TO_STORE = 0.5  // 'medium' and above
 
+// ── Manual verification allowlist ─────────────────────────────────────────────
+//
+// Tokens that have been manually verified by AgentCrush as legitimately
+// belonging to the named agent. Auto-matcher rules are strict (require
+// corroborating evidence beyond name) so name-only matches get filtered out.
+// This allowlist lets us keep tokens we've independently confirmed (via
+// onchain owner check, team confirmation, or other out-of-band evidence)
+// without weakening the auto-matcher.
+//
+// To add: verify onchain (ownerOf, tokenURI), check that the owner address
+// is the project's known wallet or that the metadata explicitly identifies
+// the project. Record the verification method.
+//
+// Tuple: agent_handle | chain_id (eip155:N) | token_id | verified_by
+const VERIFIED_MATCHES = [
+  {
+    agent_handle: 'crewai',
+    chain_id: 'eip155:8453',
+    registry_address: '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+    token_id: 17997,
+    verified_by: 'On-chain check 2026-05-08 (CS#2): token #17997 on Base, tokenURI metadata declares x402_supported: true. Match confidence forced to 1.00 by manual verification.',
+  },
+  // NOTE: token #9634 ("AgentLab") was previously stored for handle "agentlab"
+  // via name-only match. On-chain verification 2026-05-13 showed owner has no
+  // Coral/AgentLab affiliation. NOT added here — attribution unconfirmed.
+]
+
 // Confidence label → numeric score
 const CONFIDENCE_MAP = {
   high:            1.00,
@@ -161,14 +188,18 @@ function matchAgent(acAgent, erc8004Records) {
       reasons.push(`name similarity ${(bestSim * 100).toFixed(0)}%: "${who}" ~ "${recName}"`)
     }
 
-    // GitHub org in description
+    // GitHub org in description (must be the github.com/{org} URL form, not bare org name)
     if (ghOrg && recDesc.includes(`github.com/${ghOrg}`)) {
       reasons.push(`github org "${ghOrg}" found in description`)
     }
 
-    // GitHub repo in description
-    if (ghRepo && ghRepo.length >= 4 && recDesc.includes(ghRepo)) {
-      reasons.push(`github repo "${ghRepo}" found in description`)
+    // GitHub repo in description — require the FULL "{org}/{repo}" pattern,
+    // not just the bare repo name. "manifest" alone (repo only) would match
+    // any description that mentions the word, producing 20+ false positives.
+    // Requiring "{org}/{repo}" co-occurrence makes the match specific to
+    // the actual repository.
+    if (ghOrg && ghRepo && ghRepo.length >= 3 && recDesc.includes(`${ghOrg}/${ghRepo}`)) {
+      reasons.push(`github repo "${ghOrg}/${ghRepo}" found in description`)
     }
 
     // Website domain in description or image URL
@@ -183,18 +214,45 @@ function matchAgent(acAgent, erc8004Records) {
     if (reasons.length === 0) continue
 
     // Confidence label
-    const isHighReason = reasons.some(
-      (r) => r.startsWith('exact') || r.includes('github org') || r.includes('website domain')
-    )
-    const isMediumReason = reasons.some(
-      (r) => r.includes('similarity') && bestSim >= 0.85
-    )
+    //
+    // The 2026-05-13 update: a name match alone (even exact) is NOT enough.
+    // The original logic stored token #9634 ("AgentLab") for AgentCrush handle
+    // "agentlab" via exact-name-only — and onchain verification showed the
+    // owner had no Coral/AgentLab affiliation. Public attribution scandal-class
+    // mistake. Fix: require independent corroborating evidence to stand on
+    // its own; pure name matches are downgraded to `low` and not stored.
+    //
+    // Signal types:
+    //   - hasExactName       : exact handle/display name match
+    //   - hasNameSimilarity  : ≥85% similarity
+    //   - hasGitHubMatch     : github.com/{org} or repo name in description
+    //   - hasDomainMatch     : website domain in description or image URL
+    //
+    // Corroboration = github match OR domain match. These are evidence that
+    // ties the token to a project's actual public assets, not just a label.
+
+    const hasExactName       = reasons.some((r) => r.startsWith('exact'))
+    const hasNameSimilarity  = reasons.some((r) => r.includes('similarity'))
+    const hasGitHubMatch     = reasons.some((r) => r.includes('github org') || r.includes('github repo'))
+    const hasDomainMatch     = reasons.some((r) => r.includes('website domain'))
+    const hasCorroboration   = hasGitHubMatch || hasDomainMatch
+    const hasAnyNameSignal   = hasExactName || hasNameSimilarity
 
     let confidenceLabel
-    if (isHighReason && isMediumReason) confidenceLabel = 'high'
-    else if (isHighReason) confidenceLabel = 'medium-high'
-    else if (isMediumReason) confidenceLabel = 'medium'
-    else confidenceLabel = 'low'
+    if (hasAnyNameSignal && hasCorroboration) {
+      // Name + (github OR domain) = strong, both signals independent
+      confidenceLabel = 'high'
+    } else if (hasGitHubMatch && hasDomainMatch) {
+      // Both corroborating signals, no name = still strong
+      confidenceLabel = 'high'
+    } else if (hasCorroboration) {
+      // GitHub or domain alone, no name = reasonable
+      confidenceLabel = 'medium-high'
+    } else {
+      // Name-only (exact OR similarity) with no corroboration = not enough
+      // to publish as a match. Downgraded from previous medium-high to low.
+      confidenceLabel = 'low'
+    }
 
     const chainIdInt = rec.chain_id
     const chainIdStr = `eip155:${chainIdInt}`
@@ -380,6 +438,23 @@ async function main() {
     const matches = matchAgent(agent, [...candidates.values()])
     allMatches.push(...matches)
 
+    // Promote any match that's on the manual VERIFIED_MATCHES allowlist
+    // up to confidence 1.00, regardless of automated confidence.
+    for (const m of matches) {
+      const verified = VERIFIED_MATCHES.find(
+        (v) =>
+          v.agent_handle === m.agent_handle &&
+          v.chain_id === m.erc8004_chain &&
+          String(v.token_id) === String(m._db_row.token_id)
+      )
+      if (verified) {
+        m.match_confidence = 1.0
+        m.match_confidence_label = 'high'
+        m._db_row.match_confidence = 1.0
+        m.match_reasons = [...(m.match_reasons || []), `MANUALLY VERIFIED: ${verified.verified_by}`]
+      }
+    }
+
     const confident = matches.filter((m) => m.match_confidence >= MIN_CONFIDENCE_TO_STORE)
     const weak = matches.filter((m) => m.match_confidence < MIN_CONFIDENCE_TO_STORE)
     toStore.push(...confident)
@@ -418,6 +493,48 @@ async function main() {
     }
   } else if (writeMode && toStore.length === 0) {
     console.log('\nNo confident matches to upsert.')
+  }
+
+  // ── DB cleanup: full-sync semantics ──
+  // The 8004scan reader is canonical. Any row in the DB that wasn't
+  // re-confirmed by this run is stale (matcher rules changed, source data
+  // changed, or the match no longer holds). Prune it.
+  //
+  // Pruning rule: delete any row whose (agent_handle, chain_id, token_id)
+  // tuple is not present in this run's toStore. This catches:
+  //   - Old matches downgraded by stricter rules (e.g. AgentLab name-only)
+  //   - False positives from looser previous matcher logic
+  //   - Matches whose underlying 8004scan record was removed
+  if (writeMode) {
+    console.log('\nPruning rows not re-confirmed by this run…')
+    const confirmedKeys = new Set(
+      toStore.map((m) => `${m.agent_handle}|${m._db_row.chain_id}|${m._db_row.token_id}`)
+    )
+    const { data: existing, error: selErr } = await writeClient
+      .from('agent_erc8004_registrations')
+      .select('id, agent_handle, token_id, chain_id, match_confidence')
+    if (selErr) {
+      console.warn(`  could not query for stale rows: ${selErr.message}`)
+    } else if (existing && existing.length > 0) {
+      let pruned = 0
+      for (const row of existing) {
+        const key = `${row.agent_handle}|${row.chain_id}|${row.token_id}`
+        if (confirmedKeys.has(key)) continue
+        const { error: delErr } = await writeClient
+          .from('agent_erc8004_registrations')
+          .delete()
+          .eq('id', row.id)
+        if (delErr) {
+          console.warn(`  ✗ failed to delete row id=${row.id}: ${delErr.message}`)
+        } else {
+          console.log(`  ✓ pruned ${row.agent_handle} → token ${row.token_id} (${row.chain_id}, conf ${row.match_confidence})`)
+          pruned++
+        }
+      }
+      if (pruned === 0) console.log('  (none)')
+    } else {
+      console.log('  (none)')
+    }
   }
 
   // ── Summary ──
