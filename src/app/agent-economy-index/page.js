@@ -45,7 +45,7 @@ const TRACKED_SURFACES = [
   { name: 'Machine-discoverability surfaces',       status: 'Live',       note: 'per-agent scan: .well-known/x402, agent-card, MCP manifest, OpenAPI, robots.txt' },
   { name: 'Dependency graph',                       status: 'Collecting', note: 'shadow signal — not yet in public scoring' },
   { name: 'Documentation quality',                  status: 'Collecting', note: 'shadow signal — not yet in public scoring' },
-  { name: 'External A2A / MCP activity',             status: 'Monitoring', note: 'AgentCrush MCP server live; external protocol ingestion not started' },
+  { name: 'External A2A / MCP activity',             status: 'Live',       note: '409 A2A-supporting repos ingested daily via GitHub discovery (v0); live-endpoint ping deferred to v1' },
   { name: 'Agentverse / Fetch.ai',                  status: 'Live',       note: '10,000 agents ingested from agentverse.ai daily; AgentCrush listing registered' },
   { name: 'Virtuals Protocol',                      status: 'Live',       note: '40,598 agents from api.virtuals.io daily; market cap + holders + TVL (USD via VIRTUAL/USD feed)' },
   { name: 'Virtuals ACP / ERC-8183',               status: 'Monitoring', note: 'ACP layer monitoring; ERC-8183 contract not yet ingested' },
