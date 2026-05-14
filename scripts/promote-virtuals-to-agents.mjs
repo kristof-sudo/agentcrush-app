@@ -71,6 +71,12 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
+function extractXHandle(twitterUrl) {
+  if (!twitterUrl) return null;
+  const m = twitterUrl.match(/(?:twitter\.com|x\.com)\/(?:#!\/)?@?([A-Za-z0-9_]+)/i);
+  return m ? m[1] : null;
+}
+
 function makeHandle(name, ticker) {
   // virtuals_${ticker.toLowerCase()} with non-alphanumeric stripped
   const base = `virtuals_${(ticker || name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
@@ -139,10 +145,10 @@ if (isDryRun) {
   process.exit(0);
 }
 
-let inserted = 0, updated = 0, skipped = 0, failed = 0;
+let inserted = 0, updated = 0, crossLinked = 0, skipped = 0, failed = 0;
 
 for (const v of qualifying) {
-  // Already mapped?
+  // 1. Already mapped via virtuals_id?
   const { data: existing } = await sb.from('agents').select('id, handle, tier').eq('virtuals_id', v.virtuals_id).maybeSingle();
   if (existing) {
     if (isUpdate) {
@@ -151,7 +157,7 @@ for (const v of qualifying) {
         tagline: (v.description || '').slice(0, 200),
         avatar_url: v.image_url || null,
         website_url: v.website_url || null,
-        twitter_url: v.twitter_url || null,
+        x_handle: extractXHandle(v.twitter_url),
       }).eq('id', existing.id);
       if (updErr) { failed++; console.warn(`  update fail ${v.name}: ${updErr.message}`); }
       else updated++;
@@ -161,7 +167,39 @@ for (const v of qualifying) {
     continue;
   }
 
-  // New row
+  // 2. Dedup: existing agent with matching display_name or handle (case-insensitive)?
+  // Cross-link rather than create duplicate. The existing agent gains virtuals_id.
+  const nameLower = (v.name || '').trim().toLowerCase();
+  const tickerLower = (v.ticker || '').trim().toLowerCase();
+  if (nameLower || tickerLower) {
+    const orParts = [];
+    if (nameLower) orParts.push(`display_name.ilike.${nameLower}`);
+    if (nameLower) orParts.push(`handle.ilike.${nameLower}`);
+    if (tickerLower) orParts.push(`handle.ilike.${tickerLower}`);
+    const { data: nameMatch } = await sb
+      .from('agents')
+      .select('id, handle, display_name, virtuals_id, avatar_url, x_handle')
+      .or(orParts.join(','))
+      .is('virtuals_id', null)
+      .limit(1)
+      .maybeSingle();
+    if (nameMatch) {
+      // Cross-link the existing agent with virtuals_id (no duplicate row created).
+      // Only backfill missing fields — don't overwrite curated data.
+      const patch = { virtuals_id: v.virtuals_id };
+      if (!nameMatch.avatar_url && v.image_url) patch.avatar_url = v.image_url;
+      if (!nameMatch.x_handle) {
+        const xh = extractXHandle(v.twitter_url);
+        if (xh) patch.x_handle = xh;
+      }
+      const { error: linkErr } = await sb.from('agents').update(patch).eq('id', nameMatch.id);
+      if (linkErr) { failed++; console.warn(`  cross-link fail ${nameMatch.handle}: ${linkErr.message}`); }
+      else { crossLinked++; if (crossLinked <= 5) console.log(`  ↔ cross-link ${nameMatch.handle} = ${v.name} (virtuals_id ${v.virtuals_id})`); }
+      continue;
+    }
+  }
+
+  // 3. New row
   const baseHandle = makeHandle(v.name, v.ticker);
   const handle = await uniqueHandle(baseHandle);
 
@@ -176,7 +214,7 @@ for (const v of qualifying) {
     virtuals_id: v.virtuals_id,
     avatar_url: v.image_url || null,
     website_url: v.website_url || null,
-    twitter_url: v.twitter_url || null,
+    x_handle: extractXHandle(v.twitter_url),
     identity_status: 'unverified',
     visibility_score: 0,
     reputation_score: 0,
@@ -190,4 +228,4 @@ for (const v of qualifying) {
   else { inserted++; if (inserted <= 5) console.log(`  + ${handle} ← ${v.name}`); }
 }
 
-console.log(`\n[promote-virtuals] inserted=${inserted} updated=${updated} skipped=${skipped} failed=${failed}`);
+console.log(`\n[promote-virtuals] inserted=${inserted} cross-linked=${crossLinked} updated=${updated} skipped=${skipped} failed=${failed}`);

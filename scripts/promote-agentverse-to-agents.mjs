@@ -116,9 +116,10 @@ if (isDryRun) {
   process.exit(0);
 }
 
-let inserted = 0, updated = 0, skipped = 0, failed = 0;
+let inserted = 0, updated = 0, crossLinked = 0, skipped = 0, failed = 0;
 
 for (const v of qualifying) {
+  // 1. Already mapped via agentverse_id?
   const { data: existing } = await sb.from('agents').select('id').eq('agentverse_id', v.agentverse_id).maybeSingle();
   if (existing) {
     if (isUpdate) {
@@ -132,6 +133,28 @@ for (const v of qualifying) {
     continue;
   }
 
+  // 2. Dedup: existing agent with matching display_name or handle (case-insensitive)?
+  // Cross-link rather than create duplicate.
+  const nameLower = (v.name || '').trim().toLowerCase();
+  if (nameLower) {
+    const { data: nameMatch } = await sb
+      .from('agents')
+      .select('id, handle, display_name, agentverse_id')
+      .or(`display_name.ilike.${nameLower},handle.ilike.${nameLower}`)
+      .is('agentverse_id', null)
+      .limit(1)
+      .maybeSingle();
+    if (nameMatch) {
+      const { error: linkErr } = await sb.from('agents').update({
+        agentverse_id: v.agentverse_id,
+      }).eq('id', nameMatch.id);
+      if (linkErr) { failed++; console.warn(`  cross-link fail ${nameMatch.handle}: ${linkErr.message}`); }
+      else { crossLinked++; if (crossLinked <= 5) console.log(`  ↔ cross-link ${nameMatch.handle} = ${v.name}`); }
+      continue;
+    }
+  }
+
+  // 3. New row
   const baseHandle = makeHandle(v.name);
   const handle = await uniqueHandle(baseHandle);
 
@@ -158,4 +181,4 @@ for (const v of qualifying) {
   else { inserted++; if (inserted <= 5) console.log(`  + ${handle} ← ${v.name}`); }
 }
 
-console.log(`\n[promote-agentverse] inserted=${inserted} updated=${updated} skipped=${skipped} failed=${failed}`);
+console.log(`\n[promote-agentverse] inserted=${inserted} cross-linked=${crossLinked} updated=${updated} skipped=${skipped} failed=${failed}`);
