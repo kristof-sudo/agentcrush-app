@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush Agentverse agents daily sync — 05:30 Budapest local
+
+[Timer]
+OnCalendar=*-*-* 05:30:00
+Persistent=false
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

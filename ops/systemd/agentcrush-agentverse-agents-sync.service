@@ -1,0 +1,13 @@
+[Unit]
+Description=AgentCrush Agentverse (Fetch.ai) agents daily sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-agentverse-agents-sync.lock \
+    /usr/bin/node /opt/agentcrush/runtime/agentverse-agents-adapter.mjs --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-agentverse-agents-sync

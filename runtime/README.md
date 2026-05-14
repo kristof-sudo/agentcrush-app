@@ -68,6 +68,43 @@ Table `erc8004_registry` columns: `token_id` (PK), `owner_address`,
 Scheduled by `ops/systemd/agentcrush-erc8004-registry-sync.{service,timer}`
 — daily 06:00 Budapest.
 
+## agentverse-agents-adapter.mjs
+
+Read-only daily mirror of the Agentverse (Fetch.ai) public agent index.
+Fetches `POST https://agentverse.ai/v1/search/agents` (unauthenticated; an
+optional `AGENTVERSE_API_KEY` env var is supported but not required for the
+public listing), paginates at 100/page with a 1s delay between pages,
+normalizes each agent, and upserts into `agentverse_agents` keyed by
+`agentverse_id` (the bech32 address). `last_seen_at` bumps every run;
+`raw_payload` + sha256 `payload_hash` give cheap change detection.
+
+**Read-only. Not a ranking signal.** Source table only.
+
+Run:
+```
+# dry-run, no DB writes
+node runtime/agentverse-agents-adapter.mjs --dry-run --limit-pages 3
+
+# capped
+node runtime/agentverse-agents-adapter.mjs --dry-run --max 500
+
+# full sync (production: daily 05:30 Budapest)
+node runtime/agentverse-agents-adapter.mjs --write
+```
+
+Flags: `--dry-run | --write`, `--max N`, `--limit-pages N`.
+
+Table `agentverse_agents` columns: `agentverse_id` (PK, bech32 address),
+`name`, `description`, `category`, `address`, `endpoint_url`, `is_active`,
+`status` (composite: "responsive" / "unresponsive" / "inactive"),
+`protocols` (jsonb), `runtime` ("hosted" | "local" | "mailbox" | "proxy" |
+"custom"), `interactions_count`, `rating`, `uptime_pct`, `tags`,
+`raw_payload`, `payload_hash`, `first_seen_at`, `last_seen_at`,
+`created_at`, `updated_at`.
+
+Scheduled by `ops/systemd/agentcrush-agentverse-agents-sync.{service,timer}`
+— daily 05:30 Budapest.
+
 ## Not versioned here
 - .env files
 - node_modules

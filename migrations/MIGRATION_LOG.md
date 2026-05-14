@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-05-14
+- `migrations/20260514_0530_create_agentverse_agents.sql` — Create `agentverse_agents` table for the Agentverse (Fetch.ai) read-only adapter. Read-only mirror of the public `POST https://agentverse.ai/v1/search/agents` index. PK `agentverse_id` (bech32 address). Stores normalized fields (name, description, category, address, endpoint_url, is_active, status, protocols, runtime, interactions_count, rating, uptime_pct, tags) plus `raw_payload` and a sha256 `payload_hash` for change detection. Indexes on name, address, is_active, last_seen_at DESC, payload_hash. `updated_at` touch trigger. Idempotent upserts on `agentverse_id`; `last_seen_at` bumps every run. No scoring impact. Populated by `runtime/agentverse-agents-adapter.mjs`.
+  **STATUS: Written — requires manual apply via Supabase dashboard.**
+
 ### 2026-05-13
 - `migrations/20260513_2030_erc8004_registry_multichain_checkpoint.sql` — Multi-chain + checkpoint support for `erc8004_registry`. Adds `mint_block` column, changes PK from `(token_id)` to `(token_id, chain)` (same token id can exist on Base AND Ethereum), creates `erc8004_sync_state` table for per-chain checkpoint (last_scanned_block, run history, error state) so daily runs resume from where they left off instead of re-scanning the full block range. Compatible with v1 (additive on empty table).
   **STATUS: APPLIED 2026-05-13 by Kris via Supabase dashboard.**
