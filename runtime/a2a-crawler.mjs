@@ -118,7 +118,10 @@ if (isWrite) {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const TOPICS = ['a2a-protocol', 'agent2agent', 'agent-to-agent', 'a2a', 'agent-protocol'];
+// Bare `a2a` topic dropped (Kris call 2026-05-14) — too broad, picked up
+// unrelated repos in v0 dry-run. Keeping more specific topics that signal
+// real protocol intent.
+const TOPICS = ['a2a-protocol', 'agent2agent', 'agent-to-agent', 'agent-protocol'];
 const DEP_QUERIES = ['@google/a2a-sdk', '@a2a-project'];
 const RATE_LIMIT_MS = 1000; // 1 req/sec, gentle on GitHub
 
