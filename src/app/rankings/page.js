@@ -83,16 +83,16 @@ export default async function RankingsPage({ searchParams }) {
 
   // Note: view name "top50" is misleading — it has no LIMIT. Filtered by
   // evidence_ready_for_public_rank=true this returns ALL evidence-ranked agents.
-  // Promotion rule: agent appears on /rankings if
-  //   (a) the v2 evidence-ready check passes (multi-signal coverage), OR
-  //   (b) a single primary signal is top-tier (github_score >= 90 — handles cases
-  //       like Hermes/Nous Research with 150k stars but no other signal yet).
-  // This is a public-promotion override for the strict v2 multi-signal rule.
-  // Proper methodology fix is to update the view itself (queued in brain).
+  // Promotion rule now lives in the view itself (migration 20260514_2100_update_evidence_ready_rule.sql).
+  // The view's evidence_ready_for_public_rank includes:
+  //   (a) active_weight_total >= 0.55 (multi-signal coverage), OR
+  //   (b) current_rank <= 100 AND active_weight_total >= 0.45, OR
+  //   (c) (primary signal >= 90) AND (count of signals > 50) >= 2
+  //       (top-tier single signal with corroboration)
   const { data: v2Rows, error: v2Error } = await supabase
     .from('agent_score_v2_top50_public_candidate')
     .select('handle, display_name, rank_v2_c_public, score_v2_c_public_candidate, active_weight_total, coverage_tier, github_score, package_usage_score, dependency_score, ecosystem_score, docs_quality_score, hn_score, trust_score')
-    .or('evidence_ready_for_public_rank.eq.true,github_score.gte.90')
+    .eq('evidence_ready_for_public_rank', true)
     .order('rank_v2_c_public', { ascending: true })
 
   if (v2Error) throw new Error(v2Error.message)
