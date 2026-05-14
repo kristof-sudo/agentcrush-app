@@ -327,7 +327,7 @@ export default function HeroSection({ agentCount, signalsToday, evidenceRankedCo
             marginTop: 14, maxWidth: 560, lineHeight: 1.7,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .18s',
           }}>
-            Whether you&apos;re looking for an agent to use, building one, or watching the ecosystem — we help you make sense of it.
+            Whether you&apos;re looking for an agent to use, building one, or watching the ecosystem — we help you make sense of it. Tracking AI agents across open-source, x402, ERC-8004, MCP, A2A, and marketplaces.
           </p>
 
           {/* Intent question */}
