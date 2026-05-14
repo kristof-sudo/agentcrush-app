@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
@@ -67,6 +67,13 @@ export default function FindQuizClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [animDirection, setAnimDirection] = useState('forward') // for slide direction
+  const [exitDirection, setExitDirection] = useState(null) // 'right' on answer, 'left' on back-swipe
+
+  // Drag/swipe state
+  const [dragX, setDragX] = useState(0)
+  const dragStartRef = useRef(null)
+  const isDraggingRef = useRef(false)
+  const SWIPE_THRESHOLD = 80 // px
 
   const isResults = step >= QUESTIONS.length
   const progress = isResults ? 100 : Math.round((step / QUESTIONS.length) * 100)
@@ -75,17 +82,65 @@ export default function FindQuizClient() {
     const next = { ...answers, [qid]: value }
     setAnswers(next)
     setAnimDirection('forward')
-    if (step + 1 < QUESTIONS.length) {
-      setStep(step + 1)
-    } else {
-      runQuery(next)
-    }
+    setExitDirection('right') // card flies off to the right
+    // Wait for exit animation, then advance
+    setTimeout(() => {
+      setExitDirection(null)
+      setDragX(0)
+      if (step + 1 < QUESTIONS.length) {
+        setStep(step + 1)
+      } else {
+        runQuery(next)
+      }
+    }, 280)
   }
 
   function back() {
     if (step === 0) return
     setAnimDirection('back')
-    setStep(step - 1)
+    setExitDirection('left')
+    setTimeout(() => {
+      setExitDirection(null)
+      setDragX(0)
+      setStep(step - 1)
+    }, 280)
+  }
+
+  // ── Drag handlers ──
+  function onPointerDown(e) {
+    if (exitDirection) return // mid-transition
+    isDraggingRef.current = true
+    dragStartRef.current = {
+      x: e.touches ? e.touches[0].clientX : e.clientX,
+      y: e.touches ? e.touches[0].clientY : e.clientY,
+    }
+  }
+
+  function onPointerMove(e) {
+    if (!isDraggingRef.current || !dragStartRef.current) return
+    const x = e.touches ? e.touches[0].clientX : e.clientX
+    const y = e.touches ? e.touches[0].clientY : e.clientY
+    const dx = x - dragStartRef.current.x
+    const dy = y - dragStartRef.current.y
+    // Only treat as horizontal drag if x movement dominates
+    if (Math.abs(dx) > Math.abs(dy) * 1.5) {
+      // Only allow leftward drag (back). Rightward needs an answer choice.
+      if (dx < 0) setDragX(dx)
+      else setDragX(dx * 0.25) // resist rightward drag
+    }
+  }
+
+  function onPointerUp() {
+    if (!isDraggingRef.current) return
+    isDraggingRef.current = false
+    const dx = dragX
+    setDragX(0)
+    dragStartRef.current = null
+
+    // Swipe left past threshold = go back
+    if (dx < -SWIPE_THRESHOLD && step > 0) {
+      back()
+    }
   }
 
   async function runQuery(finalAnswers) {
@@ -193,9 +248,28 @@ export default function FindQuizClient() {
       {!isResults && (
         <div
           key={step}
-          className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-5 py-6 md:px-7 md:py-8"
+          onMouseDown={onPointerDown}
+          onMouseMove={onPointerMove}
+          onMouseUp={onPointerUp}
+          onMouseLeave={onPointerUp}
+          onTouchStart={onPointerDown}
+          onTouchMove={onPointerMove}
+          onTouchEnd={onPointerUp}
+          className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-5 py-6 md:px-7 md:py-8 select-none"
           style={{
-            animation: `${animDirection === 'forward' ? 'slideInRight' : 'slideInLeft'} .35s cubic-bezier(.2,.8,.4,1) both`,
+            // Exit animation takes priority over enter animation
+            animation: exitDirection
+              ? `${exitDirection === 'right' ? 'flyOutRight' : 'flyOutLeft'} .28s cubic-bezier(.4,.0,.7,1) both`
+              : `${animDirection === 'forward' ? 'slideInRight' : 'slideInLeft'} .35s cubic-bezier(.2,.8,.4,1) both`,
+            // Live drag transform (resets to 0 on release)
+            ...(dragX !== 0 && !exitDirection
+              ? {
+                  transform: `translateX(${dragX}px) rotate(${dragX * 0.04}deg)`,
+                  transition: 'none',
+                }
+              : {}),
+            cursor: isDraggingRef.current ? 'grabbing' : 'grab',
+            touchAction: 'pan-y', // allow vertical page scroll, capture horizontal
           }}
         >
           <h2 className="text-lg font-semibold text-white leading-tight mb-1">
@@ -222,14 +296,22 @@ export default function FindQuizClient() {
             ))}
           </div>
 
-          {step > 0 && (
-            <button
-              onClick={back}
-              className="mt-5 text-xs font-mono text-white/30 hover:text-white/60 transition-colors"
-            >
-              ← back
-            </button>
-          )}
+          <div className="mt-5 flex items-center justify-between gap-3">
+            {step > 0 ? (
+              <button
+                onClick={back}
+                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors"
+              >
+                ← back
+              </button>
+            ) : <span />}
+            <span className="text-[10px] font-mono text-white/20 hidden sm:inline">
+              tap an answer · swipe ← to go back
+            </span>
+            <span className="text-[10px] font-mono text-white/20 sm:hidden">
+              swipe ← back
+            </span>
+          </div>
         </div>
       )}
 
@@ -332,7 +414,7 @@ export default function FindQuizClient() {
         </div>
       )}
 
-      {/* Slide animations */}
+      {/* Slide + fly-out animations */}
       <style>{`
         @keyframes slideInRight {
           from { opacity: 0; transform: translateX(28px); }
@@ -341,6 +423,14 @@ export default function FindQuizClient() {
         @keyframes slideInLeft {
           from { opacity: 0; transform: translateX(-28px); }
           to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes flyOutRight {
+          from { opacity: 1; transform: translateX(0) rotate(0); }
+          to   { opacity: 0; transform: translateX(120%) rotate(12deg); }
+        }
+        @keyframes flyOutLeft {
+          from { opacity: 1; transform: translateX(0) rotate(0); }
+          to   { opacity: 0; transform: translateX(-120%) rotate(-12deg); }
         }
       `}</style>
     </main>
