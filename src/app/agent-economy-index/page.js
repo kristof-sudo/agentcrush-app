@@ -46,8 +46,9 @@ const TRACKED_SURFACES = [
   { name: 'Dependency graph',                       status: 'Collecting', note: 'shadow signal — not yet in public scoring' },
   { name: 'Documentation quality',                  status: 'Collecting', note: 'shadow signal — not yet in public scoring' },
   { name: 'External A2A / MCP activity',             status: 'Monitoring', note: 'AgentCrush MCP server live; external protocol ingestion not started' },
-  { name: 'Agentverse / Fetch.ai',                  status: 'Monitoring', note: 'registry planned; not yet ingesting' },
-  { name: 'Virtuals ACP / ERC-8183',               status: 'Monitoring', note: 'monitoring ecosystem; coverage not started' },
+  { name: 'Agentverse / Fetch.ai',                  status: 'Live',       note: '10,000 agents ingested from agentverse.ai daily; AgentCrush listing registered' },
+  { name: 'Virtuals Protocol',                      status: 'Live',       note: '40,598 agents from api.virtuals.io daily; market cap + holders + TVL (USD via VIRTUAL/USD feed)' },
+  { name: 'Virtuals ACP / ERC-8183',               status: 'Monitoring', note: 'ACP layer monitoring; ERC-8183 contract not yet ingested' },
   { name: 'Daydreams / OpenServ / Giza',            status: 'Monitoring', note: 'monitoring; no structured data source yet' },
   { name: 'SURF / onchain sources',                 status: 'Monitoring', note: 'standard maturing; will build adapter once stable' },
 ]
