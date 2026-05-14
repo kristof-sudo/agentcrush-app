@@ -9,6 +9,8 @@ Older historical DB changes existed before this process was formalized and may n
 ## Entries
 
 ### 2026-05-14
+- `migrations/20260514_1200_create_virtuals_agents.sql` — Create `virtuals_agents` table for the daily Virtuals Protocol agent-index mirror. One row per Virtuals numeric id; stores name, ticker, description, token_address (Base), market_cap / fdv / tvl / price denominated in VIRTUAL token (Virtuals API native), liquidity_usd + volume_24h_usd (USD-denominated), holders, top10_holder_pct, price_change_pct_24h, category, archetype (`role`), image/twitter URLs, plus full raw_payload JSONB and a sha256 payload_hash for change detection. Indexes on name, token_address, market_cap_virtual DESC, market_cap_usd DESC, last_seen_at DESC, ticker. updated_at touch trigger. Read-only mirror, no scoring impact. Populated by `runtime/virtuals-agents-adapter.mjs`.
+  **STATUS: Written — requires manual apply via Supabase dashboard.**
 - `migrations/20260514_0530_create_agentverse_agents.sql` — Create `agentverse_agents` table for the Agentverse (Fetch.ai) read-only adapter. Read-only mirror of the public `POST https://agentverse.ai/v1/search/agents` index. PK `agentverse_id` (bech32 address). Stores normalized fields (name, description, category, address, endpoint_url, is_active, status, protocols, runtime, interactions_count, rating, uptime_pct, tags) plus `raw_payload` and a sha256 `payload_hash` for change detection. Indexes on name, address, is_active, last_seen_at DESC, payload_hash. `updated_at` touch trigger. Idempotent upserts on `agentverse_id`; `last_seen_at` bumps every run. No scoring impact. Populated by `runtime/agentverse-agents-adapter.mjs`.
   **STATUS: Written — requires manual apply via Supabase dashboard.**
 
