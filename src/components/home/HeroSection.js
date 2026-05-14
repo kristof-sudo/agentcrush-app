@@ -349,7 +349,7 @@ export default function HeroSection({ agentCount, signalsToday, evidenceRankedCo
             maxWidth: 880,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .4s',
           }}>
-            <Link href="/rankings" style={{
+            <Link href="/find" style={{
               display: 'block',
               borderRadius: 6, border: '1px solid rgba(57,255,20,0.35)',
               background: 'rgba(57,255,20,0.06)',
@@ -368,7 +368,7 @@ export default function HeroSection({ agentCount, signalsToday, evidenceRankedCo
                 fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
                 fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5,
               }}>
-                Browse evidence-ranked agents by category, score, and ecosystem signals.
+                4 quick questions → 3-5 agents from our index that match what you need.
               </div>
             </Link>
 
