@@ -166,6 +166,38 @@ function chainLabel(raw) {
   return raw.toLowerCase();
 }
 
+// VIRTUAL/USD price fetched once per run from CoinGecko. Closed over by
+// normalize() via a module-level variable set in main().
+let VIRTUAL_USD_PRICE = null;
+
+async function fetchVirtualUsdPrice() {
+  // CoinGecko public API — coin id "virtual-protocol"
+  const url = 'https://api.coingecko.com/api/v3/simple/price?ids=virtual-protocol&vs_currencies=usd';
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json', 'User-Agent': 'agentcrush-virtuals-adapter' },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const body = await res.json();
+    const price = body?.['virtual-protocol']?.usd;
+    if (typeof price !== 'number' || !Number.isFinite(price) || price <= 0) {
+      throw new Error(`Unexpected response: ${JSON.stringify(body).slice(0, 200)}`);
+    }
+    return price;
+  } catch (err) {
+    console.warn(`[virtuals-adapter] VIRTUAL/USD price fetch failed: ${err.message}. USD columns will remain NULL.`);
+    return null;
+  }
+}
+
+function virtualToUsd(virtualAmount) {
+  if (VIRTUAL_USD_PRICE == null) return null;
+  if (virtualAmount == null) return null;
+  const n = Number(virtualAmount);
+  if (!Number.isFinite(n)) return null;
+  return n * VIRTUAL_USD_PRICE;
+}
+
 function normalize(item) {
   return {
     virtuals_id: item.id,
@@ -182,9 +214,12 @@ function normalize(item) {
     fdv_virtual: toNumberOrNull(item.fdvInVirtual),
     tvl_virtual: toNumberOrNull(item.totalValueLocked),
 
-    token_price_usd: null,
-    market_cap_usd: null,
-    tvl_usd: null,
+    // USD columns derived by multiplying VIRTUAL-denominated amounts by the
+    // VIRTUAL/USD spot price (fetched once per run from CoinGecko).
+    // If the price fetch failed, these stay NULL.
+    token_price_usd: virtualToUsd(toNumberOrNull(item.virtualTokenValue)),
+    market_cap_usd: virtualToUsd(toNumberOrNull(item.mcapInVirtual)),
+    tvl_usd: virtualToUsd(toNumberOrNull(item.totalValueLocked)),
     liquidity_usd: toNumberOrNull(item.liquidityUsd),
     volume_24h_usd: toNumberOrNull(item.volume24h),
 
@@ -249,6 +284,15 @@ async function fetchAllAgents() {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
+  // Fetch VIRTUAL/USD spot price once at the start so all rows in this run
+  // share a consistent USD reference. Failure is non-fatal — USD columns
+  // simply stay NULL.
+  console.log(`[virtuals-adapter] Fetching VIRTUAL/USD spot price from CoinGecko…`);
+  VIRTUAL_USD_PRICE = await fetchVirtualUsdPrice();
+  if (VIRTUAL_USD_PRICE != null) {
+    console.log(`[virtuals-adapter] VIRTUAL/USD = $${VIRTUAL_USD_PRICE}`);
+  }
+
   console.log(`[virtuals-adapter] Fetching…`);
   const t0 = Date.now();
   const { items, reportedTotal, reportedPageCount, pagesFetched } = await fetchAllAgents();
