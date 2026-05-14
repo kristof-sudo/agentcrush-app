@@ -142,6 +142,59 @@ rest of the discovery index.
 Scheduled by `ops/systemd/agentcrush-virtuals-agents-sync.{service,timer}`
 — daily 05:00 Budapest.
 
+## a2a-crawler.mjs
+
+External A2A (Agent-to-Agent Protocol) activity crawler — v0. Discovers
+GitHub repositories that declare A2A support and mirrors them into the
+`a2a_agents` table. There is no central A2A registry, so we infer
+support from public GitHub signals.
+
+**v0 scope:** GitHub-based discovery only.
+**v1 (deferred):** live A2A endpoint pinging (agent-card.json fetches,
+capability probes against discovered endpoints).
+
+Discovery strategies (all run, results merged on `repo_full_name`):
+1. **Topic search** — repos tagged with `a2a-protocol`, `agent2agent`,
+   `agent-to-agent`, `a2a`, or `agent-protocol`.
+2. **Dependency search** — repos whose `package.json` references
+   `@google/a2a-sdk` or `@a2a-project` (requires `GITHUB_TOKEN` — code
+   search is auth-only).
+3. **Description keyword** — repos whose description contains
+   `"A2A protocol"`.
+
+Each discovered repo is enriched (full repo details) and assigned a
+heuristic `signal_strength` (0..100) combining stars (log-scaled, up to
+50), recency boost (+20 if pushed in last 30 days, +10 if last 90),
+multi-signal corroboration (+10 per additional matched method beyond
+the first), and homepage presence (+10).
+
+Dry-run:
+```
+node runtime/a2a-crawler.mjs --dry-run
+```
+
+Production write:
+```
+node runtime/a2a-crawler.mjs --write
+```
+
+Flags: `--dry-run | --write`, `--max N`. Rate-limited to 1 req/sec
+against the GitHub API. Strongly recommend setting `GITHUB_TOKEN`
+(authenticated quota is 5000 req/hour vs ~30 req/hour unauthenticated).
+
+Table `a2a_agents` columns include: `repo_full_name` (UNIQUE),
+`repo_url`, `name`, `owner`, `description`, `stars`, `forks`,
+`language`, `topics` (jsonb), `homepage_url`, `discovery_method` (first
+matched signal), `last_pushed_at`, `signal_strength` (0..100),
+`raw_payload` (jsonb), `payload_hash`, `first_seen_at`, `last_seen_at`,
+`removed_at`. Indexed on `signal_strength DESC`, `stars DESC`,
+`last_seen_at DESC`, `discovery_method`.
+
+No scoring impact. Read-only ecosystem mirror.
+
+Scheduled by `ops/systemd/agentcrush-a2a-crawler.{service,timer}` —
+daily 04:00 Budapest.
+
 ## Not versioned here
 - .env files
 - node_modules

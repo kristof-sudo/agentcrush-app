@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush A2A GitHub crawler — daily 04:00 Budapest local
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=false
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

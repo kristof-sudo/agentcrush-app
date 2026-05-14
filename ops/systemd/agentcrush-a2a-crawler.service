@@ -1,0 +1,13 @@
+[Unit]
+Description=AgentCrush A2A (Agent-to-Agent) GitHub crawler — daily discovery
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-a2a-crawler.lock \
+    /usr/bin/node /opt/agentcrush/runtime/a2a-crawler.mjs --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-a2a-crawler
