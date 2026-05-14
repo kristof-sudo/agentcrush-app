@@ -579,7 +579,9 @@ async function runChain(chainConfig) {
     return { chain: CHAIN_NAME, status: 'ok-dryrun', scanned: okCount };
   }
 
-  // WRITE: pull existing token_id + metadata_hash for THIS chain only.
+  // WRITE: pull existing token_id + metadata_hash + registered_at for THIS chain only.
+  // We need registered_at on existing rows so we can preserve it on upsert
+  // (Supabase serializes missing fields as null, violating the NOT NULL constraint).
   const existing = new Map();
   {
     const pageSize = 1000;
@@ -587,7 +589,7 @@ async function runChain(chainConfig) {
     while (true) {
       const { data, error } = await supabase
         .from('erc8004_registry')
-        .select('token_id,metadata_hash')
+        .select('token_id,metadata_hash,registered_at')
         .eq('chain', CHAIN_NAME)
         .range(from, from + pageSize - 1);
       if (error) throw new Error(`Supabase select failed: ${error.message}`);
@@ -608,8 +610,14 @@ async function runChain(chainConfig) {
     if (!prev) newCount++;
     else if (prev.metadata_hash !== r.metadata_hash) changedCount++;
     else unchangedCount++;
-    const base = { ...r, last_seen_at: now };
-    if (!prev) base.registered_at = now;
+    // Always include registered_at:
+    //   - new rows: now()
+    //   - existing rows: the previously-recorded registered_at (so UPDATE doesn't null it)
+    const base = {
+      ...r,
+      last_seen_at: now,
+      registered_at: prev?.registered_at || now,
+    };
     return base;
   });
 
@@ -690,18 +698,42 @@ async function enumerateTokenIdsWithBlocks(fromBlock, latestBlock, idToBlock) {
       consecutiveFailures = 0; // reset on success
     } catch (err) {
       const msg = String(err.message || '');
+
+      // If the RPC declares a hard limit (e.g. "eth_getLogs is limited to 0 - 50 blocks"),
+      // and that limit is impractically small (<1000 blocks), failover to next RPC
+      // rather than accepting it (50-block windows on 20M-block ranges = 400k calls).
+      // For reasonable limits (1000+), adopt them.
+      const limitMatch = msg.match(/limited to\s+\d+\s*-?\s*(\d+)\s*blocks?/i);
+      if (limitMatch) {
+        const declaredLimit = parseInt(limitMatch[1], 10);
+        if (declaredLimit < 1000 && RPC_LIST.length > 1) {
+          RPC_INDEX = (RPC_INDEX + 1) % RPC_LIST.length;
+          RPC_URL = RPC_LIST[RPC_INDEX];
+          console.log(`[erc8004-sync][${CHAIN_NAME}] RPC limit too small (${declaredLimit} blocks). Failover -> ${RPC_URL}`);
+          await sleep(500);
+          continue;
+        }
+        if (declaredLimit < dynamicWindow) {
+          dynamicWindow = Math.max(25, declaredLimit);
+          console.log(`[erc8004-sync][${CHAIN_NAME}] RPC declared block limit: ${declaredLimit}. Adopting.`);
+          await sleep(500);
+          continue;
+        }
+      }
+
       // Halve on: explicit range complaints, 5xx, timeouts, generic fetch failures
       const isTransient = (
         /range/i.test(msg) ||
         /50[0-9]/.test(msg) ||
         /timeout/i.test(msg) ||
         /fetch failed/i.test(msg) ||
-        /ECONNRESET|ETIMEDOUT|ENOTFOUND/i.test(msg)
+        /ECONNRESET|ETIMEDOUT|ENOTFOUND/i.test(msg) ||
+        /limit/i.test(msg)
       );
-      if (isTransient && dynamicWindow > 500) {
-        dynamicWindow = Math.max(500, Math.floor(dynamicWindow / 2));
+      if (isTransient && dynamicWindow > 25) {
+        dynamicWindow = Math.max(25, Math.floor(dynamicWindow / 2));
         console.log(`[erc8004-sync][${CHAIN_NAME}] window shrunk to ${dynamicWindow} after: ${msg.slice(0, 80)}`);
-        await sleep(1000); // brief pause before retry
+        await sleep(1000);
         continue;
       }
       if (isTransient) {
