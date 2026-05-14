@@ -40,8 +40,9 @@ const TRACKED_SURFACES = [
   { name: 'Open-source / GitHub',                  status: 'Live',       note: 'commits, releases, stars, forks' },
   { name: 'npm / PyPI package usage',               status: 'Live',       note: 'download trends, weekly delta' },
   { name: 'Hacker News mentions',                   status: 'Live',       note: 'discourse signal, mention frequency' },
-  { name: 'x402 endpoints / Bazaar',                status: 'Collecting', note: '3 AgentCrush endpoints live; all 3 in CDP discovery; Agentic.Market UI surfaces 1' },
-  { name: 'ERC-8004 on-chain registry',             status: 'Collecting', note: 'v1 reader active; matched agents stored' },
+  { name: 'x402 endpoints / Bazaar',                status: 'Live',       note: '46,888 resources indexed from CDP Bazaar; 7 are AgentCrush endpoints' },
+  { name: 'ERC-8004 on-chain registry',             status: 'Live',       note: 'daily multi-chain sync (Base + Ethereum); on-chain enumeration via mint logs' },
+  { name: 'Machine-discoverability surfaces',       status: 'Live',       note: 'per-agent scan: .well-known/x402, agent-card, MCP manifest, OpenAPI, robots.txt' },
   { name: 'Dependency graph',                       status: 'Collecting', note: 'shadow signal — not yet in public scoring' },
   { name: 'Documentation quality',                  status: 'Collecting', note: 'shadow signal — not yet in public scoring' },
   { name: 'External A2A / MCP activity',             status: 'Monitoring', note: 'AgentCrush MCP server live; external protocol ingestion not started' },
@@ -183,9 +184,9 @@ export default async function AgentEconomyIndexPage() {
           />
           <MetricCard
             label="x402 endpoints"
-            value={3}
-            sub="trust-summary · history · verification-status"
-            source="AgentCrush x402 endpoint"
+            value={7}
+            sub="indexed in CDP Bazaar (trust-summary, history, verification-status × multiple agents)"
+            source="CDP Bazaar /discovery/resources"
           />
         </div>
       </section>

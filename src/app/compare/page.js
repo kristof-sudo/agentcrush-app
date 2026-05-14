@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
 import { getAgentArchetype, getAgentDisplayName } from '@/lib/agent-quality'
+import ComparePicker from './ComparePicker'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,23 +90,7 @@ export default async function ComparePage({ searchParams }) {
   const { a, b } = await searchParams || {}
 
   if (!a || !b) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 text-white">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Compare Agents</h1>
-          <p className="mt-1 text-sm text-white/40">Side-by-side score, movement, and signal breakdown.</p>
-        </div>
-        <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] p-6 text-center">
-          <div className="text-sm text-white/40 mb-2">Add two agent handles to the URL to compare</div>
-          <code className="text-xs text-violet-300 bg-violet-500/10 px-3 py-1 rounded">/compare?a=handle1&b=handle2</code>
-          <div className="mt-4">
-            <Link href="/rankings" className="text-xs text-violet-400 hover:text-violet-300 underline transition-colors">
-              Browse rankings to find agents →
-            </Link>
-          </div>
-        </div>
-      </main>
-    )
+    return <ComparePicker />
   }
 
   const supabase = supabaseAnon()
