@@ -220,8 +220,8 @@ function WhatCanYouDo() {
     {
       verb: 'Compare two agents head-to-head',
       sub: 'Score, 30-day history, signals, ecosystem links, and ERC-8004 mappings — side by side.',
-      href: '/compare/crewai-vs-langchainagents',
-      linkLabel: 'Try a comparison →',
+      href: '/compare',
+      linkLabel: 'Pick two agents →',
     },
   ]
   return (
@@ -259,7 +259,7 @@ function ComparisonWidget() {
           <span className="font-mono text-[10px] text-[#e91e80]">⇄</span>
           <span className="font-mono text-xs font-bold text-white tracking-wide">COMPARE</span>
         </div>
-        <Link href="/explore" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
+        <Link href="/compare" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
           Compare any two →
         </Link>
       </div>

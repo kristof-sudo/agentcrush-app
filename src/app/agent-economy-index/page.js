@@ -312,7 +312,7 @@ export default async function AgentEconomyIndexPage() {
         <Link href="/explore" className="text-white/40 hover:text-white/70 transition-colors">
           Explore All Agents →
         </Link>
-        <Link href="/compare/crewai-vs-autogpt" className="text-white/40 hover:text-white/70 transition-colors">
+        <Link href="/compare" className="text-white/40 hover:text-white/70 transition-colors">
           Compare Agents →
         </Link>
         <Link href="/how-we-rank" className="text-white/40 hover:text-white/70 transition-colors">
