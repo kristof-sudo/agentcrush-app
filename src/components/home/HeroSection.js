@@ -204,14 +204,16 @@ export default function HeroSection({ agentCount, signalsToday, evidenceRankedCo
 
       <div
         ref={heroRef}
+        className="hero-shell"
         style={{
           position: 'relative',
-          height: '100vh',
+          // height + flex-end: pin content to bottom on desktop. On mobile,
+          // we override to auto-height + flex-start so the H1 isn't pushed
+          // off the top by the intent-card grid.
           minHeight: 640,
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'flex-end',
           paddingTop: 56,
         }}
       >

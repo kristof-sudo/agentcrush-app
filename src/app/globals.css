@@ -6,6 +6,20 @@
   --font-display: var(--font-michroma);
 }
 
+/* Homepage hero responsive shell. On mobile the hero grows with content so
+   the H1 + intent cards aren't clipped. On desktop it locks to viewport
+   height with content pinned to the bottom (the design intent). */
+.hero-shell {
+  height: auto;
+  justify-content: flex-start;
+}
+@media (min-width: 768px) {
+  .hero-shell {
+    height: 100vh;
+    justify-content: flex-end;
+  }
+}
+
 @keyframes ticker-scroll {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
