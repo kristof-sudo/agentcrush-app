@@ -417,6 +417,29 @@ export default function HeroSection({ agentCount, signalsToday, evidenceRankedCo
                 Cross-protocol agent intelligence: x402, ERC-8004, MCP, Bazaar.
               </div>
             </Link>
+
+            <Link href="/learn" style={{
+              display: 'block',
+              borderRadius: 6, border: '1px solid rgba(251,191,36,0.35)',
+              background: 'rgba(251,191,36,0.06)',
+              padding: '14px 16px',
+              textDecoration: 'none',
+              transition: 'all .2s',
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                fontSize: 13, fontWeight: 700, color: '#fbbf24',
+                marginBottom: 4,
+              }}>
+                I&apos;m just exploring →
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-mono,"Geist Mono",monospace)',
+                fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5,
+              }}>
+                What are AI agents, why they matter, where the economy is going. Plain-language intro.
+              </div>
+            </Link>
           </div>
 
           {/* Stat row with animated count-up */}
