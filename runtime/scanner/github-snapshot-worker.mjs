@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs/promises';
+import path from 'node:path';
 
-const ENV_PATH = '/opt/agentcrush/scanner/.env';
+const ENV_CANDIDATES = [
+  '/opt/agentcrush/scanner/.env',
+  '/opt/agentcrush/copydesk/.env',
+  path.resolve(process.cwd(), '.env.local'),
+  path.resolve(process.cwd(), '.env'),
+];
 
 function parseEnv(text) {
   const out = {};
@@ -23,12 +29,26 @@ function parseEnv(text) {
   return out;
 }
 
-async function loadEnvFile(path) {
-  const text = await fs.readFile(path, 'utf8');
-  const parsed = parseEnv(text);
-  for (const [k, v] of Object.entries(parsed)) {
-    if (!process.env[k]) process.env[k] = v;
+async function loadEnvFile(filePath) {
+  try {
+    const text = await fs.readFile(filePath, 'utf8');
+    const parsed = parseEnv(text);
+    for (const [k, v] of Object.entries(parsed)) {
+      if (!process.env[k]) process.env[k] = v;
+    }
+    return true;
+  } catch {
+    return false;
   }
+}
+
+async function loadEnv() {
+  for (const candidate of ENV_CANDIDATES) {
+    if (await loadEnvFile(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 function githubHeaders() {
@@ -58,7 +78,8 @@ async function fetchJson(url) {
 }
 
 async function main() {
-  await loadEnvFile(ENV_PATH);
+  const envPath = await loadEnv();
+  if (envPath) console.log(`Loaded env from ${envPath}`);
 
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
 
