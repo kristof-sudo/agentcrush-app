@@ -640,16 +640,37 @@ export default async function Home() {
 
         {/* ── HISTORICAL SNAPSHOTS PROOF-POINT ─────────────────────────────── */}
         {snapshotCount > 0 && (
-          <div className="border-b border-[rgba(167,139,250,0.1)] bg-[rgba(167,139,250,0.03)] py-2">
+          <div className="border-b border-[rgba(167,139,250,0.12)] bg-[rgba(167,139,250,0.04)] py-6 md:py-8">
             <Container>
-              <p className="font-mono text-[11px] text-white/40 text-center leading-relaxed">
-                <span style={{ color: '#a78bfa' }}>◆</span>{' '}
-                Historical snapshots since Apr 2026{' '}
-                <span className="text-white/20">·</span>{' '}
-                <span className="text-white/60 tabular-nums">{snapshotCount.toLocaleString()}</span> daily agent records tracked
-                <span className="hidden sm:inline text-white/20"> · </span>
-                <span className="hidden sm:inline text-white/25">tracking how agent reputation changes over time</span>
-              </p>
+              <div className="grid gap-5 md:grid-cols-[auto_1fr] md:items-center md:gap-8 max-w-4xl mx-auto">
+                {/* Big number */}
+                <div className="text-center md:text-left md:border-r md:border-[rgba(167,139,250,0.15)] md:pr-8">
+                  <div
+                    className="font-mono font-bold tabular-nums"
+                    style={{
+                      color: '#a78bfa',
+                      fontSize: 'clamp(28px, 6vw, 44px)',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {snapshotCount.toLocaleString()}
+                  </div>
+                  <div className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-white/40">
+                    Daily snapshots since Apr 2026
+                  </div>
+                </div>
+
+                {/* Why it matters */}
+                <div>
+                  <p className="text-sm md:text-base text-white/70 leading-relaxed">
+                    <span className="text-white/95 font-semibold">The historical moat.</span>{' '}
+                    Other directories show today&apos;s list. We show <em className="not-italic text-violet-300">how rankings change over time</em> — who&apos;s climbing, who&apos;s falling, who came from nowhere 30 days ago, who collapsed.
+                  </p>
+                  <p className="mt-2 text-xs md:text-sm text-white/45 leading-relaxed">
+                    Every indexed agent has a daily record of rank, score, and signal change. Trends, not snapshots. Momentum, not vanity metrics.
+                  </p>
+                </div>
+              </div>
             </Container>
           </div>
         )}

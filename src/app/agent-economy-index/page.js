@@ -49,8 +49,7 @@ const TRACKED_SURFACES = [
   { name: 'Agentverse / Fetch.ai',                  status: 'Monitoring', note: 'registry planned; not yet ingesting' },
   { name: 'Virtuals ACP / ERC-8183',               status: 'Monitoring', note: 'monitoring ecosystem; coverage not started' },
   { name: 'Daydreams / OpenServ / Giza',            status: 'Monitoring', note: 'monitoring; no structured data source yet' },
-  { name: 'SURF / onchain sources',                 status: 'Planned',    note: 'on the roadmap' },
-  { name: 'Bittensor / decentralised AI infra',     status: 'Planned',    note: 'on the roadmap' },
+  { name: 'SURF / onchain sources',                 status: 'Monitoring', note: 'standard maturing; will build adapter once stable' },
 ]
 
 const STATUS_STYLE = {
