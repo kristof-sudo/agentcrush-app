@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush HuggingFace derivatives daily aggregation — 05:15 Budapest local
+
+[Timer]
+OnCalendar=*-*-* 05:15:00
+Persistent=false
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

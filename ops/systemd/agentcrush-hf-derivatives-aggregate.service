@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush HuggingFace derivatives daily aggregation
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=-/opt/agentcrush/scanner/.env
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-hf-derivatives-aggregate.lock \
+    /usr/bin/node /opt/agentcrush/runtime/hf-derivatives-aggregator.mjs --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-hf-derivatives-aggregate

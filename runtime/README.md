@@ -310,6 +310,72 @@ key — unblocking the public rank for that slice of the category.
 Scheduled by `ops/systemd/agentcrush-lmarena-sync.{service,timer}` —
 daily 04:45 Budapest (between HF 04:30 and Virtuals 05:00).
 
+## hf-derivatives-aggregator.mjs
+
+Daily aggregation of HuggingFace downstream-adoption signal per base
+model. Step (c.2) of the Category Index Pivot — the second capability
+signal for `model_family` scoring (after LMArena). Together with the HF
+signal slice and LMArena, it is what pushes `model_family` agents past
+the strict 3-of-5 + at-least-one-capability
+`evidence_ready_for_public_rank` gate.
+
+Source: aggregated locally from the `hf_models.tags` JSONB. HuggingFace
+surfaces base-model declarations as tag entries like
+`base_model:OWNER/NAME` (always present when declared) plus optional
+kind variants `base_model:finetune:OWNER/NAME`,
+`base_model:quantized:OWNER/NAME`, `base_model:adapter:OWNER/NAME`,
+`base_model:merge:OWNER/NAME`. We dedupe per derivative model_id so
+multiple variants on the same model count once.
+
+Strategy: scan the local `hf_models` table (already populated daily by
+`hf-models-adapter.mjs`). No HF API calls. This aggregator therefore
+**depends on `hf-models-adapter` having run first** — the timer fires
+05:15 Budapest, 45 min after the HF sync at 04:30.
+
+Usage:
+```
+node runtime/hf-derivatives-aggregator.mjs --dry-run            # scan + summary
+node runtime/hf-derivatives-aggregator.mjs --write              # upsert into Supabase
+node runtime/hf-derivatives-aggregator.mjs --dry-run --max 200  # cap base models
+```
+
+Table `hf_derivatives` columns: `base_model` (PK, canonical HF id),
+`base_author` (owner prefix), `derivatives_count`,
+`derivatives_total_downloads` (BIGINT sum), `derivatives_total_likes`
+(sum), `sample_derivative_ids` (top 10 by downloads — JSONB array, for
+transparency display), `last_aggregated_at`, plus `created_at` /
+`updated_at` with touch trigger. Indexed on `derivatives_count DESC`,
+`derivatives_total_downloads DESC`, `base_author`,
+`last_aggregated_at DESC`.
+
+No scoring impact in v0. The aggregator only populates `hf_derivatives`
+— it does NOT auto-promote rows into `agents`, nor does it write into
+`agent_score_model_family_v1`.
+
+### Future-step linkage plan (separate migration)
+
+A future migration will plumb `derivatives_score` into
+`agent_score_model_family_v1`. Sketch:
+
+```
+derivatives_score = LEAST(100, ROUND(
+  LOG(10, GREATEST(1, total_derivatives_count_across_author)) * 25
+))
+```
+
+where `total_derivatives_count_across_author` is computed as
+`SUM(hf_derivatives.derivatives_count) WHERE base_author = agents.hf_author`.
+
+This means a model_family agent gets credit for the cumulative
+downstream adoption across all of its base-model releases. With LMArena
+(step c.1) and HF downloads (step b) plus derivatives, the strict
+3-of-5 + at-least-one-capability evidence-ready rule starts flipping
+`true` for established families like NousResearch, deepseek-ai,
+meta-llama.
+
+Scheduled by `ops/systemd/agentcrush-hf-derivatives-aggregate.{service,timer}` —
+daily 05:15 Budapest (after Virtuals 05:00, before Agentverse 05:30).
+
 ## Not versioned here
 - .env files
 - node_modules
