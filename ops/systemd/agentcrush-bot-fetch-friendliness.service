@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/agentcrush
+EnvironmentFile=-/opt/agentcrush/scanner/.env
 ExecStart=/usr/bin/flock --nonblock /run/agentcrush-bot-fetch-friendliness.lock \
     /usr/bin/node /opt/agentcrush/runtime/bot-fetch-friendliness-scanner.mjs
 StandardOutput=journal

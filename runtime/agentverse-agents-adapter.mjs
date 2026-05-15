@@ -57,6 +57,7 @@ if (MAX_PAGES !== Infinity) console.log(`[agentverse-adapter] Capping at ${MAX_P
 // ── Env loading ───────────────────────────────────────────────────────────────
 
 const ENV_CANDIDATES = [
+  '/opt/agentcrush/scanner/.env',
   '/opt/agentcrush/selector/.env',
   '/opt/agentcrush/briefing/.env',
   '/opt/agentcrush/copydesk/.env',

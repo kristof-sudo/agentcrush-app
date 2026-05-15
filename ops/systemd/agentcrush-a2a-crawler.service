@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/agentcrush
+EnvironmentFile=-/opt/agentcrush/scanner/.env
 ExecStart=/usr/bin/flock --nonblock /run/agentcrush-a2a-crawler.lock \
     /usr/bin/node /opt/agentcrush/runtime/a2a-crawler.mjs --write
 StandardOutput=journal

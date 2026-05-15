@@ -62,6 +62,7 @@ if (LIMIT_PAGES !== Infinity) console.log(`[virtuals-adapter] Capping at ${LIMIT
 // ── Env loading (write mode only) ─────────────────────────────────────────────
 
 const ENV_CANDIDATES = [
+  '/opt/agentcrush/scanner/.env',
   '/opt/agentcrush/selector/.env',
   '/opt/agentcrush/briefing/.env',
   '/opt/agentcrush/copydesk/.env',

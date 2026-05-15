@@ -52,6 +52,7 @@ if (MAX_ITEMS !== Infinity) console.log(`[bazaar-adapter] Capping at ${MAX_ITEMS
 // ── Env loading (write mode only) ─────────────────────────────────────────────
 
 const ENV_CANDIDATES = [
+  '/opt/agentcrush/scanner/.env',
   '/opt/agentcrush/selector/.env',
   '/opt/agentcrush/briefing/.env',
   '/opt/agentcrush/copydesk/.env',

@@ -56,6 +56,7 @@ if (MAX_ITEMS !== Infinity) console.log(`[a2a-crawler] Capping at ${MAX_ITEMS} i
 // ── Env loading ───────────────────────────────────────────────────────────────
 
 const ENV_CANDIDATES = [
+  '/opt/agentcrush/scanner/.env',
   '/opt/agentcrush/selector/.env',
   '/opt/agentcrush/briefing/.env',
   '/opt/agentcrush/copydesk/.env',

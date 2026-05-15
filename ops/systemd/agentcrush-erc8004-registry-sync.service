@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/agentcrush
+EnvironmentFile=-/opt/agentcrush/scanner/.env
 ExecStart=/usr/bin/flock --nonblock /run/agentcrush-erc8004-registry-sync.lock \
     /usr/bin/node /opt/agentcrush/runtime/erc8004-registry-sync.mjs --write
 StandardOutput=journal
