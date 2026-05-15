@@ -8,6 +8,7 @@ const STATIC_PAGES = [
   { path: '/rankings',     priority: 0.9, changeFrequency: 'daily'  },
   { path: '/rankings/model-families',  priority: 0.8, changeFrequency: 'daily'  },
   { path: '/rankings/tokenized-agents', priority: 0.8, changeFrequency: 'daily'  },
+  { path: '/rankings/service-agents',   priority: 0.8, changeFrequency: 'daily'  },
   { path: '/explore',      priority: 0.8, changeFrequency: 'daily'  },
   { path: '/categories',   priority: 0.8, changeFrequency: 'weekly' },
   { path: '/use-cases',    priority: 0.8, changeFrequency: 'weekly' },

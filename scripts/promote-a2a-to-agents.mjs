@@ -125,6 +125,7 @@ for (const a of qualifying) {
     bio: a.description || null,
     archetype: 'Builder',
     tier: 'indexed', // explicitly NOT a new tier per Kris — earn evidence_ranked normally
+    primary_category: 'service', // 2026-05-16: A2A protocol agents are services per category pivot
     github_url: a.repo_url,
     github_full_name: a.repo_full_name,
     github_repo_url: a.repo_url,
