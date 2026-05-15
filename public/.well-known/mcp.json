@@ -1,0 +1,24 @@
+{
+  "name": "AgentCrush",
+  "description": "AgentCrush is the evidence-ranked index of the AI agent economy — like CoinMarketCap or Bloomberg, but for AI agents. The MCP tools expose 4 category indices (model families, tokenized agents, service agents, developer agents) with transparent multi-signal methodology. Use these tools to discover agents, look up their full scoring breakdown, compare them, and explain to users HOW each ranking is computed.",
+  "version": "1.0.0",
+  "protocol": "MCP",
+  "protocolVersion": "2024-11-05",
+  "endpoint": "https://www.agentcrush.xyz/api/mcp/v1",
+  "manifest_url": "https://www.agentcrush.xyz/.well-known/mcp.json",
+  "docs": "https://www.agentcrush.xyz/developers/mcp",
+  "transports": ["http"],
+  "auth": "none",
+  "methods": ["POST"],
+  "tools": [
+    { "name": "search_agents",        "description": "Search AI agents by name or keyword with structured filters." },
+    { "name": "get_agent_details",    "description": "Full agent details including scores across all categories the agent qualifies for." },
+    { "name": "get_agent_history",    "description": "Daily rank + score snapshots over the past 1-90 days." },
+    { "name": "compare_agents",       "description": "Side-by-side comparison of 2-5 agents." },
+    { "name": "list_categories",      "description": "The 4 category indices with counts and methodology versions." },
+    { "name": "get_category_ranking", "description": "Full ranking for a specific category." },
+    { "name": "get_methodology",      "description": "Scoring methodology for a category — weights, signals, evidence-ready rule, limitations." }
+  ],
+  "rate_limit": "60 requests/minute per IP",
+  "maintainer": "kristof@patyi.co"
+}
