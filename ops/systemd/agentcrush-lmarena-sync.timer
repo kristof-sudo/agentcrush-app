@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush LMArena leaderboard daily sync — 04:45 Budapest local
+
+[Timer]
+OnCalendar=*-*-* 04:45:00
+Persistent=false
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

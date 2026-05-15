@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush LMArena leaderboard daily mirror
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=-/opt/agentcrush/scanner/.env
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-lmarena-sync.lock \
+    /usr/bin/node /opt/agentcrush/runtime/lmarena-adapter.mjs --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-lmarena-sync

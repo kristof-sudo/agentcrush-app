@@ -249,6 +249,67 @@ the model_family category.
 Scheduled by `ops/systemd/agentcrush-hf-models-sync.{service,timer}` —
 daily 04:30 Budapest (between A2A 04:00 and Virtuals 05:00).
 
+## lmarena-adapter.mjs
+
+Daily mirror of the canonical LMArena (Chatbot Arena) Bradley-Terry
+leaderboard. Step (c.1) of the Category Index Pivot — the
+highest-leverage source signal for the `model_family` agent category,
+feeding the `lmarena_score` column in `agent_score_model_family_v1`.
+
+Source: HuggingFace dataset `lmarena-ai/leaderboard-dataset`,
+config=`text`, split=`latest`. We pull rows via
+`https://datasets-server.huggingface.co/rows` (anonymous, no auth).
+The latest split currently has ~8.8k rows across all categories
+(overall, hard, coding, vision, style_control, etc.). We collapse on
+normalized `model_name` so each model is one row; the "overall"
+category drives `arena_score`/`arena_rank`/`votes`, and the per-category
+sub-rankings are stored verbatim in `category_ranks` JSONB.
+
+Normalization: model_name is lowercased, trimmed, and trailing date
+stamps (`-YYYY-MM-DD`, `_YYYYMMDD`, etc.) are stripped so that
+"GPT-4o-2024-08-06" canonicalizes to a stable key for joins.
+
+Usage:
+```
+node runtime/lmarena-adapter.mjs --dry-run            # fetch + summary
+node runtime/lmarena-adapter.mjs --write              # upsert into Supabase
+node runtime/lmarena-adapter.mjs --dry-run --max 500  # cap rows fetched
+```
+
+Table `lmarena_models` columns: `model_name` (PK, normalized),
+`display_name`, `organization`, `arena_score` (BT rating, ~700..1500),
+`arena_rank`, `votes`, `license`, `model_url`, `category_ranks` (jsonb),
+`leaderboard_publish_date`, `raw_payload` (jsonb), `payload_hash`,
+`first_seen_at`, `last_seen_at`, `removed_at`.
+Indexed on `arena_score DESC`, `arena_rank ASC`, `organization`,
+`votes DESC`, `last_seen_at DESC`, `payload_hash`.
+
+Soft-remove: rows present in DB but missing from this fetch get
+`removed_at` set; reappearance clears it.
+
+No scoring impact in v0. The adapter only mirrors LMArena into
+`lmarena_models` — it does NOT auto-promote rows into the `agents`
+table, nor does it write into `agent_score_model_family_v1`.
+
+### Future-step linkage plan (separate migration)
+
+A future migration will plumb `lmarena_score` into
+`agent_score_model_family_v1` by:
+
+1. Adding `agents.lmarena_model_keys` (`text[]`) — list of normalized
+   LMArena `model_name` keys that map to this agent.
+2. Updating the view's `lmarena_score` column to compute
+   `LEAST(100, ROUND((MAX(arena_score) - 700) / 8))` aggregated across
+   the listed keys (maps the ~700-1500 BT range to 0-100).
+3. Backfilling the 3 model_family seed agents with their LMArena keys.
+
+Once step 1 ships, `evidence_ready_for_public_rank` will flip to
+`true` for any model_family agent with at least one linked LMArena
+key — unblocking the public rank for that slice of the category.
+
+Scheduled by `ops/systemd/agentcrush-lmarena-sync.{service,timer}` —
+daily 04:45 Budapest (between HF 04:30 and Virtuals 05:00).
+
 ## Not versioned here
 - .env files
 - node_modules
