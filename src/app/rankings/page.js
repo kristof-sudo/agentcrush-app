@@ -215,6 +215,34 @@ export default async function RankingsPage({ searchParams }) {
         </p>
       </div>
 
+      {/* Per-category indices — Category Index Pivot (2026-05-15) */}
+      <div className="mb-4 rounded-lg border border-white/[0.08] bg-[#0a0a14] px-4 py-3">
+        <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/40 mb-2">
+          ◆ Per-category indices
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-[11px] text-white/80">
+            <span>Developer</span>
+            <span className="text-[9px] uppercase tracking-wider text-[#00d4ff]">this page</span>
+          </span>
+          <Link
+            href="/rankings/model-families"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[rgba(233,30,128,0.30)] bg-[rgba(233,30,128,0.06)] px-2.5 py-1 font-mono text-[11px] text-white/85 hover:bg-[rgba(233,30,128,0.12)] hover:border-[rgba(233,30,128,0.50)] transition-colors"
+          >
+            <span>Model Families</span>
+            <span className="text-[9px] uppercase tracking-wider text-[#e91e80]">live →</span>
+          </Link>
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 font-mono text-[11px] text-white/40">
+            <span>Tokenized</span>
+            <span className="text-[9px] uppercase tracking-wider text-white/30">coming</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 font-mono text-[11px] text-white/40">
+            <span>Service</span>
+            <span className="text-[9px] uppercase tracking-wider text-white/30">coming</span>
+          </span>
+        </div>
+      </div>
+
       {/* Evidence explanation */}
       <div className="mb-4 rounded-lg border border-[rgba(57,255,20,0.15)] bg-[rgba(57,255,20,0.04)] px-4 py-3 font-mono text-[11px] text-white/50 leading-relaxed">
         These rankings include only agents with enough public evidence to score reliably. Signals include GitHub activity, package usage, dependency adoption, docs quality, ecosystem relationships, and public discourse. The list grows automatically as indexed agents accumulate evidence.{' '}

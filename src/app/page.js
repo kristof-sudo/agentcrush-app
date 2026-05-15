@@ -767,9 +767,15 @@ export default async function Home() {
                       <span className="font-mono text-[10px] font-bold text-[#e91e80]">◆</span>
                       <span className="font-mono text-xs font-bold text-white tracking-wide">RISING NOW</span>
                     </div>
-                    <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
-                      All Rankings →
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href="/rankings/model-families" className="font-mono text-[10px] text-[#e91e80]/70 hover:text-[#e91e80] transition-colors">
+                        Model Families →
+                      </Link>
+                      <span className="font-mono text-[10px] text-white/15">·</span>
+                      <Link href="/rankings" className="font-mono text-[10px] text-white/30 hover:text-white/55 transition-colors">
+                        All Rankings →
+                      </Link>
+                    </div>
                   </div>
                   <div className="px-3 pt-2 pb-3">
                     <SectorTabsAndTable rows={rankingRows} sectors={topSectors} />
