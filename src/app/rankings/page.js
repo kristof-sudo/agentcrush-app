@@ -232,10 +232,13 @@ export default async function RankingsPage({ searchParams }) {
             <span>Model Families</span>
             <span className="text-[9px] uppercase tracking-wider text-[#e91e80]">live →</span>
           </Link>
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 font-mono text-[11px] text-white/40">
+          <Link
+            href="/rankings/tokenized-agents"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[rgba(233,30,128,0.30)] bg-[rgba(233,30,128,0.06)] px-2.5 py-1 font-mono text-[11px] text-white/85 hover:bg-[rgba(233,30,128,0.12)] hover:border-[rgba(233,30,128,0.50)] transition-colors"
+          >
             <span>Tokenized</span>
-            <span className="text-[9px] uppercase tracking-wider text-white/30">coming</span>
-          </span>
+            <span className="text-[9px] uppercase tracking-wider text-[#e91e80]">live →</span>
+          </Link>
           <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 font-mono text-[11px] text-white/40">
             <span>Service</span>
             <span className="text-[9px] uppercase tracking-wider text-white/30">coming</span>
