@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush HuggingFace models daily mirror
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=-/opt/agentcrush/scanner/.env
+ExecStart=/usr/bin/flock --nonblock /run/agentcrush-hf-models-sync.lock \
+    /usr/bin/node /opt/agentcrush/runtime/hf-models-adapter.mjs --write
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentcrush-hf-models-sync

@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush HuggingFace models daily sync — 04:30 Budapest local
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+Persistent=false
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
