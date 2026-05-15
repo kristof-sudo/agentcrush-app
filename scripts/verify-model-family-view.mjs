@@ -25,7 +25,7 @@ const sb = createClient(url, key)
 const { data, error } = await sb
   .from('agent_score_model_family_v1')
   .select(
-    'handle, hf_score, lmarena_score, derivatives_score, model_family_score, signals_available_count, evidence_ready_for_public_rank, total_derivatives, lmarena_top_arena_score, methodology_version'
+    'handle, hf_score, lmarena_score, derivatives_score, citations_score, deployment_score, model_family_score, signals_available_count, evidence_ready_for_public_rank, total_derivatives, total_citations, total_deployments, lmarena_top_arena_score, methodology_version'
   )
   .order('model_family_score', { ascending: false })
 
@@ -38,11 +38,14 @@ console.log('Methodology:', data[0]?.methodology_version)
 console.log()
 for (const r of data) {
   console.log(
-    `${r.handle.padEnd(28)} HF=${String(r.hf_score).padStart(3)} ` +
+    `${r.handle.padEnd(28)} ` +
+      `HF=${String(r.hf_score).padStart(3)} ` +
       `LM=${String(r.lmarena_score ?? '—').padStart(3)} ` +
       `Der=${String(r.derivatives_score ?? '—').padStart(3)} ` +
-      `(total_der=${r.total_derivatives}, lm_bt=${r.lmarena_top_arena_score ?? '—'}) ` +
+      `Cit=${String(r.citations_score ?? '—').padStart(3)} ` +
+      `Dep=${String(r.deployment_score ?? '—').padStart(3)} ` +
       `→ composite=${r.model_family_score} signals=${r.signals_available_count} ` +
-      `${r.evidence_ready_for_public_rank ? '✅ EVIDENCE-READY' : '— not yet'}`
+      `${r.evidence_ready_for_public_rank ? '✅' : '—'}  ` +
+      `[der=${r.total_derivatives} cit=${r.total_citations} dep=${r.total_deployments} lm_bt=${r.lmarena_top_arena_score ?? '—'}]`
   )
 }
