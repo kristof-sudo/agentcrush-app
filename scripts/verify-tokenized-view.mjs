@@ -14,7 +14,7 @@ const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_
 
 const { data, error } = await sb
   .from('agent_score_tokenized_v1')
-  .select('handle, virtuals_ticker, market_cap_usd, liquidity_usd, market_cap_score, liquidity_volume_score, holders_basket_score, price_momentum_score, cross_protocol_score, social_score, tokenized_score, signals_available_count, evidence_ready_for_public_rank, methodology_version, primary_category, secondary_categories')
+  .select('handle, virtuals_ticker, market_cap_usd, liquidity_usd, tvl_usd, market_cap_score, liquidity_volume_score, holders_basket_score, price_momentum_score, tvl_score, social_score, tokenized_score, signals_available_count, evidence_ready_for_public_rank, methodology_version, primary_category, secondary_categories')
   .order('tokenized_score', { ascending: false })
 
 if (error) { console.error(error); process.exit(1) }
@@ -29,7 +29,7 @@ for (const r of data) {
     ` LV=${String(r.liquidity_volume_score ?? '—').padStart(3)}` +
     ` H=${String(r.holders_basket_score ?? '—').padStart(3)}` +
     ` Mo=${String(r.price_momentum_score ?? '—').padStart(3)}` +
-    ` XP=${String(r.cross_protocol_score ?? '—').padStart(3)}` +
+    ` TVL=${String(r.tvl_score ?? '—').padStart(3)}` +
     ` So=${String(r.social_score ?? '—').padStart(3)}` +
     ` → ${String(r.tokenized_score).padStart(3)}` +
     ` sigs=${r.signals_available_count}` +

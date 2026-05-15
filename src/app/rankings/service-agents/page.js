@@ -56,11 +56,11 @@ const SIGNAL_SOURCES = [
     fields: ['protocol_breadth_score'],
   },
   {
-    name: 'Cross-Protocol',
+    name: 'Forks',
     weight: 15,
-    status: 'live-v0',
-    note: 'Distinct service surfaces this agent appears on. v1.0 counts A2A + Agentverse. v1.1 adds ERC-8004 + Bazaar.',
-    fields: ['cross_protocol_score'],
+    status: 'live',
+    note: 'GitHub fork count, log-scaled. Forks measure active engagement (use/modify) vs passive starring. For service agents that expose code, this is a stronger adoption signal than stars.',
+    fields: ['forks_score'],
   },
   {
     name: 'Discourse / Social',
@@ -96,7 +96,7 @@ async function fetchData() {
   const supabase = supabaseAnon()
   const { data, error } = await supabase
     .from('agent_score_service_v1')
-    .select('agent_id, handle, display_name, github_full_name, agentverse_id, a2a_stars, a2a_signal_strength, a2a_last_pushed_at, av_interactions, av_rating, adoption_score, source_quality_score, activity_score, protocol_breadth_score, cross_protocol_score, social_score, service_score, rank_in_service, signals_available_count, evidence_ready_for_public_rank, methodology_version, primary_category, secondary_categories')
+    .select('agent_id, handle, display_name, github_full_name, agentverse_id, a2a_stars, a2a_forks, a2a_signal_strength, a2a_last_pushed_at, av_interactions, av_rating, adoption_score, source_quality_score, activity_score, protocol_breadth_score, forks_score, social_score, service_score, rank_in_service, signals_available_count, evidence_ready_for_public_rank, methodology_version, primary_category, secondary_categories')
     .order('rank_in_service', { ascending: true })
   if (error) {
     const { data: agents } = await supabase
@@ -107,9 +107,9 @@ async function fetchData() {
       rows: (agents || []).map(a => ({
         agent_id: a.id, handle: a.handle, display_name: a.display_name,
         github_full_name: a.github_full_name, agentverse_id: a.agentverse_id,
-        a2a_stars: null, av_interactions: null, av_rating: null,
+        a2a_stars: null, a2a_forks: null, av_interactions: null, av_rating: null,
         adoption_score: null, source_quality_score: null, activity_score: null,
-        protocol_breadth_score: null, cross_protocol_score: null, social_score: null,
+        protocol_breadth_score: null, forks_score: null, social_score: null,
         service_score: 0, rank_in_service: 0,
         signals_available_count: 0, evidence_ready_for_public_rank: false,
         methodology_version: 'v1.0-service-v0 (view pending)',
@@ -212,7 +212,7 @@ export default async function ServiceRankingsPage() {
               <span className="text-right" title="Source Quality">QUL</span>
               <span className="text-right" title="Activity">ACT</span>
               <span className="text-right" title="Protocol Breadth">PRO</span>
-              <span className="text-right" title="Cross-Protocol">XP</span>
+              <span className="text-right" title="Forks (engagement)">FRK</span>
               <span className="text-right" title="Social">SOC</span>
               <span className="text-right">Score</span>
             </div>
@@ -240,7 +240,7 @@ export default async function ServiceRankingsPage() {
                       )}
                     </div>
                     <div className="text-[11px] text-white/35 mt-0.5 truncate">
-                      {r.github_full_name && <span>GH: {r.github_full_name}{r.a2a_stars > 0 && <span className="text-white/25"> · {r.a2a_stars.toLocaleString()}★</span>}</span>}
+                      {r.github_full_name && <span>GH: {r.github_full_name}{r.a2a_stars > 0 && <span className="text-white/25"> · {r.a2a_stars.toLocaleString()}★</span>}{r.a2a_forks > 0 && <span className="text-white/25"> · {r.a2a_forks.toLocaleString()} forks</span>}</span>}
                       {r.agentverse_id && <span> · AV: {r.agentverse_id.slice(0, 14)}…</span>}
                       {r.av_interactions > 0 && <span> · {r.av_interactions} interactions</span>}
                     </div>
@@ -258,7 +258,7 @@ export default async function ServiceRankingsPage() {
                     {r.protocol_breadth_score != null ? r.protocol_breadth_score : <CoverageDot available={false} />}
                   </span>
                   <span className="text-xs font-mono tabular-nums w-10 text-right">
-                    {r.cross_protocol_score != null ? r.cross_protocol_score : <CoverageDot available={false} />}
+                    {r.forks_score != null ? r.forks_score : <CoverageDot available={false} />}
                   </span>
                   <span className="text-xs font-mono tabular-nums w-10 text-right">
                     {r.social_score != null ? r.social_score : <CoverageDot available={false} />}
@@ -274,23 +274,23 @@ export default async function ServiceRankingsPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-lg font-bold text-white mb-1">v1.1 roadmap</h2>
+        <h2 className="text-lg font-bold text-white mb-1">v1.2 roadmap</h2>
         <p className="text-sm text-white/45 mb-4">
-          What expands next. v1.0 covers A2A + Agentverse; v1.1 adds two more service surfaces.
+          v1.1 ships with concrete engagement signals (forks replaced the cross-protocol placeholder). v1.2 layers in cross-protocol presence + ecosystem reach.
         </p>
 
         <ol className="space-y-3 text-sm text-white/55">
           <li className="flex gap-3">
             <span className="font-mono text-xs text-violet-400/80 mt-0.5 w-12 shrink-0">+1</span>
-            <span><span className="text-white/85">ERC-8004 registry as service surface</span> — 29K on-chain Base agents. Token holders + activity become signals.</span>
+            <span><span className="text-white/85">Cross-protocol presence (activate)</span> — currently tracked in <code className="bg-white/[0.04] px-1 rounded">cross_protocol_presence</code> table but unweighted in composite. Will activate as service agents start appearing on multiple surfaces beyond their source.</span>
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs text-white/45 mt-0.5 w-12 shrink-0">+2</span>
-            <span><span className="text-white/85">Bazaar x402 endpoints as service surface</span> — 46K paid x402 services. Counts as cross-protocol presence; paid endpoint = adoption proof.</span>
+            <span><span className="text-white/85">ERC-8004 + Bazaar as service surfaces</span> — 29K on-chain Base agents + 46K x402 endpoints. Treats paid endpoint as adoption proof.</span>
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs text-white/45 mt-0.5 w-12 shrink-0">+3</span>
-            <span><span className="text-white/85">Discourse signal</span> — X + Farcaster mention volume for service agents.</span>
+            <span><span className="text-white/85">Contributor + commit-recency from GitHub</span> — deeper code-health signals beyond raw forks.</span>
           </li>
         </ol>
       </section>

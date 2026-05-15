@@ -14,7 +14,7 @@ const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_
 
 const { data, error } = await sb
   .from('agent_score_service_v1')
-  .select('handle, github_full_name, a2a_stars, a2a_signal_strength, av_interactions, adoption_score, source_quality_score, activity_score, protocol_breadth_score, cross_protocol_score, social_score, service_score, signals_available_count, evidence_ready_for_public_rank, methodology_version')
+  .select('handle, github_full_name, a2a_stars, a2a_forks, a2a_signal_strength, av_interactions, adoption_score, source_quality_score, activity_score, protocol_breadth_score, forks_score, social_score, service_score, signals_available_count, evidence_ready_for_public_rank, methodology_version')
   .order('service_score', { ascending: false })
   .limit(30)
 
@@ -28,7 +28,7 @@ for (const r of data) {
     ` Q=${String(r.source_quality_score ?? '—').padStart(3)}` +
     ` Act=${String(r.activity_score ?? '—').padStart(3)}` +
     ` Pro=${String(r.protocol_breadth_score ?? '—').padStart(3)}` +
-    ` XP=${String(r.cross_protocol_score ?? '—').padStart(3)}` +
+    ` FRK=${String(r.forks_score ?? '—').padStart(3)}` +
     ` So=${String(r.social_score ?? '—').padStart(3)}` +
     ` → ${String(r.service_score).padStart(3)}` +
     ` sig=${r.signals_available_count}` +

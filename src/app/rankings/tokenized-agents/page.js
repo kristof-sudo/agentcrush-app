@@ -56,11 +56,11 @@ const SIGNAL_SOURCES = [
     fields: ['price_momentum_score'],
   },
   {
-    name: 'Cross-Protocol',
+    name: 'TVL',
     weight: 15,
-    status: 'live-v0',
-    note: 'v1.0 proxy: bot_fetch_friendliness_score (x402/MCP/agent-card). v1.1: scan Bazaar/ERC-8004/Agentverse by name.',
-    fields: ['cross_protocol_score'],
+    status: 'live',
+    note: 'Total value locked in token contracts (governance/staking/LP). Log-scaled USD. Capital commitment beyond market cap or liquidity.',
+    fields: ['tvl_score'],
   },
   {
     name: 'Social Visibility',
@@ -104,7 +104,7 @@ async function fetchData() {
   const supabase = supabaseAnon()
   const { data, error } = await supabase
     .from('agent_score_tokenized_v1')
-    .select('agent_id, handle, display_name, virtuals_name, virtuals_ticker, token_address, market_cap_usd, liquidity_usd, volume_24h_usd, holders, top10_holder_pct, price_change_pct_24h, market_cap_score, liquidity_volume_score, holders_basket_score, price_momentum_score, cross_protocol_score, social_score, tokenized_score, rank_in_tokenized, signals_available_count, evidence_ready_for_public_rank, methodology_version, primary_category, secondary_categories')
+    .select('agent_id, handle, display_name, virtuals_name, virtuals_ticker, token_address, market_cap_usd, liquidity_usd, volume_24h_usd, tvl_usd, holders, top10_holder_pct, price_change_pct_24h, market_cap_score, liquidity_volume_score, holders_basket_score, price_momentum_score, tvl_score, social_score, tokenized_score, rank_in_tokenized, signals_available_count, evidence_ready_for_public_rank, methodology_version, primary_category, secondary_categories')
     .order('rank_in_tokenized', { ascending: true })
   if (error) {
     const { data: agents } = await supabase
@@ -117,7 +117,7 @@ async function fetchData() {
         virtuals_name: null, virtuals_ticker: null,
         market_cap_usd: null, liquidity_usd: null, volume_24h_usd: null, holders: null, top10_holder_pct: null,
         market_cap_score: null, liquidity_volume_score: null, holders_basket_score: null,
-        price_momentum_score: null, cross_protocol_score: null, social_score: null,
+        price_momentum_score: null, tvl_score: null, social_score: null,
         tokenized_score: 0, rank_in_tokenized: 0,
         signals_available_count: 0, evidence_ready_for_public_rank: false,
         methodology_version: 'v1.0-tokenized-v0 (view pending)',
@@ -220,7 +220,7 @@ export default async function TokenizedRankingsPage() {
               <span className="text-right" title="Liquidity + Volume">L+V</span>
               <span className="text-right" title="Holders">HLD</span>
               <span className="text-right" title="Momentum">MOM</span>
-              <span className="text-right" title="Cross-Protocol">XP</span>
+              <span className="text-right" title="TVL">TVL</span>
               <span className="text-right" title="Social">SOC</span>
               <span className="text-right">Score</span>
             </div>
@@ -255,7 +255,7 @@ export default async function TokenizedRankingsPage() {
                       )}
                     </div>
                     <div className="text-[11px] text-white/35 mt-0.5 truncate">
-                      MC {formatUsd(r.market_cap_usd)} · Liq {formatUsd(r.liquidity_usd)} · Vol {formatUsd(r.volume_24h_usd)}
+                      MC {formatUsd(r.market_cap_usd)} · Liq {formatUsd(r.liquidity_usd)} · TVL {formatUsd(r.tvl_usd)}
                       {r.holders ? <span className="text-white/25"> · {r.holders.toLocaleString()} holders</span> : null}
                       {r.top10_holder_pct != null ? <span className="text-white/25"> · top10 {r.top10_holder_pct}%</span> : null}
                     </div>
@@ -273,7 +273,7 @@ export default async function TokenizedRankingsPage() {
                     {r.price_momentum_score != null ? r.price_momentum_score : <CoverageDot available={false} />}
                   </span>
                   <span className="text-xs font-mono tabular-nums w-10 text-right">
-                    {r.cross_protocol_score != null ? r.cross_protocol_score : <CoverageDot available={false} />}
+                    {r.tvl_score != null ? r.tvl_score : <CoverageDot available={false} />}
                   </span>
                   <span className="text-xs font-mono tabular-nums w-10 text-right">
                     {r.social_score != null ? r.social_score : <CoverageDot available={false} />}
@@ -289,15 +289,15 @@ export default async function TokenizedRankingsPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-lg font-bold text-white mb-1">v1.1 roadmap</h2>
+        <h2 className="text-lg font-bold text-white mb-1">v1.2 roadmap</h2>
         <p className="text-sm text-white/45 mb-4">
-          Where the methodology evolves next. v1.0 proves the structure; v1.1 deepens cross-protocol and social.
+          What expands next. v1.1 ships with concrete economic signals (TVL replaced the cross-protocol placeholder). v1.2 layers in cross-protocol and social proper.
         </p>
 
         <ol className="space-y-3 text-sm text-white/55">
           <li className="flex gap-3">
             <span className="font-mono text-xs text-violet-400/80 mt-0.5 w-12 shrink-0">+1</span>
-            <span><span className="text-white/85">Cross-protocol upgrade</span> — full name + token-address scan across bazaar_resources, erc8004_registry, agentverse_agents, a2a_agents. Same moat pattern as model_family deployment signal.</span>
+            <span><span className="text-white/85">Cross-protocol presence (re-weighted)</span> — currently tracked in <code className="bg-white/[0.04] px-1 rounded">cross_protocol_presence</code> table but unweighted in composite. Will activate as more tokenized agents get referenced across Bazaar / ERC-8004 / Agentverse descriptions. Same moat pattern as model_family deployment.</span>
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs text-white/45 mt-0.5 w-12 shrink-0">+2</span>
