@@ -62,30 +62,39 @@ CREATE INDEX IF NOT EXISTS idx_agents_lmarena_model_keys_gin
 -- JOIN in the view returns NULL for missing keys. As soon as the adapter
 -- picks up new variants, they auto-link.
 
+-- Hermes: NO match in LMArena as of 2026-05-15. Nous's Hermes models aren't on
+-- the chat arena (likely because they're not conversational-instruction-tuned
+-- in the way arena tests). Hermes will need derivatives + citations to reach
+-- evidence-ready, NOT LMArena. Empty array.
 UPDATE public.agents
-   SET lmarena_model_keys = ARRAY[
-     'hermes-3-llama-3.1-405b',
-     'hermes-3-llama-3.1-70b',
-     'hermes-3-llama-3.1-8b',
-     'hermes-3-llama-3.2-3b'
-   ]
+   SET lmarena_model_keys = ARRAY[]::text[]
  WHERE handle = 'nousresearch_hermes_agent';
 
+-- DeepSeek: 8 variants present (v4-pro, v4-pro-thinking, v4-flash, r1-0528,
+-- v4-flash-thinking, v3.2-exp-thinking, v3.2, v3.2-exp) — keep current
+-- top-of-leaderboard variants. The view aggregates MAX across listed keys.
 UPDATE public.agents
    SET lmarena_model_keys = ARRAY[
-     'deepseek-v3',
+     'deepseek-v4-pro',
+     'deepseek-v4-pro-thinking',
+     'deepseek-v4-flash',
+     'deepseek-r1-0528',
+     'deepseek-v3.2',
+     'deepseek-v3.2-exp',
      'deepseek-r1',
-     'deepseek-v2.5',
-     'deepseek-coder-v2'
+     'deepseek-v3'
    ]
  WHERE handle = 'deepseek';
 
+-- Gemini: latest top variants are gemini-3.x — older 1.5/2.5 retained for completeness.
 UPDATE public.agents
    SET lmarena_model_keys = ARRAY[
+     'gemini-3.1-pro-preview',
+     'gemini-3-pro',
+     'gemini-3-flash',
+     'gemini-3.1-flash-lite-preview',
      'gemini-2.5-pro',
-     'gemini-2.5-flash',
-     'gemini-1.5-pro',
-     'gemini-1.5-flash'
+     'gemini-2.5-flash'
    ]
  WHERE handle = 'gemini';
 
