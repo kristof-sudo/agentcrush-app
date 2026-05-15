@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-05-15
+- `migrations/20260515_1200_add_agent_categories.sql` — Step (a) of the Category Index Pivot. Adds `agents.primary_category` (text, required, default 'developer', CHECK in 4 values), `agents.secondary_categories` (text[], max 1 entry, must differ from primary_category, same enum), `agents.socially_visible` (bool, default FALSE — metadata flag for tokenized agents with social/KOL footprint since Social/KOL is deferred as a standalone category). Backfill: re-maps `tier='virtuals_economic'` → `primary_category='tokenized', tier='indexed'`. Re-maps `tier='agentverse_service'` → `primary_category='service', tier='indexed'`. Seeds 3 known model_family agents (nousresearch_hermes_agent, deepseek, gemini); HF adapter (step b) will discover the rest. Sets socially_visible=TRUE on aixbt. Indexes on primary_category, secondary_categories (GIN), socially_visible. Idempotent. Tier system reverts to universal — old tier-as-category values (virtuals_economic, agentverse_service) remain in CHECK constraint for transitional safety but are now unused. Decision doc: `agentcrush-brain/Decisions/2026-05-14-category-index-pivot.md`.
+  **STATUS: Written — requires manual apply via Supabase dashboard.**
+
 ### 2026-05-14
 - `migrations/20260514_2100_update_evidence_ready_rule.sql` — Update `agent_score_v2_rank_comparison.evidence_ready_for_public_rank` rule. Adds third OR clause: `(github_score >= 90 OR package_usage_score >= 90 OR ecosystem_score >= 90) AND (count of signals > 50) >= 2`. Top-tier on any primary signal counts, provided multi-signal corroboration (prevents vanity-metric / signal-manipulation promotions). Kris-approved 2026-05-14 — canonicalizes the app-layer override that was previously in `src/app/rankings/page.js`.
   **STATUS: APPLIED 2026-05-14 by Kris via Supabase dashboard.**
