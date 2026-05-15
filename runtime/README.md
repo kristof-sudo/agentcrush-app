@@ -195,6 +195,60 @@ No scoring impact. Read-only ecosystem mirror.
 Scheduled by `ops/systemd/agentcrush-a2a-crawler.{service,timer}` —
 daily 04:00 Budapest.
 
+## hf-models-adapter.mjs
+
+Daily read-only mirror of the HuggingFace public model index
+(`https://huggingface.co/api/models?sort=downloads&direction=-1&full=true`).
+Fetches the top ~10k models by downloads, normalizes each entry, and
+upserts into the `hf_models` source table. Step (b) of the Category
+Index Pivot — source signal for the `model_family` agent category.
+
+Run:
+```
+# dry-run, small cap (no DB writes)
+node runtime/hf-models-adapter.mjs --dry-run --max 500
+
+# full production sync
+node runtime/hf-models-adapter.mjs --write
+
+# constrained sync (e.g. dev / smoke)
+node runtime/hf-models-adapter.mjs --write --max 2000
+```
+
+Flags: `--dry-run | --write`, `--max N` (default 10000),
+`--limit-pages N`. Pagination uses HF's `Link: <...>; rel="next"`
+cursor header. Pacing is 1 req/sec with exponential backoff on 429.
+
+Auth: optional `HF_TOKEN` env var (HuggingFace API token, not
+GitHub). Anonymous rate limit is ~30 req/hr; authenticated is
+5000 req/hr. **HF_TOKEN strongly recommended in production** — a
+full 100-page top-10k sync at 1 req/sec needs the authenticated
+quota.
+
+Table `hf_models` columns: `model_id` (PK, "owner/name"), `author`,
+`pipeline_tag`, `tags` (jsonb), `downloads`, `likes`, `library_name`,
+`gated`, `created_at_hf`, `last_modified_at`, `raw_payload` (jsonb),
+`payload_hash`, `first_seen_at`, `last_seen_at`, `removed_at`.
+Indexed on `downloads DESC`, `likes DESC`, `author`, `pipeline_tag`,
+`last_modified_at DESC`, `last_seen_at DESC`, `payload_hash`.
+
+Soft-remove: rows present in DB but missing from this fetch get
+`removed_at` set; reappearance clears it.
+
+No scoring impact. v0 does NOT promote HF rows into the `agents`
+table — that's a separate Kris-gated step. Planned promotion
+threshold for `primary_category='model_family'`:
+- `downloads > 100,000` (monthly active), AND
+- `author` matches a known model-family allowlist
+  (e.g. `NousResearch`, `meta-llama`, `mistralai`, `Qwen`,
+  `deepseek-ai`, `google` for Gemma, `01-ai`, `ai21labs`).
+
+This filter prevents fine-tunes / experimental forks from cluttering
+the model_family category.
+
+Scheduled by `ops/systemd/agentcrush-hf-models-sync.{service,timer}` —
+daily 04:30 Budapest (between A2A 04:00 and Virtuals 05:00).
+
 ## Not versioned here
 - .env files
 - node_modules
