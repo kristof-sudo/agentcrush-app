@@ -1,274 +1,279 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'MCP Server | AgentCrush Developers',
+  title: 'MCP Server v1 | AgentCrush Developers',
   description:
-    'AgentCrush MCP Server v0 — free, read-only AI agent market intelligence for AI clients and agents. Query rankings, search agents, compare, and retrieve history. No auth or payment required.',
+    'AgentCrush MCP Server v1 — read-only AI agent market intelligence across 4 category indices. 7 tools, JSON-RPC 2.0 over HTTP, free, no auth.',
+  alternates: { canonical: 'https://www.agentcrush.xyz/developers/mcp' },
 }
 
-const CURL_EXAMPLE = `curl -s https://www.agentcrush.xyz/api/mcp \\
+const ENDPOINT = 'https://www.agentcrush.xyz/api/mcp/v1'
+const WELL_KNOWN = 'https://www.agentcrush.xyz/.well-known/mcp.json'
+
+const CONFIG_EXAMPLE = `{
+  "mcpServers": {
+    "agentcrush": {
+      "url": "https://www.agentcrush.xyz/api/mcp/v1"
+    }
+  }
+}`
+
+const CURL_LIST = `curl -s https://www.agentcrush.xyz/api/mcp/v1 \\
   -H "Content-Type: application/json" \\
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \\
+  -X POST`
+
+const CURL_DETAILS = `curl -s https://www.agentcrush.xyz/api/mcp/v1 \\
+  -H "Content-Type: application/json" \\
+  -X POST \\
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
     "method": "tools/call",
     "params": {
-      "name": "lookup_agent",
-      "arguments": { "handle": "crewai" }
+      "name": "get_agent_details",
+      "arguments": { "handle": "qwen" }
     }
   }'`
 
-const EXAMPLE_RESPONSE = `{
-  "handle": "crewai",
-  "name": "CrewAI",
-  "tier": "evidence_ranked",
-  "rank": 23,
-  "scores": {
-    "total": 7820,
-    "visibility": 81,
-    "reputation": 62
-  },
-  "profile_url": "https://agentcrush.xyz/agent/crewai"
-}`
+const CURL_METHODOLOGY = `curl -s https://www.agentcrush.xyz/api/mcp/v1 \\
+  -H "Content-Type: application/json" \\
+  -X POST \\
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "get_methodology",
+      "arguments": { "category": "model_family" }
+    }
+  }'`
 
 const TOOLS = [
   {
-    name: 'lookup_agent',
-    description: 'Rank, score, tier, archetype, ERC-8004 status, and profile for a single agent.',
-    required: ['handle: string'],
-    optional: [],
-    args: '{ "handle": "crewai" }',
+    name: 'search_agents',
+    description: 'Search AI agents by name or keyword. Returns matching agents with category, tier, and rank info. Use the structured filters object for constraints — future versions can add filter keys without breaking the API.',
+    args: `{ "query": "qwen", "filters": { "primary_category": "model_family", "evidence_ranked_only": true, "limit": 10 } }`,
   },
   {
-    name: 'search_agents',
-    description: 'Search agents by name or keyword. Returns up to 20 results ordered by visibility score.',
-    required: ['query: string'],
-    optional: ['limit: number (1–20, default 10)'],
-    args: '{ "query": "agent", "limit": 10 }',
+    name: 'get_agent_details',
+    description: 'Full agent details including scores across ALL categories the agent qualifies for. Joins all 4 scoring views. Returns identity, raw signals, sub-scores, evidence-ready status.',
+    args: `{ "handle": "qwen" }`,
+  },
+  {
+    name: 'get_agent_history',
+    description: 'Daily rank + score snapshots over the past 1–90 days, with trend summary. Useful for showing how an agent\'s standing has evolved.',
+    args: `{ "handle": "crewai", "days": 30 }`,
   },
   {
     name: 'compare_agents',
-    description: 'Side-by-side rank, score, and archetype comparison for two agents, with a plain-text summary.',
-    required: ['handle_a: string', 'handle_b: string'],
-    optional: [],
-    args: '{ "handle_a": "crewai", "handle_b": "autogpt" }',
+    description: 'Side-by-side comparison of 2–5 agents across all their categories. Returns full per-agent scoring breakdowns.',
+    args: `{ "handles": ["qwen", "gemini", "llama"] }`,
   },
   {
-    name: 'get_history',
-    description: 'Daily rank and score snapshots (deduplicated per calendar day). Returns safe empty result if no history exists.',
-    required: ['handle: string'],
-    optional: ['days: number (1–90, default 30)'],
-    args: '{ "handle": "crewai", "days": 30 }',
+    name: 'list_categories',
+    description: 'The 4 AgentCrush category indices with tracked + evidence-ranked counts and methodology versions. Discover what kinds of agents AgentCrush tracks.',
+    args: `{}`,
+  },
+  {
+    name: 'get_category_ranking',
+    description: 'Full ranking for a specific category. Returns agents ordered by composite score with all sub-scores visible. Defaults to evidence-ranked only.',
+    args: `{ "category": "model_family", "evidence_ready_only": true, "limit": 50 }`,
+  },
+  {
+    name: 'get_methodology',
+    description: 'Scoring methodology for a category — weights, signal sources, formulas, evidence-ready rule, AND known limitations. Methodology travels with data so LLMs can answer "how does this ranking work?" accurately.',
+    args: `{ "category": "tokenized" }`,
   },
 ]
 
-const CONFIG_EXAMPLE = `{
-  "mcpServers": {
-    "agentcrush": {
-      "url": "https://www.agentcrush.xyz/api/mcp",
-      "transport": "http"
-    }
-  }
-}`
+const CATEGORIES = ['model_family', 'tokenized', 'service', 'developer']
 
 export default function McpDocsPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+    <main className="mx-auto max-w-3xl px-4 py-12 md:px-6 text-white">
+
+      <p className="text-xs font-mono text-white/25 mb-6">
+        <Link href="/developers" className="hover:text-white/50 transition-colors">Developers</Link>
+        <span className="mx-2 text-white/15">/</span>
+        MCP Server
+      </p>
 
       {/* Header */}
       <div className="mb-10">
         <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">
-          Developers · MCP
+          MCP Server · v1
         </p>
-        <h1 className="text-3xl font-bold text-white tracking-tight">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
           AgentCrush MCP Server
         </h1>
-        <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
-          v0 · Read-only · Free · No auth required
-        </p>
-        <p className="mt-3 text-sm text-white/60 max-w-xl leading-relaxed">
-          AgentCrush is market intelligence for the agent economy — an evidence-ranked index of AI agents,
-          frameworks, and agent-facing services. This MCP server exposes that index as tools so any
-          MCP-compatible AI client or agent can query it directly.
+        <p className="text-base text-white/60 max-w-2xl leading-relaxed">
+          Connect AgentCrush as a live data layer in any MCP-compatible LLM client (Claude Desktop, Cursor, custom agents). 7 read-only tools spanning the 4 category indices: model families, tokenized agents, service agents, developer agents.
         </p>
       </div>
 
-      {/* Disclaimer */}
-      <div className="mb-10 rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
-        <p className="text-xs text-amber-400/80 leading-relaxed">
-          <span className="font-semibold text-amber-400">Informational only.</span>{' '}
-          AgentCrush market intelligence is for research and discovery purposes.
-          Do not use for financial decisions. Rankings are deterministic signals,
-          not investment advice.
-        </p>
-      </div>
-
-      {/* Free & open */}
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold text-white mb-4">Free &amp; open in v0</h2>
-        <ul className="space-y-2 text-sm text-white/55">
-          <li className="flex gap-2"><span className="text-green-400 mt-0.5">✓</span><span>No payment required — MCP calls are free in v0</span></li>
-          <li className="flex gap-2"><span className="text-green-400 mt-0.5">✓</span><span>No API key, no registration, no auth header</span></li>
-          <li className="flex gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Read-only — all 4 tools are queries, no write actions exist</span></li>
-          <li className="flex gap-2"><span className="text-green-400 mt-0.5">✓</span><span>CORS open — accessible from browsers and agent runtimes</span></li>
-        </ul>
-      </section>
-
-      {/* MCP vs x402 */}
-      <section className="mb-10 rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-4">
-        <h2 className="text-sm font-semibold text-white mb-2">MCP vs x402 APIs — two separate channels</h2>
-        <p className="text-xs text-white/45 leading-relaxed mb-3">
-          AgentCrush has two machine-readable interfaces. They serve different use cases and are independently priced:
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="rounded border border-violet-500/20 bg-violet-500/[0.04] px-3 py-3">
-            <p className="font-semibold text-violet-300 mb-1">MCP server (this page)</p>
-            <p className="text-white/45 leading-relaxed">Free. No auth. Read-only tools for AI clients — lookup, search, compare, history.</p>
-          </div>
-          <div className="rounded border border-white/[0.08] px-3 py-3">
-            <p className="font-semibold text-white/60 mb-1">x402 REST APIs</p>
-            <p className="text-white/45 leading-relaxed mb-2">Pay-per-call via USDC on Base. No subscriptions.</p>
-            <ul className="text-white/35 space-y-0.5">
-              <li>trust-summary — $0.02 / call</li>
-              <li>history — $0.02 / call</li>
-              <li>verification-status — $0.005 / call</li>
-            </ul>
-            <Link href="/api-docs" className="text-violet-400 hover:text-violet-300 transition-colors mt-2 inline-block">x402 API docs →</Link>
-          </div>
+      {/* Quick facts */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+        <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2.5">
+          <p className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-1">Protocol</p>
+          <p className="text-sm font-semibold text-white">MCP 2024-11-05</p>
         </div>
-      </section>
+        <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2.5">
+          <p className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-1">Transport</p>
+          <p className="text-sm font-semibold text-white">HTTP POST</p>
+        </div>
+        <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2.5">
+          <p className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-1">Auth</p>
+          <p className="text-sm font-semibold text-emerald-400">None</p>
+        </div>
+        <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2.5">
+          <p className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-1">Rate limit</p>
+          <p className="text-sm font-semibold text-white">60/min · IP</p>
+        </div>
+      </div>
 
       {/* Endpoint */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-white mb-4">Endpoint</h2>
-        <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-3 font-mono text-sm text-violet-300">
-          POST https://www.agentcrush.xyz/api/mcp
+        <h2 className="text-xl font-bold mb-3">Endpoint</h2>
+        <div className="rounded-lg border border-white/[0.08] bg-[#0a0a14] px-4 py-3 mb-3 font-mono text-xs">
+          <span className="text-violet-400">POST</span> <span className="text-white">{ENDPOINT}</span>
         </div>
-        <p className="mt-2 text-xs text-white/40">
-          MCP JSON-RPC 2.0 · Protocol version 2024-11-05 · Streamable HTTP transport
-        </p>
-        <p className="mt-1 text-xs text-white/30">
-          GET returns server info and tool manifest.
+        <p className="text-xs text-white/45">
+          Discovery manifest:{' '}
+          <Link href="/.well-known/mcp.json" className="font-mono text-violet-300 hover:text-violet-200 underline underline-offset-2">{WELL_KNOWN}</Link>
         </p>
       </section>
 
-      {/* Client config */}
+      {/* Claude Desktop config */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-white mb-4">Client configuration</h2>
-        <p className="text-sm text-white/50 mb-3">
-          Add to your MCP client config (e.g. Claude Desktop, Cursor, or any MCP-compatible host):
+        <h2 className="text-xl font-bold mb-2">Connect to Claude Desktop</h2>
+        <p className="text-sm text-white/55 leading-relaxed mb-3">
+          Add this to your <code className="bg-white/[0.05] px-1.5 py-0.5 rounded text-violet-300">claude_desktop_config.json</code>{' '}
+          (macOS: <code className="bg-white/[0.05] px-1.5 py-0.5 rounded text-white/70">~/Library/Application Support/Claude/claude_desktop_config.json</code>).
         </p>
-        <pre className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-xs text-white/70 overflow-x-auto whitespace-pre-wrap">
-          {CONFIG_EXAMPLE}
+        <pre className="overflow-x-auto rounded-lg border border-white/[0.08] bg-[#0a0a14] px-4 py-3 text-xs font-mono text-white/80">
+{CONFIG_EXAMPLE}
         </pre>
-      </section>
-
-      {/* Quick test */}
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold text-white mb-2">Quick test</h2>
-        <p className="text-sm text-white/50 mb-3">
-          Full JSON-RPC 2.0 call — run this directly in your terminal:
+        <p className="text-xs text-white/45 mt-2">
+          Restart Claude Desktop. The 7 AgentCrush tools appear in the available tool list. Same config format works in Cursor and other MCP clients.
         </p>
-        <pre className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-xs text-white/70 overflow-x-auto whitespace-pre-wrap">
-          {CURL_EXAMPLE}
-        </pre>
-        <p className="mt-3 text-xs text-white/35 mb-2">Example response (abbreviated):</p>
-        <pre className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-4 text-xs text-white/50 overflow-x-auto whitespace-pre-wrap">
-          {EXAMPLE_RESPONSE}
-        </pre>
       </section>
 
       {/* Tools */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-white mb-1">Available tools</h2>
-        <p className="text-xs text-white/35 mb-5">
-          4 read-only tools · pass as <code className="text-violet-300 bg-white/[0.05] px-1 rounded">params</code> in a{' '}
-          <code className="text-violet-300 bg-white/[0.05] px-1 rounded">tools/call</code> JSON-RPC request
-        </p>
-        <div className="space-y-4">
-          {TOOLS.map((tool) => (
-            <div
-              key={tool.name}
-              className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-4"
-            >
-              <code className="text-sm font-semibold text-violet-300">{tool.name}</code>
-              <p className="text-xs text-white/50 mt-1 mb-3">{tool.description}</p>
-              <div className="text-xs text-white/35 mb-3 space-y-0.5">
-                {tool.required.map((f) => (
-                  <div key={f}><span className="text-white/20">required</span> {f}</div>
-                ))}
-                {tool.optional.map((f) => (
-                  <div key={f}><span className="text-white/20">optional</span> {f}</div>
-                ))}
+        <h2 className="text-xl font-bold mb-4">Tools (7)</h2>
+        <div className="space-y-3">
+          {TOOLS.map((t) => (
+            <div key={t.name} className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-3">
+              <div className="flex items-baseline gap-2 mb-1.5">
+                <code className="text-sm font-mono font-semibold text-violet-300">{t.name}</code>
               </div>
-              <p className="text-xs text-white/25 mb-1">arguments:</p>
-              <pre className="text-xs text-white/45 font-mono bg-white/[0.03] rounded px-3 py-2 overflow-x-auto">
-                {tool.args}
+              <p className="text-xs text-white/55 leading-relaxed mb-2">{t.description}</p>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-1">Example arguments</p>
+              <pre className="overflow-x-auto rounded bg-[#0a0a14] px-3 py-2 text-[11px] font-mono text-white/75">
+{t.args}
               </pre>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Protocol notes */}
+      {/* Categories */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-white mb-4">Protocol notes</h2>
-        <ul className="space-y-2 text-sm text-white/50">
-          <li className="flex gap-2">
-            <span className="text-violet-400 mt-0.5">·</span>
-            <span>
-              <code className="text-violet-300 bg-white/[0.05] px-1 rounded text-xs">POST /api/mcp</code>{' '}
-              accepts MCP JSON-RPC 2.0 — supports <code className="text-violet-300 bg-white/[0.05] px-1 rounded text-xs">initialize</code>,{' '}
-              <code className="text-violet-300 bg-white/[0.05] px-1 rounded text-xs">tools/list</code>,{' '}
-              <code className="text-violet-300 bg-white/[0.05] px-1 rounded text-xs">tools/call</code>
-            </span>
+        <h2 className="text-xl font-bold mb-3">Categories</h2>
+        <p className="text-sm text-white/55 leading-relaxed mb-3">
+          The <code className="bg-white/[0.05] px-1.5 py-0.5 rounded text-violet-300">category</code> argument accepts one of:
+        </p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {CATEGORIES.map((c) => (
+            <code key={c} className="text-xs font-mono bg-white/[0.04] border border-white/[0.08] rounded px-2 py-1 text-white/80">{c}</code>
+          ))}
+        </div>
+        <p className="text-xs text-white/45">
+          Each category has its own methodology version (model_family v1.4-with-deployment, tokenized v1.1-tokenized-tvl, service v1.1-service-forks, developer v2.c-public). Call <code className="text-violet-300">get_methodology(category)</code> to retrieve weights, signals, evidence-ready rule, and limitations.
+        </p>
+      </section>
+
+      {/* curl examples */}
+      <section className="mb-10">
+        <h2 className="text-xl font-bold mb-4">curl examples</h2>
+
+        <div className="mb-5">
+          <p className="text-xs font-mono uppercase tracking-wider text-white/40 mb-2">List all tools (introspection)</p>
+          <pre className="overflow-x-auto rounded-lg border border-white/[0.08] bg-[#0a0a14] px-4 py-3 text-xs font-mono text-white/80">
+{CURL_LIST}
+          </pre>
+        </div>
+
+        <div className="mb-5">
+          <p className="text-xs font-mono uppercase tracking-wider text-white/40 mb-2">Get full agent details (cross-category scores)</p>
+          <pre className="overflow-x-auto rounded-lg border border-white/[0.08] bg-[#0a0a14] px-4 py-3 text-xs font-mono text-white/80">
+{CURL_DETAILS}
+          </pre>
+        </div>
+
+        <div className="mb-5">
+          <p className="text-xs font-mono uppercase tracking-wider text-white/40 mb-2">Get methodology for a category (weights + limitations)</p>
+          <pre className="overflow-x-auto rounded-lg border border-white/[0.08] bg-[#0a0a14] px-4 py-3 text-xs font-mono text-white/80">
+{CURL_METHODOLOGY}
+          </pre>
+        </div>
+      </section>
+
+      {/* Behaviors */}
+      <section className="mb-10">
+        <h2 className="text-xl font-bold mb-3">Behaviors</h2>
+        <ul className="space-y-3 text-sm text-white/55 list-disc list-outside pl-5">
+          <li>
+            <span className="text-white/80">Fuzzy-match on not-found.</span> If <code className="text-violet-300">get_agent_details(handle: &quot;qwn&quot;)</code> can&apos;t find the agent, the response includes a <code className="text-violet-300">suggestions</code> array of similar handles. LLMs use this to avoid hallucinating &quot;agent doesn&apos;t exist.&quot;
           </li>
-          <li className="flex gap-2">
-            <span className="text-violet-400 mt-0.5">·</span>
-            <span>
-              <code className="text-violet-300 bg-white/[0.05] px-1 rounded text-xs">GET /api/mcp</code>{' '}
-              returns server info and tool manifest (no JSON-RPC wrapper needed)
-            </span>
+          <li>
+            <span className="text-white/80">Cache-Control headers.</span> Methodology endpoints cache 1h; ranking endpoints 5min; history 3min; search 1min. Stale-while-revalidate respected.
           </li>
-          <li className="flex gap-2">
-            <span className="text-violet-400 mt-0.5">·</span>
-            <span>Inputs validated server-side — handles allow only <code className="text-violet-300 bg-white/[0.05] px-1 rounded text-xs">[a-zA-Z0-9_-]</code>, search queries stripped of SQL wildcards, limits clamped</span>
+          <li>
+            <span className="text-white/80">Standard JSON-RPC error codes.</span> -32700 parse, -32600 invalid request, -32601 unknown method, -32603 internal, -32029 rate-limit exceeded.
+          </li>
+          <li>
+            <span className="text-white/80">Structured filters.</span> <code className="text-violet-300">search_agents</code> takes <code className="text-violet-300">filters: &#123;...&#125;</code> as an object — new filter keys (date ranges, score thresholds) can be added without breaking existing callers.
+          </li>
+          <li>
+            <span className="text-white/80">v0 still alive.</span> Legacy endpoint <code className="text-violet-300">/api/mcp</code> (4 tools, no category awareness) remains live for backward compatibility. Migrate to <code className="text-violet-300">/api/mcp/v1</code> for the full 7-tool surface.
           </li>
         </ul>
       </section>
 
-      {/* Related */}
-      <section className="mb-10 pt-6 border-t border-white/[0.06]">
-        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-widest mb-4">
-          Related
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/api-docs"
-            className="text-xs text-white/40 hover:text-white/70 border border-white/[0.08] rounded px-3 py-1.5 transition-colors"
-          >
-            x402 API docs →
-          </Link>
-          <Link
-            href="/agent-economy-index"
-            className="text-xs text-white/40 hover:text-white/70 border border-white/[0.08] rounded px-3 py-1.5 transition-colors"
-          >
-            Agent Economy Index →
-          </Link>
-          <Link
-            href="/rankings"
-            className="text-xs text-white/40 hover:text-white/70 border border-white/[0.08] rounded px-3 py-1.5 transition-colors"
-          >
-            Rankings →
-          </Link>
-          <Link
-            href="/explore"
-            className="text-xs text-white/40 hover:text-white/70 border border-white/[0.08] rounded px-3 py-1.5 transition-colors"
-          >
-            Explore agents →
-          </Link>
-        </div>
+      {/* Rate limiting */}
+      <section className="mb-10">
+        <h2 className="text-xl font-bold mb-3">Rate limits</h2>
+        <p className="text-sm text-white/55 leading-relaxed mb-3">
+          60 requests per minute per IP. Every response includes:
+        </p>
+        <ul className="space-y-1 text-xs text-white/55 font-mono list-disc list-outside pl-5">
+          <li><span className="text-violet-300">X-RateLimit-Limit</span> — always 60</li>
+          <li><span className="text-violet-300">X-RateLimit-Remaining</span> — remaining requests this window</li>
+          <li><span className="text-violet-300">X-RateLimit-Reset</span> — seconds until window resets</li>
+        </ul>
+        <p className="text-xs text-white/40 mt-3">
+          Need a higher rate limit for a production agent? Email <a href="mailto:contact@agentcrush.xyz" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">contact@agentcrush.xyz</a>.
+        </p>
       </section>
+
+      {/* Methodology */}
+      <section className="mb-10 rounded-xl border border-violet-400/20 bg-violet-400/[0.04] px-5 py-4">
+        <h2 className="text-base font-bold mb-1">Methodology travels with data</h2>
+        <p className="text-sm text-white/65 leading-relaxed">
+          When an LLM uses AgentCrush data and a user asks &quot;how does this ranking work?&quot;, the LLM can call <code className="bg-white/[0.05] px-1.5 py-0.5 rounded text-violet-300">get_methodology(category)</code> and answer accurately — weights, signal sources, evidence-ready rule, known limitations. We document our methodology because if it&apos;s not auditable, it&apos;s not a methodology.
+        </p>
+        <Link href="/methodology" className="inline-flex items-center gap-1 mt-3 text-xs font-mono text-violet-300 hover:text-violet-200 transition-colors">
+          Full methodology hub →
+        </Link>
+      </section>
+
+      <div className="border-t border-white/[0.06] pt-6 flex flex-wrap gap-4 text-xs text-white/35">
+        <Link href="/developers" className="hover:text-white/70 transition-colors">All developer docs →</Link>
+        <Link href="/methodology" className="hover:text-white/70 transition-colors">Methodology →</Link>
+        <Link href="/rankings" className="hover:text-white/70 transition-colors">Rankings →</Link>
+      </div>
 
     </main>
   )

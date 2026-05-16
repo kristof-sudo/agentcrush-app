@@ -125,8 +125,31 @@ export default async function ServiceRankingsPage() {
   const evidenceReadyCount = rows.filter(r => r.evidence_ready_for_public_rank).length
   const trackedCount = rows.length
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'AgentCrush Service Agent Rankings',
+    description: 'Callable service agents (A2A, Agentverse, x402, ERC-8004) ranked on adoption, source quality, activity, protocol breadth, forks, social. Methodology v1.1.',
+    url: 'https://www.agentcrush.xyz/rankings/service-agents',
+    numberOfItems: evidenceReadyCount,
+    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index' },
+    itemListElement: rows.filter(r => r.evidence_ready_for_public_rank).slice(0, 50).map((r) => ({
+      '@type': 'ListItem',
+      position: r.rank_in_service,
+      item: {
+        '@type': 'SoftwareApplication',
+        name: r.display_name || r.handle,
+        url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`,
+        applicationCategory: 'Service Agent',
+        aggregateRating: r.service_score > 0 ? { '@type': 'AggregateRating', ratingValue: (r.service_score / 10).toFixed(1), bestRating: 10, worstRating: 0, ratingCount: 1 } : undefined,
+      },
+    })),
+  }
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 md:px-6 text-white">
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <p className="text-xs font-mono text-white/25 mb-6">
         <Link href="/rankings" className="hover:text-white/50 transition-colors">Rankings</Link>

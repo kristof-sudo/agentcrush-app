@@ -1007,6 +1007,70 @@ export default async function AgentPage({ params }) {
       name: 'AgentCrush',
       url: 'https://agentcrush.xyz',
     },
+    // Category Index Pivot extensions (v1.4 methodology — May 2026)
+    // Surfaces per-category scoring + methodology for LLM retrieval.
+    ...(agent.primary_category ? {
+      category: agent.primary_category,
+      keywords: [
+        agent.primary_category,
+        ...(agent.secondary_categories || []),
+        agent.archetype,
+        agent.ecosystem_layer,
+        agent.framework_name,
+      ].filter(Boolean).join(', '),
+    } : {}),
+    additionalProperty: [
+      ...(agent.primary_category ? [{
+        '@type': 'PropertyValue',
+        name: 'agentcrush_primary_category',
+        value: agent.primary_category,
+      }] : []),
+      ...((agent.secondary_categories || []).length > 0 ? [{
+        '@type': 'PropertyValue',
+        name: 'agentcrush_secondary_categories',
+        value: agent.secondary_categories.join(','),
+      }] : []),
+      ...(agent.tier ? [{
+        '@type': 'PropertyValue',
+        name: 'agentcrush_tier',
+        value: agent.tier,
+      }] : []),
+      ...(agentCrushScore > 0 ? [{
+        '@type': 'PropertyValue',
+        name: 'agentcrush_score',
+        value: String(agentCrushScore),
+        maxValue: 100,
+        minValue: 0,
+      }] : []),
+      ...(ranking?.global_rank ? [{
+        '@type': 'PropertyValue',
+        name: 'agentcrush_global_rank',
+        value: String(ranking.global_rank),
+      }] : []),
+      ...(agent.identity_status === 'verified' ? [{
+        '@type': 'PropertyValue',
+        name: 'erc8004_registered',
+        value: 'true',
+      }] : []),
+      ...(agent.hf_author ? [{
+        '@type': 'PropertyValue',
+        name: 'huggingface_author',
+        value: agent.hf_author,
+      }] : []),
+      ...(agent.github_full_name ? [{
+        '@type': 'PropertyValue',
+        name: 'github_repo',
+        value: agent.github_full_name,
+      }] : []),
+    ],
+    isPartOf: {
+      '@type': 'Dataset',
+      '@id': 'https://www.agentcrush.xyz/methodology',
+      name: 'AgentCrush Evidence-Ranked Index',
+      description: 'Multi-signal agent reputation index across 4 category methodologies (model families, tokenized agents, service agents, developer agents).',
+      url: 'https://www.agentcrush.xyz/methodology',
+      creator: { '@type': 'Organization', name: 'AgentCrush' },
+    },
   }
 
   return (

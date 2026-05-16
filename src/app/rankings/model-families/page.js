@@ -132,8 +132,42 @@ export default async function ModelFamiliesRankingsPage() {
   const evidenceReadyCount = rows.filter(r => r.evidence_ready_for_public_rank).length
   const trackedCount = rows.length
 
+  // JSON-LD ItemList for LLM retrieval
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'AgentCrush Model Family Rankings',
+    description: 'Evidence-ranked model families scored on HuggingFace adoption, LMArena capability, HF derivatives, paper citations, and cross-protocol deployment. Methodology v1.4.',
+    url: 'https://www.agentcrush.xyz/rankings/model-families',
+    numberOfItems: evidenceReadyCount,
+    isPartOf: {
+      '@type': 'Dataset',
+      '@id': 'https://www.agentcrush.xyz/methodology',
+      name: 'AgentCrush Evidence-Ranked Index',
+    },
+    itemListElement: rows.filter(r => r.evidence_ready_for_public_rank).slice(0, 50).map((r) => ({
+      '@type': 'ListItem',
+      position: r.rank_in_model_family,
+      item: {
+        '@type': 'SoftwareApplication',
+        name: r.display_name || r.handle,
+        url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`,
+        applicationCategory: 'AI Model',
+        aggregateRating: r.model_family_score > 0 ? {
+          '@type': 'AggregateRating',
+          ratingValue: (r.model_family_score / 10).toFixed(1),
+          bestRating: 10,
+          worstRating: 0,
+          ratingCount: 1,
+        } : undefined,
+      },
+    })),
+  }
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 md:px-6 text-white">
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Breadcrumb */}
       <p className="text-xs font-mono text-white/25 mb-6">
