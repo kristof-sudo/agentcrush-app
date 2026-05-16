@@ -547,8 +547,60 @@ export default async function Home() {
 
   const indexedFreshness = getIndexedFreshnessMeta(recentAgents?.[0]?.created_at)
 
+  // Homepage JSON-LD: Organization + WebSite + Dataset
+  // LLM retrieval optimization — search-augmented LLMs use these schemas
+  // to understand site structure and surface AgentCrush in answers.
+  const homepageJsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      '@id': 'https://www.agentcrush.xyz#org',
+      name: 'AgentCrush',
+      url: 'https://www.agentcrush.xyz',
+      logo: 'https://www.agentcrush.xyz/agentcrush-logo.png',
+      description: 'Protocol-neutral market intelligence layer for the AI agent economy. Tracks AI agents across HuggingFace, LMArena, GitHub, on-chain registries (ERC-8004), tokenized agent protocols (Virtuals), service registries (Agentverse / A2A), and machine-payable endpoints (x402 / CDP Bazaar).',
+      slogan: 'Market intelligence for the agent economy',
+      sameAs: [
+        'https://x.com/agentcrush_xyz',
+        'https://warpcast.com/agentcrush',
+      ],
+      contactPoint: { '@type': 'ContactPoint', email: 'contact@agentcrush.xyz', contactType: 'customer service' },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      '@id': 'https://www.agentcrush.xyz#site',
+      url: 'https://www.agentcrush.xyz',
+      name: 'AgentCrush',
+      description: 'Evidence-ranked index of AI agents across 4 category methodologies (model families, tokenized, service, developer). Live MCP server + free JSON endpoints for LLM retrieval.',
+      publisher: { '@id': 'https://www.agentcrush.xyz#org' },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: 'https://www.agentcrush.xyz/rankings?q={search_term_string}',
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Dataset',
+      '@id': 'https://www.agentcrush.xyz/methodology',
+      name: 'AgentCrush Evidence-Ranked Index',
+      description: 'Multi-signal AI agent reputation index. 4 category methodologies with documented weights, formulas, evidence-ready rules, and limitations.',
+      url: 'https://www.agentcrush.xyz/methodology',
+      creator: { '@id': 'https://www.agentcrush.xyz#org' },
+      keywords: ['AI agents', 'agent economy', 'agent ranking', 'multi-signal scoring', 'MCP', 'x402', 'ERC-8004'],
+      isAccessibleForFree: true,
+      distribution: [
+        { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/api/agent-economy/llm-summary' },
+        { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/.well-known/mcp.json' },
+      ],
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-[#08080f] overflow-x-hidden" style={{backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '24px 24px'}}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd) }} />
+
       {/* Atmosphere overlays */}
       <div className="fixed inset-0 bg-gradient-to-b from-[#0c0c1a] via-[#08080f] to-[#0a0812] pointer-events-none" />
       <div className="fixed inset-0 pointer-events-none" style={{background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(236,72,153,0.06) 0%, transparent 60%)'}} />
