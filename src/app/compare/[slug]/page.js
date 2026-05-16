@@ -246,8 +246,28 @@ export default async function CompareSlugPage({ params }) {
   const maxDoc    = Math.max(agentA.doc_score || 0, agentB.doc_score || 0, 1)
   const maxHn     = Math.max(agentA.hn_score || 0, agentB.hn_score || 0, 1)
 
+  // JSON-LD for LLM retrieval
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: `${agentA.display_name || agentA.handle} vs ${agentB.display_name || agentB.handle}`,
+    description: `Side-by-side comparison of ${agentA.display_name || agentA.handle} and ${agentB.display_name || agentB.handle} across AgentCrush's public evidence signals. Activity, package usage, dependency adoption, docs quality, ecosystem links, discourse.`,
+    url: `https://www.agentcrush.xyz/compare/${slug}`,
+    dateModified: new Date().toISOString().slice(0, 10),
+    author: { '@type': 'Organization', name: 'AgentCrush' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://www.agentcrush.xyz/compare/${slug}` },
+    about: [
+      { '@type': 'SoftwareApplication', name: agentA.display_name || agentA.handle, url: `https://www.agentcrush.xyz/agent/${agentA.handle}` },
+      { '@type': 'SoftwareApplication', name: agentB.display_name || agentB.handle, url: `https://www.agentcrush.xyz/agent/${agentB.handle}` },
+    ],
+    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index' },
+  }
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 md:px-6 text-white">
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-5 flex-wrap">

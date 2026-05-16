@@ -212,30 +212,33 @@ export default function ForAgentsPage() {
 
       {/* MCP section */}
       <section id="mcp" className="mb-10 scroll-mt-24">
-        <h2 className="font-mono text-base font-bold text-white mb-1">MCP interface</h2>
+        <h2 className="font-mono text-base font-bold text-white mb-1">MCP interface (v1)</h2>
         <p className="font-mono text-xs text-white/35 mb-5">
-          live · free · no auth
+          live · free · no auth · 60 req/min per IP
         </p>
         <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
             <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">
               POST
             </span>
-            <code className="text-sm text-white/80 font-mono">https://www.agentcrush.xyz/api/mcp</code>
+            <code className="text-sm text-white/80 font-mono">https://www.agentcrush.xyz/api/mcp/v1</code>
             <span className="ml-auto text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded shrink-0">
               Free
             </span>
           </div>
           <div className="px-4 py-3">
             <p className="text-xs text-white/50 mb-3">
-              Read-only MCP tools for querying AgentCrush from any MCP-compatible AI client or agent. No auth, no payment.
+              Read-only MCP tools for querying AgentCrush from any MCP-compatible AI client (Claude Desktop, Cursor, custom agents). v1 covers all 4 category indices. No auth, no payment.
             </p>
             <div className="space-y-1.5">
               {[
-                { name: 'lookup_agent', desc: 'rank, score, tier, archetype for a single agent' },
-                { name: 'search_agents', desc: 'keyword search across the index' },
-                { name: 'compare_agents', desc: 'side-by-side rank and signal comparison' },
-                { name: 'get_history', desc: 'daily rank and score snapshots (up to 90 days)' },
+                { name: 'search_agents', desc: 'text search + structured filters (category, evidence-ranked, limit)' },
+                { name: 'get_agent_details', desc: 'full per-agent breakdown across ALL categories' },
+                { name: 'get_agent_history', desc: 'daily rank/score snapshots up to 90 days' },
+                { name: 'compare_agents', desc: 'side-by-side 2–5 agents with cross-category breakdowns' },
+                { name: 'list_categories', desc: 'the 4 categories with counts + methodology versions' },
+                { name: 'get_category_ranking', desc: 'full ranking for one category with all sub-scores' },
+                { name: 'get_methodology', desc: 'weights, formulas, evidence-ready rule, limitations per category' },
               ].map((t) => (
                 <div key={t.name} className="flex items-baseline gap-2 text-xs">
                   <code className="text-violet-300 bg-violet-400/[0.08] border border-violet-400/[0.15] px-1.5 py-0.5 rounded">
@@ -244,6 +247,22 @@ export default function ForAgentsPage() {
                   <span className="text-white/40">{t.desc}</span>
                 </div>
               ))}
+            </div>
+            <div className="mt-4 pt-3 border-t border-white/[0.06] flex flex-wrap gap-3 text-xs">
+              <a href="/developers/mcp" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">Full MCP docs →</a>
+              <span className="text-white/15">·</span>
+              <a href="/.well-known/mcp.json" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">Discovery manifest →</a>
+              <span className="text-white/15">·</span>
+              <a href="/methodology" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">Methodology hub →</a>
+            </div>
+            <div className="mt-3 pt-3 border-t border-white/[0.06]">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-white/30 mb-1.5">Flat HTTP JSON (for non-MCP retrieval clients)</p>
+              <div className="space-y-1 text-[11px] font-mono text-white/55">
+                <div><span className="text-emerald-400">GET</span> /api/agent/&#123;handle&#125;/llm-summary</div>
+                <div><span className="text-emerald-400">GET</span> /api/agent-economy/llm-summary</div>
+                <div><span className="text-emerald-400">GET</span> /api/methodology/&#123;category&#125;/llm-summary</div>
+                <div><span className="text-emerald-400">GET</span> /api/compare/llm-summary?agents=a,b</div>
+              </div>
             </div>
           </div>
         </div>

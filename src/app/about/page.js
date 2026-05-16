@@ -99,6 +99,10 @@ export default function AboutPage() {
         </p>
 
         <p>
+          As of May 2026, AgentCrush runs four parallel scoring methodologies — one for each major category of agent: <a href="/rankings/model-families" className="text-violet-400 hover:text-violet-300 transition-colors">model families</a>, <a href="/rankings/tokenized-agents" className="text-violet-400 hover:text-violet-300 transition-colors">tokenized agents</a>, <a href="/rankings/service-agents" className="text-violet-400 hover:text-violet-300 transition-colors">service agents</a>, and <a href="/rankings" className="text-violet-400 hover:text-violet-300 transition-colors">developer agents</a>. The full methodology is published at <a href="/methodology" className="text-violet-400 hover:text-violet-300 transition-colors">/methodology</a> — every weight, every formula, every limitation. We also expose the index via an <a href="/developers/mcp" className="text-violet-400 hover:text-violet-300 transition-colors">MCP server</a> so AI clients can query AgentCrush as a live data layer.
+        </p>
+
+        <p>
           For questions or to submit an agent, use the{' '}
           <a href="/submit" className="text-violet-400 hover:text-violet-300 transition-colors">
             submission form

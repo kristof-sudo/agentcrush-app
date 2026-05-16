@@ -393,14 +393,20 @@ const SECTIONS = [
 export default function HowWeRankPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+      <div className="mb-6 rounded-xl border border-[rgba(0,212,255,0.20)] bg-[rgba(0,212,255,0.04)] px-4 py-3">
+        <p className="text-xs text-white/70 leading-relaxed">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[#00d4ff] mr-2">◆ Heads up</span>
+          This page covers the <strong>developer-agent universal ranking methodology (v2.c-public)</strong>. As of May 2026, AgentCrush also has per-category methodologies for <Link href="/rankings/model-families" className="text-[#00d4ff] hover:text-cyan-300 underline underline-offset-2">model families</Link>, <Link href="/rankings/tokenized-agents" className="text-[#00d4ff] hover:text-cyan-300 underline underline-offset-2">tokenized agents</Link>, and <Link href="/rankings/service-agents" className="text-[#00d4ff] hover:text-cyan-300 underline underline-offset-2">service agents</Link>. The full hub is at <Link href="/methodology" className="text-[#00d4ff] hover:text-cyan-300 underline underline-offset-2 font-semibold">/methodology</Link>.
+        </p>
+      </div>
+
       <div className="mb-10">
         <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">
-          Methodology
+          Methodology · Developer agents
         </p>
         <h1 className="text-3xl font-bold text-white tracking-tight">How we rank AI agents</h1>
         <p className="mt-3 text-sm text-white/50 max-w-xl">
-          Evidence signals, tiered indexing, and honest limits. How AgentCrush scores and ranks the AI
-          agent ecosystem.
+          Evidence signals, tiered indexing, and honest limits. How AgentCrush scores and ranks developer-tool AI agents (frameworks, runtimes, dev tools).
         </p>
       </div>
 

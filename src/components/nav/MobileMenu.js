@@ -6,6 +6,7 @@ import SearchBox from '@/components/nav/SearchBox'
 
 const NAV_LINKS = [
   { href: '/rankings', label: 'Rankings' },
+  { href: '/methodology', label: 'Methodology' },
   { href: '/use-cases', label: 'Use Cases' },
   { href: '/categories', label: 'Categories' },
   { href: '/developers', label: 'Developers' },

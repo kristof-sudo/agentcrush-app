@@ -675,6 +675,35 @@ export default async function Home() {
           </div>
         )}
 
+        {/* ── METHODOLOGY v1.4 STRIP (2026-05-16 launch) ───────────────────── */}
+        <div className="border-b border-[rgba(0,212,255,0.12)] bg-[rgba(0,212,255,0.03)] py-4 md:py-5">
+          <Container>
+            <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6">
+              <div className="flex items-baseline gap-2.5 flex-wrap">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-[#00d4ff]">
+                  ◆ Methodology v1.4 LIVE
+                </span>
+                <span className="text-sm text-white/75">
+                  4 category indices · {evidenceRankedCount || 135} evidence-ranked · MCP v1 server
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <Link href="/methodology" className="font-mono text-[#00d4ff]/85 hover:text-[#00d4ff] transition-colors">
+                  Methodology →
+                </Link>
+                <span className="text-white/15">·</span>
+                <Link href="/labs/findings/methodology-v1-launch" className="font-mono text-white/45 hover:text-white/70 transition-colors">
+                  Findings →
+                </Link>
+                <span className="text-white/15">·</span>
+                <Link href="/developers/mcp" className="font-mono text-white/45 hover:text-white/70 transition-colors">
+                  MCP →
+                </Link>
+              </div>
+            </div>
+          </Container>
+        </div>
+
         {/* ── MAIN CONTENT ─────────────────────────────────────────────────── */}
         <main style={{ position: 'relative', zIndex: 10 }}>
           {/* Ambient fog blobs */}

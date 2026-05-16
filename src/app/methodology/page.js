@@ -160,8 +160,39 @@ export default async function MethodologyHubPage() {
   const counts = await fetchCounts()
   const totalEvidenceRanked = Object.values(counts).reduce((s, c) => s + c.evidence_ranked, 0)
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    '@id': 'https://www.agentcrush.xyz/methodology',
+    name: 'AgentCrush Evidence-Ranked Index',
+    description: 'Multi-signal agent reputation methodologies across 4 categories: model families (v1.4), tokenized agents (v1.1), service agents (v1.1), developer agents (v2.c). Every weight, formula, evidence-ready rule, and known limitation is published.',
+    url: 'https://www.agentcrush.xyz/methodology',
+    keywords: ['AI agents', 'agent ranking', 'agent economy', 'multi-signal scoring', 'evidence-ranked', 'methodology', 'model families', 'tokenized agents', 'service agents'],
+    creator: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
+    dateModified: '2026-05-16',
+    license: 'https://www.agentcrush.xyz/terms',
+    isAccessibleForFree: true,
+    distribution: [
+      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/api/agent-economy/llm-summary', description: 'Market-level summary across all 4 categories' },
+      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/api/methodology/model_family/llm-summary', description: 'Model-family methodology breakdown' },
+      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/.well-known/mcp.json', description: 'MCP server discovery manifest' },
+    ],
+    measurementTechnique: 'Multi-signal scoring with category-specific weights. Per-category methodology versions (v1.4 / v1.1 / v2.c). Evidence-ready rule: 3+ of N signals AND ≥1 capability signal.',
+    variableMeasured: [
+      'HuggingFace adoption signals (downloads, likes, recency, breadth, top-model)',
+      'LMArena Bradley-Terry capability scores',
+      'HuggingFace derivatives (downstream model count)',
+      'Paper citations (Semantic Scholar)',
+      'Cross-protocol deployment mentions',
+      'Token market cap, liquidity, TVL, holders, momentum',
+      'GitHub activity, package usage, dependency adoption, docs quality, ecosystem links, discourse, trust signals',
+    ],
+  }
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 md:px-6 text-white">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <p className="text-xs font-mono text-white/25 mb-6">
         <Link href="/" className="hover:text-white/50 transition-colors">Home</Link>
