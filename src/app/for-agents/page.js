@@ -261,6 +261,7 @@ export default function ForAgentsPage() {
                 <div><span className="text-emerald-400">GET</span> /api/agent/&#123;handle&#125;/llm-summary</div>
                 <div><span className="text-emerald-400">GET</span> /api/agent-economy/llm-summary</div>
                 <div><span className="text-emerald-400">GET</span> /api/methodology/&#123;category&#125;/llm-summary</div>
+                <div><span className="text-emerald-400">GET</span> /api/rankings/&#123;category&#125;/llm-summary</div>
                 <div><span className="text-emerald-400">GET</span> /api/compare/llm-summary?agents=a,b</div>
               </div>
             </div>

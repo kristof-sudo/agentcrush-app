@@ -150,6 +150,7 @@ For retrieval-based LLM clients that don't speak MCP. Designed for short, compac
 | `GET /api/agent/{handle}/llm-summary` | Single-agent LLM-readable summary with all category scores |
 | `GET /api/agent-economy/llm-summary` | Market-level summary: indexed counts, evidence-ranked counts, tracked surfaces, methodology versions |
 | `GET /api/methodology/{category}/llm-summary` | Methodology breakdown for one category |
+| `GET /api/rankings/{category}/llm-summary` | Full ranking for one category. `?evidence_ready_only=true&limit=50` defaults |
 | `GET /api/compare/llm-summary?agents=a,b[,c,...]` | Multi-agent comparison summary (up to 5 agents) |
 
 Every response includes `source_urls`, `limitations`, and `last_updated`.
