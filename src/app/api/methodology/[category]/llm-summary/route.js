@@ -7,8 +7,8 @@
  * Mirrors the MCP get_methodology(category) tool for HTTP retrieval clients.
  */
 
-export const dynamic = 'force-static'
-export const revalidate = 3600 // 1 hour
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
