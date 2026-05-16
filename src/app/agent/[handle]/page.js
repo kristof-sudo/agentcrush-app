@@ -1113,6 +1113,57 @@ export default async function AgentPage({ params }) {
           </Link>
         </div>
 
+        {/* ── AI-READABLE SUMMARY (LLM Gateway block) ─────────────────── */}
+        <div style={{
+          ...PANEL, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6,
+          border: '1px solid rgba(167,139,250,0.18)',
+          background: 'linear-gradient(180deg, rgba(167,139,250,0.04) 0%, rgba(167,139,250,0.01) 100%)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.85)' }}>
+              ◆ AI-readable summary
+            </span>
+            <Link
+              href={`/api/agent/${encodeURIComponent(agent.handle)}/llm-summary`}
+              style={{
+                fontFamily: 'ui-monospace, monospace', fontSize: 9, fontWeight: 600,
+                color: 'rgba(167,139,250,0.75)', textDecoration: 'none',
+                padding: '3px 6px', borderRadius: 3, background: 'rgba(167,139,250,0.08)',
+              }}
+            >
+              JSON →
+            </Link>
+          </div>
+          <p style={{ fontSize: 12, lineHeight: 1.5, color: 'rgba(226,232,240,0.78)', margin: 0 }}>
+            <strong style={{ color: 'rgba(255,255,255,0.95)' }}>{displayName}</strong>
+            {' '}is classified by AgentCrush as a{' '}
+            <strong style={{ color: 'rgba(167,139,250,0.95)' }}>{agent.primary_category || 'developer'}</strong>
+            {' '}agent
+            {(agent.secondary_categories?.length > 0) && (
+              <> (also: <strong style={{ color: 'rgba(167,139,250,0.85)' }}>{agent.secondary_categories.join(', ')}</strong>)</>
+            )}
+            {agent.archetype && <> · archetype <em style={{ color: 'rgba(255,255,255,0.7)' }}>{agent.archetype}</em></>}.
+            {' '}AgentCrush tracks public evidence signals for this agent and assigns it the{' '}
+            <strong style={{ color: 'rgba(74,222,128,0.95)' }}>{agent.tier || 'indexed'}</strong>
+            {' '}tier
+            {agentCrushScore > 0 && <> with composite score <strong style={{ color: 'rgba(255,255,255,0.95)' }}>{agentCrushScore.toLocaleString()}</strong></>}
+            {ranking?.global_rank && <> (universal rank <strong style={{ color: 'rgba(251,191,36,0.95)' }}>#{ranking.global_rank}</strong>)</>}
+            .{' '}
+            Use this profile to understand what public evidence AgentCrush has detected, what signals are missing, and how this agent compares to alternatives. Methodology is published at{' '}
+            <Link href="/methodology" style={{ color: 'rgba(167,139,250,0.95)', textDecoration: 'underline', textUnderlineOffset: 2 }}>/methodology</Link>.
+          </p>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+            For machine retrieval, fetch{' '}
+            <code style={{ fontFamily: 'ui-monospace, monospace', background: 'rgba(255,255,255,0.05)', padding: '1px 4px', borderRadius: 2, color: 'rgba(167,139,250,0.85)' }}>
+              GET /api/agent/{agent.handle}/llm-summary
+            </code>
+            {' '}or call MCP{' '}
+            <code style={{ fontFamily: 'ui-monospace, monospace', background: 'rgba(255,255,255,0.05)', padding: '1px 4px', borderRadius: 2, color: 'rgba(167,139,250,0.85)' }}>
+              get_agent_details(&quot;{agent.handle}&quot;)
+            </code>.
+          </p>
+        </div>
+
         {/* ── 2. SCORE STRIP ───────────────────────────────────────────── */}
         <div style={{ ...PANEL, padding: 0 }}>
           <CornerAccentsServer color="#00e5ff" />

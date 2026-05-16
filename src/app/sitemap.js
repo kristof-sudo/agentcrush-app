@@ -22,6 +22,12 @@ const STATIC_PAGES = [
   { path: '/labs/findings/methodology-v1-launch', priority: 0.8, changeFrequency: 'monthly'},
   { path: '/methodology',  priority: 0.9, changeFrequency: 'weekly' },
   { path: '/developers/mcp', priority: 0.8, changeFrequency: 'monthly'},
+  // LLM Gateway canonical answer pages — high priority for retrieval
+  { path: '/agent-economy',         priority: 0.95, changeFrequency: 'weekly' },
+  { path: '/ai-agent-frameworks',   priority: 0.9, changeFrequency: 'weekly' },
+  { path: '/a2a-commerce',          priority: 0.9, changeFrequency: 'weekly' },
+  { path: '/x402-agents',           priority: 0.9, changeFrequency: 'weekly' },
+  { path: '/mcp-agents',            priority: 0.9, changeFrequency: 'weekly' },
   { path: '/learn',        priority: 0.7, changeFrequency: 'monthly'},
   { path: '/find',         priority: 0.8, changeFrequency: 'monthly'},
   { path: '/blog',         priority: 0.6, changeFrequency: 'monthly'},

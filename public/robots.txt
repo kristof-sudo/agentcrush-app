@@ -5,3 +5,35 @@ Disallow: /mission-control
 Disallow: /admin
 
 Sitemap: https://agentcrush.xyz/sitemap.xml
+
+# LLM-readable indexes
+# /llms.txt        — Compact site map for LLM retrieval
+# /llms-full.txt   — Full LLM-readable reference (methodology, signals, endpoints)
+# /.well-known/mcp.json — MCP server discovery manifest
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
