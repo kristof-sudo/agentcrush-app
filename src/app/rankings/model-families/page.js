@@ -32,36 +32,36 @@ const SIGNAL_SOURCES = [
     name: 'HuggingFace',
     weight: 30,
     status: 'live',
-    note: 'Downloads, likes, recency, breadth, top-model — aggregated by author',
+    note: 'Downloads, likes, recency, breadth, top-model — aggregated by author.',
     fields: ['hf_downloads_score', 'hf_likes_score', 'hf_recency_score', 'hf_breadth_score', 'hf_top_model_score'],
   },
   {
     name: 'LMArena',
     weight: 25,
-    status: 'next',
-    note: 'Bradley-Terry score from chat.lmarena.ai — strongest defensible capability signal',
+    status: 'live',
+    note: 'Bradley-Terry capability score from chat.lmarena.ai — strongest defensible capability signal.',
     fields: ['lmarena_score'],
   },
   {
     name: 'HF Derivatives',
     weight: 20,
-    status: 'planned',
-    note: 'Count of fine-tunes and downstream models per base — downstream adoption signal',
+    status: 'live',
+    note: 'Count of fine-tunes / downstream models per base. LOG10(sum) × 25.',
     fields: ['derivatives_score'],
   },
   {
     name: 'Paper Citations',
     weight: 15,
-    status: 'planned',
-    note: 'Semantic Scholar / OpenReview citation counts where available',
+    status: 'live',
+    note: 'Semantic Scholar citation counts on canonical lab papers. LOG10(sum) × 16.',
     fields: ['citations_score'],
   },
   {
-    name: 'Discourse / Social',
+    name: 'Deployment',
     weight: 10,
-    status: 'planned',
-    note: 'X + Farcaster + Reddit + HN mentions — lowest weight, last priority',
-    fields: ['social_score'],
+    status: 'live',
+    note: 'Cross-protocol agent-economy mentions across 6 source tables (agents, bazaar_resources, erc8004_registry, agentverse_agents, virtuals_agents, a2a_agents). The moat signal — only AgentCrush has this view unified.',
+    fields: ['deployment_score'],
   },
 ]
 
@@ -91,7 +91,7 @@ async function fetchData() {
   // even when HF data is empty (LEFT JOIN preserves the rows).
   const { data, error } = await supabase
     .from('agent_score_model_family_v1')
-    .select('agent_id, handle, display_name, hf_author, total_downloads, total_likes, model_count, top_model_downloads, most_recent_modified, hf_downloads_score, hf_likes_score, hf_recency_score, hf_breadth_score, hf_top_model_score, hf_score, derivatives_score, lmarena_score, citations_score, social_score, model_family_score, rank_in_model_family, signals_available_count, evidence_ready_for_public_rank, methodology_version')
+    .select('agent_id, handle, display_name, hf_author, total_downloads, total_likes, model_count, top_model_downloads, most_recent_modified, total_derivatives, total_citations, total_deployments, hf_downloads_score, hf_likes_score, hf_recency_score, hf_breadth_score, hf_top_model_score, hf_score, derivatives_score, lmarena_score, citations_score, deployment_score, model_family_score, rank_in_model_family, signals_available_count, evidence_ready_for_public_rank, methodology_version')
     .order('rank_in_model_family', { ascending: true })
   if (error) {
     // Defensive: if view doesn't exist yet (migration not applied),
@@ -113,7 +113,7 @@ async function fetchData() {
         derivatives_score: null,
         lmarena_score: null,
         citations_score: null,
-        social_score: null,
+        deployment_score: null,
         model_family_score: 0,
         rank_in_model_family: 0,
         signals_available_count: 0,
@@ -156,14 +156,13 @@ export default async function ModelFamiliesRankingsPage() {
       </div>
 
       {/* Status banner */}
-      <div className="mb-8 rounded-xl border border-amber-400/30 bg-amber-400/[0.06] px-5 py-4">
+      <div className="mb-8 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-5 py-4">
         <div className="flex items-baseline gap-3 flex-wrap mb-1">
-          <span className="text-xs font-mono font-bold uppercase tracking-widest text-amber-300">v1.0 — launching</span>
-          <span className="text-xs text-white/40">methodology version: {rows[0]?.methodology_version || 'v1.0-hf-only'}</span>
+          <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-300">v1.4 — FULL methodology LIVE</span>
+          <span className="text-xs text-white/40">methodology version: {rows[0]?.methodology_version || 'v1.4-with-deployment'}</span>
         </div>
         <p className="text-sm text-white/70 leading-relaxed">
-          <span className="text-white/95 font-semibold">Rankings populate as evidence accumulates, not on a fixed date.</span>{' '}
-          Currently <span className="font-mono text-amber-300">{trackedCount}</span> model families tracked, <span className="font-mono text-amber-300">{evidenceReadyCount}</span> evidence-ranked. The strict evidence rule requires multi-signal corroboration — see methodology below. As adapters ship for LMArena, HF derivatives, and citations over the next 2-3 weeks, well-known model families will become evidence-ready automatically.
+          <span className="font-mono text-emerald-300">{trackedCount}</span> model families tracked, <span className="font-mono text-emerald-300">{evidenceReadyCount}</span> evidence-ranked. All 5 signal slots populated: HuggingFace + LMArena + HF derivatives + paper citations + cross-protocol deployment. The evidence-ready rule requires 3-of-5 signals AND ≥1 capability signal (derivatives, LMArena, citations, or deployment) — protects against vanity-metric promotion.
         </p>
       </div>
 
@@ -191,7 +190,7 @@ export default async function ModelFamiliesRankingsPage() {
         <div className="mt-6 rounded-lg border border-white/[0.05] bg-white/[0.01] px-4 py-3">
           <p className="text-xs font-semibold text-white/55 mb-1">Evidence-ready rule</p>
           <p className="text-xs text-white/45 leading-relaxed">
-            A model family is evidence-ranked when at least <span className="text-white/70">3 of 5 signals are present</span> AND at least one of those is a <span className="text-white/70">capability-or-adoption signal</span> (LMArena, citations, or derivatives — not just downloads). Downloads alone is vanity for models the same way GitHub stars are vanity for developer agents.
+            A model family is evidence-ranked when at least <span className="text-white/70">3 of 5 signals are present</span> AND at least one of those is a <span className="text-white/70">capability-or-adoption signal</span> (derivatives, LMArena, citations, or deployment — not just downloads). Downloads alone is vanity for models the same way GitHub stars are vanity for developer agents.
           </p>
         </div>
       </section>
@@ -226,7 +225,7 @@ export default async function ModelFamiliesRankingsPage() {
               <span className="text-right" title="HF Derivatives">DER</span>
               <span className="text-right" title="LMArena">LMA</span>
               <span className="text-right" title="Citations">CIT</span>
-              <span className="text-right" title="Social">SOC</span>
+              <span className="text-right" title="Deployment (cross-protocol)">DEP</span>
               <span className="text-right">Score</span>
             </div>
 
@@ -273,7 +272,7 @@ export default async function ModelFamiliesRankingsPage() {
                     {r.citations_score != null ? r.citations_score : <CoverageDot available={false} />}
                   </span>
                   <span className="text-xs font-mono tabular-nums w-10 text-right">
-                    {r.social_score != null ? r.social_score : <CoverageDot available={false} />}
+                    {r.deployment_score != null ? r.deployment_score : <CoverageDot available={false} />}
                   </span>
                   <span className="text-sm font-mono font-bold tabular-nums text-white w-12 text-right">
                     {r.model_family_score || '—'}
@@ -285,29 +284,25 @@ export default async function ModelFamiliesRankingsPage() {
         )}
       </section>
 
-      {/* Adapter roadmap */}
+      {/* v1.5 roadmap (v1.4 is FULL methodology — all signals live) */}
       <section className="mb-10">
-        <h2 className="text-lg font-bold text-white mb-1">Adapter roadmap</h2>
+        <h2 className="text-lg font-bold text-white mb-1">v1.5 roadmap</h2>
         <p className="text-sm text-white/45 mb-4">
-          What we&apos;re building next. Signal coverage expands category-by-category over the next 2-3 weeks.
+          v1.4 ships with all 5 signal slots populated. v1.5 deepens each signal with additional inputs.
         </p>
 
         <ol className="space-y-3 text-sm text-white/55">
           <li className="flex gap-3">
-            <span className="font-mono text-xs text-violet-400/80 mt-0.5 w-12 shrink-0">NEXT</span>
-            <span><span className="text-white/85">LMArena adapter</span> — Bradley-Terry capability rankings from chat.lmarena.ai. Strongest defensible capability signal in the agent ecosystem. Highest priority because no other source measures actual model quality.</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="font-mono text-xs text-white/45 mt-0.5 w-12 shrink-0">+1</span>
-            <span><span className="text-white/85">HF derivatives adapter</span> — fine-tune and downstream-model counts per base model. Adoption signal: how much the ecosystem builds on top of this model.</span>
+            <span className="font-mono text-xs text-violet-400/80 mt-0.5 w-12 shrink-0">+1</span>
+            <span><span className="text-white/85">Expand seed coverage</span> — currently 5 model families seeded (Qwen, Gemini, DeepSeek, Llama, Hermes). Next: Mistral, Anthropic Claude, OpenAI GPT lineage, Cohere, Stability — once we can map them to HF authors / LMArena keys / canonical papers.</span>
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs text-white/45 mt-0.5 w-12 shrink-0">+2</span>
-            <span><span className="text-white/85">Citations adapter</span> — Semantic Scholar / OpenReview where the model has a paper. Academic-credibility signal. Partial coverage acceptable — not every model has a paper.</span>
+            <span><span className="text-white/85">Citation backfill via S2 API key</span> — daily refresh of 13 canonical papers with full rate-limit access. Will surface citation drift over time.</span>
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs text-white/45 mt-0.5 w-12 shrink-0">+3</span>
-            <span><span className="text-white/85">Discourse / social adapter</span> — X + Farcaster + Reddit + HN mentions. Lowest weight, last priority. Not required for evidence-ready threshold.</span>
+            <span><span className="text-white/85">Deployment signal v2</span> — add ERC-8004 token metadata fetch (currently scans agent_name only). Will multiply the cross-protocol match volume as more on-chain agents declare model usage.</span>
           </li>
         </ol>
       </section>
