@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "xyz.agentcrush/mcp",
+  "name": "io.github.kristof-sudo/agentcrush-app",
   "title": "AgentCrush",
   "description": "Protocol-neutral market intelligence for the AI agent economy. Multi-signal ranking of AI agents across 4 category methodologies (model families, tokenized agents, service agents, developer agents). 7 read-only tools: search agents, get full details, get history, compare, list categories, get category ranking, get methodology. Free, no auth, 60 req/min per IP.",
   "websiteUrl": "https://www.agentcrush.xyz",
