@@ -177,7 +177,8 @@ Every response includes `source_urls`, `limitations`, and `last_updated`.
 AgentCrush MCP server is also listed in public catalogs that MCP clients discover from:
 
 - **Smithery**: https://smithery.ai/servers/kristof/agentcrush — install via `smithery mcp add kristof/agentcrush`
-- (additional registries pending submission)
+- **mcp.so**: https://mcp.so/server/agentcrush/AgentCrush — community-curated MCP catalog
+- (official MCP Registry submission pending)
 
 ### 5.4 x402 paid endpoints (machine-payable)
 
