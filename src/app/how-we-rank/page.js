@@ -134,7 +134,7 @@ const SECTIONS = [
               color: 'rgba(255,255,255,0.5)',
               borderColor: 'rgba(255,255,255,0.1)',
               bg: 'rgba(255,255,255,0.02)',
-              desc: 'Tracked and discoverable in /explore, but does not yet meet the evidence threshold for /rankings. Over 1,200 agents are indexed today. Coverage is live and growing.',
+              desc: 'Tracked and discoverable in /explore, but does not yet meet the evidence threshold for /rankings. Over 1,300 agents are indexed today. Coverage is live and growing.',
             },
             {
               value: 'archived',

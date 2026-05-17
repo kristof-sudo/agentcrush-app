@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "xyz.agentcrush/mcp",
+  "title": "AgentCrush",
+  "description": "Protocol-neutral market intelligence for the AI agent economy. Multi-signal ranking of AI agents across 4 category methodologies (model families, tokenized agents, service agents, developer agents). 7 read-only tools: search agents, get full details, get history, compare, list categories, get category ranking, get methodology. Free, no auth, 60 req/min per IP.",
+  "websiteUrl": "https://www.agentcrush.xyz",
+  "repository": {
+    "url": "https://github.com/kristof-sudo/agentcrush-app",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://www.agentcrush.xyz/api/mcp/v1"
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "discovery_manifest": "https://www.agentcrush.xyz/.well-known/mcp.json",
+      "openapi_spec": "https://www.agentcrush.xyz/api/openapi.json",
+      "docs_url": "https://www.agentcrush.xyz/developers/mcp",
+      "methodology_url": "https://www.agentcrush.xyz/methodology",
+      "llms_txt": "https://www.agentcrush.xyz/llms.txt",
+      "rate_limit": "60 requests/minute per IP",
+      "categories": ["data", "intelligence", "directory", "agent-economy", "ai-agents"],
+      "use_cases": [
+        "User asks about a specific AI agent (CrewAI, LangGraph, Qwen, Gemini, etc.) — call get_agent_details",
+        "User asks 'best AI agent for X' — call get_category_ranking or search_agents with category filter",
+        "User compares two agents — call compare_agents or retrieve the comparison page",
+        "User asks how a ranking is calculated — call get_methodology(category)",
+        "Agent needs market-level summary — call list_categories"
+      ]
+    }
+  }
+}

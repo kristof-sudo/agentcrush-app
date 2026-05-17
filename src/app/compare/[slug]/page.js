@@ -288,6 +288,33 @@ export default async function CompareSlugPage({ params }) {
         </p>
       </div>
 
+      {/* ── AI-READABLE SUMMARY (LLM Gateway block) ────────────────────────── */}
+      <div className="mb-5 rounded-lg border border-violet-400/[0.18] bg-gradient-to-b from-violet-400/[0.04] to-violet-400/[0.01] px-4 py-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-violet-300/85">
+            ◆ AI-readable summary
+          </span>
+          <Link
+            href={`/api/compare/llm-summary?agents=${encodeURIComponent(agentA.handle)},${encodeURIComponent(agentB.handle)}`}
+            className="font-mono text-[9px] font-semibold rounded px-1.5 py-0.5 bg-violet-400/[0.08] text-violet-300/80 hover:text-violet-200 transition-colors"
+          >
+            JSON →
+          </Link>
+        </div>
+        <p className="text-xs leading-relaxed text-white/75">
+          AgentCrush compares <strong className="text-white">{agentA.display_name}</strong> and <strong className="text-white">{agentB.display_name}</strong> across public evidence signals — GitHub activity, package usage, dependency adoption, docs quality, ecosystem links, and discourse. {hasV2 ? (
+            <>At least one agent is <span className="text-emerald-400">evidence-ranked</span> under multi-signal corroboration. </>
+          ) : (
+            <>Both are <span className="text-white/85">indexed</span> but not yet evidence-ranked. </>
+          )}
+          The comparison shows evidence differences, not a universal winner. Methodology at{' '}
+          <Link href="/methodology" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">/methodology</Link>.
+        </p>
+        <p className="text-[10px] text-white/35 mt-1">
+          For machine retrieval: <code className="font-mono bg-white/[0.05] px-1 rounded text-violet-300/75">GET /api/compare/llm-summary?agents={agentA.handle},{agentB.handle}</code> or MCP <code className="font-mono bg-white/[0.05] px-1 rounded text-violet-300/75">compare_agents([&quot;{agentA.handle}&quot;,&quot;{agentB.handle}&quot;])</code>.
+        </p>
+      </div>
+
       {/* Agent header cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         {agents.map((agent) => (
