@@ -20,5 +20,15 @@
     { "name": "get_methodology",      "description": "Scoring methodology for a category — weights, signals, evidence-ready rule, limitations." }
   ],
   "rate_limit": "60 requests/minute per IP",
+  "openapi_spec": "https://www.agentcrush.xyz/api/openapi.json",
+  "flat_json_endpoints": [
+    "https://www.agentcrush.xyz/api/agent/{handle}/llm-summary",
+    "https://www.agentcrush.xyz/api/agents/bulk?handles=a,b,c",
+    "https://www.agentcrush.xyz/api/agent-economy/llm-summary",
+    "https://www.agentcrush.xyz/api/methodology/{category}/llm-summary",
+    "https://www.agentcrush.xyz/api/rankings/{category}/llm-summary",
+    "https://www.agentcrush.xyz/api/compare/llm-summary?agents=a,b"
+  ],
+  "feedback_endpoint": "https://www.agentcrush.xyz/api/agent-feedback",
   "maintainer": "kristof@patyi.co"
 }

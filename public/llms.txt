@@ -40,10 +40,13 @@ AgentCrush is not built on x402, ERC-8004, Agentverse, or any single protocol. I
 - [Developer MCP docs](https://www.agentcrush.xyz/developers/mcp) — Claude Desktop config example, curl recipes, tool schemas.
 - Free flat JSON endpoints (HTTP GET, no auth):
   - `/api/agent/{handle}/llm-summary` — per-agent details across all categories
+  - `/api/agents/bulk?handles=a,b,c,...` — bulk lookup, up to 50 agents in one call
   - `/api/agent-economy/llm-summary` — market-level summary
   - `/api/methodology/{category}/llm-summary` — methodology breakdown per category
   - `/api/rankings/{category}/llm-summary` — full ranking for one category
   - `/api/compare/llm-summary?agents=a,b[,c,d,e]` — 2-5 agent comparison
+- [OpenAPI 3.1 spec](https://www.agentcrush.xyz/api/openapi.json) — single machine-readable schema for all endpoints. Auto-generate typed clients.
+- Feedback channel (POST, no auth): `/api/agent-feedback` — agents tell us what's missing or wrong. Rate-limited 10/min, 50/day per IP.
 - [API docs](https://www.agentcrush.xyz/api-docs) — API and x402 endpoint documentation.
 
 ## x402 paid endpoints (machine-payable via Coinbase CDP Bazaar)

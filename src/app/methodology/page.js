@@ -170,7 +170,7 @@ export default async function MethodologyHubPage() {
     keywords: ['AI agents', 'agent ranking', 'agent economy', 'multi-signal scoring', 'evidence-ranked', 'methodology', 'model families', 'tokenized agents', 'service agents'],
     creator: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
     publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    dateModified: '2026-05-16',
+    dateModified: '2026-05-17',
     license: 'https://www.agentcrush.xyz/terms',
     isAccessibleForFree: true,
     distribution: [

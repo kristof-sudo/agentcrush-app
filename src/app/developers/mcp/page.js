@@ -258,6 +258,37 @@ export default function McpDocsPage() {
         </p>
       </section>
 
+      {/* For agents as first-class users */}
+      <section className="mb-10">
+        <h2 className="text-xl font-bold mb-2">For agents using AgentCrush as a first-class user</h2>
+        <p className="text-sm text-white/55 leading-relaxed mb-4">
+          The advice is real: AI agents will be the #1 users of the internet. AgentCrush is built so agents can integrate fast and ask for what they need.
+        </p>
+
+        <div className="space-y-3">
+          {[
+            { label: 'OpenAPI 3.1 spec',         url: '/api/openapi.json',              note: 'Single machine-readable schema. Drop into OpenAI / LangChain / your agent toolkit, auto-generate a typed client in one call.' },
+            { label: 'MCP server (7 tools)',     url: '/api/mcp/v1',                    note: 'JSON-RPC 2.0. POST with tools/list to introspect. Connect via /.well-known/mcp.json.' },
+            { label: 'Bulk lookup',              url: '/api/agents/bulk?handles=a,b,c', note: 'Up to 50 agents per call. Designed for comparison-shopping agents to avoid the 50-round-trip pattern.' },
+            { label: 'Per-agent details',        url: '/api/agent/{handle}/llm-summary', note: 'Full breakdown across all categories the agent qualifies for. Fuzzy-match on 404.' },
+            { label: 'Category ranking',         url: '/api/rankings/{category}/llm-summary', note: 'Full ranking for one category with all sub-scores.' },
+            { label: 'Methodology',              url: '/api/methodology/{category}/llm-summary', note: 'Weights, formulas, evidence-ready rule, limitations. Methodology travels with data.' },
+            { label: 'Compare 2-5 agents',       url: '/api/compare/llm-summary?agents=a,b', note: 'Side-by-side composite scores. Cross-category warning when applicable.' },
+            { label: 'Agent feedback channel',   url: '/api/agent-feedback',            note: 'POST. Tell us what is missing or wrong. Real signal of what to build next. Rate-limited 10/min, 50/day per IP.' },
+          ].map((r) => (
+            <div key={r.url} className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-3">
+              <div className="flex items-center justify-between gap-3 mb-1">
+                <span className="text-sm font-semibold text-white">{r.label}</span>
+                <Link href={r.url} className="text-xs font-mono text-violet-300 hover:text-violet-200 underline underline-offset-2 truncate max-w-[60%] text-right">
+                  {r.url}
+                </Link>
+              </div>
+              <p className="text-xs text-white/55 leading-relaxed">{r.note}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Methodology */}
       <section className="mb-10 rounded-xl border border-violet-400/20 bg-violet-400/[0.04] px-5 py-4">
         <h2 className="text-base font-bold mb-1">Methodology travels with data</h2>

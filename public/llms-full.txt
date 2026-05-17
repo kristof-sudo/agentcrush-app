@@ -148,10 +148,13 @@ For retrieval-based LLM clients that don't speak MCP. Designed for short, compac
 | Endpoint | Returns |
 |---|---|
 | `GET /api/agent/{handle}/llm-summary` | Single-agent LLM-readable summary with all category scores |
+| `GET /api/agents/bulk?handles=a,b,c,...` | **Bulk lookup** — up to 50 agents in one call. Eliminates 50-round-trip pattern. |
 | `GET /api/agent-economy/llm-summary` | Market-level summary: indexed counts, evidence-ranked counts, tracked surfaces, methodology versions |
 | `GET /api/methodology/{category}/llm-summary` | Methodology breakdown for one category |
 | `GET /api/rankings/{category}/llm-summary` | Full ranking for one category. `?evidence_ready_only=true&limit=50` defaults |
 | `GET /api/compare/llm-summary?agents=a,b[,c,...]` | Multi-agent comparison summary (up to 5 agents) |
+| `GET /api/openapi.json` | **OpenAPI 3.1 spec** — auto-generate typed clients for all endpoints above |
+| `POST /api/agent-feedback` | **Feedback channel for AI agents** — tell us what's missing/wrong/needed. Rate-limited 10/min, 50/day per IP. |
 
 Every response includes `source_urls`, `limitations`, and `last_updated`.
 

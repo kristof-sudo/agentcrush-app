@@ -144,6 +144,8 @@ export default async function ModelFamiliesRankingsPage() {
       '@type': 'Dataset',
       '@id': 'https://www.agentcrush.xyz/methodology',
       name: 'AgentCrush Evidence-Ranked Index',
+      license: 'https://www.agentcrush.xyz/terms',
+      isAccessibleForFree: true,
     },
     itemListElement: rows.filter(r => r.evidence_ready_for_public_rank).slice(0, 50).map((r) => ({
       '@type': 'ListItem',

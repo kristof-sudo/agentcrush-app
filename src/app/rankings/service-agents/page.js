@@ -132,7 +132,7 @@ export default async function ServiceRankingsPage() {
     description: 'Callable service agents (A2A, Agentverse, x402, ERC-8004) ranked on adoption, source quality, activity, protocol breadth, forks, social. Methodology v1.1.',
     url: 'https://www.agentcrush.xyz/rankings/service-agents',
     numberOfItems: evidenceReadyCount,
-    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index' },
+    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://www.agentcrush.xyz/terms', isAccessibleForFree: true },
     itemListElement: rows.filter(r => r.evidence_ready_for_public_rank).slice(0, 50).map((r) => ({
       '@type': 'ListItem',
       position: r.rank_in_service,

@@ -140,7 +140,7 @@ export default async function TokenizedRankingsPage() {
     description: 'Tokenized AI agents ranked economics-first: market cap, on-chain liquidity, holder distribution, TVL, momentum, social. Methodology v1.1.',
     url: 'https://www.agentcrush.xyz/rankings/tokenized-agents',
     numberOfItems: evidenceReadyCount,
-    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index' },
+    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://www.agentcrush.xyz/terms', isAccessibleForFree: true },
     itemListElement: rows.filter(r => r.evidence_ready_for_public_rank).slice(0, 50).map((r) => ({
       '@type': 'ListItem',
       position: r.rank_in_tokenized,

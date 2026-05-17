@@ -590,6 +590,7 @@ export default async function Home() {
       creator: { '@id': 'https://www.agentcrush.xyz#org' },
       keywords: ['AI agents', 'agent economy', 'agent ranking', 'multi-signal scoring', 'MCP', 'x402', 'ERC-8004'],
       isAccessibleForFree: true,
+      license: 'https://www.agentcrush.xyz/terms',
       distribution: [
         { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/api/agent-economy/llm-summary' },
         { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/.well-known/mcp.json' },

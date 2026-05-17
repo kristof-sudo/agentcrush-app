@@ -1070,6 +1070,8 @@ export default async function AgentPage({ params }) {
       description: 'Multi-signal agent reputation index across 4 category methodologies (model families, tokenized agents, service agents, developer agents).',
       url: 'https://www.agentcrush.xyz/methodology',
       creator: { '@type': 'Organization', name: 'AgentCrush' },
+      license: 'https://www.agentcrush.xyz/terms',
+      isAccessibleForFree: true,
     },
   }
 

@@ -261,7 +261,7 @@ export default async function CompareSlugPage({ params }) {
       { '@type': 'SoftwareApplication', name: agentA.display_name || agentA.handle, url: `https://www.agentcrush.xyz/agent/${agentA.handle}` },
       { '@type': 'SoftwareApplication', name: agentB.display_name || agentB.handle, url: `https://www.agentcrush.xyz/agent/${agentB.handle}` },
     ],
-    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index' },
+    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://www.agentcrush.xyz/terms', isAccessibleForFree: true },
   }
 
   return (
