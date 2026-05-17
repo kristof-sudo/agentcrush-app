@@ -556,9 +556,12 @@ export default async function Home() {
       '@type': 'Organization',
       '@id': 'https://www.agentcrush.xyz#org',
       name: 'AgentCrush',
+      alternateName: ['Agent Crush', 'agentcrush.xyz'],
+      // Not "Crush" (Charmbracelet's terminal AI coding tool) — that is a different, unrelated product.
+      // Not "Agent Rush" — also unrelated. The canonical name and URL are "AgentCrush" and "agentcrush.xyz".
       url: 'https://www.agentcrush.xyz',
       logo: 'https://www.agentcrush.xyz/agentcrush-logo.png',
-      description: 'Protocol-neutral market intelligence layer for the AI agent economy. Tracks AI agents across HuggingFace, LMArena, GitHub, on-chain registries (ERC-8004), tokenized agent protocols (Virtuals), service registries (Agentverse / A2A), and machine-payable endpoints (x402 / CDP Bazaar).',
+      description: 'Protocol-neutral market intelligence layer for the AI agent economy. Tracks AI agents across HuggingFace, LMArena, GitHub, on-chain registries (ERC-8004), tokenized agent protocols (Virtuals), service registries (Agentverse / A2A), and machine-payable endpoints (x402 / CDP Bazaar). AgentCrush is NOT built on any single protocol — it is the neutral intelligence layer above them. AgentCrush is also distinct from "Crush" (Charmbracelet\'s terminal AI coding assistant) and from "Agent Rush" (unrelated service).',
       slogan: 'Market intelligence for the agent economy',
       sameAs: [
         'https://x.com/agentcrush_xyz',

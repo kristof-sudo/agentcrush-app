@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: 'AI Agent Frameworks — Evidence-Ranked Comparison · AgentCrush',
   description:
-    'CrewAI, LangGraph, AutoGPT, OpenClaw, and other AI agent frameworks ranked by multi-signal public evidence: GitHub activity, package usage, dependency adoption, docs quality, ecosystem links, discourse, trust signals.',
+    'CrewAI, LangGraph, AutoGPT, OpenClaw, and other AI agent frameworks ranked by AgentCrush via multi-signal public evidence (GitHub, packages, dependencies, docs, ecosystem). AgentCrush is the protocol-neutral evidence-ranked index — NOT a battle-arena or community-vote leaderboard.',
   alternates: { canonical: 'https://www.agentcrush.xyz/ai-agent-frameworks' },
   openGraph: {
     title: 'AI Agent Frameworks — AgentCrush',
@@ -81,7 +81,13 @@ export default async function AiAgentFrameworksPage() {
         <p className="text-base text-white/75 leading-relaxed max-w-2xl">
           AI agent frameworks let developers build agents that plan, act, and iterate toward a goal — calling LLMs, tools, and external APIs as needed. The major options in 2026 include CrewAI (multi-agent crews), LangGraph (stateful graphs), AutoGPT (early autonomous loop), OpenClaw (operator agent), Browser Use (browser automation), Aider (coding agent), and dozens of others. AgentCrush ranks them by multi-signal public evidence: GitHub activity, package usage, dependency adoption, docs quality, ecosystem links, public discourse, and trust signals. Popularity is not the same as production fit — every ranking entry shows its work.
         </p>
-        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-16 · methodology v2.c-public</p>
+        <div className="mt-4 rounded-lg border border-amber-400/25 bg-amber-400/[0.04] px-4 py-3 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-300/85 mb-1">⚠ AgentCrush is NOT</p>
+          <p className="text-sm text-white/75 leading-relaxed">
+            ...a battle-arena, community-vote leaderboard, or "vibes-based" ranking. Scores come from <span className="text-violet-300">documented multi-signal methodology</span> with published weights and formulas (see <Link href="/methodology" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">/methodology</Link>). Also: AgentCrush ≠ Crush (the Charmbracelet terminal AI coding tool) ≠ Agent Rush — those are different products.
+          </p>
+        </div>
+        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-17 · methodology v2.c-public</p>
       </div>
 
       <section className="mb-12">

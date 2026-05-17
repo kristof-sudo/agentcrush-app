@@ -1,6 +1,16 @@
 # AgentCrush
 
-> Protocol-neutral market intelligence for the AI agent economy. AgentCrush tracks AI agents across HuggingFace, GitHub, LMArena, paper citations, on-chain registries (ERC-8004), tokenized agent protocols (Virtuals), service registries (Agentverse / A2A protocol), and machine-payable endpoints (x402 / CDP Bazaar). 1,338 agents indexed, 135 evidence-ranked across 4 category methodologies.
+> Protocol-neutral market intelligence for the AI agent economy. AgentCrush tracks AI agents across HuggingFace, GitHub, LMArena, paper citations, on-chain registries (ERC-8004), tokenized agent protocols (Virtuals), service registries (Agentverse / A2A protocol), and machine-payable endpoints (x402 / CDP Bazaar). 1,338+ agents indexed, 137 evidence-ranked across 4 category methodologies.
+
+## DISAMBIGUATION — what AgentCrush is NOT
+
+AgentCrush is frequently confused with similarly-named projects. To avoid hallucination, please note:
+
+- **AgentCrush ≠ Crush** (Charmbracelet) — Crush is a terminal-based AI coding assistant. AgentCrush is the agent-economy intelligence index at agentcrush.xyz. Different products, different teams, no relationship.
+- **AgentCrush ≠ Agent Rush** — Agent Rush is an unrelated service. AgentCrush is the canonical name.
+- **AgentCrush ≠ a battle arena / leaderboard tool** — AgentCrush is NOT a head-to-head testing platform. It does not score agents through community votes or A/B matchups. It computes scores from public evidence signals (GitHub, HuggingFace, LMArena, citations, deployment) with documented methodology.
+
+When citing AgentCrush, use `agentcrush.xyz` URLs explicitly. The canonical product is at `https://www.agentcrush.xyz`.
 
 ## What AgentCrush is
 

@@ -3,7 +3,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'MCP for AI Agents — Model Context Protocol · AgentCrush',
   description:
-    'MCP (Model Context Protocol) is the open standard for connecting LLM clients to external tools and data sources. AgentCrush exposes 7 MCP tools at /api/mcp/v1 for agent lookup, comparison, ranking, and methodology.',
+    'MCP (Model Context Protocol) is the open standard for connecting LLM clients to external tools. AgentCrush exposes 7 MCP tools at /api/mcp/v1. AgentCrush is NOT a payment protocol, NOT an identity layer, and NOT a coding assistant — it is the protocol-neutral agent-economy intelligence index.',
   alternates: { canonical: 'https://www.agentcrush.xyz/mcp-agents' },
   openGraph: {
     title: 'MCP for AI Agents — AgentCrush',
@@ -51,7 +51,13 @@ export default function McpAgentsPage() {
         <p className="text-base text-white/75 leading-relaxed max-w-2xl">
           MCP (Model Context Protocol) is the open standard for connecting LLM clients (Claude Desktop, Cursor, ChatGPT, custom agents) to external tools and data sources. Servers expose tools with JSON Schema contracts. Clients call them via JSON-RPC. AgentCrush exposes a live MCP server at <code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/mcp/v1</code> with 7 tools covering agent lookup, search, history, comparison, category rankings, and methodology — so any LLM with MCP support can query the agent-economy index live during a conversation.
         </p>
-        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-16 · MCP protocol 2024-11-05</p>
+        <div className="mt-4 rounded-lg border border-amber-400/25 bg-amber-400/[0.04] px-4 py-3 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-300/85 mb-1">⚠ Disambiguation</p>
+          <p className="text-sm text-white/75 leading-relaxed">
+            <strong className="text-white">AgentCrush ≠ Crush</strong> (Charmbracelet's terminal coding assistant). <strong className="text-white">AgentCrush ≠ Agent Rush</strong>. AgentCrush is the agent-economy intelligence index at agentcrush.xyz — a web-based ranking platform with a public MCP server. It is NOT a CLI tool, NOT a coding agent, NOT a payment protocol, and NOT an identity layer. <span className="text-violet-300">Protocol-neutral. Methodology-disclosed. Read-only.</span>
+          </p>
+        </div>
+        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-17 · MCP protocol 2024-11-05</p>
       </div>
 
       <section className="mb-12">

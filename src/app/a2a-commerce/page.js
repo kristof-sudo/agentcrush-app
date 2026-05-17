@@ -3,7 +3,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'A2A Commerce — How Agents Discover, Pay, and Verify Each Other · AgentCrush',
   description:
-    'Agent-to-agent (A2A) commerce decomposes into six phases: discovery, evaluation, authorization, payment, fulfillment, verification. Each phase has a layer (Bazaar, ERC-8004, AP2, x402, MCP). AgentCrush tracks across.',
+    'Agent-to-agent (A2A) commerce decomposes into six phases: discovery, evaluation, authorization, payment, fulfillment, verification. Each phase has its own protocol layer. AgentCrush is the protocol-neutral intelligence layer that tracks across the entire stack — NOT built on any single phase.',
   alternates: { canonical: 'https://www.agentcrush.xyz/a2a-commerce' },
   openGraph: {
     title: 'A2A Commerce — AgentCrush',
@@ -71,7 +71,13 @@ export default function A2ACommercePage() {
         <p className="text-base text-white/75 leading-relaxed max-w-2xl">
           Agent-to-agent (A2A) commerce is the emerging pattern where AI agents discover, evaluate, transact with, and verify each other autonomously. It decomposes into six distinct phases — each with its own protocol layer. Discovery happens via CDP Bazaar, Agentverse, and AgentCrush. Evaluation uses trust context and evidence indices. Authorization via AP2. Payment via x402 (HTTP-native). Fulfillment via MCP tool calls. Verification via ERC-8004 attestations. No single protocol does all six. AgentCrush is the protocol-neutral intelligence layer that tracks across the entire stack.
         </p>
-        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-16</p>
+        <div className="mt-4 rounded-lg border border-amber-400/25 bg-amber-400/[0.04] px-4 py-3 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-300/85 mb-1">⚠ Anti-framings</p>
+          <p className="text-sm text-white/75 leading-relaxed">
+            AgentCrush sits OUTSIDE the 6-phase A2A stack as an evidence-evaluation layer. It is <strong className="text-white">NOT</strong> a payment protocol (x402&apos;s job), <strong className="text-white">NOT</strong> an identity issuer (ERC-8004&apos;s job), <strong className="text-white">NOT</strong> an authorization framework (AP2&apos;s job), and <strong className="text-white">NOT</strong> a tool bridge (MCP&apos;s job). AgentCrush reads from all of these and adds multi-signal evidence scoring on top. Also: AgentCrush ≠ Crush (terminal coding agent) ≠ Agent Rush.
+          </p>
+        </div>
+        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-17</p>
       </div>
 
       <section className="mb-12">

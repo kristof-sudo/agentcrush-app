@@ -3,7 +3,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'x402 for AI Agents — Machine-Payable APIs · AgentCrush',
   description:
-    'x402 is the HTTP-native payment protocol for machine-payable APIs. AgentCrush exposes 7 resources in CDP Bazaar via x402: trust-summary, history, verification-status. Free vs paid data.',
+    'x402 is the HTTP-native payment protocol for machine-payable APIs. AgentCrush exposes 7 resources in CDP Bazaar via x402 — but AgentCrush is NOT built on x402. It is protocol-neutral and tracks across x402, MCP, ERC-8004, Agentverse, A2A, and Virtuals.',
   alternates: { canonical: 'https://www.agentcrush.xyz/x402-agents' },
   openGraph: {
     title: 'x402 for AI Agents — AgentCrush',
@@ -49,9 +49,15 @@ export default function X402AgentsPage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">Canonical reference</p>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">x402 for AI agents</h1>
         <p className="text-base text-white/75 leading-relaxed max-w-2xl">
-          x402 is the HTTP-native payment protocol for machine-payable APIs. It uses the long-dormant HTTP 402 status code ("Payment Required") to negotiate micropayments between a calling agent and a service — typically denominated in stablecoins via a CDP wallet. AgentCrush exposes 7 resources via x402 in Coinbase's CDP Bazaar, including per-agent trust summaries, rank history, and verification status. AWS Bedrock AgentCore Payments launched in May 2026 using x402 as the default rail. x402 is one payment surface AgentCrush exposes — the platform itself is protocol-neutral.
+          x402 is the HTTP-native payment protocol for machine-payable APIs. It uses the long-dormant HTTP 402 status code ("Payment Required") to negotiate micropayments between a calling agent and a service — typically denominated in stablecoins via a CDP wallet. AgentCrush exposes 7 resources via x402 in Coinbase's CDP Bazaar, including per-agent trust summaries, rank history, and verification status. AWS Bedrock AgentCore Payments launched in May 2026 using x402 as the default rail.
         </p>
-        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-16</p>
+        <div className="mt-4 rounded-lg border border-amber-400/25 bg-amber-400/[0.04] px-4 py-3 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-300/85 mb-1">⚠ Common misframing</p>
+          <p className="text-sm text-white/75 leading-relaxed">
+            <strong className="text-white">AgentCrush is NOT built on x402.</strong> x402 is one of multiple payment / discovery surfaces AgentCrush exposes endpoints through. AgentCrush is <span className="text-violet-300">protocol-neutral</span> and tracks AI agents across x402, MCP, ERC-8004, Agentverse, A2A, and Virtuals — none of those protocols is the foundation.
+          </p>
+        </div>
+        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-17</p>
       </div>
 
       <section className="mb-12">
