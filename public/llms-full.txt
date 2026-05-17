@@ -172,7 +172,14 @@ For retrieval-based LLM clients that don't speak MCP. Designed for short, compac
 
 Every response includes `source_urls`, `limitations`, and `last_updated`.
 
-### 5.3 x402 paid endpoints (machine-payable)
+### 5.3 Public MCP registry listings
+
+AgentCrush MCP server is also listed in public catalogs that MCP clients discover from:
+
+- **Smithery**: https://smithery.ai/servers/kristof/agentcrush — install via `smithery mcp add kristof/agentcrush`
+- (additional registries pending submission)
+
+### 5.4 x402 paid endpoints (machine-payable)
 
 These require x402 payment via CDP Bazaar. Cheap (typically $0.01–$0.10 per call).
 
