@@ -195,11 +195,17 @@ async function fuzzySuggestHandles(query, limit = 5) {
 }
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
+// All tools are read-only (no DB writes). annotations.readOnlyHint=true.
+// openWorldHint=true on tools that hit live DB state (counts/rankings change).
+// Every tool declares outputSchema so MCP clients know the response shape
+// without a sample call.
 
 const TOOLS = [
   {
     name: 'search_agents',
-    description: 'Search AI agents by name or keyword. Returns matching agents with category, tier, and rank info. Use the `filters` object for structured constraints; future versions will add more filter keys without breaking the API.',
+    title: 'Search AgentCrush Index',
+    description: 'Search AI agents by name or keyword across AgentCrush\'s evidence-ranked index. Returns matching agents with category, tier, and rank info. Use the `filters` object for structured constraints; future versions will add filter keys without breaking the API.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -208,39 +214,99 @@ const TOOLS = [
           type: 'object',
           description: 'Optional structured filters.',
           properties: {
-            primary_category:      { type: 'string', enum: VALID_CATEGORIES, description: 'Restrict to one category.' },
-            evidence_ranked_only:  { type: 'boolean', description: 'Only return evidence-ranked agents (default false — include indexed too).' },
+            primary_category:      { type: 'string', enum: VALID_CATEGORIES, description: 'Restrict to one of the 4 AgentCrush categories.' },
+            evidence_ranked_only:  { type: 'boolean', description: 'Only return evidence-ranked agents. Default false (include indexed too).' },
             limit:                 { type: 'number', description: 'Max results (1-50, default 10).' },
           },
         },
       },
       required: ['query'],
     },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        query:   { type: 'string' },
+        filters: { type: 'object' },
+        count:   { type: 'integer', description: 'Number of results returned.' },
+        agents:  {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              handle:               { type: 'string' },
+              name:                 { type: 'string' },
+              primary_category:     { type: 'string', enum: VALID_CATEGORIES },
+              secondary_categories: { type: 'array', items: { type: 'string' } },
+              tier:                 { type: 'string' },
+              archetype:            { type: 'string' },
+              ecosystem_layer:      { type: 'string' },
+              profile_url:          { type: 'string', format: 'uri' },
+            },
+          },
+        },
+      },
+    },
   },
   {
     name: 'get_agent_details',
-    description: 'Get full details for an AI agent including all category scores it qualifies for (model_family, tokenized, service, developer). Returns identity, raw signals, sub-scores, evidence-ready status across all relevant categories.',
+    title: 'Get Full Agent Details',
+    description: 'Get full details for a specific AI agent including all category scores it qualifies for (model_family, tokenized, service, developer). Returns identity, raw signals, sub-scores, evidence-ready status. Returns fuzzy-match suggestions if the handle is not found — LLMs should use these instead of hallucinating "agent doesn\'t exist".',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: {
       type: 'object',
-      properties: { handle: { type: 'string', description: 'Agent handle slug.' } },
+      properties: { handle: { type: 'string', description: 'Agent handle slug (e.g. "qwen", "crewai", "aixbt"). Alphanumeric/hyphen/underscore, max 64 chars.' } },
       required: ['handle'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        handle: { type: 'string' },
+        name:   { type: 'string' },
+        tier:   { type: 'string' },
+        archetype: { type: 'string' },
+        primary_category:     { type: 'string', enum: VALID_CATEGORIES },
+        secondary_categories: { type: 'array', items: { type: 'string' } },
+        verified:             { type: 'boolean' },
+        erc8004_registered:   { type: 'boolean' },
+        bio:           { type: 'string' },
+        profile_url:   { type: 'string', format: 'uri' },
+        identity:      { type: 'object', description: 'External identifiers (hf_author, lmarena_keys, paper_ids, virtuals_id, agentverse_id, github_full_name).' },
+        scores:        { type: 'object', description: 'Per-category scoring data keyed by category slug.' },
+        error:         { type: 'string', description: 'Set when agent not found.' },
+        suggestions:   { type: 'array', items: { type: 'object' }, description: 'Fuzzy-match suggestions when not found.' },
+      },
     },
   },
   {
     name: 'get_agent_history',
-    description: 'Get rank and score history for an AI agent over time. Returns daily snapshots up to 90 days. Useful for showing how an agent\'s standing has evolved.',
+    title: 'Get Agent Rank/Score History',
+    description: 'Get rank and score history for an AI agent over the past 1–90 days. Daily snapshots, deduplicated per calendar day. Returns trend summary (rising/falling/flat). Useful for showing how an agent\'s standing has evolved.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: {
       type: 'object',
       properties: {
         handle: { type: 'string', description: 'Agent handle slug.' },
-        days:   { type: 'number', description: 'Days of history (1-90, default 30).' },
+        days:   { type: 'number', description: 'Days of history to return (1-90, default 30).' },
       },
       required: ['handle'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        handle:           { type: 'string' },
+        name:             { type: 'string' },
+        days_requested:   { type: 'integer' },
+        snapshot_count:   { type: 'integer' },
+        history:          { type: 'array', items: { type: 'object' } },
+        summary:          { type: 'object', description: 'rank_start, rank_current, score_start, score_current, trend (rising/falling/flat).' },
+      },
     },
   },
   {
     name: 'compare_agents',
-    description: 'Compare 2-5 agents side-by-side across all their categories. Returns scoring data per agent and an automatic comparison summary.',
+    title: 'Compare AI Agents Side-by-Side',
+    description: 'Compare 2-5 AI agents side-by-side across all their categories. Returns full per-agent scoring data + comparison context. Use for "X vs Y" queries. AgentCrush does not declare a universal winner — comparison shows evidence differences.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -249,37 +315,92 @@ const TOOLS = [
           items: { type: 'string' },
           minItems: 2,
           maxItems: 5,
-          description: 'Array of 2-5 agent handles.',
+          description: 'Array of 2-5 agent handles to compare.',
         },
       },
       required: ['handles'],
     },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        compare_url: { type: 'string', format: 'uri', nullable: true, description: 'Human-readable comparison page URL (2-agent comparisons only).' },
+        agents:      { type: 'array', items: { type: 'object', description: 'Full agent details per handle.' } },
+      },
+    },
   },
   {
     name: 'list_categories',
-    description: 'List the 4 AgentCrush agent categories with counts, methodology versions, and evidence-ranked agent counts. Use this to discover what kinds of agents AgentCrush tracks.',
+    title: 'List AgentCrush Categories',
+    description: 'List the 4 AgentCrush agent categories with tracked + evidence-ranked counts and current methodology versions. Use this for market-level discovery — what kinds of agents does AgentCrush track and how many of each?',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: { type: 'object', properties: {} },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        categories: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              category:             { type: 'string', enum: VALID_CATEGORIES },
+              display_name:         { type: 'string' },
+              description:          { type: 'string' },
+              methodology_version:  { type: 'string', description: 'e.g. v1.4-with-deployment for model_family.' },
+              total_tracked:        { type: 'integer' },
+              evidence_ranked:      { type: 'integer' },
+              ranking_url:          { type: 'string', format: 'uri' },
+            },
+          },
+        },
+      },
+    },
   },
   {
     name: 'get_category_ranking',
-    description: 'Get the full ranking for a specific category. Returns agents ordered by composite score with all sub-scores visible.',
+    title: 'Get Category Ranking',
+    description: 'Get the full ranking for one of the 4 categories. Returns agents ordered by composite score with all sub-scores visible. Defaults to evidence-ranked only.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: {
       type: 'object',
       properties: {
-        category:             { type: 'string', enum: VALID_CATEGORIES, description: 'Category to rank.' },
-        evidence_ready_only:  { type: 'boolean', description: 'Filter to evidence-ranked only (default true).' },
-        limit:                { type: 'number', description: 'Max results (1-100, default 50).' },
+        category:             { type: 'string', enum: VALID_CATEGORIES, description: 'Which of the 4 AgentCrush categories to rank.' },
+        evidence_ready_only:  { type: 'boolean', description: 'Filter to evidence-ranked only. Default true.' },
+        limit:                { type: 'number', description: 'Max results to return (1-100, default 50).' },
       },
       required: ['category'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        category:             { type: 'string', enum: VALID_CATEGORIES },
+        methodology_version:  { type: 'string' },
+        count:                { type: 'integer' },
+        ranking:              { type: 'array', items: { type: 'object', description: 'Per-agent ranking row with sub-scores.' } },
+      },
     },
   },
   {
     name: 'get_methodology',
-    description: 'Get the scoring methodology for a category — weights, signal sources, formulas, evidence-ready rule, and known limitations. Use this when explaining HOW a ranking works to an end user. Methodology travels with data so LLMs can answer "how is this ranked" accurately.',
+    title: 'Get Scoring Methodology',
+    description: 'Get the scoring methodology for one category — weights, signal sources, formulas, evidence-ready rule, and known limitations. **Methodology travels with data**: call this when explaining HOW a ranking works so the LLM can give a methodology-accurate answer instead of guessing.',
+    annotations: { readOnlyHint: true, openWorldHint: false, destructiveHint: false, idempotentHint: true },
     inputSchema: {
       type: 'object',
-      properties: { category: { type: 'string', enum: VALID_CATEGORIES, description: 'Category to get methodology for.' } },
+      properties: { category: { type: 'string', enum: VALID_CATEGORIES, description: 'Which category methodology to retrieve.' } },
       required: ['category'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        category:             { type: 'string', enum: VALID_CATEGORIES },
+        name:                 { type: 'string' },
+        methodology_version:  { type: 'string' },
+        description:          { type: 'string' },
+        signals:              { type: 'array', items: { type: 'object', description: 'Per-signal weight + formula + note.' } },
+        evidence_ready_rule:  { type: 'string' },
+        limitations:          { type: 'array', items: { type: 'string' } },
+        methodology_url:      { type: 'string', format: 'uri' },
+      },
     },
   },
 ]
@@ -669,7 +790,7 @@ export async function POST(request) {
     case 'initialize':
       return jsonResult(id, {
         protocolVersion: '2024-11-05',
-        capabilities: { tools: {} },
+        capabilities: { tools: {}, resources: {}, prompts: {} },
         serverInfo: { name: 'AgentCrush', version: '1.0.0', api_version: 'v1' },
       }, rl, CACHE_TTL['initialize'])
     case 'initialized':
@@ -681,6 +802,15 @@ export async function POST(request) {
       return jsonResult(id, { tools: TOOLS }, rl, CACHE_TTL['tools/list'])
     case 'tools/call':
       return dispatchTool(id, params, rl)
+    // Standard MCP optional methods. We expose no resources / prompts —
+    // returning empty arrays is the correct response (rather than "method
+    // not found"). Smithery quality-score expects these.
+    case 'resources/list':
+      return jsonResult(id, { resources: [] }, rl, 3600)
+    case 'resources/templates/list':
+      return jsonResult(id, { resourceTemplates: [] }, rl, 3600)
+    case 'prompts/list':
+      return jsonResult(id, { prompts: [] }, rl, 3600)
     default:
       return jsonError(id, -32601, `Method not found: ${method}`, rl)
   }
