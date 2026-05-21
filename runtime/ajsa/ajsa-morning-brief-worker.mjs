@@ -66,7 +66,7 @@ if (!ANTHROPIC_API_KEY) {
 }
 
 const ANTHROPIC_MODEL = 'claude-haiku-4-5';
-const MAX_OUTPUT_TOKENS = 4096;
+const MAX_OUTPUT_TOKENS = 8192;
 
 console.log(`[ajsa-morning-brief] Date: ${RUN_DATE}  Mode: ${isDryRun ? 'DRY-RUN' : 'WRITE'}  Telegram: ${skipTelegram ? 'OFF' : 'ON'}`);
 console.log(`[ajsa-morning-brief] Brain path: ${BRAIN_PATH}  Model: ${ANTHROPIC_MODEL}`);
@@ -273,7 +273,11 @@ async function callAnthropic({ systemPrompt, userPrompt }) {
         throw new Error(`Unexpected Anthropic response shape: ${JSON.stringify(json).slice(0, 300)}`);
       }
       const usage = json.usage || {};
-      console.log(`[ajsa-morning-brief] Anthropic ok. Input tokens: ${usage.input_tokens}, output tokens: ${usage.output_tokens}`);
+      const stopReason = json.stop_reason;
+      console.log(`[ajsa-morning-brief] Anthropic ok. Input tokens: ${usage.input_tokens}, output tokens: ${usage.output_tokens}, stop_reason: ${stopReason}`);
+      if (stopReason === 'max_tokens') {
+        throw new Error(`Anthropic hit max_tokens (${MAX_OUTPUT_TOKENS}) before completing. Output is truncated and unsafe to parse. Bump MAX_OUTPUT_TOKENS, shorten the prompt, or tighten the brief format spec.`);
+      }
       return text;
     } catch (err) {
       lastErr = err;
