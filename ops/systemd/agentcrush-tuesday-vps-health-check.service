@@ -1,0 +1,20 @@
+[Unit]
+Description=Send weekly VPS health-check prompt to Kris on Telegram
+Documentation=https://github.com/kristof-sudo/agentcrush-brain/blob/main/Playbooks/vps-weekly-health-check.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/tools/.env
+ExecStartPre=/bin/bash -lc 'cd ${BRAIN_PATH:-/opt/agentcrush-brain} && git pull --quiet origin main'
+ExecStart=/usr/bin/node /opt/agentcrush/tools/telegram-sender.mjs \
+  --file ${BRAIN_PATH:-/opt/agentcrush-brain}/Playbooks/vps-weekly-health-check.md \
+  --extract-prompt-block \
+  --header "📋 Tuesday VPS health check — paste this to Claude-on-VPS"
+StandardOutput=append:/var/log/agentcrush/telegram-sender.log
+StandardError=append:/var/log/agentcrush/telegram-sender.log
+
+[Install]
+WantedBy=multi-user.target

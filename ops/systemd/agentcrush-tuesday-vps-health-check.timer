@@ -1,0 +1,11 @@
+[Unit]
+Description=Tuesday 10:00 Budapest — fire VPS weekly health-check Telegram reminder
+Documentation=https://github.com/kristof-sudo/agentcrush-brain/blob/main/Playbooks/vps-weekly-health-check.md
+
+[Timer]
+OnCalendar=Tue *-*-* 10:00:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-tuesday-vps-health-check.service
+
+[Install]
+WantedBy=timers.target
