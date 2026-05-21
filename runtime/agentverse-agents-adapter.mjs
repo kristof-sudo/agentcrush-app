@@ -36,7 +36,7 @@ const maxIdx = args.indexOf('--max');
 const MAX_ITEMS = maxIdx !== -1 ? (parseInt(args[maxIdx + 1], 10) || Infinity) : Infinity;
 const pagesIdx = args.indexOf('--limit-pages');
 const MAX_PAGES = pagesIdx !== -1 ? (parseInt(args[pagesIdx + 1], 10) || Infinity) : Infinity;
-const PAGE_LIMIT = 100;
+const PAGE_LIMIT = 50;
 const ENDPOINT = 'https://agentverse.ai/v1/search/agents';
 const PAGE_DELAY_MS = 1000;
 
