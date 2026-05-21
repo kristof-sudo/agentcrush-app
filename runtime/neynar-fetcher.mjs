@@ -88,7 +88,7 @@ async function fetchMentions() {
   // Neynar's notifications endpoint returns mentions + replies + likes for a FID.
   // We filter to mention type within the lookback window.
   const data = await neynarGet(
-    `/v2/farcaster/notifications/?fid=${AGENTCRUSH_FID}&type=mentions&limit=50`,
+    `/v2/farcaster/notifications/?fid=${AGENTCRUSH_FID}&type=mentions&limit=25`,
   );
   const all = data?.notifications || data?.result?.notifications || [];
   const recent = all.filter((n) => {
