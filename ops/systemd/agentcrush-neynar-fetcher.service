@@ -1,0 +1,17 @@
+[Unit]
+Description=Neynar Farcaster fetcher (Layer 1 deterministic — writes JSON to brain)
+Documentation=https://github.com/kristof-sudo/agentcrush-brain/blob/main/Decisions/2026-05-21-ai-infrastructure-architecture.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStartPre=/bin/bash -lc 'cd ${BRAIN_PATH} && git pull --rebase --quiet origin main 2>/dev/null || true'
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/neynar-fetcher.mjs
+StandardOutput=append:/var/log/agentcrush/neynar-fetcher.log
+StandardError=append:/var/log/agentcrush/neynar-fetcher.log
+
+[Install]
+WantedBy=multi-user.target

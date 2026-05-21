@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily 08:00 Budapest — fire Ajsa Morning Social Brief
+Documentation=https://github.com/kristof-sudo/agentcrush-brain/blob/main/Playbooks/morning-routine.md
+
+[Timer]
+OnCalendar=*-*-* 08:00:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-morning-brief.service
+
+[Install]
+WantedBy=timers.target

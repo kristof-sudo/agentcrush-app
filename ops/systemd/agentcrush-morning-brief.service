@@ -1,0 +1,19 @@
+[Unit]
+Description=Ajsa Morning Social Brief — read fetcher JSON + brain, call Haiku, push Telegram
+Documentation=https://github.com/kristof-sudo/agentcrush-brain/blob/main/Playbooks/morning-routine.md
+After=network-online.target agentcrush-neynar-fetcher.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStartPre=/bin/bash -lc 'cd ${BRAIN_PATH} && git pull --rebase --quiet origin main 2>/dev/null || true'
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/ajsa/ajsa-morning-brief-worker.mjs
+StandardOutput=append:/var/log/agentcrush/ajsa-morning-brief.log
+StandardError=append:/var/log/agentcrush/ajsa-morning-brief.log
+# Allow up to 3 minutes for the Anthropic call + writes + Telegram push
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target

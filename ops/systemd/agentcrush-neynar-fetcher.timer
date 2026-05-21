@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily 07:45 Budapest — fire Neynar Farcaster fetcher
+Documentation=https://github.com/kristof-sudo/agentcrush-brain/blob/main/Playbooks/morning-routine.md
+
+[Timer]
+OnCalendar=*-*-* 07:45:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-neynar-fetcher.service
+
+[Install]
+WantedBy=timers.target
