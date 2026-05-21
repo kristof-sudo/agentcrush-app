@@ -5,7 +5,7 @@
 
 CREATE TABLE agent_snapshots (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  agent_id        TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  agent_id        UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
   snapshot_date   DATE NOT NULL,
 
   -- Ranking state
