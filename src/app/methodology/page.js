@@ -326,9 +326,88 @@ export default async function MethodologyHubPage() {
         </Link>
       </section>
 
+      {/* Version diff archive */}
+      <section className="mb-10">
+        <h2 className="text-xl font-bold mb-4">Version history</h2>
+        <p className="text-sm text-white/50 leading-relaxed mb-5">
+          Each version bump changes signal weights, adds new signals, or adjusts the evidence-ready rule. Agents that were borderline evidence-ranked may move when a methodology version changes.
+        </p>
+        <div className="space-y-4">
+          {[
+            {
+              version: 'v1.4-with-deployment',
+              category: 'Model Families',
+              date: 'May 2026',
+              color: '#a78bfa',
+              changes: [
+                { type: 'added', text: 'Deployment signal (10%) — cross-protocol agent-economy mentions across 6 source tables.' },
+                { type: 'adjusted', text: 'HuggingFace weight reduced from 35% → 30% to accommodate deployment signal.' },
+                { type: 'adjusted', text: 'LMArena weight reduced from 30% → 25%.' },
+                { type: 'impact', text: 'Agents with broad agent-economy integrations moved up; pure-capability models without deployment footprint held or dipped.' },
+              ],
+            },
+            {
+              version: 'v1.3-with-citations',
+              category: 'Model Families',
+              date: 'April 2026',
+              color: '#a78bfa',
+              changes: [
+                { type: 'added', text: 'Paper Citations signal (15%) — Semantic Scholar citation counts on canonical lab papers.' },
+                { type: 'adjusted', text: 'HF Derivatives weight reduced from 25% → 20%.' },
+                { type: 'impact', text: 'Research-heavy model families (DeepSeek, Llama) gained; models without academic papers were unaffected.' },
+              ],
+            },
+            {
+              version: 'v1.1-tokenized-tvl',
+              category: 'Tokenized Agents',
+              date: 'May 2026',
+              color: '#39ff14',
+              changes: [
+                { type: 'added', text: 'TVL signal (15%) — total value locked in token contracts.' },
+                { type: 'adjusted', text: 'Liquidity + Volume weight reduced from 25% → 20%.' },
+                { type: 'impact', text: 'Agents with capital locked beyond market cap moved up. Pure market-cap agents lost relative position.' },
+              ],
+            },
+            {
+              version: 'v1.1-service-forks',
+              category: 'Service Agents',
+              date: 'May 2026',
+              color: '#f0a500',
+              changes: [
+                { type: 'added', text: 'Forks signal (15%) — GitHub forks log-scaled. Measures active engagement vs. passive starring.' },
+                { type: 'adjusted', text: 'Protocol Breadth weight unchanged. Adoption signal recalibrated.' },
+                { type: 'impact', text: 'Agents with high fork engagement moved up relative to starred-but-unforked repos.' },
+              ],
+            },
+          ].map((ver) => (
+            <div key={ver.version} className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+              <div className="flex flex-wrap items-baseline gap-3 px-4 py-3 border-b border-white/[0.05]"
+                style={{ borderLeftColor: ver.color, borderLeftWidth: 2 }}>
+                <span className="font-mono text-sm font-bold" style={{ color: ver.color }}>{ver.version}</span>
+                <span className="text-xs text-white/40">{ver.category}</span>
+                <span className="text-xs font-mono text-white/25 ml-auto">{ver.date}</span>
+              </div>
+              <div className="px-4 py-3 space-y-2">
+                {ver.changes.map((c, i) => (
+                  <div key={i} className="flex gap-3 text-xs leading-relaxed">
+                    <span className={`shrink-0 font-mono font-bold mt-0.5 ${
+                      c.type === 'added' ? 'text-emerald-400' :
+                      c.type === 'adjusted' ? 'text-amber-400' :
+                      'text-violet-400'
+                    }`}>
+                      {c.type === 'added' ? '+ added' : c.type === 'adjusted' ? '~ adjusted' : '→ impact'}
+                    </span>
+                    <span className="text-white/50">{c.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="border-t border-white/[0.06] pt-6 flex flex-wrap gap-4 text-xs text-white/35">
         <Link href="/rankings" className="hover:text-white/70 transition-colors">All Rankings →</Link>
-        <Link href="/how-we-rank" className="hover:text-white/70 transition-colors">Plain-English explainer →</Link>
         <Link href="/labs" className="hover:text-white/70 transition-colors">Labs →</Link>
         <Link href="/developers" className="hover:text-white/70 transition-colors">Developer docs →</Link>
       </div>
