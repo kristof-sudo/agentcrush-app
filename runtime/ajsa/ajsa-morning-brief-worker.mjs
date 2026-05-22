@@ -132,6 +132,7 @@ async function gatherInputs() {
   const memoryMd = await readIfExists(path.join(BRAIN_PATH, 'Memory.md'));
   const playbookFormat = await readIfExists(path.join(BRAIN_PATH, 'Playbooks', 'morning-routine.md'));
   const ajsaPlaybook = await readIfExists(path.join(BRAIN_PATH, 'Agents', 'ajsa', 'playbook.md'));
+  const postedLog = await readIfExists(path.join(BRAIN_PATH, 'Agents', 'ajsa', 'posted-log.md'));
 
   for (const [name, content] of [
     ['STATE.md', stateMd],
@@ -153,7 +154,64 @@ async function gatherInputs() {
     memoryMd,
     playbookFormat,
     ajsaPlaybook: ajsaPlaybook || '(empty — no prior learnings yet)',
+    postedLog: postedLog || '(empty — no post history yet)',
   };
+}
+
+// ── Posted-log auto-update ────────────────────────────────────────────────────
+
+async function autoUpdatePostedLog(inputs) {
+  // Compare fetcher's our_recent_casts / our_recent_posts to entries in
+  // posted-log.md. Append any cast/post hash/id not already present. Best-effort
+  // — never blocks the brief if it fails. Idempotent via hash/ID dedup.
+
+  const logPath = path.join(BRAIN_PATH, 'Agents', 'ajsa', 'posted-log.md');
+  const existingLog = inputs.postedLog || '';
+
+  const ourFcCasts = inputs.neynarData?.our_recent_casts || [];
+  const ourXPosts = inputs.xData?.our_recent_posts || [];
+
+  const newEntries = [];
+
+  for (const cast of ourFcCasts) {
+    if (!cast.hash) continue;
+    if (existingLog.includes(cast.hash)) continue; // dedup by hash
+    newEntries.push(
+      `- **${cast.timestamp || 'unknown timestamp'}** | Farcaster | (type-tbd) | auto-detected\n` +
+      `  - URL: ${cast.url || 'unknown'}\n` +
+      `  - Hash: ${cast.hash}\n` +
+      `  - Engagement at last check: ${cast.reactions?.likes ?? 0}/${cast.reactions?.recasts ?? 0}/${cast.reactions?.replies ?? 0} (${new Date().toISOString().slice(0, 10)})\n` +
+      `  - Context (auto): ${(cast.text || '').slice(0, 200).replace(/\n/g, ' ')}\n`,
+    );
+  }
+
+  for (const post of ourXPosts) {
+    if (!post.id) continue;
+    if (existingLog.includes(post.id)) continue;
+    newEntries.push(
+      `- **${post.created_at || 'unknown timestamp'}** | X | (type-tbd) | auto-detected\n` +
+      `  - URL: ${post.url || 'unknown'}\n` +
+      `  - ID: ${post.id}\n` +
+      `  - Engagement at last check: ${post.metrics?.likes ?? 0}/${post.metrics?.retweets ?? 0}/${post.metrics?.replies ?? 0} (${new Date().toISOString().slice(0, 10)})\n` +
+      `  - Context (auto): ${(post.text || '').slice(0, 200).replace(/\n/g, ' ')}\n`,
+    );
+  }
+
+  if (newEntries.length === 0) {
+    console.log('[ajsa-morning-brief] posted-log: no new entries to append.');
+    return;
+  }
+
+  const appendBlock =
+    `\n\n## Auto-appended ${new Date().toISOString().slice(0, 10)}\n\n` +
+    newEntries.join('\n');
+
+  try {
+    await fs.appendFile(logPath, appendBlock);
+    console.log(`[ajsa-morning-brief] posted-log: appended ${newEntries.length} new entries.`);
+  } catch (err) {
+    console.warn(`[ajsa-morning-brief] posted-log append failed: ${err.message}`);
+  }
 }
 
 // ── Prompt construction ───────────────────────────────────────────────────────
@@ -180,6 +238,14 @@ COMPOUNDING LEARNINGS — past Kris feedback on Ajsa briefs (Agents/ajsa/playboo
 ═══════════════════════════════════════════════════════════════════════════════
 
 ${inputs.ajsaPlaybook}
+
+═══════════════════════════════════════════════════════════════════════════════
+POSTED-LOG — AgentCrush social activity history (Agents/ajsa/posted-log.md)
+═══════════════════════════════════════════════════════════════════════════════
+
+Use this to (a) enforce cadence (gap warnings in section 4), (b) avoid repeating topics in section 8, (c) reference past engagement when proposing follow-ups. Auto-updated each run with new posts detected from fetcher data.
+
+${inputs.postedLog}
 
 ═══════════════════════════════════════════════════════════════════════════════
 OUTPUT FORMAT — STRICT
@@ -450,6 +516,17 @@ async function main() {
   }
 
   const inputs = await gatherInputs();
+
+  // Best-effort: append any new top-level casts/posts from fetcher data to
+  // the posted-log before building the prompt. So Ajsa sees the freshest
+  // history when drafting the brief. Doesn't block on failure.
+  if (!isDryRun) {
+    await autoUpdatePostedLog(inputs);
+    // Re-read after potential append so prompt sees the updated log
+    const refreshedLog = await readIfExists(path.join(BRAIN_PATH, 'Agents', 'ajsa', 'posted-log.md'));
+    if (refreshedLog) inputs.postedLog = refreshedLog;
+  }
+
   const systemPrompt = buildSystemPrompt(inputs);
   const userPrompt = buildUserPrompt(inputs);
 
