@@ -56,3 +56,4 @@ runtime/state/
 ops/logs/
 .env*.local
 .claude/worktrees/
+runtime/brain-mcp/node_modules/
