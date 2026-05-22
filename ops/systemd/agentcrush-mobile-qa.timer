@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily 09:30 Budapest — mobile-qa-checker
+
+[Timer]
+OnCalendar=*-*-* 09:30:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-mobile-qa.service
+
+[Install]
+WantedBy=timers.target

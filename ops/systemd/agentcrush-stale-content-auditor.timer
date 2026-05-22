@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly Sunday 10:00 Budapest — stale-content-auditor (gives Monday morning brief fresh audit)
+
+[Timer]
+OnCalendar=Sun *-*-* 10:00:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-stale-content-auditor.service
+
+[Install]
+WantedBy=timers.target

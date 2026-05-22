@@ -1,0 +1,18 @@
+{
+  "name": "agentcrush-mobile-qa-checker",
+  "version": "0.1.0",
+  "description": "Mobile QA checker — runs Playwright at 390px against agentcrush.xyz key routes; alerts on regressions (Phase 3 #3)",
+  "type": "module",
+  "private": true,
+  "main": "checker.mjs",
+  "scripts": {
+    "start": "node checker.mjs",
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

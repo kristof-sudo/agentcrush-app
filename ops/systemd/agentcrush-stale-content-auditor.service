@@ -1,0 +1,18 @@
+[Unit]
+Description=stale-content-auditor — weekly audit of agentcrush.xyz vs brain truth (Layer 2 Haiku)
+Documentation=https://github.com/kristof-sudo/agentcrush-app/blob/main/runtime/stale-content-auditor.mjs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStartPre=/bin/bash -lc 'cd ${BRAIN_PATH:-/opt/agentcrush-brain} && git pull --rebase --quiet origin main 2>/dev/null || true'
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/stale-content-auditor.mjs
+StandardOutput=append:/var/log/agentcrush/stale-content-auditor.log
+StandardError=append:/var/log/agentcrush/stale-content-auditor.log
+TimeoutStartSec=240
+
+[Install]
+WantedBy=multi-user.target

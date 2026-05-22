@@ -1,0 +1,18 @@
+[Unit]
+Description=mobile-qa-checker — Playwright at 390px against agentcrush.xyz key routes; Telegram on regression
+Documentation=https://github.com/kristof-sudo/agentcrush-app/blob/main/runtime/mobile-qa/checker.mjs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/mobile-qa
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/mobile-qa/checker.mjs
+StandardOutput=append:/var/log/agentcrush/mobile-qa.log
+StandardError=append:/var/log/agentcrush/mobile-qa.log
+TimeoutStartSec=300
+SuccessExitStatus=0 1
+
+[Install]
+WantedBy=multi-user.target
