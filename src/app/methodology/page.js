@@ -191,7 +191,7 @@ export default async function MethodologyHubPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12 md:px-6 text-white">
+    <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <p className="text-xs font-mono text-white/25 mb-6">
@@ -201,20 +201,20 @@ export default async function MethodologyHubPage() {
       </p>
 
       <div className="mb-10">
-        <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">
+        <p className="text-xs font-semibold uppercase tracking-widest text-violet-400/70 mb-2">
           The methodology
         </p>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
+        <h1 className="text-2xl font-bold text-white tracking-tight mb-3">
           How AgentCrush ranks the agent economy
         </h1>
-        <p className="text-base text-white/60 max-w-2xl leading-relaxed">
+        <p className="text-sm text-white/55 max-w-2xl leading-relaxed">
           AgentCrush is the evidence-ranked index of the agent economy. We don&apos;t pick winners — we publish multi-signal evidence with transparent weights. Different agent categories leave different evidence trails, so we run <span className="text-white/85">four category-specific methodologies</span>, each with its own signal sources, weights, and evidence-ready rule.
         </p>
       </div>
 
       {/* Key principles */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-4">Principles</h2>
+        <h2 className="text-lg font-bold text-white mb-4">Principles</h2>
         <div className="space-y-4 text-sm text-white/65 leading-relaxed">
           <p>
             <span className="text-white/90 font-semibold">Multi-signal corroboration.</span> No agent is evidence-ranked on a single signal. Every category requires at least 3 of N signals available, AND at least one of those signals must be a <em>capability</em> signal — not just popularity. Downloads and stars are vanity metrics on their own.
@@ -233,7 +233,7 @@ export default async function MethodologyHubPage() {
 
       {/* Live summary */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-4">Live coverage</h2>
+        <h2 className="text-lg font-bold text-white mb-4">Live coverage</h2>
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
           <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] font-mono uppercase tracking-wider text-white/35">
             <span>Category</span>
@@ -267,7 +267,7 @@ export default async function MethodologyHubPage() {
         <section key={m.slug} id={m.slug} className="mb-12 scroll-mt-24">
           <div className="flex items-baseline gap-3 mb-2">
             <AccentDot accent={m.accent} />
-            <h2 className="text-2xl font-bold">{m.name}</h2>
+            <h2 className="text-xl font-bold text-white">{m.name}</h2>
             <span className="text-[10px] font-mono text-violet-300/80">{m.version}</span>
           </div>
           <p className="text-sm text-white/55 leading-relaxed mb-5 max-w-2xl">{m.description}</p>
@@ -309,7 +309,7 @@ export default async function MethodologyHubPage() {
 
       {/* For LLMs / developers */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-3">For machine consumers</h2>
+        <h2 className="text-lg font-bold text-white mb-3">For machine consumers</h2>
         <p className="text-sm text-white/55 leading-relaxed mb-4">
           The same methodology is exposed via our MCP server. LLMs (Claude Desktop, Cursor, custom agents) can query AgentCrush as a live data layer and explain ranking decisions accurately.
         </p>
@@ -328,7 +328,7 @@ export default async function MethodologyHubPage() {
 
       {/* Version diff archive */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-4">Version history</h2>
+        <h2 className="text-lg font-bold text-white mb-4">Version history</h2>
         <p className="text-sm text-white/50 leading-relaxed mb-5">
           Each version bump changes signal weights, adds new signals, or adjusts the evidence-ready rule. Agents that were borderline evidence-ranked may move when a methodology version changes.
         </p>

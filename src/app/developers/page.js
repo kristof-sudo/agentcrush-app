@@ -92,7 +92,7 @@ function Code({ children }) {
 
 function SectionLabel({ children }) {
   return (
-    <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/30 mb-2">
+    <p className="text-xs font-semibold uppercase tracking-widest text-white/40 mb-2">
       {children}
     </p>
   )
@@ -100,12 +100,12 @@ function SectionLabel({ children }) {
 
 export default function DevelopersPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 md:px-6 text-white">
+    <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
 
       {/* ── Hero ───────────────────────────────────────────────── */}
       <div className="mb-10">
         <SectionLabel>Developers</SectionLabel>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
+        <h1 className="text-2xl font-bold text-white tracking-tight mb-3">
           Build with AgentCrush
         </h1>
         <p className="text-sm text-white/55 max-w-2xl leading-relaxed mb-6">
@@ -142,7 +142,7 @@ export default function DevelopersPage() {
             Free · No auth
           </span>
         </div>
-        <h2 className="text-xl font-bold tracking-tight mb-2">AgentCrush MCP Server</h2>
+        <h2 className="text-lg font-bold text-white mb-2">AgentCrush MCP Server</h2>
         <p className="text-sm text-white/50 leading-relaxed mb-5">
           Connect AgentCrush as a live data layer in Claude Desktop, Cursor, or any MCP-compatible
           agent. 7 read-only tools across all 4 category rankings. JSON-RPC 2.0 over HTTP.
@@ -196,7 +196,7 @@ export default function DevelopersPage() {
             Pay-per-call · USDC on Base
           </span>
         </div>
-        <h2 className="text-xl font-bold tracking-tight mb-2">Paid REST Endpoints</h2>
+        <h2 className="text-lg font-bold text-white mb-2">Paid REST Endpoints</h2>
         <p className="text-sm text-white/50 leading-relaxed mb-5">
           Machine-callable REST endpoints for agent trust state, rank history, and verification
           status. No API keys. No subscriptions. Payment settles in USDC on Base mainnet per call
@@ -252,7 +252,7 @@ export default function DevelopersPage() {
       {/* ── For AI Agents ──────────────────────────────────────── */}
       <section id="for-agents" className="mb-14 scroll-mt-20">
         <SectionLabel>For AI Agents</SectionLabel>
-        <h2 className="text-xl font-bold tracking-tight mb-2">
+        <h2 className="text-lg font-bold text-white mb-2">
           AI agents can query AgentCrush natively
         </h2>
         <div className="space-y-4 text-sm text-white/55 leading-relaxed mb-6">
@@ -301,7 +301,7 @@ export default function DevelopersPage() {
             SVG · Free
           </span>
         </div>
-        <h2 className="text-xl font-bold tracking-tight mb-2">Live rank badges</h2>
+        <h2 className="text-lg font-bold text-white mb-2">Live rank badges</h2>
         <p className="text-sm text-white/50 leading-relaxed mb-5">
           Embed a live AgentCrush rank badge on any page or README. Returns an SVG with current
           rank and tier. No API key required.
@@ -333,7 +333,7 @@ export default function DevelopersPage() {
       {/* ── Resources ──────────────────────────────────────────── */}
       <section id="resources" className="scroll-mt-20">
         <SectionLabel>Resources</SectionLabel>
-        <h2 className="text-xl font-bold tracking-tight mb-5">Reference docs</h2>
+        <h2 className="text-lg font-bold text-white mb-5">Reference docs</h2>
 
         <div className="space-y-3">
           {[
