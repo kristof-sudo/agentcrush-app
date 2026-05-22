@@ -115,7 +115,7 @@ const METHODOLOGY = [
     rule: 'Multi-signal coverage threshold OR top-100 ranked OR single signal ≥ 90 with ≥ 2 corroborating signals > 50.',
     limitations: [
       'Methodology weights are computed dynamically per agent (active_weight_total) rather than fixed.',
-      'Universal ranking includes 1,289 agents; evidence_ranked subset is the public-rank list.',
+      'Universal ranking includes the full indexed set; evidence_ranked subset is the public-rank list.',
     ],
   },
 ]
