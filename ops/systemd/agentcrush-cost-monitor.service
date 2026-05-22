@@ -1,0 +1,17 @@
+[Unit]
+Description=cost-monitor — aggregate Anthropic spend across Layer 2 workers, alert on drift toward $10/mo cap
+Documentation=https://github.com/kristof-sudo/agentcrush-app/blob/main/runtime/cost-monitor.mjs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/cost-monitor.mjs
+StandardOutput=append:/var/log/agentcrush/cost-monitor.log
+StandardError=append:/var/log/agentcrush/cost-monitor.log
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

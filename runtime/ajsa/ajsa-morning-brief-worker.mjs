@@ -345,6 +345,23 @@ async function callAnthropic({ systemPrompt, userPrompt }) {
       const usage = json.usage || {};
       const stopReason = json.stop_reason;
       console.log(`[ajsa-morning-brief] Anthropic ok on attempt ${attempt}. Input tokens: ${usage.input_tokens}, output tokens: ${usage.output_tokens}, stop_reason: ${stopReason}`);
+      // Structured cost log — read by runtime/cost-monitor.mjs. Best-effort; never throws.
+      try {
+        const { appendFileSync, mkdirSync } = await import('node:fs');
+        const COST_LOG = '/var/log/agentcrush/anthropic-costs.jsonl';
+        mkdirSync('/var/log/agentcrush', { recursive: true });
+        appendFileSync(COST_LOG, JSON.stringify({
+          ts: new Date().toISOString(),
+          worker: 'agentcrush-morning-brief',
+          model: ANTHROPIC_MODEL,
+          input_tokens: usage.input_tokens ?? 0,
+          output_tokens: usage.output_tokens ?? 0,
+          cache_read_input_tokens: usage.cache_read_input_tokens ?? 0,
+          cache_creation_input_tokens: usage.cache_creation_input_tokens ?? 0,
+        }) + '\n');
+      } catch (e) {
+        console.warn(`[ajsa-morning-brief] cost-log write failed (non-fatal): ${e.message}`);
+      }
       if (stopReason === 'max_tokens') {
         throw new Error(`Anthropic hit max_tokens (${MAX_OUTPUT_TOKENS}) before completing. Output is truncated and unsafe to parse. Bump MAX_OUTPUT_TOKENS, shorten the prompt, or tighten the brief format spec.`);
       }

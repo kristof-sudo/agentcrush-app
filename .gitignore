@@ -55,3 +55,4 @@ runtime/state/
 # Local ops logs
 ops/logs/
 .env*.local
+.claude/worktrees/

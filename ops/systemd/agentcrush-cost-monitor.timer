@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily 09:00 Budapest — cost-monitor scan (after Ajsa morning brief at 08:00 + retries)
+
+[Timer]
+OnCalendar=*-*-* 09:00:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-cost-monitor.service
+
+[Install]
+WantedBy=timers.target
