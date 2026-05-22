@@ -216,8 +216,17 @@ async function autoUpdatePostedLog(inputs) {
 
 // ── Prompt construction ───────────────────────────────────────────────────────
 
-function buildSystemPrompt(inputs) {
-  return `You are Ajsa, the AgentCrush Morning Social Brief producer. You produce a daily brief in a specific format defined in the playbook below. You only assert things traceable to specific rows in the fetcher JSON — you NEVER invent mentions, posts, or engagement metrics. The Bix Social Brief was retired 2026-05-18 for exactly this kind of fabrication; the architecture now isolates you from it by giving you only deterministic JSON inputs.
+// System prompt is split into two blocks for prompt caching:
+//   [0] CACHED — role intro + playbook + Memory.md + compounding learnings + output format
+//       Stable day-to-day; cached so retries within 5 min hit cache (90% input
+//       discount + priority queue during 529 overload windows). Changes only
+//       when Kris edits Memory.md, the playbook, or compounding learnings.
+//   [1] UNCACHED — POSTED-LOG. Auto-appended every run, so changes daily.
+//       Keeping it out of the cached block means the day's first call is a
+//       single cache write; retries within 5 min reuse the cache regardless
+//       of posted-log churn (cache key is only block [0]).
+function buildSystemBlocks(inputs) {
+  const cached = `You are Ajsa, the AgentCrush Morning Social Brief producer. You produce a daily brief in a specific format defined in the playbook below. You only assert things traceable to specific rows in the fetcher JSON — you NEVER invent mentions, posts, or engagement metrics. The Bix Social Brief was retired 2026-05-18 for exactly this kind of fabrication; the architecture now isolates you from it by giving you only deterministic JSON inputs.
 
 You are writing for Kris, the founder of AgentCrush. He reads your output on Telegram over coffee, then opens a Claude Code session where the COO verifies your work against ground truth.
 
@@ -240,14 +249,6 @@ COMPOUNDING LEARNINGS — past Kris feedback on Ajsa briefs (Agents/ajsa/playboo
 ${inputs.ajsaPlaybook}
 
 ═══════════════════════════════════════════════════════════════════════════════
-POSTED-LOG — AgentCrush social activity history (Agents/ajsa/posted-log.md)
-═══════════════════════════════════════════════════════════════════════════════
-
-Use this to (a) enforce cadence (gap warnings in section 4), (b) avoid repeating topics in section 8, (c) reference past engagement when proposing follow-ups. Auto-updated each run with new posts detected from fetcher data.
-
-${inputs.postedLog}
-
-═══════════════════════════════════════════════════════════════════════════════
 OUTPUT FORMAT — STRICT
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -265,6 +266,19 @@ Do not output anything outside these delimiters. No preamble, no summary at the 
 The full brief is committed to the brain. The Telegram message is what Kris reads on his phone — it must be self-contained and parsable on a small screen.
 
 Every draft action in either output MUST reference a specific cast/post URL or hash from the fetcher JSON. If no URL exists for an item, don't suggest the action.`;
+
+  const postedLogBlock = `═══════════════════════════════════════════════════════════════════════════════
+POSTED-LOG — AgentCrush social activity history (Agents/ajsa/posted-log.md)
+═══════════════════════════════════════════════════════════════════════════════
+
+Use this to (a) enforce cadence (gap warnings in section 4), (b) avoid repeating topics in section 8, (c) reference past engagement when proposing follow-ups. Auto-updated each run with new posts detected from fetcher data.
+
+${inputs.postedLog}`;
+
+  return [
+    { type: 'text', text: cached, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: postedLogBlock },
+  ];
 }
 
 function buildUserPrompt(inputs) {
@@ -306,12 +320,12 @@ Begin output with the literal delimiter "---FULL BRIEF START---" — no preamble
 
 // ── Anthropic call ────────────────────────────────────────────────────────────
 
-async function callAnthropic({ systemPrompt, userPrompt }) {
+async function callAnthropic({ systemBlocks, userPrompt }) {
   const url = 'https://api.anthropic.com/v1/messages';
   const body = {
     model: ANTHROPIC_MODEL,
     max_tokens: MAX_OUTPUT_TOKENS,
-    system: systemPrompt,
+    system: systemBlocks,
     messages: [{ role: 'user', content: userPrompt }],
   };
 
@@ -344,7 +358,9 @@ async function callAnthropic({ systemPrompt, userPrompt }) {
       }
       const usage = json.usage || {};
       const stopReason = json.stop_reason;
-      console.log(`[ajsa-morning-brief] Anthropic ok on attempt ${attempt}. Input tokens: ${usage.input_tokens}, output tokens: ${usage.output_tokens}, stop_reason: ${stopReason}`);
+      const cacheRead = usage.cache_read_input_tokens ?? 0;
+      const cacheCreate = usage.cache_creation_input_tokens ?? 0;
+      console.log(`[ajsa-morning-brief] Anthropic ok on attempt ${attempt}. Input tokens: ${usage.input_tokens}, output tokens: ${usage.output_tokens}, cache_read: ${cacheRead}, cache_create: ${cacheCreate}, stop_reason: ${stopReason}`);
       // Structured cost log — read by runtime/cost-monitor.mjs. Best-effort; never throws.
       try {
         const { appendFileSync, mkdirSync } = await import('node:fs');
@@ -544,14 +560,16 @@ async function main() {
     if (refreshedLog) inputs.postedLog = refreshedLog;
   }
 
-  const systemPrompt = buildSystemPrompt(inputs);
+  const systemBlocks = buildSystemBlocks(inputs);
   const userPrompt = buildUserPrompt(inputs);
 
-  console.log(`[ajsa-morning-brief] System prompt: ${systemPrompt.length} chars. User prompt: ${userPrompt.length} chars.`);
+  const systemChars = systemBlocks.reduce((n, b) => n + b.text.length, 0);
+  const cachedChars = systemBlocks[0].text.length;
+  console.log(`[ajsa-morning-brief] System: ${systemChars} chars (${cachedChars} cached). User: ${userPrompt.length} chars.`);
 
   let rawOutput;
   try {
-    rawOutput = await callAnthropic({ systemPrompt, userPrompt });
+    rawOutput = await callAnthropic({ systemBlocks, userPrompt });
   } catch (err) {
     console.error(`[ajsa-morning-brief] FATAL: ${err.message}`);
     if (!isDryRun) {
