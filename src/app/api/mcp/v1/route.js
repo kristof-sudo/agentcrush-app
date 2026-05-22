@@ -9,7 +9,7 @@
  *
  * v1 changes from v0 (/api/mcp):
  *   - 7 tools (up from 4): adds list_categories, get_category_ranking, get_methodology
- *   - Knows about the 4 category indices: model_families, tokenized, service, developer
+ *   - Knows about the 4 category rankings: model_families, tokenized, service, developer
  *   - get_agent_details returns scores across ALL of an agent's relevant categories
  *   - search_agents takes a structured `filters` object (future-proofs for new filters)
  *   - Fuzzy-match suggestions on not-found (LLMs don't hallucinate "doesn't exist")
@@ -765,7 +765,7 @@ export async function GET(request) {
     api_version: 'v1',
     protocol: 'MCP',
     protocolVersion: '2024-11-05',
-    description: 'Read-only AI agent market intelligence. Evidence-ranked across 4 category indices: model families, tokenized agents, service agents, developer agents. Live deployment, citation, on-chain, and adoption signals.',
+    description: 'Read-only AI agent market intelligence. Evidence-ranked across 4 category rankings: model families, tokenized agents, service agents, developer agents. Live deployment, citation, on-chain, and adoption signals.',
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
     endpoint: 'POST https://www.agentcrush.xyz/api/mcp/v1',
     docs: 'https://www.agentcrush.xyz/developers/mcp',

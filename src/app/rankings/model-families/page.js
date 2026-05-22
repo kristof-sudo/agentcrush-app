@@ -330,7 +330,7 @@ export default async function ModelFamiliesRankingsPage() {
         <ol className="space-y-3 text-sm text-white/55">
           <li className="flex gap-3">
             <span className="font-mono text-xs text-violet-400/80 mt-0.5 w-12 shrink-0">+1</span>
-            <span><span className="text-white/85">Expand seed coverage</span> — currently 5 model families seeded (Qwen, Gemini, DeepSeek, Llama, Hermes). Next: Mistral, Anthropic Claude, OpenAI GPT lineage, Cohere, Stability — once we can map them to HF authors / LMArena keys / canonical papers.</span>
+            <span><span className="text-white/85">Expand seed coverage</span> — 7 model families seeded (Qwen, Gemini, Mistral, DeepSeek, Llama, Cohere, Hermes). Next: Anthropic Claude, OpenAI GPT lineage, Stability — once we can map them to HF authors / LMArena keys / canonical papers.</span>
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs text-white/45 mt-0.5 w-12 shrink-0">+2</span>

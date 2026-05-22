@@ -30,7 +30,7 @@ export default function WeeklyIndexPage() {
           AgentCrush Weekly
         </h1>
         <p className="mt-2 text-sm text-white/40 leading-relaxed max-w-lg">
-          Every week: ranking moves across all four category indices, ecosystem signals, and protocol activity — distilled from the live index.
+          Every week: ranking moves across all four category rankings, ecosystem signals, and protocol activity — distilled from the live index.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <a

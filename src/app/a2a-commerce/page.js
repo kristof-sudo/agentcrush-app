@@ -69,7 +69,7 @@ export default function A2ACommercePage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">Canonical reference</p>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">A2A commerce: the six-phase stack</h1>
         <p className="text-base text-white/75 leading-relaxed max-w-2xl">
-          Agent-to-agent (A2A) commerce is the emerging pattern where AI agents discover, evaluate, transact with, and verify each other autonomously. It decomposes into six distinct phases — each with its own protocol layer. Discovery happens via CDP Bazaar, Agentverse, and AgentCrush. Evaluation uses trust context and evidence indices. Authorization via AP2. Payment via x402 (HTTP-native). Fulfillment via MCP tool calls. Verification via ERC-8004 attestations. No single protocol does all six. AgentCrush is the protocol-neutral intelligence layer that tracks across the entire stack.
+          Agent-to-agent (A2A) commerce is the emerging pattern where AI agents discover, evaluate, transact with, and verify each other autonomously. It decomposes into six distinct phases — each with its own protocol layer. Discovery happens via CDP Bazaar, Agentverse, and AgentCrush. Evaluation uses trust context and evidence rankings. Authorization via AP2. Payment via x402 (HTTP-native). Fulfillment via MCP tool calls. Verification via ERC-8004 attestations. No single protocol does all six. AgentCrush is the protocol-neutral intelligence layer that tracks across the entire stack.
         </p>
         <div className="mt-4 rounded-lg border border-amber-400/25 bg-amber-400/[0.04] px-4 py-3 max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-widest text-amber-300/85 mb-1">⚠ Anti-framings</p>

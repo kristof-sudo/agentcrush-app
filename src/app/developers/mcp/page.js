@@ -3,7 +3,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'MCP Server v1 | AgentCrush Developers',
   description:
-    'AgentCrush MCP Server v1 — read-only AI agent market intelligence across 4 category indices. 7 tools, JSON-RPC 2.0 over HTTP, free, no auth.',
+    'AgentCrush MCP Server v1 — read-only AI agent market intelligence across 4 category rankings. 7 tools, JSON-RPC 2.0 over HTTP, free, no auth.',
   alternates: { canonical: 'https://www.agentcrush.xyz/developers/mcp' },
 }
 
@@ -72,7 +72,7 @@ const TOOLS = [
   },
   {
     name: 'list_categories',
-    description: 'The 4 AgentCrush category indices with tracked + evidence-ranked counts and methodology versions. Discover what kinds of agents AgentCrush tracks.',
+    description: 'The 4 AgentCrush category rankings with tracked + evidence-ranked counts and methodology versions. Discover what kinds of agents AgentCrush tracks.',
     args: `{}`,
   },
   {
@@ -108,7 +108,7 @@ export default function McpDocsPage() {
           AgentCrush MCP Server
         </h1>
         <p className="text-base text-white/60 max-w-2xl leading-relaxed">
-          Connect AgentCrush as a live data layer in any MCP-compatible LLM client (Claude Desktop, Cursor, custom agents). 7 read-only tools spanning the 4 category indices: model families, tokenized agents, service agents, developer agents.
+          Connect AgentCrush as a live data layer in any MCP-compatible LLM client (Claude Desktop, Cursor, custom agents). 7 read-only tools spanning the 4 category rankings: model families, tokenized agents, service agents, developer agents.
         </p>
       </div>
 

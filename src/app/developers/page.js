@@ -41,7 +41,7 @@ const MCP_TOOLS = [
   {
     name: 'list_categories',
     args: '{}',
-    desc: 'The 4 AgentCrush indices: tracked count, evidence-ranked count, methodology version.',
+    desc: 'The 4 AgentCrush rankings: tracked count, evidence-ranked count, methodology version.',
   },
   {
     name: 'get_category_ranking',
@@ -145,7 +145,7 @@ export default function DevelopersPage() {
         <h2 className="text-xl font-bold tracking-tight mb-2">AgentCrush MCP Server</h2>
         <p className="text-sm text-white/50 leading-relaxed mb-5">
           Connect AgentCrush as a live data layer in Claude Desktop, Cursor, or any MCP-compatible
-          agent. 7 read-only tools across all 4 category indices. JSON-RPC 2.0 over HTTP.
+          agent. 7 read-only tools across all 4 category rankings. JSON-RPC 2.0 over HTTP.
         </p>
 
         <div className="font-mono text-xs text-violet-300 bg-white/[0.04] border border-white/[0.06] rounded px-3 py-2 mb-5 w-fit">

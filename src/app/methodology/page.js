@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: 'Methodology · AgentCrush',
   description:
-    'How AgentCrush ranks AI agents across 4 category indices: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, and limitations.',
+    'How AgentCrush ranks AI agents across 4 category rankings: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, and limitations.',
   alternates: { canonical: 'https://www.agentcrush.xyz/methodology' },
   openGraph: {
     title: 'AgentCrush Methodology',

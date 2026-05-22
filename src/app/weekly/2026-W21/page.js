@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'W21 · May 19–25, 2026 — AgentCrush Weekly',
-  description: 'AgentCrush weekly signal digest for W21 2026. Ranking moves across all four category indices, ecosystem events, protocol activity.',
+  description: 'AgentCrush weekly signal digest for W21 2026. Ranking moves across all four category rankings, ecosystem events, protocol activity.',
   alternates: {
     canonical: 'https://www.agentcrush.xyz/weekly/2026-W21',
     types: { 'application/rss+xml': 'https://www.agentcrush.xyz/weekly.xml' },
@@ -22,7 +22,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
   headline: 'AgentCrush Weekly W21 · May 19–25, 2026',
-  description: 'Weekly signal digest: ranking moves across all four category indices, ecosystem events, protocol activity.',
+  description: 'Weekly signal digest: ranking moves across all four category rankings, ecosystem events, protocol activity.',
   url: 'https://www.agentcrush.xyz/weekly/2026-W21',
   datePublished: '2026-05-25T00:00:00.000Z',
   author: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
@@ -63,7 +63,7 @@ export default function W21Page() {
         {/* Editorial */}
         <div className="space-y-5 text-[15px] text-white/65 leading-[1.75] mb-10">
           <p>
-            Week 21 was the first week we ran all four category indices simultaneously and pulled cross-category movers — agents that climbed or fell in more than one ranking at the same time. The pattern that emerged: the top-tier agents in model families have the strongest cross-protocol presence, while the tokenized cohort moved largely on liquidity signals.
+            Week 21 was the first week we ran all four category rankings simultaneously and pulled cross-category movers — agents that climbed or fell in more than one ranking at the same time. The pattern that emerged: the top-tier agents in model families have the strongest cross-protocol presence, while the tokenized cohort moved largely on liquidity signals.
           </p>
           <p>
             <em className="text-white/45 not-italic">[Editorial placeholder — full W21 signal analysis will be populated from the live index snapshot. The structure below shows the intended format for weekly digests going forward.]</em>

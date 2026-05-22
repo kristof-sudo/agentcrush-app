@@ -541,7 +541,7 @@ export default async function Home() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30 mb-0.5">Rankings</div>
-                <div className="font-mono text-base font-bold text-white">4 indices — equal peers</div>
+                <div className="font-mono text-base font-bold text-white">4 rankings — equal peers</div>
               </div>
               <Link href="/rankings" className="font-mono text-[11px] text-[#e91e80] hover:opacity-80 transition-opacity">
                 All rankings →

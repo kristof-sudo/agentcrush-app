@@ -6,7 +6,7 @@ const ISSUES = [
     title: 'AgentCrush Weekly · W21 · May 19–25, 2026',
     link: 'https://www.agentcrush.xyz/weekly/2026-W21',
     pubDate: 'Sun, 25 May 2026 00:00:00 +0000',
-    description: 'Ranking moves across all four category indices, first multi-protocol agent milestone, x402 payment activity on Base mainnet.',
+    description: 'Ranking moves across all four category rankings, first multi-protocol agent milestone, x402 payment activity on Base mainnet.',
   },
 ]
 
