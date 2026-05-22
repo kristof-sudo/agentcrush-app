@@ -160,31 +160,72 @@ function eventLabel(event) {
   }
 }
 
-// ── Blog posts (static for now — update when blog grows) ──────────────────
+// ── Latest blog post (pinned) ─────────────────────────────────────────────
 
-const BLOG_POSTS = [
-  {
-    slug: 'agent-commerce-readiness-three-audits',
-    title: 'Three Agent Commerce Readiness Audits',
-    date: '2026-05',
-    tag: 'Findings',
-    tagColor: '#e91e80',
-  },
-  {
-    slug: 'first-cross-protocol-agent',
-    title: 'The First Cross-Protocol Agent',
-    date: '2026-05',
-    tag: 'Findings',
-    tagColor: '#e91e80',
-  },
-  {
-    slug: 'x402-discovery-postmortem',
-    title: 'x402 Discovery Post-mortem',
-    date: '2026-04',
-    tag: 'Update',
-    tagColor: '#60a5fa',
-  },
-]
+const LATEST_BLOG = {
+  slug: 'agent-commerce-readiness-three-audits',
+  title: 'Three Agent Commerce Readiness Audits',
+  date: 'May 2026',
+  tag: 'Findings',
+  tagColor: '#e91e80',
+}
+
+// ── Social fetchers (15-min server-side cache) ────────────────────────────
+
+async function fetchLatestXPost() {
+  const bearer = process.env.X_BEARER_TOKEN
+  if (!bearer) return null
+  try {
+    const userRes = await fetch('https://api.twitter.com/2/users/by/username/agentcrush_xyz', {
+      headers: { Authorization: `Bearer ${bearer}` },
+      next: { revalidate: 900 },
+    })
+    if (!userRes.ok) return null
+    const { data: user } = await userRes.json()
+    if (!user?.id) return null
+    const tweetsRes = await fetch(
+      `https://api.twitter.com/2/users/${user.id}/tweets?max_results=5&tweet.fields=created_at,text&exclude=replies,retweets`,
+      { headers: { Authorization: `Bearer ${bearer}` }, next: { revalidate: 900 } },
+    )
+    if (!tweetsRes.ok) return null
+    const { data: tweets } = await tweetsRes.json()
+    return tweets?.[0] ?? null
+  } catch {
+    return null
+  }
+}
+
+async function fetchLatestFarcasterCast() {
+  const key = process.env.NEYNAR_API_KEY
+  if (!key) return null
+  try {
+    const userRes = await fetch('https://api.neynar.com/v2/farcaster/user/by_username?username=agentcrush', {
+      headers: { api_key: key },
+      next: { revalidate: 900 },
+    })
+    if (!userRes.ok) return null
+    const { user } = await userRes.json()
+    if (!user?.fid) return null
+    const feedRes = await fetch(
+      `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${user.fid}&limit=10&include_replies=false`,
+      { headers: { api_key: key }, next: { revalidate: 900 } },
+    )
+    if (!feedRes.ok) return null
+    const { casts } = await feedRes.json()
+    return (casts || []).find(c => !c.parent_hash) ?? null
+  } catch {
+    return null
+  }
+}
+
+function socialRelTime(iso) {
+  if (!iso) return ''
+  const diff = Date.now() - new Date(iso).getTime()
+  const h = Math.floor(diff / 3_600_000)
+  if (h < 1) return `${Math.floor(diff / 60_000)}m ago`
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
 
 // ── MCP tools list ─────────────────────────────────────────────────────────
 
@@ -408,6 +449,11 @@ export default async function Home() {
     { cat: CATEGORIES[3], rows: enrichRows(svcRows,  'service_score', 'rank_in_service'),                 erCount: erService },
   ]
 
+  // ── Social feeds (15-min cache, non-blocking) ─────────────────────────
+  const [xResult, castResult] = await Promise.allSettled([fetchLatestXPost(), fetchLatestFarcasterCast()])
+  const latestXPost = xResult.status === 'fulfilled' ? xResult.value : null
+  const latestCast  = castResult.status === 'fulfilled' ? castResult.value : null
+
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
@@ -543,9 +589,14 @@ export default async function Home() {
                 <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30 mb-0.5">Rankings</div>
                 <div className="font-mono text-base font-bold text-white">4 rankings — equal peers</div>
               </div>
-              <Link href="/rankings" className="font-mono text-[11px] text-[#e91e80] hover:opacity-80 transition-opacity">
-                All rankings →
-              </Link>
+              <div className="flex items-center gap-4">
+                <Link href="/compare" className="font-mono text-[11px] text-[#a78bfa]/70 hover:text-[#a78bfa] transition-colors">
+                  ⇄ Compare →
+                </Link>
+                <Link href="/rankings" className="font-mono text-[11px] text-[#e91e80] hover:opacity-80 transition-opacity">
+                  All rankings →
+                </Link>
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {catRows.map(({ cat, rows, erCount }) => (
@@ -619,6 +670,22 @@ export default async function Home() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Compare strip */}
+            <div className="mt-3 relative rounded-lg border border-[rgba(167,139,250,0.15)] bg-[rgba(167,139,250,0.02)] px-4 py-2.5 overflow-hidden flex flex-wrap items-center justify-between gap-3">
+              <span className="pointer-events-none absolute top-0 left-0 w-2 h-2 border-t border-l border-[rgba(167,139,250,0.3)]" />
+              <span className="pointer-events-none absolute top-0 right-0 w-2 h-2 border-t border-r border-[rgba(167,139,250,0.3)]" />
+              <span className="pointer-events-none absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[rgba(167,139,250,0.3)]" />
+              <span className="pointer-events-none absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[rgba(167,139,250,0.3)]" />
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-[#a78bfa]/70">⇄ COMPARE</span>
+                <span className="font-mono text-[10px] text-white/35">Head-to-head on every signal — pick two agents, get one URL.</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link href="/compare/crewai-vs-autogpt" className="font-mono text-[10px] text-white/30 hover:text-white/60 transition-colors">crewai vs autogpt →</Link>
+                <Link href="/compare" className="font-mono text-[10px] font-bold text-[#a78bfa] hover:opacity-80 transition-opacity">Open compare →</Link>
+              </div>
             </div>
           </Container>
         </section>
@@ -722,11 +789,14 @@ export default async function Home() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30 mb-0.5">Field notes</div>
-                <div className="font-mono text-base font-bold text-white">From the index</div>
+                <div className="font-mono text-base font-bold text-white">Public record &amp; findings</div>
               </div>
-              <Link href="/blog" className="font-mono text-[11px] text-white/40 hover:text-white/70 transition-colors">
-                All posts →
-              </Link>
+              <div className="flex items-center gap-3 flex-wrap justify-end">
+                <Link href="/weekly" className="font-mono text-[10px] text-[#e91e80]/60 hover:text-[#e91e80] transition-colors">/weekly →</Link>
+                <Link href="/blog" className="font-mono text-[10px] text-[#a78bfa]/60 hover:text-[#a78bfa] transition-colors">/blog →</Link>
+                <a href="https://warpcast.com/agentcrush" target="_blank" rel="noopener noreferrer" className="font-mono text-[10px] text-[#00d4ff]/60 hover:text-[#00d4ff] transition-colors">Farcaster →</a>
+                <a href="https://x.com/agentcrush_xyz" target="_blank" rel="noopener noreferrer" className="font-mono text-[10px] text-[#fb7185]/60 hover:text-[#fb7185] transition-colors">X →</a>
+              </div>
             </div>
 
             {/* Weekly digest anchor */}
@@ -753,20 +823,64 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* 3-up: latest blog posts */}
+            {/* 3-up: blog · farcaster · x */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {BLOG_POSTS.map(post => (
-                <Link key={post.slug} href={`/blog/${post.slug}`}
-                  className="rounded-lg border border-white/[0.07] bg-[#0a0a14] px-4 py-3 hover:border-white/[0.12] transition-colors">
+
+              {/* Blog */}
+              <Link href={`/blog/${LATEST_BLOG.slug}`}
+                className="rounded-lg border border-[rgba(167,139,250,0.2)] bg-[#0a0a14] px-4 py-3 hover:border-[rgba(167,139,250,0.35)] transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border"
+                    style={{ color: LATEST_BLOG.tagColor, borderColor: `${LATEST_BLOG.tagColor}44`, background: `${LATEST_BLOG.tagColor}11` }}>
+                    {LATEST_BLOG.tag}
+                  </span>
+                  <span className="font-mono text-[9px] text-white/25">{LATEST_BLOG.date}</span>
+                </div>
+                <div className="font-mono text-[11px] font-semibold text-white/80 leading-snug">{LATEST_BLOG.title}</div>
+              </Link>
+
+              {/* Farcaster */}
+              {latestCast ? (
+                <a href={`https://warpcast.com/agentcrush/${latestCast.hash?.slice(0, 10)}`} target="_blank" rel="noopener noreferrer"
+                  className="rounded-lg border border-[rgba(0,212,255,0.2)] bg-[#0a0a14] px-4 py-3 hover:border-[rgba(0,212,255,0.35)] transition-colors">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border" style={{ color: post.tagColor, borderColor: `${post.tagColor}44`, background: `${post.tagColor}11` }}>
-                      {post.tag}
-                    </span>
-                    <span className="font-mono text-[9px] text-white/25">{post.date}</span>
+                    <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#00d4ff]/30 bg-[#00d4ff]/10 text-[#00d4ff]">FARCASTER · CAST</span>
+                    <span className="font-mono text-[9px] text-white/25">{socialRelTime(latestCast.timestamp)}</span>
                   </div>
-                  <div className="font-mono text-[11px] font-semibold text-white/80 leading-snug">{post.title}</div>
-                </Link>
-              ))}
+                  <div className="font-mono text-[11px] font-semibold text-white/80 leading-snug line-clamp-3">{latestCast.text}</div>
+                  {(latestCast.reactions?.likes_count || latestCast.reactions?.recasts_count) ? (
+                    <div className="mt-2 font-mono text-[9px] text-white/25">
+                      {latestCast.reactions.likes_count > 0 && `♥ ${latestCast.reactions.likes_count}`}
+                      {latestCast.reactions.recasts_count > 0 && ` · ↺ ${latestCast.reactions.recasts_count}`}
+                    </div>
+                  ) : null}
+                </a>
+              ) : (
+                <a href="https://warpcast.com/agentcrush" target="_blank" rel="noopener noreferrer"
+                  className="rounded-lg border border-[rgba(0,212,255,0.15)] bg-[#0a0a14] px-4 py-3 hover:border-[rgba(0,212,255,0.25)] transition-colors flex flex-col justify-between">
+                  <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#00d4ff]/30 bg-[#00d4ff]/10 text-[#00d4ff] w-fit mb-2">FARCASTER · CAST</span>
+                  <div className="font-mono text-[11px] text-white/35">View latest casts →</div>
+                </a>
+              )}
+
+              {/* X */}
+              {latestXPost ? (
+                <a href={`https://x.com/agentcrush_xyz/status/${latestXPost.id}`} target="_blank" rel="noopener noreferrer"
+                  className="rounded-lg border border-[rgba(251,113,133,0.2)] bg-[#0a0a14] px-4 py-3 hover:border-[rgba(251,113,133,0.35)] transition-colors">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fb7185]/30 bg-[#fb7185]/10 text-[#fb7185]">X · POST</span>
+                    <span className="font-mono text-[9px] text-white/25">{socialRelTime(latestXPost.created_at)}</span>
+                  </div>
+                  <div className="font-mono text-[11px] font-semibold text-white/80 leading-snug line-clamp-3">{latestXPost.text}</div>
+                </a>
+              ) : (
+                <a href="https://x.com/agentcrush_xyz" target="_blank" rel="noopener noreferrer"
+                  className="rounded-lg border border-[rgba(251,113,133,0.15)] bg-[#0a0a14] px-4 py-3 hover:border-[rgba(251,113,133,0.25)] transition-colors flex flex-col justify-between">
+                  <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fb7185]/30 bg-[#fb7185]/10 text-[#fb7185] w-fit mb-2">X · POST</span>
+                  <div className="font-mono text-[11px] text-white/35">View latest posts →</div>
+                </a>
+              )}
+
             </div>
           </Container>
         </section>
