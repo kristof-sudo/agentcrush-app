@@ -52,7 +52,7 @@ export async function GET() {
 
     return Response.json({
       type: 'agent_economy_llm_summary',
-      url: 'https://www.agentcrush.xyz/agent-economy',
+      url: 'https://agentcrush.xyz/agent-economy',
       summary:
         'AgentCrush is the protocol-neutral market intelligence layer for the AI agent economy. ' +
         `It tracks ${total ? total.toLocaleString() : '1,300+'} agents across HuggingFace, LMArena, ` +
@@ -73,8 +73,8 @@ export async function GET() {
           methodology_version: 'v1.4-with-deployment',
           total_tracked: mfTot || 0,
           evidence_ranked: mfER || 0,
-          ranking_url: 'https://www.agentcrush.xyz/rankings/model-families',
-          methodology_url: 'https://www.agentcrush.xyz/methodology#model_family',
+          ranking_url: 'https://agentcrush.xyz/rankings/model-families',
+          methodology_url: 'https://agentcrush.xyz/methodology#model_family',
         },
         {
           slug: 'tokenized',
@@ -82,8 +82,8 @@ export async function GET() {
           methodology_version: 'v1.1-tokenized-tvl',
           total_tracked: tkTot || 0,
           evidence_ranked: tkER || 0,
-          ranking_url: 'https://www.agentcrush.xyz/rankings/tokenized-agents',
-          methodology_url: 'https://www.agentcrush.xyz/methodology#tokenized',
+          ranking_url: 'https://agentcrush.xyz/rankings/tokenized-agents',
+          methodology_url: 'https://agentcrush.xyz/methodology#tokenized',
         },
         {
           slug: 'service',
@@ -91,8 +91,8 @@ export async function GET() {
           methodology_version: 'v1.1-service-forks',
           total_tracked: svcTot || 0,
           evidence_ranked: svcER || 0,
-          ranking_url: 'https://www.agentcrush.xyz/rankings/service-agents',
-          methodology_url: 'https://www.agentcrush.xyz/methodology#service',
+          ranking_url: 'https://agentcrush.xyz/rankings/service-agents',
+          methodology_url: 'https://agentcrush.xyz/methodology#service',
         },
         {
           slug: 'developer',
@@ -100,8 +100,8 @@ export async function GET() {
           methodology_version: 'v2.c-public',
           total_tracked: devTot || 0,
           evidence_ranked: devER || 0,
-          ranking_url: 'https://www.agentcrush.xyz/rankings',
-          methodology_url: 'https://www.agentcrush.xyz/how-we-rank',
+          ranking_url: 'https://agentcrush.xyz/rankings',
+          methodology_url: 'https://agentcrush.xyz/how-we-rank',
         },
       ],
       tracked_surfaces: [
@@ -116,13 +116,13 @@ export async function GET() {
         'Coinbase CDP Bazaar (x402 endpoints)',
       ],
       machine_readable_endpoints: {
-        mcp_server_v1: 'https://www.agentcrush.xyz/api/mcp/v1',
-        mcp_discovery: 'https://www.agentcrush.xyz/.well-known/mcp.json',
-        llms_txt: 'https://www.agentcrush.xyz/llms.txt',
-        llms_full_txt: 'https://www.agentcrush.xyz/llms-full.txt',
-        agent_summary: 'https://www.agentcrush.xyz/api/agent/{handle}/llm-summary',
-        methodology_summary: 'https://www.agentcrush.xyz/api/methodology/{category}/llm-summary',
-        compare_summary: 'https://www.agentcrush.xyz/api/compare/llm-summary?agents=a,b',
+        mcp_server_v1: 'https://agentcrush.xyz/api/mcp/v1',
+        mcp_discovery: 'https://agentcrush.xyz/.well-known/mcp.json',
+        llms_txt: 'https://agentcrush.xyz/llms.txt',
+        llms_full_txt: 'https://agentcrush.xyz/llms-full.txt',
+        agent_summary: 'https://agentcrush.xyz/api/agent/{handle}/llm-summary',
+        methodology_summary: 'https://agentcrush.xyz/api/methodology/{category}/llm-summary',
+        compare_summary: 'https://agentcrush.xyz/api/compare/llm-summary?agents=a,b',
       },
       positioning: 'AgentCrush is protocol-neutral. It tracks across x402, MCP, ERC-8004, Agentverse, A2A, Virtuals, and other agent-economy surfaces. It is not built on any single protocol.',
       limitations: [
@@ -133,9 +133,9 @@ export async function GET() {
       ],
       last_updated: new Date().toISOString(),
       source_urls: [
-        'https://www.agentcrush.xyz/agent-economy',
-        'https://www.agentcrush.xyz/methodology',
-        'https://www.agentcrush.xyz/agent-economy-index',
+        'https://agentcrush.xyz/agent-economy',
+        'https://agentcrush.xyz/methodology',
+        'https://agentcrush.xyz/agent-economy-index',
       ],
     }, { headers: HEADERS })
 
@@ -143,7 +143,7 @@ export async function GET() {
     return Response.json({
       error: 'temporary_unavailable',
       message: 'Agent economy summary temporarily unavailable.',
-      fallback_url: 'https://www.agentcrush.xyz/agent-economy',
+      fallback_url: 'https://agentcrush.xyz/agent-economy',
     }, { status: 503, headers: HEADERS })
   }
 }

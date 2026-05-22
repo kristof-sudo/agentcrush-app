@@ -221,7 +221,7 @@ export default function ForAgentsPage() {
             <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">
               POST
             </span>
-            <code className="text-sm text-white/80 font-mono">https://www.agentcrush.xyz/api/mcp/v1</code>
+            <code className="text-sm text-white/80 font-mono">https://agentcrush.xyz/api/mcp/v1</code>
             <span className="ml-auto text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded shrink-0">
               Free
             </span>

@@ -109,7 +109,7 @@ export async function GET(req, { params }) {
       error: 'invalid_category',
       message: `Category must be one of: ${VALID.join(', ')}`,
       valid_categories: VALID,
-      source_urls: ['https://www.agentcrush.xyz/methodology'],
+      source_urls: ['https://agentcrush.xyz/methodology'],
     }, { status: 400, headers: HEADERS })
   }
 
@@ -123,15 +123,15 @@ export async function GET(req, { params }) {
     signals: m.signals,
     evidence_ready_rule: m.evidence_ready_rule,
     limitations: m.limitations,
-    methodology_url: `https://www.agentcrush.xyz/methodology#${category}`,
-    ranking_url: category === 'model_family' ? 'https://www.agentcrush.xyz/rankings/model-families'
-              : category === 'tokenized'    ? 'https://www.agentcrush.xyz/rankings/tokenized-agents'
-              : category === 'service'      ? 'https://www.agentcrush.xyz/rankings/service-agents'
-              : 'https://www.agentcrush.xyz/rankings',
+    methodology_url: `https://agentcrush.xyz/methodology#${category}`,
+    ranking_url: category === 'model_family' ? 'https://agentcrush.xyz/rankings/model-families'
+              : category === 'tokenized'    ? 'https://agentcrush.xyz/rankings/tokenized-agents'
+              : category === 'service'      ? 'https://agentcrush.xyz/rankings/service-agents'
+              : 'https://agentcrush.xyz/rankings',
     last_updated: '2026-05-16',
     source_urls: [
-      'https://www.agentcrush.xyz/methodology',
-      `https://www.agentcrush.xyz/methodology#${category}`,
+      'https://agentcrush.xyz/methodology',
+      `https://agentcrush.xyz/methodology#${category}`,
     ],
   }, { headers: HEADERS })
 }

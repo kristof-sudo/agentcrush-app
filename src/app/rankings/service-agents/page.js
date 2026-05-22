@@ -11,7 +11,7 @@ export const metadata = {
   openGraph: {
     title: 'Service Agent Rankings · AgentCrush',
     description: 'Callable AI agents ranked by adoption, source quality, and cross-protocol presence.',
-    url: 'https://www.agentcrush.xyz/rankings/service-agents',
+    url: 'https://agentcrush.xyz/rankings/service-agents',
     siteName: 'AgentCrush',
     images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
     type: 'website',

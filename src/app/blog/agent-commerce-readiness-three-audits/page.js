@@ -6,17 +6,17 @@ export const metadata = {
   description:
     "We audited aixbt, Coral Protocol, and Daydreams / Lucid Agents in one pass. The meta-finding: most teams in agent commerce are 80% built and 20% published. Spectrum, evidence, and roadmaps.",
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/blog/agent-commerce-readiness-three-audits',
+    canonical: 'https://agentcrush.xyz/blog/agent-commerce-readiness-three-audits',
   },
   openGraph: {
     title: "The state of agent commerce readiness: three audits, three shapes of unfinished — AgentCrush",
     description:
       "We audited aixbt, Coral Protocol, and Daydreams / Lucid Agents in one pass. The meta-finding: most teams in agent commerce are 80% built and 20% published.",
-    url: 'https://www.agentcrush.xyz/blog/agent-commerce-readiness-three-audits',
+    url: 'https://agentcrush.xyz/blog/agent-commerce-readiness-three-audits',
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://www.agentcrush.xyz/og-three-audits.png',
+        url: 'https://agentcrush.xyz/og-three-audits.png',
         width: 1731,
         height: 909,
         alt: 'The state of agent commerce readiness: three audits, three shapes of unfinished — AgentCrush',
@@ -30,7 +30,7 @@ export const metadata = {
     title: "The state of agent commerce readiness: three audits, three shapes of unfinished — AgentCrush",
     description:
       "We audited aixbt, Coral Protocol, and Daydreams / Lucid Agents in one pass. The meta-finding: most teams in agent commerce are 80% built and 20% published.",
-    images: ['https://www.agentcrush.xyz/og-three-audits.png'],
+    images: ['https://agentcrush.xyz/og-three-audits.png'],
   },
 }
 

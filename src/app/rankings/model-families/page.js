@@ -11,7 +11,7 @@ export const metadata = {
   openGraph: {
     title: 'Model Family Rankings · AgentCrush',
     description: 'Cross-protocol ranking of AI model families. Evidence-based, transparent methodology.',
-    url: 'https://www.agentcrush.xyz/rankings/model-families',
+    url: 'https://agentcrush.xyz/rankings/model-families',
     siteName: 'AgentCrush',
     images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
     type: 'website',

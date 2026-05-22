@@ -11,7 +11,7 @@ export const metadata = {
   openGraph: {
     title: 'Tokenized Agent Rankings · AgentCrush',
     description: 'Tokenized AI agents ranked by economic signals — market cap, liquidity, holders, cross-protocol presence.',
-    url: 'https://www.agentcrush.xyz/rankings/tokenized-agents',
+    url: 'https://agentcrush.xyz/rankings/tokenized-agents',
     siteName: 'AgentCrush',
     images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
     type: 'website',

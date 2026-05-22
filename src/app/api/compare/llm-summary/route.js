@@ -116,8 +116,8 @@ export async function GET(req) {
       summaries.push({
         handle: agent.handle,
         name: agent.display_name || agent.handle,
-        url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
-        full_summary_url: `https://www.agentcrush.xyz/api/agent/${encodeURIComponent(agent.handle)}/llm-summary`,
+        url: `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
+        full_summary_url: `https://agentcrush.xyz/api/agent/${encodeURIComponent(agent.handle)}/llm-summary`,
         primary_category: agent.primary_category,
         secondary_categories: agent.secondary_categories || [],
         tier: agent.tier,
@@ -137,7 +137,7 @@ export async function GET(req) {
     const leader = ranked[0] || null
 
     const compareUrl = handles.length === 2
-      ? `https://www.agentcrush.xyz/compare/${handles[0]}-vs-${handles[1]}`
+      ? `https://agentcrush.xyz/compare/${handles[0]}-vs-${handles[1]}`
       : null
 
     return Response.json({
@@ -157,7 +157,7 @@ export async function GET(req) {
         'Methodology versions differ per category.',
         'Some agents may have null sub-scores for signals not yet measured.',
       ],
-      methodology_url: 'https://www.agentcrush.xyz/methodology',
+      methodology_url: 'https://agentcrush.xyz/methodology',
       last_updated: new Date().toISOString(),
       source_urls: summaries.map(s => s.url).filter(Boolean),
     }, { headers: HEADERS })

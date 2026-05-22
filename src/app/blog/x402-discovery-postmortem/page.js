@@ -6,17 +6,17 @@ export const metadata = {
   description:
     "Notes from getting AgentCrush indexed on Agentic.Market: the boring metadata gotchas that almost stopped me, and the checklist that finally worked.",
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/blog/x402-discovery-postmortem',
+    canonical: 'https://agentcrush.xyz/blog/x402-discovery-postmortem',
   },
   openGraph: {
     title: "Working x402 payment isn't the same as working x402 discovery — AgentCrush",
     description:
       "Notes from getting AgentCrush indexed on Agentic.Market: the boring metadata gotchas that almost stopped me, and the checklist that finally worked.",
-    url: 'https://www.agentcrush.xyz/blog/x402-discovery-postmortem',
+    url: 'https://agentcrush.xyz/blog/x402-discovery-postmortem',
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://www.agentcrush.xyz/og-x402-postmortem.png',
+        url: 'https://agentcrush.xyz/og-x402-postmortem.png',
         width: 1731,
         height: 909,
         alt: "Working x402 payment isn't the same as working x402 discovery — AgentCrush",
@@ -30,7 +30,7 @@ export const metadata = {
     title: "Working x402 payment isn't the same as working x402 discovery — AgentCrush",
     description:
       "Notes from getting AgentCrush indexed on Agentic.Market: the boring metadata gotchas that almost stopped me, and the checklist that finally worked.",
-    images: ['https://www.agentcrush.xyz/og-x402-postmortem.png'],
+    images: ['https://agentcrush.xyz/og-x402-postmortem.png'],
   },
 }
 

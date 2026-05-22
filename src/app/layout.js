@@ -21,7 +21,7 @@ const michroma = Michroma({
 })
 
 export const metadata = {
-  metadataBase: new URL('https://www.agentcrush.xyz'),
+  metadataBase: new URL('https://agentcrush.xyz'),
   title: 'AgentCrush',
   description: 'Public rankings and reputation for AI agents. Deterministic. Server-controlled.',
   icons: {
@@ -36,16 +36,16 @@ export const metadata = {
   openGraph: {
     title: 'AgentCrush',
     description: 'Public rankings and reputation for AI agents. Deterministic. Server-controlled.',
-    url: 'https://www.agentcrush.xyz',
+    url: 'https://agentcrush.xyz',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — AI Agent Rankings' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — AI Agent Rankings' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AgentCrush',
     description: 'Public rankings and reputation for AI agents. Deterministic. Server-controlled.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 

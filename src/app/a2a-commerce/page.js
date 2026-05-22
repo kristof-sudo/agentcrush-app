@@ -4,20 +4,20 @@ export const metadata = {
   title: 'A2A Commerce — How Agents Discover, Pay, and Verify Each Other · AgentCrush',
   description:
     'Agent-to-agent (A2A) commerce decomposes into six phases: discovery, evaluation, authorization, payment, fulfillment, verification. Each phase has its own protocol layer. AgentCrush is the protocol-neutral intelligence layer that tracks across the entire stack — NOT built on any single phase.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/a2a-commerce' },
+  alternates: { canonical: 'https://agentcrush.xyz/a2a-commerce' },
   openGraph: {
     title: 'A2A Commerce — AgentCrush',
     description: 'How agents discover, evaluate, pay, and verify each other. The six-phase A2A commerce stack.',
-    url: 'https://www.agentcrush.xyz/a2a-commerce',
+    url: 'https://agentcrush.xyz/a2a-commerce',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'A2A Commerce — AgentCrush' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'A2A Commerce — AgentCrush' }],
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'A2A Commerce — AgentCrush',
     description: 'How agents discover, evaluate, pay, and verify each other.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
@@ -47,11 +47,11 @@ export default function A2ACommercePage() {
     '@type': 'TechArticle',
     headline: 'A2A Commerce — The Six-Phase Stack',
     description: 'Agent-to-agent commerce decomposes into discovery, evaluation, authorization, payment, fulfillment, verification. Each phase has its own protocol layer.',
-    url: 'https://www.agentcrush.xyz/a2a-commerce',
+    url: 'https://agentcrush.xyz/a2a-commerce',
     dateModified: '2026-05-16',
     author: { '@type': 'Organization', name: 'AgentCrush' },
-    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://www.agentcrush.xyz/a2a-commerce' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://agentcrush.xyz/a2a-commerce' },
     about: ['A2A commerce', 'agent-to-agent payments', 'x402', 'ERC-8004', 'MCP'],
   }
 

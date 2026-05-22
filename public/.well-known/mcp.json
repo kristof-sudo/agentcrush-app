@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "protocol": "MCP",
   "protocolVersion": "2024-11-05",
-  "endpoint": "https://www.agentcrush.xyz/api/mcp/v1",
-  "manifest_url": "https://www.agentcrush.xyz/.well-known/mcp.json",
-  "docs": "https://www.agentcrush.xyz/developers/mcp",
+  "endpoint": "https://agentcrush.xyz/api/mcp/v1",
+  "manifest_url": "https://agentcrush.xyz/.well-known/mcp.json",
+  "docs": "https://agentcrush.xyz/developers/mcp",
   "transports": ["http"],
   "auth": "none",
   "methods": ["POST"],
@@ -20,15 +20,15 @@
     { "name": "get_methodology",      "description": "Scoring methodology for a category — weights, signals, evidence-ready rule, limitations." }
   ],
   "rate_limit": "60 requests/minute per IP",
-  "openapi_spec": "https://www.agentcrush.xyz/api/openapi.json",
+  "openapi_spec": "https://agentcrush.xyz/api/openapi.json",
   "flat_json_endpoints": [
-    "https://www.agentcrush.xyz/api/agent/{handle}/llm-summary",
-    "https://www.agentcrush.xyz/api/agents/bulk?handles=a,b,c",
-    "https://www.agentcrush.xyz/api/agent-economy/llm-summary",
-    "https://www.agentcrush.xyz/api/methodology/{category}/llm-summary",
-    "https://www.agentcrush.xyz/api/rankings/{category}/llm-summary",
-    "https://www.agentcrush.xyz/api/compare/llm-summary?agents=a,b"
+    "https://agentcrush.xyz/api/agent/{handle}/llm-summary",
+    "https://agentcrush.xyz/api/agents/bulk?handles=a,b,c",
+    "https://agentcrush.xyz/api/agent-economy/llm-summary",
+    "https://agentcrush.xyz/api/methodology/{category}/llm-summary",
+    "https://agentcrush.xyz/api/rankings/{category}/llm-summary",
+    "https://agentcrush.xyz/api/compare/llm-summary?agents=a,b"
   ],
-  "feedback_endpoint": "https://www.agentcrush.xyz/api/agent-feedback",
+  "feedback_endpoint": "https://agentcrush.xyz/api/agent-feedback",
   "maintainer": "kristof@patyi.co"
 }

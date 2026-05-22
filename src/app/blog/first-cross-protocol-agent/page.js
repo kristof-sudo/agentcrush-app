@@ -6,17 +6,17 @@ export const metadata = {
   description:
     'A worked example of an agent active on two protocol surfaces at once — CrewAI registered on ERC-8004 (Base, token #17997) with x402_supported: true. What AgentCrush sees when we cross the data, and why multi-rail becomes the default.',
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/blog/first-cross-protocol-agent',
+    canonical: 'https://agentcrush.xyz/blog/first-cross-protocol-agent',
   },
   openGraph: {
     title: 'The first cross-protocol agent: CrewAI on ERC-8004 and x402 — AgentCrush',
     description:
       'A worked example of an agent active on two protocol surfaces at once — CrewAI registered on ERC-8004 (Base, token #17997) with x402_supported: true. What AgentCrush sees when we cross the data, and why multi-rail becomes the default.',
-    url: 'https://www.agentcrush.xyz/blog/first-cross-protocol-agent',
+    url: 'https://agentcrush.xyz/blog/first-cross-protocol-agent',
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://www.agentcrush.xyz/og-cross-protocol-agent.png',
+        url: 'https://agentcrush.xyz/og-cross-protocol-agent.png',
         width: 1731,
         height: 909,
         alt: 'First cross-protocol agent indexed: CrewAI on ERC-8004 and x402 — AgentCrush',
@@ -30,7 +30,7 @@ export const metadata = {
     title: 'The first cross-protocol agent: CrewAI on ERC-8004 and x402 — AgentCrush',
     description:
       'A worked example of an agent active on two protocol surfaces at once — CrewAI registered on ERC-8004 (Base, token #17997) with x402_supported: true. What AgentCrush sees when we cross the data, and why multi-rail becomes the default.',
-    images: ['https://www.agentcrush.xyz/og-cross-protocol-agent.png'],
+    images: ['https://agentcrush.xyz/og-cross-protocol-agent.png'],
   },
 }
 

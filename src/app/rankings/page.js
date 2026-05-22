@@ -13,7 +13,7 @@ export const metadata = {
     description: '4 category rankings: Developer · Model Families · Tokenized · Service. Evidence-ranked, open methodology.',
     url: 'https://www.agentcrush.xyz/rankings',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {

@@ -509,14 +509,14 @@ export async function generateMetadata({ params }) {
     image = 'https://agentcrush.xyz/og-default.png'
   }
 
-  const agentUrl = `https://www.agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`
-  const ogImageUrl = `https://www.agentcrush.xyz/api/og/agent/${encodeURIComponent(agent.handle)}`
+  const agentUrl = `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`
+  const ogImageUrl = `https://agentcrush.xyz/api/og/agent/${encodeURIComponent(agent.handle)}`
 
   const embedAction = {
     type: 'launch_miniapp',
     name: 'AgentCrush',
     url: agentUrl,
-    splashImageUrl: 'https://www.agentcrush.xyz/agentcrush-logo.png',
+    splashImageUrl: 'https://agentcrush.xyz/agentcrush-logo.png',
     splashBackgroundColor: '#08080f',
   }
 
@@ -1065,12 +1065,12 @@ export default async function AgentPage({ params }) {
     ],
     isPartOf: {
       '@type': 'Dataset',
-      '@id': 'https://www.agentcrush.xyz/methodology',
+      '@id': 'https://agentcrush.xyz/methodology',
       name: 'AgentCrush Evidence-Ranked Index',
       description: 'Multi-signal agent reputation index across 4 category methodologies (model families, tokenized agents, service agents, developer agents).',
-      url: 'https://www.agentcrush.xyz/methodology',
+      url: 'https://agentcrush.xyz/methodology',
       creator: { '@type': 'Organization', name: 'AgentCrush' },
-      license: 'https://www.agentcrush.xyz/terms',
+      license: 'https://agentcrush.xyz/terms',
       isAccessibleForFree: true,
     },
   }
@@ -1581,8 +1581,8 @@ export default async function AgentPage({ params }) {
               overflowX: 'auto',
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-all',
-            }}>{`<a href="https://www.agentcrush.xyz/agent/${agent.handle}?utm_source=badge&utm_medium=embed&utm_campaign=agent_badge">
-  <img src="https://www.agentcrush.xyz/embed/${agent.handle}.svg" alt="AgentCrush rank badge for ${displayName}" />
+            }}>{`<a href="https://agentcrush.xyz/agent/${agent.handle}?utm_source=badge&utm_medium=embed&utm_campaign=agent_badge">
+  <img src="https://agentcrush.xyz/embed/${agent.handle}.svg" alt="AgentCrush rank badge for ${displayName}" />
 </a>`}</pre>
           </div>
         )}

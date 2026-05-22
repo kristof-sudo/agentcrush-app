@@ -7,20 +7,20 @@ export const metadata = {
   title: 'Agent Payments Stack · AgentCrush',
   description:
     'Neutral, evidence-ranked map of the 6-layer agent payments stack — settlement, wallets, routing, protocol, governance, application. Tracks Coinbase, Stripe, Circle, Tempo, x402, MPP, AP2, Visa, Mastercard, ERC-8004, Virtuals, Fetch Agent Launch and more.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/rankings/agent-payments-stack' },
+  alternates: { canonical: 'https://agentcrush.xyz/rankings/agent-payments-stack' },
   openGraph: {
     title: 'Agent Payments Stack · AgentCrush',
     description: 'Live 6-layer map of the agent payments stack — who covers what, ranked by stack coverage.',
-    url: 'https://www.agentcrush.xyz/rankings/agent-payments-stack',
+    url: 'https://agentcrush.xyz/rankings/agent-payments-stack',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Agent Payments Stack' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Agent Payments Stack' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Agent Payments Stack · AgentCrush',
     description: 'Live 6-layer map of the agent payments stack.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
@@ -174,13 +174,13 @@ export default async function AgentPaymentsStackPage() {
     '@type': 'ItemList',
     name: 'AgentCrush Agent Payments Stack',
     description: 'Live 6-layer map of the agent payments stack. Projects ranked by stack coverage (layers spanned, weighted by layer importance). Sources include the Keyrock + Coinbase + Tempo + Virtuals "Who Pays The Agent?" report (May 2026), public disclosures, and AgentCrush evidence ranking.',
-    url: 'https://www.agentcrush.xyz/rankings/agent-payments-stack',
+    url: 'https://agentcrush.xyz/rankings/agent-payments-stack',
     numberOfItems: totalProjects,
     isPartOf: {
       '@type': 'Dataset',
-      '@id': 'https://www.agentcrush.xyz/methodology',
+      '@id': 'https://agentcrush.xyz/methodology',
       name: 'AgentCrush Evidence-Ranked Index',
-      license: 'https://www.agentcrush.xyz/terms',
+      license: 'https://agentcrush.xyz/terms',
       isAccessibleForFree: true,
     },
     itemListElement: rows.slice(0, 50).map((r) => ({
@@ -189,7 +189,7 @@ export default async function AgentPaymentsStackPage() {
       item: {
         '@type': 'Organization',
         name: r.name,
-        url: r.website_url || `https://www.agentcrush.xyz/rankings/agent-payments-stack#${r.slug}`,
+        url: r.website_url || `https://agentcrush.xyz/rankings/agent-payments-stack#${r.slug}`,
         description: r.description,
       },
     })),
