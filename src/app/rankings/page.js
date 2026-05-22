@@ -388,7 +388,7 @@ export default async function RankingsHub() {
       </div>
 
       {/* ── 2×2 Grid ────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         {categoryData.map(({ cat, rows, evidenceCount, totalCount }) => (
           <CategoryTile
             key={cat.id}
@@ -399,6 +399,25 @@ export default async function RankingsHub() {
           />
         ))}
       </div>
+
+      {/* ── Agent Payments Stack callout (Phase 3.5 Week 1) ─────────────── */}
+      <Link
+        href="/rankings/agent-payments-stack"
+        className="group block mb-8 rounded-lg border border-emerald-400/20 bg-gradient-to-br from-emerald-400/[0.05] to-transparent hover:border-emerald-400/40 transition-colors px-5 py-4"
+      >
+        <div className="flex items-baseline gap-2 mb-2">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-emerald-300">NEW · CROSS-CATEGORY</span>
+          <span className="font-mono text-[9px] text-white/30">v1.0-aps</span>
+          <span className="ml-auto font-mono text-[10px] text-white/40 group-hover:text-white/70 transition-colors">open →</span>
+        </div>
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <span className="font-bold text-white text-base">The Agent Payments Stack</span>
+          <span className="text-xs text-white/45">6 layers · projects ranked by stack coverage</span>
+        </div>
+        <p className="mt-2 text-xs text-white/55 leading-relaxed max-w-3xl">
+          Settlement · Wallets · Routing · Protocol · Governance · Application. Live map of who covers what — Coinbase + Stripe each span 5/6 layers. Sourced from the Keyrock &quot;Who Pays The Agent?&quot; report (May 2026) + AgentCrush evidence ranking.
+        </p>
+      </Link>
 
       {/* ── Cross-index movers + narrative ──────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

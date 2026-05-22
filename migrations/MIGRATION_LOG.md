@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-05-22
+- `migrations/20260522_2100_create_agent_payments_stack.sql` — Phase 3.5 Week 1: creates `agent_payments_stack_projects` table (taxonomy of payments-stack projects, distinct from `agents` which holds entities with handles) + `agent_payments_stack_v1` view that computes `layers_spanned` + weighted `stack_coverage_score` (L0=4, L1=3, L2=2, L3=4, L4=5, L5=3). Seeds ~35 projects from Keyrock "Who Pays The Agent?" May 2026 6-layer map: Coinbase + Stripe (5/6 layers each), Circle (4/6), Tempo, Base, Solana, Arc, VisaNet, Safe, AgentKit, MoonPay OWS, Privy, Dynamic, ZeroDev, NEAR AI Wallets, CCTP, deBridge, Bridge, LayerZero, BVNK, x402, MPP, Google AP2, ACP, Circle Nanopayments, Visa Intelligent Commerce, Mastercard Agentic Tokens, Amex ACE, ERC-8004, AIS-1, Virtuals, ElizaOS, Felix, Nansen, Olas, Fetch Agent Launch, Brex, CoW Protocol. Idempotent via ON CONFLICT (slug). Anon RLS read enabled per registry-mirror pattern. See [[Decisions/2026-05-22-phase-35-agent-payments-stack-index]] (brain) for full scope.
+  **STATUS: PENDING APPLY — Kris to run in Supabase SQL editor.**
+
 ### 2026-05-16
 - `migrations/20260516_2210_service_v11_forks_replaces_xp.sql` — Service methodology v1.1. Replaces v1.0 cross_protocol_score placeholder (uniformly 25 for all 28 agents — all came from A2A only) with `forks_score = LEAST(100, ROUND(LOG10(forks) * 22))`. Why forks > stars for service agents: forks measure active engagement (use/modify) vs passive starring. Top 15 A2A repos range 38 → 2,399 forks. Composite weights unchanged (adoption 25 / quality 20 / activity 15 / protocols 15 / forks 15 / social 10). End-state: a2aproject/A2A still #1 at 77 (was 70). Methodology v1.0-service-v0 → v1.1-service-forks. Cross-protocol presence parked in cross_protocol_presence table for v1.2 (currently 0 matches for all agents — agent economy hasn't yet penetrated cross-protocol descriptions).
   **STATUS: APPLIED 2026-05-16 by Kris.**
