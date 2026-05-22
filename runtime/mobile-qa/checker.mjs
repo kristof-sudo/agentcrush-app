@@ -32,7 +32,7 @@ import path from 'node:path';
 
 const BRAIN_PATH = process.env.BRAIN_PATH || '/opt/agentcrush-brain';
 const BASE = (process.env.MOBILE_QA_BASE_URL || 'https://agentcrush.xyz').replace(/\/$/, '');
-const DEFAULT_ROUTES = '/,/rankings,/rankings/model-families,/agent-economy,/labs,/how-we-rank';
+const DEFAULT_ROUTES = '/,/rankings,/rankings/model-families,/agent-economy,/labs,/how-we-rank,/surfaces/agentverse';
 const ROUTES = (process.env.MOBILE_QA_ROUTES || DEFAULT_ROUTES).split(',').map((r) => r.trim()).filter(Boolean);
 const FORCE_PUSH = process.env.MOBILE_QA_FORCE_PUSH === '1';
 const RUN_DATE = process.env.RUN_DATE || new Date().toISOString().slice(0, 10);

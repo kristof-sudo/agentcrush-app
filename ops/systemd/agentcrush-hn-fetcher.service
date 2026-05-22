@@ -1,0 +1,18 @@
+[Unit]
+Description=hn-fetcher (Layer 1) — scan HN topstories for AI/agent keywords; write JSON for downstream Layer 2
+Documentation=https://github.com/kristof-sudo/agentcrush-app/blob/main/runtime/hn-fetcher.mjs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStartPre=/bin/bash -lc 'cd ${BRAIN_PATH:-/opt/agentcrush-brain} && git pull --rebase --quiet origin main 2>/dev/null || true'
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/hn-fetcher.mjs
+StandardOutput=append:/var/log/agentcrush/hn-fetcher.log
+StandardError=append:/var/log/agentcrush/hn-fetcher.log
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

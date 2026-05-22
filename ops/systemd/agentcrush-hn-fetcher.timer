@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily 07:50 Budapest — hn-fetcher (between Neynar 07:45 and morning brief 08:00)
+
+[Timer]
+OnCalendar=*-*-* 07:50:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-hn-fetcher.service
+
+[Install]
+WantedBy=timers.target
