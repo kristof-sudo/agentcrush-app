@@ -58,7 +58,17 @@ If unsure, skip — STATE.md noise is worse than missing detail.
 
 Tick checkboxes for completed items. Add new lines for items that surfaced. Group placement matters (critical path / product / distribution / done).
 
-## 5. Verify brain will commit cleanly
+## 5. Refresh brain indexes (auto)
+
+If any files were added/renamed/removed in the brain this session, regenerate the per-directory `_index.md` listings:
+
+```bash
+node /Users/pk/projects/agentcrush-brain/tools/index-sweep.mjs
+```
+
+Idempotent — skips unchanged directories. Safe to run unconditionally at end of every session.
+
+## 6. Verify brain will commit cleanly
 
 The SessionEnd hook commits + pushes brain on session close. Quick sanity:
 
@@ -68,7 +78,7 @@ cd /Users/pk/projects/agentcrush-brain && git status --short
 
 If there are files you do NOT want auto-committed (e.g. work-in-progress in Inbox/ that you want to leave un-pushed for now), either stash them or move them to `tmp/` (gitignored). Otherwise the hook will sweep them.
 
-## 6. Post final summary to Kris
+## 7. Post final summary to Kris
 
 One message, 3-5 lines:
 
