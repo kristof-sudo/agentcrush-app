@@ -7,16 +7,16 @@ export const metadata = {
   title: 'Service Agent Rankings · AgentCrush',
   description:
     'Ranking of service agents — callable AI agents exposed via A2A protocol, Agentverse, ERC-8004, and x402 endpoints. Adoption, quality, activity, protocol breadth. Methodology v1.1.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/rankings/service-agents' },
+  alternates: { canonical: 'https://agentcrush.xyz/rankings/service-agents' },
   openGraph: {
     title: 'Service Agent Rankings · AgentCrush',
     description: 'Callable AI agents ranked by adoption, source quality, and cross-protocol presence.',
     url: 'https://agentcrush.xyz/rankings/service-agents',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'Service Agent Rankings · AgentCrush', images: ['https://www.agentcrush.xyz/og-default.png'] },
+  twitter: { card: 'summary_large_image', title: 'Service Agent Rankings · AgentCrush', images: ['https://agentcrush.xyz/og-default.png'] },
 }
 
 const CAT_COLOR = '#f0a500'
@@ -126,12 +126,12 @@ export default async function ServiceRankingsPage() {
     '@context': 'https://schema.org', '@type': 'ItemList',
     name: 'AgentCrush Service Agent Rankings',
     description: 'Callable service agents (A2A, Agentverse, x402, ERC-8004) ranked on adoption, quality, activity, protocol breadth, forks. v1.1.',
-    url: 'https://www.agentcrush.xyz/rankings/service-agents',
+    url: 'https://agentcrush.xyz/rankings/service-agents',
     numberOfItems: evidenceReadyCount,
-    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://www.agentcrush.xyz/terms', isAccessibleForFree: true },
+    isPartOf: { '@type': 'Dataset', '@id': 'https://agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://agentcrush.xyz/terms', isAccessibleForFree: true },
     itemListElement: rows.filter(r => r.evidence_ready_for_public_rank).slice(0, 50).map(r => ({
       '@type': 'ListItem', position: r.rank_in_service,
-      item: { '@type': 'SoftwareApplication', name: r.display_name || r.handle, url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`, applicationCategory: 'Service Agent' },
+      item: { '@type': 'SoftwareApplication', name: r.display_name || r.handle, url: `https://agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`, applicationCategory: 'Service Agent' },
     })),
   }
 

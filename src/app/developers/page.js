@@ -4,15 +4,15 @@ export const metadata = {
   title: 'Developers | AgentCrush',
   description:
     'Free MCP tools, paid x402 REST APIs, embeddable badges, and structured agent intelligence for developers and AI agents building with AgentCrush.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/developers' },
+  alternates: { canonical: 'https://agentcrush.xyz/developers' },
 }
 
-const MCP_ENDPOINT = 'https://www.agentcrush.xyz/api/mcp/v1'
+const MCP_ENDPOINT = 'https://agentcrush.xyz/api/mcp/v1'
 
 const MCP_CONFIG = `{
   "mcpServers": {
     "agentcrush": {
-      "url": "https://www.agentcrush.xyz/api/mcp/v1"
+      "url": "https://agentcrush.xyz/api/mcp/v1"
     }
   }
 }`
@@ -178,7 +178,7 @@ export default function DevelopersPage() {
         <div className="mt-6 rounded-lg border border-white/[0.05] bg-white/[0.01] px-4 py-3">
           <p className="text-xs text-white/30 mb-1">Discovery</p>
           <a
-            href="https://www.agentcrush.xyz/.well-known/mcp.json"
+            href="https://agentcrush.xyz/.well-known/mcp.json"
             target="_blank"
             rel="noopener noreferrer"
             className="font-mono text-xs text-violet-400/60 hover:text-violet-300 transition-colors"
@@ -238,7 +238,7 @@ export default function DevelopersPage() {
         <div className="mt-5 rounded-lg border border-white/[0.05] bg-white/[0.01] px-4 py-3">
           <p className="text-xs text-white/30 mb-1">x402 discovery</p>
           <a
-            href="https://www.agentcrush.xyz/.well-known/x402"
+            href="https://agentcrush.xyz/.well-known/x402"
             target="_blank"
             rel="noopener noreferrer"
             className="font-mono text-xs text-violet-400/60 hover:text-violet-300 transition-colors"

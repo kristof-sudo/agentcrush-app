@@ -4,8 +4,8 @@ export const metadata = {
   title: 'Weekly Digest · AgentCrush',
   description: 'Weekly signal digest from the AgentCrush index — ranking moves, ecosystem events, protocol activity.',
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/weekly',
-    types: { 'application/rss+xml': 'https://www.agentcrush.xyz/weekly.xml' },
+    canonical: 'https://agentcrush.xyz/weekly',
+    types: { 'application/rss+xml': 'https://agentcrush.xyz/weekly.xml' },
   },
 }
 

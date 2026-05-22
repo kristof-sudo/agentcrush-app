@@ -7,16 +7,16 @@ export const metadata = {
   title: 'Tokenized Agent Rankings · AgentCrush',
   description:
     'Ranking of tokenized AI agents by economic signals — market cap, liquidity, holder distribution, TVL, cross-protocol presence. Honeypot-aware methodology v1.1.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/rankings/tokenized-agents' },
+  alternates: { canonical: 'https://agentcrush.xyz/rankings/tokenized-agents' },
   openGraph: {
     title: 'Tokenized Agent Rankings · AgentCrush',
     description: 'Tokenized AI agents ranked by economic signals — market cap, liquidity, holders, cross-protocol presence.',
     url: 'https://agentcrush.xyz/rankings/tokenized-agents',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'Tokenized Agent Rankings · AgentCrush', images: ['https://www.agentcrush.xyz/og-default.png'] },
+  twitter: { card: 'summary_large_image', title: 'Tokenized Agent Rankings · AgentCrush', images: ['https://agentcrush.xyz/og-default.png'] },
 }
 
 const CAT_COLOR = '#39ff14'
@@ -141,12 +141,12 @@ export default async function TokenizedRankingsPage() {
     '@context': 'https://schema.org', '@type': 'ItemList',
     name: 'AgentCrush Tokenized Agent Rankings',
     description: 'Tokenized AI agents ranked economics-first: market cap, liquidity, holders, TVL, momentum, social. v1.1.',
-    url: 'https://www.agentcrush.xyz/rankings/tokenized-agents',
+    url: 'https://agentcrush.xyz/rankings/tokenized-agents',
     numberOfItems: evidenceReadyCount,
-    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://www.agentcrush.xyz/terms', isAccessibleForFree: true },
+    isPartOf: { '@type': 'Dataset', '@id': 'https://agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://agentcrush.xyz/terms', isAccessibleForFree: true },
     itemListElement: rows.filter(r => r.evidence_ready_for_public_rank).slice(0, 50).map(r => ({
       '@type': 'ListItem', position: r.rank_in_tokenized,
-      item: { '@type': 'SoftwareApplication', name: r.display_name || r.handle, url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`, applicationCategory: 'Tokenized AI Agent' },
+      item: { '@type': 'SoftwareApplication', name: r.display_name || r.handle, url: `https://agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`, applicationCategory: 'Tokenized AI Agent' },
     })),
   }
 
