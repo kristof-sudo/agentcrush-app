@@ -14,8 +14,8 @@ import IndexedBadge from '@/components/ui/IndexedBadge'
 import ScoreBreakdown from '@/components/ui/ScoreBreakdown'
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'build-only'
 )
 
 const PAYMENT_RAIL_LABELS = {
