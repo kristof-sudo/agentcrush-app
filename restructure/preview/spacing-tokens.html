@@ -1,0 +1,51 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#08080f; font-family:'Geist Mono',monospace; padding:14px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
+.section { font-size:9px; color:rgba(255,255,255,0.25); text-transform:uppercase; letter-spacing:.08em; width:100%; }
+.row { display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:flex-start; }
+.spacer-row { display:flex; gap:4px; align-items:center; margin-bottom:3px; }
+.sp-box { background:#0a0a14; border:1px solid rgba(255,255,255,0.08); border-radius:3px; display:flex; align-items:center; justify-content:center; }
+.sp-label { font-size:8px; color:rgba(255,255,255,0.3); }
+</style></head><body>
+<div class="section">Spacing Scale</div>
+<div class="row">
+  <div>
+    <div class="spacer-row"><div class="sp-box" style="width:4px;height:16px"></div><div class="sp-label" style="margin-left:6px">4px — space-1</div></div>
+    <div class="spacer-row"><div class="sp-box" style="width:8px;height:16px"></div><div class="sp-label" style="margin-left:6px">8px — space-2</div></div>
+    <div class="spacer-row"><div class="sp-box" style="width:12px;height:16px"></div><div class="sp-label" style="margin-left:6px">12px — space-3 (px-3)</div></div>
+    <div class="spacer-row"><div class="sp-box" style="width:16px;height:16px"></div><div class="sp-label" style="margin-left:6px">16px — space-4 (px-4)</div></div>
+    <div class="spacer-row"><div class="sp-box" style="width:24px;height:16px"></div><div class="sp-label" style="margin-left:6px">24px — space-6 / dot-grid</div></div>
+  </div>
+</div>
+<div class="section" style="margin-top:10px">Corner Radius</div>
+<div class="row">
+  <div style="text-align:center">
+    <div style="width:40px;height:40px;background:#0a0a14;border:1px solid rgba(255,255,255,0.12);border-radius:2px"></div>
+    <div class="sp-label" style="margin-top:4px">2px<br>pill borders</div>
+  </div>
+  <div style="text-align:center">
+    <div style="width:40px;height:40px;background:#0a0a14;border:1px solid rgba(255,255,255,0.12);border-radius:4px"></div>
+    <div class="sp-label" style="margin-top:4px">4px<br>buttons/pills</div>
+  </div>
+  <div style="text-align:center">
+    <div style="width:40px;height:40px;background:#0a0a14;border:1px solid rgba(255,255,255,0.12);border-radius:8px"></div>
+    <div class="sp-label" style="margin-top:4px">8px<br>cards/panels</div>
+  </div>
+  <div style="text-align:center">
+    <div style="width:40px;height:40px;background:#0a0a14;border:1px solid rgba(255,255,255,0.12);border-radius:9999px"></div>
+    <div class="sp-label" style="margin-top:4px">pill<br>live dot</div>
+  </div>
+</div>
+<div class="section" style="margin-top:10px">Border Styles</div>
+<div class="row">
+  <div style="display:flex;flex-direction:column;gap:5px">
+    <div style="height:1px;width:180px;background:rgba(255,255,255,0.06)"></div><div class="sp-label">Default panel border (6% white)</div>
+    <div style="height:1px;width:180px;background:rgba(255,255,255,0.04)"></div><div class="sp-label">Subtle divider (4% white)</div>
+    <div style="height:1px;width:180px;background:rgba(255,255,255,0.10)"></div><div class="sp-label">Strong border (10% white)</div>
+    <div style="height:1px;width:180px;background:rgba(232,121,249,0.12)"></div><div class="sp-label">Pink header border</div>
+    <div style="height:1px;width:180px;background:rgba(232,121,249,0.35)"></div><div class="sp-label">Pink CTA border</div>
+  </div>
+</div>
+</body></html>

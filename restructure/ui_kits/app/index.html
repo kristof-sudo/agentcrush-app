@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentCrush UI Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=Geist+Mono:wght@400;500;600;700&family=Michroma&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#08080f; color:white; font-family:'Geist Mono',monospace; overflow-x:hidden; }
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:4px; }
+</style>
+</head>
+<body>
+<script type="text/babel" src="Pills.jsx"></script>
+<script type="text/babel" src="Nav.jsx"></script>
+<script type="text/babel" src="RankingRow.jsx"></script>
+<script type="text/babel" src="SignalFeed.jsx"></script>
+<script type="text/babel" src="AgentCard.jsx"></script>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ── Mock Data ──────────────────────────────────────────────────────────────
+
+const MOCK_AGENTS = [
+  { id:1, global_rank:1, handle:'agentverse',   display_name:'AgentVerse',         archetype:'Researcher', weekly_delta:37, score_total:168, score_visibility:89, score_reputation:79,  tagline:'Multi-agent research and orchestration platform for autonomous AI workflows.' },
+  { id:2, global_rank:2, handle:'autogpt',      display_name:'AutoGPT',            archetype:'Rebel',      weekly_delta:36, score_total:166, score_visibility:93, score_reputation:73,  tagline:'The original autonomous GPT-4 experiment. Self-prompting AI agent.' },
+  { id:3, global_rank:3, handle:'crewai',       display_name:'CrewAI Ecosystem',   archetype:'Ecosystem',  weekly_delta:34, score_total:165, score_visibility:92, score_reputation:73,  tagline:'Framework for orchestrating role-playing, autonomous AI agents.' },
+  { id:4, global_rank:4, handle:'autonolas',    display_name:'Autonolas Agents',   archetype:'Trader',     weekly_delta:40, score_total:159, score_visibility:90, score_reputation:69,  tagline:'Autonomous AI agent services for on-chain coordination.' },
+  { id:5, global_rank:5, handle:'cognosys',     display_name:'Cognosys',           archetype:'Operator',   weekly_delta:29, score_total:158, score_visibility:89, score_reputation:69,  tagline:'AI-powered task management and cognitive workflow automation.' },
+  { id:6, global_rank:6, handle:'agentops',     display_name:'AgentOps',           archetype:'Infra',      weekly_delta:30, score_total:152, score_visibility:85, score_reputation:67,  tagline:'Observability and testing infrastructure for AI agents.' },
+  { id:7, global_rank:7, handle:'devika',       display_name:'Devika',             archetype:'Builder',    weekly_delta:21, score_total:156, score_visibility:87, score_reputation:69,  tagline:'Open-source AI software engineer — plan, research, and code.' },
+  { id:8, global_rank:8, handle:'aiarena',      display_name:'AI Arena',           archetype:'Ecosystem',  weekly_delta:27, score_total:151, score_visibility:88, score_reputation:63,  tagline:'Competitive AI agent platform for evaluation and benchmarking.' },
+  { id:9, global_rank:9, handle:'langchainagents',display_name:'LangChain Agents', archetype:'Framework',  weekly_delta:33, score_total:150, score_visibility:83, score_reputation:67,  tagline:'Composable framework for LLM-powered agents and chains.' },
+  { id:10,global_rank:10,handle:'langgraph',    display_name:'LangGraph',          archetype:'Builder',    weekly_delta:21, score_total:154, score_visibility:86, score_reputation:68,  tagline:'Graph-based stateful multi-agent and multi-step LLM workflows.' },
+  { id:11,global_rank:11,handle:'agentpilot',   display_name:'AgentPilot',         archetype:'Operator',   weekly_delta:38, score_total:146, score_visibility:84, score_reputation:62,  tagline:'Open-source AI agent management platform with chat interface.' },
+  { id:12,global_rank:12,handle:'opendevin',    display_name:'OpenDevin',          archetype:'Developer',  weekly_delta:29, score_total:144, score_visibility:81, score_reputation:63,  tagline:'Open platform for autonomous AI software engineers.' },
+];
+
+const MOCK_SIGNALS = [
+  { id:1, display_name:'AutoGen Studio', handle:'autogen',    event_type:'repo_star_growth', event_label:'GitHub stars growing',  created_at: new Date(Date.now()-7200000).toISOString() },
+  { id:2, display_name:'nanobot',        handle:'nanobot',    event_type:'dev_activity',     event_label:'dev activity',          created_at: new Date(Date.now()-7300000).toISOString() },
+  { id:3, display_name:'nanobot',        handle:'nanobot',    event_type:'repo_star_growth', event_label:'GitHub stars growing',  created_at: new Date(Date.now()-7400000).toISOString() },
+  { id:4, display_name:'OpenHands',      handle:'openhands',  event_type:'dev_activity',     event_label:'dev activity',          created_at: new Date(Date.now()-8100000).toISOString() },
+  { id:5, display_name:'OpenHands',      handle:'openhands',  event_type:'repo_star_growth', event_label:'GitHub stars growing',  created_at: new Date(Date.now()-8200000).toISOString() },
+  { id:6, display_name:'CrewAI',         handle:'crewai',     event_type:'dev_activity',     event_label:'dev activity',          created_at: new Date(Date.now()-9000000).toISOString() },
+  { id:7, display_name:'CrewAI',         handle:'crewai',     event_type:'repo_star_growth', event_label:'GitHub stars growing',  created_at: new Date(Date.now()-9100000).toISOString() },
+  { id:8, display_name:'AgentVerse',     handle:'agentverse', event_type:'ranking_jump',     event_label:'climbed 37 spots',      created_at: new Date(Date.now()-10000000).toISOString() },
+  { id:9, display_name:'Autonolas',      handle:'autonolas',  event_type:'ecosystem_integration', event_label:'integrated Solana', created_at: new Date(Date.now()-12000000).toISOString() },
+  { id:10,display_name:'LangGraph',      handle:'langgraph',  event_type:'repo_release',     event_label:'released v0.2.1',       created_at: new Date(Date.now()-14000000).toISOString() },
+];
+
+const MOCK_RECENT = [
+  { id:101, handle:'awesome-llm-apps',       display_name:'awesome-llm-apps',       archetype:'Researcher' },
+  { id:102, handle:'career-ops',             display_name:'career-ops',             archetype:'Builder'    },
+  { id:103, handle:'1panel',                 display_name:'1Panel',                 archetype:'Operator'   },
+  { id:104, handle:'firecrawl',              display_name:'firecrawl',              archetype:'Operator'   },
+  { id:105, handle:'goose',                  display_name:'goose',                  archetype:'Builder'    },
+  { id:106, handle:'cowagent',               display_name:'CowAgent',               archetype:'Operator'   },
+  { id:107, handle:'nanobot',                display_name:'nanobot',                archetype:'Builder'    },
+  { id:108, handle:'agentic-ai-pipeline',    display_name:'Agentic-AI-Pipeline',    archetype:'Builder'    },
+  { id:109, handle:'genai-job-agents',       display_name:'genai-job-agents',       archetype:'Operator'   },
+  { id:110, handle:'live',                   display_name:'live',                   archetype:'Operator'   },
+  { id:111, handle:'spm-agent-nodejs',       display_name:'spm-agent-nodejs',       archetype:'Builder'    },
+  { id:112, handle:'fastagent',              display_name:'FastAgent',              archetype:'Operator'   },
+];
+
+const MOCK_MOVERS = MOCK_AGENTS.slice(0,8).sort((a,b)=>b.weekly_delta-a.weekly_delta);
+
+const SECTORS = [
+  ['All', 12], ['Operator', 458], ['Builder', 297], ['Researcher', 146],
+  ['Trader', 32], ['Creator', 19], ['Framework', 12],
+];
+
+const MOCK_CATEGORIES = [
+  { name:'Operator',    delta:'+5%',   count:450, agents:[{name:'Cognosys',delta:+29},{name:'AgentPilot',delta:+38},{name:'OpenClaw Agents',delta:+19}] },
+  { name:'Builder',     delta:'+10%',  count:297, agents:[{name:'LangGraph',delta:+21},{name:'Cursor Agents',delta:+20},{name:'Devin',delta:+20}] },
+  { name:'Researcher',  delta:'+14%',  count:146, agents:[{name:'AgentVerse',delta:+37},{name:'AgentScope',delta:+16},{name:'Langroid',delta:+22}] },
+  { name:'Trader',      delta:'+30%',  count:32,  agents:[{name:'Autonolas',delta:+40},{name:'Virtuals Protocol',delta:+30},{name:'Fetch Agents',delta:+24}] },
+  { name:'Framework',   delta:'+87%',  count:12,  agents:[{name:'LangChain Agents',delta:+33},{name:'Superagent',delta:+24},{name:'Semantic Kernel',delta:+19}] },
+  { name:'Ecosystem',   delta:'+100%', count:7,   agents:[{name:'CrewAI Ecosystem',delta:+34},{name:'AgentOps',delta:+30},{name:'AI Arena',delta:+27}] },
+];
+
+const USE_CASES = [
+  { icon:'⚙️', title:'Coding Automation',       body:'Agents autonomously write, review, debug, and deploy code.', count:5 },
+  { icon:'🔍', title:'Research Automation',      body:'Search, synthesize, and summarize information autonomously.', count:5 },
+  { icon:'🕸️', title:'Multi-Agent Orchestration', body:'Build and coordinate networks of specialized agents.', count:5 },
+  { icon:'₿',  title:'Crypto Trading',           body:'Monitor on-chain signals, execute trades in real time.', count:5 },
+  { icon:'🌐', title:'Browser Automation',        body:'Navigate, click, fill forms, and extract data from any website.', count:5 },
+  { icon:'📊', title:'Data Analysis',            body:'Connect to data sources, run queries, produce structured insights.', count:5 },
+  { icon:'💬', title:'Customer Support',         body:'Handle inbound queries, route tickets, maintain context.', count:5 },
+  { icon:'🔎', title:'Code Review',              body:'Automatically review pull requests, flag bugs, suggest improvements.', count:5 },
+  { icon:'🧠', title:'Research Agents',          body:'Scan sources, synthesize findings, stay current.', count:5 },
+];
+
+// ── Pages ──────────────────────────────────────────────────────────────────
+
+function StatPill({ label, value, badge }) {
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+      <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'.07em'}}>{label}</span>
+      <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white',fontVariantNumeric:'tabular-nums'}}>{value}</span>
+      {badge && <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,fontWeight:600,color:badge.color}}>{badge.text}</span>}
+    </div>
+  );
+}
+
+function StatStrip() {
+  return (
+    <div style={{borderBottom:'1px solid rgba(232,121,249,0.08)',background:'rgba(232,121,249,0.02)'}}>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:8,paddingBottom:8,gap:24}}>
+        <div style={{display:'flex',alignItems:'center',gap:24,overflowX:'auto'}}>
+          <StatPill label="AGENTS" value="1,225"/>
+          <StatPill label="SIGNALS TODAY" value="70" badge={{text:'-66%',color:'#f87171'}}/>
+          <StatPill label="RANKED" value="15"/>
+          <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'.07em'}}>TOP MOVER</span>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>Autonolas Agents</span>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'#39ff14',fontVariantNumeric:'tabular-nums'}}>+40</span>
+          </div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:5,flexShrink:0}}>
+          <LiveDot/>
+          <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)'}}>LIVE</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HomePage({ onAgentClick }) {
+  const [sector, setSector] = useState('All');
+  const filtered = sector==='All' ? MOCK_AGENTS : MOCK_AGENTS.filter(a=>a.archetype===sector);
+
+  return (
+    <div style={{minHeight:'100vh',background:'#08080f',
+      backgroundImage:'radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)',
+      backgroundSize:'24px 24px',overflowX:'hidden'}}>
+      <div style={{position:'fixed',inset:0,background:'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(236,72,153,0.06) 0%, transparent 60%)',pointerEvents:'none'}}/>
+      <div style={{position:'relative'}}>
+        <StatStrip/>
+
+        {/* Hero */}
+        <div style={{borderBottom:'1px solid rgba(255,255,255,0.04)',padding:'32px 16px',maxWidth:1200,margin:'0 auto'}}>
+          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:16}}>
+            <div style={{flex:1}}>
+              <h1 style={{fontFamily:'Michroma,sans-serif',fontSize:28,fontWeight:400,color:'white',lineHeight:1.2}}>
+                Get your open-source agent discovered.
+              </h1>
+              <p style={{fontFamily:'Geist Mono,monospace',fontSize:12,color:'rgba(255,255,255,0.4)',marginTop:8,maxWidth:560,lineHeight:1.6}}>
+                Live rankings of 1,225+ AI agents by GitHub activity, ecosystem integration, and real adoption signals. Updated every 4 hours.
+              </p>
+              <div style={{marginTop:16,display:'flex',flexWrap:'wrap',gap:8}}>
+                <button style={{display:'inline-flex',alignItems:'center',gap:6,borderRadius:4,border:'1px solid rgba(232,121,249,0.6)',background:'rgba(232,121,249,0.15)',padding:'8px 16px',fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:700,color:'#e879f9',cursor:'pointer'}}>
+                  Submit your agent →
+                </button>
+                <button style={{display:'inline-flex',alignItems:'center',gap:6,borderRadius:4,border:'1px solid rgba(255,255,255,0.15)',background:'rgba(255,255,255,0.04)',padding:'8px 16px',fontFamily:'Geist Mono,monospace',fontSize:12,color:'rgba(255,255,255,0.6)',cursor:'pointer'}}>
+                  Browse rankings
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Value props */}
+          <div style={{marginTop:20,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+            {[
+              {icon:'📊',title:'Get tracked',body:'Multi-signal scoring from GitHub, X mentions, and ecosystem integration depth. No hype, no synthetic signals.'},
+              {icon:'🎯',title:'Get discovered',body:'1,225+ agents indexed. Your page ranks for your agent\'s name. Builders find you through comparison pages and category rankings.'},
+              {icon:'⚡',title:'Claim your profile',body:'Respond to users, update your bio, verify your agent. Free to claim.'},
+            ].map(({icon,title,body})=>(
+              <div key={title} style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',padding:'12px 14px',position:'relative',overflow:'hidden'}}>
+                <CornerAccent/>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                  <span style={{fontSize:14}}>{icon}</span>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>{title}</span>
+                </div>
+                <p style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.35)',lineHeight:1.6}}>{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main grid */}
+        <div style={{maxWidth:1200,margin:'0 auto',padding:'12px 16px',display:'grid',gridTemplateColumns:'1fr 320px',gap:12,alignItems:'start'}}>
+          {/* Left col */}
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {/* Rising Now */}
+            <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',position:'relative',overflow:'hidden'}}>
+              <CornerAccent/>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'7px 12px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'#e879f9'}}>◆</span>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white',letterSpacing:'.04em'}}>RISING NOW</span>
+                </div>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)'}}>All Rankings →</span>
+              </div>
+              {/* Sector tabs */}
+              <div style={{display:'flex',gap:4,padding:'8px 12px',overflowX:'auto',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                {SECTORS.map(([s,n])=>(
+                  <button key={s} onClick={()=>setSector(s)} style={{
+                    borderRadius:4,border:sector===s?'1px solid rgba(255,255,255,0.2)':'1px solid rgba(255,255,255,0.08)',
+                    background:sector===s?'rgba(255,255,255,0.08)':'transparent',
+                    padding:'3px 9px',fontFamily:'Geist Mono,monospace',fontSize:11,
+                    color:sector===s?'white':'rgba(255,255,255,0.45)',cursor:'pointer',whiteSpace:'nowrap',
+                    display:'flex',alignItems:'center',gap:4,
+                  }}>
+                    {s} <span style={{fontSize:9,color:'rgba(255,255,255,0.3)'}}>{n}</span>
+                  </button>
+                ))}
+              </div>
+              {/* Inner Live Rankings header */}
+              <div style={{borderBottom:'1px solid rgba(255,255,255,0.04)',padding:'8px 12px 4px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'#e879f9'}}>◆</span>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:'.08em'}}>LIVE RANKINGS</span>
+                </div>
+                <div style={{fontFamily:'Michroma,sans-serif',fontSize:18,color:'white',marginTop:2}}>Rising Now</div>
+              </div>
+              <RankingTable rows={filtered} onRowClick={onAgentClick}/>
+            </div>
+
+            {/* Bottom row */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              {/* Recently Indexed */}
+              <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',position:'relative',overflow:'hidden'}}>
+                <CornerAccent/>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'7px 12px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:5}}>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'#fbbf24'}}>✦</span>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>RECENTLY INDEXED</span>
+                  </div>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)'}}>All →</span>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,padding:8}}>
+                  {MOCK_RECENT.map(a=><IndexedMiniCard key={a.id} agent={a} onClick={()=>onAgentClick(a)}/>)}
+                </div>
+                <div style={{borderTop:'1px solid rgba(255,255,255,0.04)',padding:'4px 12px'}}>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.2)'}}>2h ago · latest</span>
+                </div>
+              </div>
+
+              {/* Biggest Movers */}
+              <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',position:'relative',overflow:'hidden'}}>
+                <CornerAccent/>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'7px 12px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:5}}>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'#39ff14'}}>↑</span>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>BIGGEST MOVERS</span>
+                  </div>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.2)'}}>7d delta</span>
+                </div>
+                <div>
+                  {MOCK_MOVERS.map(a=><MoverCard key={a.id} agent={a} onClick={()=>onAgentClick(a)}/>)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right col */}
+          <div style={{display:'flex',flexDirection:'column',gap:10,position:'sticky',top:80}}>
+            <SignalFeed rows={MOCK_SIGNALS}/>
+            {/* Submit CTA */}
+            <div style={{borderRadius:8,border:'1px solid rgba(232,121,249,0.35)',background:'rgba(232,121,249,0.06)',padding:'10px 14px',position:'relative',overflow:'hidden',cursor:'pointer'}}
+              onMouseEnter={e=>e.currentTarget.style.background='rgba(232,121,249,0.12)'}
+              onMouseLeave={e=>e.currentTarget.style.background='rgba(232,121,249,0.06)'}
+            >
+              <CornerAccent/>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:700,color:'#e879f9'}}>Submit an Agent</span>
+                <span style={{fontFamily:'Geist Mono,monospace',color:'#e879f9'}}>→</span>
+              </div>
+              <div style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:3}}>List your agent in the index. Free.</div>
+            </div>
+            {/* Follow panel */}
+            <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.05)',background:'#0a0a14',padding:'14px',position:'relative',overflow:'hidden'}}>
+              <CornerAccent/>
+              <h2 style={{fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:700,color:'white'}}>Follow the ecosystem</h2>
+              <p style={{fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.35)',marginTop:4}}>Track the AI agent ecosystem — rank moves, new launches, and signal intelligence.</p>
+              <div style={{marginTop:10,display:'flex',flexWrap:'wrap',gap:6}}>
+                <button style={{display:'inline-flex',alignItems:'center',gap:5,borderRadius:4,border:'1px solid rgba(255,255,255,0.09)',background:'rgba(255,255,255,0.03)',padding:'5px 10px',fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.6)',cursor:'pointer'}}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.24.24H5.76C2.579.24 0 2.819 0 6v12c0 3.181 2.579 5.76 5.76 5.76h12.48C21.421 23.76 24 21.181 24 18V6C24 2.819 21.421.24 18.24.24m.816 17.166v.504c.287-.026.546.191.544.479v.569h-5.144v-.569c-.002-.288.258-.505.544-.479v-.504c0-.22.153-.402.358-.458l-.01-4.365c-.159-1.737-1.64-3.098-3.444-3.098-1.804 0-3.284 1.361-3.444 3.098l-.01 4.358c.228.042.532.208.54.465v.504c.286-.026.546.191.544.479v.569H4.392v-.569c-.002-.288.257-.505.544-.479v-.504c0-.253.201-.455.454-.472V9.04h-.491L4.29 7.008l2.64-.001V5.042h9.95v1.965h2.822l-.61 2.031h-.49v7.895c.252.018.453.22.453.473"/></svg>
+                  AgentCrush on Farcaster
+                </button>
+                <button style={{display:'inline-flex',alignItems:'center',gap:5,borderRadius:4,border:'1px solid rgba(255,255,255,0.09)',background:'rgba(255,255,255,0.03)',padding:'5px 10px',fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.6)',cursor:'pointer'}}>
+                  Browse Categories →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RankingsPage({ onAgentClick }) {
+  const [filter, setFilter] = useState('All');
+  const tabs = ['All','Rising','Trending','Top 10'];
+  const rows = filter==='Top 10' ? MOCK_AGENTS.slice(0,10) : MOCK_AGENTS;
+
+  return (
+    <div style={{minHeight:'100vh',background:'#08080f',backgroundImage:'radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)',backgroundSize:'24px 24px'}}>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:'24px 16px'}}>
+        <h1 style={{fontFamily:'Geist',fontSize:28,fontWeight:700,color:'white'}}>Rankings</h1>
+        <p style={{fontFamily:'Geist Mono,monospace',fontSize:12,color:'rgba(255,255,255,0.4)',marginTop:4}}>
+          133 ranked · 1225 indexed · <span style={{color:'#39ff14'}}>133 rising</span> · 0 trending · updated 2h ago
+        </p>
+
+        {/* Weekly narrative */}
+        <div style={{marginTop:16,borderRadius:6,border:'1px solid rgba(57,255,20,0.15)',background:'rgba(57,255,20,0.03)',padding:'10px 14px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'#39ff14',textTransform:'uppercase',letterSpacing:'.08em'}}>◆ WEEKLY NARRATIVE</span>
+          </div>
+          <p style={{fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.6)',lineHeight:1.7}}>
+            AgentVerse extended its lead at #1, gaining +37 spots this week. Autonolas Agents climbed +40 to #4 — Rose 40 spots. 15 agents broke into the top 15 this week.
+          </p>
+        </div>
+
+        {/* Rising Now mini-list */}
+        <div style={{marginTop:12,borderRadius:6,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',padding:'8px 0'}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,padding:'4px 14px 8px',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'#39ff14'}}>↑</span>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:'.07em'}}>RISING NOW</span>
+          </div>
+          {MOCK_AGENTS.slice(0,5).map(a=>(
+            <div key={a.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',cursor:'pointer'}}
+              onClick={()=>onAgentClick(a)}
+              onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.02)'}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+            >
+              <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.6)'}}>#{a.global_rank} {a.display_name}</span>
+              <DeltaBadge value={a.weekly_delta}/>
+            </div>
+          ))}
+        </div>
+
+        {/* Search + filters */}
+        <div style={{marginTop:16,display:'flex',alignItems:'center',gap:8}}>
+          <div style={{flex:1,position:'relative'}}>
+            <input placeholder="Search by name, handle, or category…" style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:4,padding:'7px 12px',fontFamily:'Geist Mono,monospace',fontSize:12,color:'white',outline:'none'}}/>
+          </div>
+          <div style={{display:'flex',gap:4}}>
+            {tabs.map(t=>(
+              <button key={t} onClick={()=>setFilter(t)} style={{borderRadius:4,border:filter===t?'1px solid rgba(232,121,249,0.5)':'1px solid rgba(255,255,255,0.08)',background:filter===t?'rgba(232,121,249,0.12)':'transparent',padding:'5px 12px',fontFamily:'Geist Mono,monospace',fontSize:11,color:filter===t?'#e879f9':'rgba(255,255,255,0.5)',cursor:'pointer'}}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Table */}
+        <div style={{marginTop:12,borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',position:'relative',overflow:'hidden'}}>
+          <CornerAccent/>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'8px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'#e879f9'}}>◆</span>
+              <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white',letterSpacing:'.04em'}}>LIVE RANKINGS</span>
+            </div>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontStyle:'italic',color:'rgba(255,255,255,0.6)'}}>Rising Now</span>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)'}}>133 agents</span>
+          </div>
+          <RankingTable rows={rows} onRowClick={onAgentClick}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoriesPage({ onAgentClick }) {
+  const trending = ['Builder','Operator','Researcher','Framework','Trader'];
+  return (
+    <div style={{minHeight:'100vh',background:'#08080f',backgroundImage:'radial-gradient(circle,rgba(255,255,255,0.03) 1px,transparent 1px)',backgroundSize:'24px 24px'}}>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:'24px 16px'}}>
+        <h1 style={{fontFamily:'Geist',fontSize:28,fontWeight:700,color:'white'}}>Categories</h1>
+        <p style={{fontFamily:'Geist Mono,monospace',fontSize:12,color:'rgba(255,255,255,0.4)',marginTop:4}}>
+          AI agent ecosystem by type · 1000 agents tracked · <span style={{color:'#39ff14'}}>133 gaining this week</span>
+        </p>
+
+        {/* Trending tabs */}
+        <div style={{display:'flex',gap:6,marginTop:16,overflowX:'auto'}}>
+          {[['Builder','+10%',297],['Operator','+5%',450],['Researcher','+14%',146],['Framework','+87%',12],['Trader','+30%',32]].map(([n,d,c])=>(
+            <div key={n} style={{borderRadius:4,border:'1px solid rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.04)',padding:'8px 14px',minWidth:110,cursor:'pointer',flexShrink:0}}>
+              <div style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>{n}</div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:3}}>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.3)'}}>{c} agents</span>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,fontWeight:700,color:'#39ff14'}}>{d}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Category grid */}
+        <div style={{marginTop:16,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+          {MOCK_CATEGORIES.map(cat=>(
+            <div key={cat.name} style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',overflow:'hidden',position:'relative'}}>
+              <CornerAccent/>
+              <div style={{padding:'10px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:700,color:'white'}}>{cat.name}</span>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'#39ff14'}}>{cat.delta} gaining · {cat.count} tracked</span>
+                </div>
+              </div>
+              <div>
+                {cat.agents.map((a,i)=>(
+                  <div key={a.name} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,0.03)',cursor:'pointer'}}
+                    onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.02)'}
+                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                  >
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.25)',width:12}}>{i+1}</span>
+                      <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.8)'}}>{a.name}</span>
+                    </div>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'#39ff14',fontVariantNumeric:'tabular-nums'}}>+{a.delta}</span>
+                  </div>
+                ))}
+                <div style={{padding:'5px 12px',borderTop:'1px solid rgba(255,255,255,0.04)'}}><span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)'}}>view all →</span></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UseCasesPage() {
+  return (
+    <div style={{minHeight:'100vh',background:'#08080f',backgroundImage:'radial-gradient(circle,rgba(255,255,255,0.03) 1px,transparent 1px)',backgroundSize:'24px 24px'}}>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:'24px 16px'}}>
+        <h1 style={{fontFamily:'Geist',fontSize:28,fontWeight:700,color:'white'}}>Use Cases</h1>
+        <p style={{fontFamily:'Geist Mono,monospace',fontSize:12,color:'rgba(255,255,255,0.4)',marginTop:4}}>Find the right agent for your workflow. 11 use cases indexed.</p>
+        <div style={{marginTop:20,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+          {USE_CASES.map(uc=>(
+            <div key={uc.title} style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',padding:'14px',cursor:'pointer',position:'relative',overflow:'hidden'}}
+              onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.12)'}
+              onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'}
+            >
+              <CornerAccent/>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                <span style={{fontSize:16}}>{uc.icon}</span>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:700,color:'white'}}>{uc.title}</span>
+              </div>
+              <p style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.4)',lineHeight:1.6}}>{uc.body}</p>
+              <div style={{marginTop:10,fontFamily:'Geist Mono,monospace',fontSize:11,color:'#e879f9'}}>{uc.count} agents →</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SubmitPage() {
+  return (
+    <div style={{minHeight:'100vh',background:'#08080f',backgroundImage:'radial-gradient(circle,rgba(255,255,255,0.03) 1px,transparent 1px)',backgroundSize:'24px 24px'}}>
+      <div style={{maxWidth:600,margin:'0 auto',padding:'40px 16px'}}>
+        <h1 style={{fontFamily:'Michroma,sans-serif',fontSize:24,color:'white'}}>Submit your agent</h1>
+        <p style={{fontFamily:'Geist Mono,monospace',fontSize:12,color:'rgba(255,255,255,0.4)',marginTop:8,lineHeight:1.6}}>List your open-source AI agent in the index. Free. No account required.</p>
+        <div style={{marginTop:24,display:'flex',flexDirection:'column',gap:14}}>
+          {[
+            {label:'GitHub Repository URL', placeholder:'https://github.com/yourorg/your-agent'},
+            {label:'Agent Name',            placeholder:'e.g. AgentVerse'},
+            {label:'Handle',               placeholder:'e.g. agentverse (no @)'},
+            {label:'Category / Archetype', placeholder:'Researcher, Builder, Operator…'},
+            {label:'Tagline',              placeholder:'One-line description of what your agent does'},
+          ].map(({label,placeholder})=>(
+            <div key={label}>
+              <label style={{fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.5)',display:'block',marginBottom:5}}>{label}</label>
+              <input placeholder={placeholder} style={{width:'100%',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:4,padding:'9px 12px',fontFamily:'Geist Mono,monospace',fontSize:12,color:'white',outline:'none',transition:'border-color .15s'}}
+                onFocus={e=>e.target.style.borderColor='rgba(232,121,249,0.5)'}
+                onBlur={e=>e.target.style.borderColor='rgba(255,255,255,0.1)'}
+              />
+            </div>
+          ))}
+          <button style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,borderRadius:4,border:'1px solid rgba(232,121,249,0.6)',background:'rgba(232,121,249,0.15)',padding:'10px 20px',fontFamily:'Geist Mono,monospace',fontSize:13,fontWeight:700,color:'#e879f9',cursor:'pointer',marginTop:4}}>
+            Submit agent →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── App Shell ──────────────────────────────────────────────────────────────
+
+function App() {
+  const saved = localStorage.getItem('ac_page') || 'home';
+  const [page, setPage] = useState(saved);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+
+  useEffect(()=>{ localStorage.setItem('ac_page', page); }, [page]);
+
+  function handleNav(id) { setPage(id); setSelectedAgent(null); }
+  function handleAgentClick(agent) { setSelectedAgent(agent); }
+
+  const trending = { name:'Autonolas Agents', delta:40 };
+
+  return (
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}>
+      <Header onNav={handleNav} activePage={page} trending={trending}/>
+
+      {selectedAgent ? (
+        <div style={{maxWidth:1200,margin:'24px auto',padding:'0 16px',width:'100%'}}>
+          <AgentProfilePanel agent={selectedAgent} onClose={()=>setSelectedAgent(null)}/>
+        </div>
+      ) : (
+        <>
+          {page==='home'       && <HomePage       onAgentClick={handleAgentClick}/>}
+          {page==='home'       && null}
+          {page==='categories' && <CategoriesPage onAgentClick={handleAgentClick}/>}
+          {page==='use-cases'  && <UseCasesPage/>}
+          {page==='submit'     && <SubmitPage/>}
+        </>
+      )}
+      {page !== 'home' && !selectedAgent && <Footer onNav={handleNav}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

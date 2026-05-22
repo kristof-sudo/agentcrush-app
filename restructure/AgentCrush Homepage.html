@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AgentCrush · The AI Agent Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=Geist+Mono:wght@400;500;600;700&family=Michroma&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:#08080f;color:white;font-family:'Geist Mono',monospace;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(232,121,249,0.3);border-radius:4px}
+@media(max-width:768px){
+  .data-grid{grid-template-columns:1fr !important}
+  .right-col{position:static !important;top:auto !important}
+  .bottom-grid{grid-template-columns:1fr !important}
+  .hero-stats{flex-direction:column;gap:10px !important}
+  .nav-links{display:none !important}
+  .trending-badge{display:none !important}
+  .value-props{grid-template-columns:1fr !important}
+  .cat-grid{grid-template-columns:1fr !important}
+  .rank-col-vis,.rank-col-rep{display:none !important}
+  .rank-row{grid-template-columns:28px 1fr 58px !important;gap:6px !important}
+  .rank-col-score{display:none !important}
+  .rank-col-delta{min-width:0 !important}
+  .mover-row{padding:7px 10px !important}
+  .mover-delta{min-width:48px !important;text-align:right}
+}
+
+@keyframes ping{0%{transform:scale(1);opacity:.6}75%,100%{transform:scale(2.4);opacity:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes floatUp{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:1}90%{opacity:.6}100%{transform:translateY(-100vh) translateX(var(--drift));opacity:0}}
+@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+@keyframes ringPulse{0%,100%{box-shadow:0 0 40px 8px rgba(0,212,255,0.35),0 0 80px 20px rgba(0,212,255,0.12)}50%{box-shadow:0 0 60px 14px rgba(0,212,255,0.55),0 0 120px 40px rgba(0,212,255,0.2)}}
+@keyframes beamSweep{0%{opacity:0;transform:rotate(-30deg) scaleY(0.5)}20%{opacity:.18}80%{opacity:.12}100%{opacity:0;transform:rotate(30deg) scaleY(1.2)}}
+@keyframes fogDrift{0%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-20px) scale(1.08)}66%{transform:translate(-30px,15px) scale(0.95)}100%{transform:translate(0,0) scale(1)}}
+@keyframes slideUp{0%{opacity:0;transform:translateY(28px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes glowBreathe{0%,100%{text-shadow:0 0 20px rgba(232,121,249,0.4)}50%{text-shadow:0 0 40px rgba(232,121,249,0.7),0 0 80px rgba(232,121,249,0.3)}}
+@keyframes newRow{0%{opacity:0;transform:translateX(-12px);background:rgba(0,212,255,0.06)}100%{opacity:1;transform:translateX(0);background:transparent}}
+@keyframes cornerFlash{0%{border-color:rgba(232,121,249,0.9)}100%{border-color:rgba(232,121,249,0.4)}}
+@keyframes heroBreathe{0%{transform:scale(1) translate(0,0)}25%{transform:scale(1.06) translate(-1%,-1%)}50%{transform:scale(1.10) translate(1%,0.5%)}75%{transform:scale(1.05) translate(-0.5%,1%)}100%{transform:scale(1) translate(0,0)}}
+@keyframes numberTick{0%{transform:translateY(0)}50%{transform:translateY(-4px)}100%{transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback} = React;
+
+/* ── DATA ── */
+const AGENTS = [
+  {id:1,rank:1, handle:'agentverse',  name:'AgentVerse',        arch:'Researcher', delta:37, score:168, vis:89, rep:79},
+  {id:2,rank:2, handle:'autogpt',     name:'AutoGPT',           arch:'Rebel',      delta:36, score:166, vis:93, rep:73},
+  {id:3,rank:3, handle:'crewai',      name:'CrewAI Ecosystem',  arch:'Ecosystem',  delta:34, score:165, vis:92, rep:73},
+  {id:4,rank:4, handle:'autonolas',   name:'Autonolas Agents',  arch:'Trader',     delta:40, score:159, vis:90, rep:69},
+  {id:5,rank:5, handle:'cognosys',    name:'Cognosys',          arch:'Operator',   delta:29, score:158, vis:89, rep:69},
+  {id:6,rank:6, handle:'agentops',    name:'AgentOps',          arch:'Infra',      delta:30, score:152, vis:85, rep:67},
+  {id:7,rank:7, handle:'devika',      name:'Devika',            arch:'Builder',    delta:21, score:156, vis:87, rep:69},
+  {id:8,rank:8, handle:'aiarena',     name:'AI Arena',          arch:'Ecosystem',  delta:27, score:151, vis:88, rep:63},
+];
+
+const SIGNAL_POOL = [
+  {handle:'autogpt',     name:'AutoGPT',          type:'repo_star_growth',      label:'GitHub stars growing',    dot:'#4ade80'},
+  {handle:'agentverse',  name:'AgentVerse',        type:'ranking_jump',          label:'climbed 37 spots',        dot:'#39ff14'},
+  {handle:'autonolas',   name:'Autonolas Agents',  type:'ecosystem_integration', label:'integrated Solana',       dot:'#00d4ff'},
+  {handle:'langgraph',   name:'LangGraph',         type:'repo_release',          label:'released v0.2.1',         dot:'#e879f9'},
+  {handle:'crewai',      name:'CrewAI',            type:'dev_activity',          label:'dev activity',            dot:'#60a5fa'},
+  {handle:'devika',      name:'Devika',            type:'repo_star_growth',      label:'+124 GitHub stars',       dot:'#4ade80'},
+  {handle:'openhands',   name:'OpenHands',         type:'dev_activity',          label:'dev activity',            dot:'#60a5fa'},
+  {handle:'agentpilot',  name:'AgentPilot',        type:'ranking_jump',          label:'climbed 38 spots',        dot:'#39ff14'},
+  {handle:'cognosys',    name:'Cognosys',          type:'audience_spike',        label:'audience spike',          dot:'#e879f9'},
+  {handle:'nanobot',     name:'nanobot',           type:'agent_joined',          label:'joined the index',        dot:'#fb923c'},
+  {handle:'fastagent',   name:'FastAgent',         type:'repo_release',          label:'new release',             dot:'#e879f9'},
+  {handle:'sweep',       name:'Sweep AI',          type:'collab_win',            label:'collab w/ GitHub',        dot:'#f0a500'},
+];
+
+const ARCH_COLORS = {
+  Researcher:{border:'rgba(232,121,249,0.4)',color:'#e879f9',bg:'rgba(232,121,249,0.08)'},
+  Ecosystem: {border:'rgba(0,212,255,0.35)', color:'#00d4ff',bg:'rgba(0,212,255,0.06)'},
+  Builder:   {border:'rgba(96,165,250,0.35)',color:'#60a5fa',bg:'rgba(96,165,250,0.07)'},
+  Operator:  {border:'rgba(167,139,250,0.35)',color:'#a78bfa',bg:'rgba(167,139,250,0.07)'},
+  Framework: {border:'rgba(57,255,20,0.3)',  color:'#39ff14',bg:'rgba(57,255,20,0.07)'},
+  Trader:    {border:'rgba(240,165,0,0.35)', color:'#f0a500',bg:'rgba(240,165,0,0.07)'},
+  Rebel:     {border:'rgba(248,113,113,0.35)',color:'#f87171',bg:'rgba(248,113,113,0.07)'},
+  Infra:     {border:'rgba(251,146,60,0.35)',color:'#fb923c',bg:'rgba(251,146,60,0.07)'},
+};
+const AC = (a) => ARCH_COLORS[a]||{border:'rgba(255,255,255,0.2)',color:'rgba(255,255,255,0.5)',bg:'rgba(255,255,255,0.04)'};
+const AVATAR_COLS=['rgba(167,139,250,0.25)','rgba(74,222,128,0.25)','rgba(96,165,250,0.25)','rgba(251,191,36,0.25)','rgba(232,121,249,0.25)','rgba(0,212,255,0.25)','rgba(248,113,113,0.25)'];
+const avatarBg=(h)=>{ let n=0;for(let i=0;i<h.length;i++)n=(n*31+h.charCodeAt(i))&0xffff; return AVATAR_COLS[n%AVATAR_COLS.length]; };
+
+/* ── CORNER ACCENT ── */
+function CA({c='rgba(232,121,249,0.4)'}){
+  const s=(pos)=>({position:'absolute',width:10,height:10,pointerEvents:'none',...pos});
+  const b=`1px solid ${c}`;
+  return<>{[
+    [{top:0,left:0},{borderTop:b,borderLeft:b}],
+    [{top:0,right:0},{borderTop:b,borderRight:b}],
+    [{bottom:0,left:0},{borderBottom:b,borderLeft:b}],
+    [{bottom:0,right:0},{borderBottom:b,borderRight:b}],
+  ].map(([pos,extra],i)=><span key={i} style={{...s(pos),...extra}}/>)}</>;
+}
+
+/* ── LIVE DOT ── */
+function LiveDot({color='#4ade80',size=7}){
+  return<span style={{position:'relative',display:'inline-flex',width:size,height:size}}>
+    <span style={{position:'absolute',inset:0,borderRadius:'50%',background:color,opacity:.5,animation:'ping 1.6s cubic-bezier(0,0,.2,1) infinite'}}/>
+    <span style={{position:'relative',width:size,height:size,borderRadius:'50%',background:color,display:'block'}}/>
+  </span>;
+}
+
+/* ── PARTICLES ── */
+function Particles(){
+  const canvasRef=useRef();
+  useEffect(()=>{
+    const c=canvasRef.current; if(!c)return;
+    const ctx=c.getContext('2d');
+    let W=c.width=window.innerWidth, H=c.height=window.innerHeight;
+    const COLS=['#e879f9','#00d4ff','#39ff14','#a78bfa','#60a5fa'];
+    const pts=Array.from({length:55},(_,i)=>({
+      x:Math.random()*W, y:Math.random()*H,
+      r:Math.random()*1.8+0.6,
+      vy:-(Math.random()*0.4+0.15),
+      vx:(Math.random()-0.5)*0.3,
+      col:COLS[i%COLS.length],
+      life:Math.random(),
+      maxLife:Math.random()*0.6+0.4,
+      glow:Math.random()*6+3,
+    }));
+    let raf;
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      pts.forEach(p=>{
+        p.life+=0.003;
+        if(p.life>p.maxLife){p.life=0;p.x=Math.random()*W;p.y=H+10;}
+        p.x+=p.vx; p.y+=p.vy;
+        const alpha=Math.sin((p.life/p.maxLife)*Math.PI)*0.75;
+        ctx.save();
+        ctx.globalAlpha=alpha;
+        ctx.shadowBlur=p.glow*3;
+        ctx.shadowColor=p.col;
+        ctx.fillStyle=p.col;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      });
+      raf=requestAnimationFrame(draw);
+    }
+    draw();
+    const onResize=()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight;};
+    window.addEventListener('resize',onResize);
+    return()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',onResize);};
+  },[]);
+  return<canvas ref={canvasRef} style={{position:'fixed',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:1}}/>;
+}
+
+/* ── SCANLINE ── */
+function Scanline(){
+  return<div style={{position:'fixed',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:2,overflow:'hidden',opacity:.025}}>
+    <div style={{
+      position:'absolute',top:0,left:0,width:'100%',height:'100%',
+      backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.8) 3px,rgba(0,0,0,0.8) 4px)',
+    }}/>
+    <div style={{position:'absolute',top:0,left:0,width:'100%',height:'200px',
+      background:'linear-gradient(to bottom,rgba(0,212,255,0.06),transparent)',
+      animation:'scanline 8s linear infinite',
+    }}/>
+  </div>;
+}
+
+/* ── RAIN / MIST ── */
+function HeroRain(){
+  const canvasRef=useRef();
+  useEffect(()=>{
+    const c=canvasRef.current; if(!c)return;
+    const ctx=c.getContext('2d');
+    let W=c.width=c.offsetWidth, H=c.height=c.offsetHeight;
+    const drops=Array.from({length:120},()=>({
+      x:Math.random()*W,
+      y:Math.random()*H,
+      len:Math.random()*60+20,
+      speed:Math.random()*2.5+1.2,
+      opacity:Math.random()*0.12+0.03,
+      width:Math.random()*0.6+0.2,
+      col:Math.random()<0.15?'0,212,255':'255,255,255',
+    }));
+    // Mist blobs
+    const mists=Array.from({length:5},(_,i)=>({
+      x:Math.random()*W, y:Math.random()*H*0.7,
+      r:Math.random()*180+80,
+      vx:(Math.random()-.5)*0.15,
+      vy:(Math.random()-.5)*0.08,
+      opacity:Math.random()*0.04+0.02,
+      col:i<2?'0,212,255':i<4?'167,139,250':'232,121,249',
+    }));
+    let raf;
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      // mist
+      mists.forEach(m=>{
+        m.x+=m.vx; m.y+=m.vy;
+        if(m.x<-m.r)m.x=W+m.r; if(m.x>W+m.r)m.x=-m.r;
+        if(m.y<-m.r)m.y=H+m.r; if(m.y>H+m.r)m.y=-m.r;
+        const g=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,m.r);
+        g.addColorStop(0,`rgba(${m.col},${m.opacity})`);
+        g.addColorStop(1,`rgba(${m.col},0)`);
+        ctx.fillStyle=g;
+        ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.fill();
+      });
+      // rain
+      drops.forEach(d=>{
+        d.y+=d.speed;
+        if(d.y>H){ d.y=-d.len; d.x=Math.random()*W; }
+        ctx.save();
+        ctx.globalAlpha=d.opacity;
+        ctx.strokeStyle=`rgba(${d.col},1)`;
+        ctx.lineWidth=d.width;
+        ctx.beginPath();
+        ctx.moveTo(d.x,d.y);
+        ctx.lineTo(d.x-d.speed*0.4,d.y+d.len);
+        ctx.stroke();
+        ctx.restore();
+      });
+      raf=requestAnimationFrame(draw);
+    }
+    draw();
+    const onResize=()=>{W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;};
+    window.addEventListener('resize',onResize);
+    return()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',onResize);};
+  },[]);
+  return<canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:4}}/>;
+}
+
+/* ── ANIMATED COUNTER ── */
+function Counter({target,duration=1800}){
+  const [val,setVal]=useState(0);
+  useEffect(()=>{
+    let start=null,raf;
+    function step(ts){
+      if(!start)start=ts;
+      const p=Math.min((ts-start)/duration,1);
+      const ease=1-Math.pow(1-p,3);
+      setVal(Math.round(ease*target));
+      if(p<1)raf=requestAnimationFrame(step);
+    }
+    raf=requestAnimationFrame(step);
+    return()=>cancelAnimationFrame(raf);
+  },[target]);
+  return<>{val.toLocaleString()}</>;
+}
+
+/* ── HEADER ── */
+function Header(){
+  const [scrolled,setScrolled]=useState(false);
+  useEffect(()=>{
+    const fn=()=>setScrolled(window.scrollY>40);
+    window.addEventListener('scroll',fn);
+    return()=>window.removeEventListener('scroll',fn);
+  },[]);
+  return(
+    <header style={{
+      position:'fixed',top:0,left:0,right:0,zIndex:100,
+      borderBottom:`1px solid rgba(232,121,249,${scrolled?'.15':'.07'})`,
+      background:scrolled?'rgba(8,8,15,0.94)':'transparent',
+      backdropFilter:scrolled?'blur(20px)':'none',
+      transition:'all .3s',
+    }}>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:56}}>
+        <img src="assets/agentcrush-logo.png" alt="AgentCrush" style={{height:30,width:'auto'}}/>
+        <nav style={{display:'flex',alignItems:'center',gap:24}} className="nav-links">
+          {['Rankings','Categories','Use Cases','Submit'].map(l=>(
+            <a key={l} href="#" style={{fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:600,color:'rgba(255,255,255,0.5)',textDecoration:'none',position:'relative',transition:'color .15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.color='white'}}
+              onMouseLeave={e=>{e.currentTarget.style.color='rgba(255,255,255,0.5)'}}
+            >{l}</a>
+          ))}
+        </nav>
+        <a href="#" style={{display:'flex',alignItems:'center',gap:6,borderRadius:4,border:'1px solid rgba(57,255,20,0.3)',background:'rgba(57,255,20,0.07)',padding:'5px 12px',fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.7)',textDecoration:'none'}} className="trending-badge">
+          <span style={{color:'#39ff14',fontWeight:700}}>↑</span> Autonolas Agents <span style={{color:'#39ff14',fontWeight:700}}>+40</span>
+        </a>
+      </div>
+    </header>
+  );
+}
+
+/* ── HERO ── */
+function Hero(){
+  const [mouse,setMouse]=useState({x:0,y:0});
+  const heroRef=useRef();
+  useEffect(()=>{
+    const fn=(e)=>{
+      const r=heroRef.current?.getBoundingClientRect();
+      if(!r)return;
+      setMouse({x:(e.clientX-r.left)/r.width-.5, y:(e.clientY-r.top)/r.height-.5});
+    };
+    window.addEventListener('mousemove',fn);
+    return()=>window.removeEventListener('mousemove',fn);
+  },[]);
+
+  return(
+    <div ref={heroRef} style={{position:'relative',height:'100vh',minHeight:640,overflow:'hidden',display:'flex',flexDirection:'column',justifyContent:'flex-end',paddingTop:56}}>
+
+      {/* BG image — parallax */}
+      <div style={{
+        position:'absolute',inset:'-5%',
+        backgroundImage:'url(assets/hero-main.png)',
+        backgroundSize:'cover',backgroundPosition:'center 40%',
+        transform:`translate(${mouse.x*-18}px, ${mouse.y*-12}px)`,
+        transition:'transform .08s ease-out',
+        filter:'brightness(0.6) saturate(1.4)',
+        animation:'heroBreathe 22s ease-in-out infinite',
+      }}/>
+
+      {/* Arena world overlay — blended top portion */}
+      <div style={{
+        position:'absolute',inset:'-5%',
+        backgroundImage:'url(assets/bg-arena-world.png)',
+        backgroundSize:'cover',backgroundPosition:'center',
+        transform:`translate(${mouse.x*-8}px, ${mouse.y*-6}px)`,
+        opacity:.12,
+        mixBlendMode:'screen',
+        transition:'transform .12s ease-out',
+      }}/>
+
+      {/* Dark gradient — bottom fade into content */}
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom, rgba(8,8,15,0.1) 0%, rgba(8,8,15,0) 30%, rgba(8,8,15,0.5) 65%, rgba(8,8,15,1) 100%)'}}/>
+
+      {/* Top gradient */}
+      <div style={{position:'absolute',top:0,left:0,right:0,height:200,background:'linear-gradient(to bottom,rgba(8,8,15,0.7),transparent)'}}/>
+
+      {/* Sweeping light beam */}
+      <div style={{
+        position:'absolute',top:'-20%',left:'50%',width:2,height:'70%',
+        background:'linear-gradient(to bottom, transparent, rgba(0,212,255,0.25), transparent)',
+        transformOrigin:'top center',
+        animation:'beamSweep 7s ease-in-out infinite',
+        filter:'blur(6px)',
+      }}/>
+      <div style={{
+        position:'absolute',top:'-20%',left:'42%',width:2,height:'60%',
+        background:'linear-gradient(to bottom, transparent, rgba(232,121,249,0.2), transparent)',
+        transformOrigin:'top center',
+        animation:'beamSweep 9s ease-in-out infinite 2s',
+        filter:'blur(8px)',
+      }}/>
+
+      {/* Rain + mist overlay */}
+      <HeroRain/>
+
+      {/* Glowing neon ring — CSS echo of the image */}
+      <div style={{
+        position:'absolute',bottom:'-60px',left:'50%',transform:'translateX(-50%)',
+        width:600,height:600,borderRadius:'50%',
+        border:'1.5px solid rgba(0,212,255,0.18)',
+        animation:'ringPulse 3s ease-in-out infinite',
+        pointerEvents:'none',
+      }}/>
+      <div style={{
+        position:'absolute',bottom:'-90px',left:'50%',transform:'translateX(-50%)',
+        width:480,height:480,borderRadius:'50%',
+        border:'1px solid rgba(232,121,249,0.12)',
+        animation:'ringPulse 4s ease-in-out infinite 1s',
+        pointerEvents:'none',
+      }}/>
+
+      {/* Hero content */}
+      <div style={{position:'relative',zIndex:10,maxWidth:1200,margin:'0 auto',padding:'0 20px 80px',width:'100%'}}>
+        {/* Live badge */}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:20,animation:'fadeIn .8s ease both'}}>
+          <LiveDot/>
+          <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.35)',textTransform:'uppercase',letterSpacing:'.1em'}}>Live rankings — updated 2h ago</span>
+        </div>
+
+        <h1 style={{
+          fontFamily:'Michroma,sans-serif',
+          fontSize:'clamp(22px,5.5vw,52px)',
+          fontWeight:400,
+          color:'white',lineHeight:1.1,letterSpacing:'.01em',
+          maxWidth:760,animation:'slideUp .9s cubic-bezier(.2,.8,.4,1) both .1s',
+        }}>
+          Get your open-source<br/>
+          <span style={{color:'#e879f9',animation:'glowBreathe 3s ease-in-out infinite'}}>agent</span> discovered.
+        </h1>
+
+        <p style={{
+          fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.28)',
+          marginTop:12,letterSpacing:'.04em',
+          animation:'slideUp .9s cubic-bezier(.2,.8,.4,1) both .18s',
+        }}>
+          The AI agent index run by AI agents.
+        </p>
+
+        <p style={{
+          fontFamily:'Geist Mono,monospace',fontSize:13,color:'rgba(255,255,255,0.42)',
+          marginTop:14,maxWidth:500,lineHeight:1.75,
+          animation:'slideUp .9s cubic-bezier(.2,.8,.4,1) both .25s',
+        }}>
+          Live rankings of 1,225+ open-source AI agents by GitHub activity, ecosystem integration, and real adoption signals.
+        </p>
+
+        <div style={{marginTop:28,display:'flex',gap:12,flexWrap:'wrap',animation:'slideUp .9s cubic-bezier(.2,.8,.4,1) both .4s'}}>
+          <a href="#" style={{
+            display:'inline-flex',alignItems:'center',gap:8,
+            borderRadius:4,border:'1px solid rgba(232,121,249,0.7)',
+            background:'rgba(232,121,249,0.18)',
+            padding:'11px 22px',fontFamily:'Geist Mono,monospace',fontSize:13,
+            fontWeight:700,color:'#e879f9',textDecoration:'none',
+            boxShadow:'0 0 20px rgba(232,121,249,0.15)',
+            transition:'all .2s',
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.background='rgba(232,121,249,0.28)';e.currentTarget.style.boxShadow='0 0 40px rgba(232,121,249,0.3)'}}
+          onMouseLeave={e=>{e.currentTarget.style.background='rgba(232,121,249,0.18)';e.currentTarget.style.boxShadow='0 0 20px rgba(232,121,249,0.15)'}}
+          >
+            Submit your agent →
+          </a>
+          <a href="#rankings" style={{
+            display:'inline-flex',alignItems:'center',gap:8,
+            borderRadius:4,border:'1px solid rgba(255,255,255,0.12)',
+            background:'rgba(255,255,255,0.04)',
+            padding:'11px 22px',fontFamily:'Geist Mono,monospace',fontSize:13,
+            color:'rgba(255,255,255,0.6)',textDecoration:'none',transition:'all .2s',
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.color='white';e.currentTarget.style.borderColor='rgba(255,255,255,0.25)'}}
+          onMouseLeave={e=>{e.currentTarget.style.color='rgba(255,255,255,0.6)';e.currentTarget.style.borderColor='rgba(255,255,255,0.12)'}}
+          >
+            Browse rankings
+          </a>
+        </div>
+
+        {/* Stat pills */}
+      <div style={{marginTop:40,display:'flex',gap:20,flexWrap:'wrap',animation:'fadeIn 1s ease both .6s'}} className="hero-stats">
+          {[
+            {label:'agents indexed',value:1225,color:'white'},
+            {label:'signals today',  value:70,  color:'white'},
+            {label:'ranked',         value:133, color:'white'},
+            {label:'top mover',      value:null,extra:'+40 Autonolas',color:'#39ff14'},
+          ].map(s=>(
+            <div key={s.label} style={{display:'flex',alignItems:'baseline',gap:7}}>
+              <span style={{fontFamily:'Geist Mono,monospace',fontSize:s.value?20:16,fontWeight:700,color:s.color,fontVariantNumeric:'tabular-nums'}}>
+                {s.value ? <Counter target={s.value}/> : s.extra}
+              </span>
+              <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)',textTransform:'uppercase',letterSpacing:'.07em'}}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── INTEL TICKER ── */
+function IntelTicker(){
+  const items=[
+    'AutoGen Studio · GitHub stars growing · 2h ago',
+    'Autonolas Agents · climbed +40 to #4 this week',
+    'LangGraph · released v0.2.1 · new release',
+    'CrewAI · dev activity · strong momentum',
+    'AgentPilot · +38 · biggest mover today',
+    'OpenHands · GitHub stars growing · 3h ago',
+    'Devika · +124 GitHub stars overnight',
+    'AgentVerse · holds #1 for 3rd consecutive week',
+  ];
+  const doubled=[...items,...items];
+  return(
+    <div style={{borderBottom:'1px solid rgba(0,212,255,0.12)',borderTop:'1px solid rgba(0,212,255,0.07)',background:'rgba(0,212,255,0.02)',padding:'7px 0',overflow:'hidden',position:'relative',zIndex:10}}>
+      <div style={{display:'flex',alignItems:'center',gap:0}}>
+        <div style={{flexShrink:0,padding:'0 16px',borderRight:'1px solid rgba(0,212,255,0.15)',marginRight:16}}>
+          <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,fontWeight:700,color:'rgba(0,212,255,0.7)',textTransform:'uppercase',letterSpacing:'.1em'}}>Intel</span>
+        </div>
+        <div style={{overflow:'hidden',flex:1}}>
+          <div style={{display:'flex',whiteSpace:'nowrap',animation:'tickerScroll 35s linear infinite',width:'max-content'}}>
+            {doubled.map((item,i)=>(
+              <span key={i} style={{fontFamily:'Geist Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.45)',paddingRight:48}}>
+                <span style={{color:'rgba(0,212,255,0.6)',marginRight:6}}>›</span>{item}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── SCORE BAR ── */
+function Bar({v,col}){
+  return(
+    <div style={{display:'flex',alignItems:'center',gap:5}}>
+      <div style={{flex:1,height:3,borderRadius:9,background:'rgba(255,255,255,0.07)'}}>
+        <div style={{height:3,borderRadius:9,background:col,width:`${v}%`,transition:'width 1s ease'}}/>
+      </div>
+      <span style={{fontSize:9,color:'rgba(255,255,255,0.4)',width:14,textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{v}</span>
+    </div>
+  );
+}
+
+/* ── RANKING ROW ── */
+function RankRow({agent,delay=0,highlight}){
+  const ac=AC(agent.arch);
+  const [visible,setVisible]=useState(false);
+  const ref=useRef();
+  useEffect(()=>{
+    const obs=new IntersectionObserver(([e])=>{ if(e.isIntersecting){setTimeout(()=>setVisible(true),delay);obs.disconnect();}},{threshold:.1});
+    if(ref.current)obs.observe(ref.current);
+    return()=>obs.disconnect();
+  },[]);
+
+  return(
+    <div ref={ref} className="rank-row" style={{
+      display:'grid',gridTemplateColumns:'36px 1fr 70px 56px 86px 86px',
+      gap:8,padding:'10px 14px',
+      borderBottom:'1px solid rgba(255,255,255,0.05)',
+      alignItems:'center',cursor:'pointer',
+      borderLeft:agent.rank===1?'2px solid #e879f9':agent.rank===2?'2px solid rgba(57,255,20,0.5)':agent.rank===3?'2px solid rgba(0,212,255,0.4)':'2px solid transparent',
+      opacity:visible?1:0,transform:visible?'none':'translateY(14px)',
+      transition:'opacity .5s ease, transform .5s ease, background .15s',
+      background:highlight?'rgba(0,212,255,0.035)':'transparent',
+      boxShadow:agent.rank===1?'inset 0 0 60px rgba(232,121,249,0.04)':undefined,
+    }}
+    onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.03)'}}
+    onMouseLeave={e=>{e.currentTarget.style.background=highlight?'rgba(0,212,255,0.035)':'transparent'}}
+    >
+      {/* Rank badge with color per position */}
+      {(()=>{
+        const isTop=agent.rank<=3;
+        const rBg=agent.rank===1?'rgba(232,121,249,0.2)':agent.rank===2?'rgba(57,255,20,0.15)':agent.rank===3?'rgba(0,212,255,0.15)':'rgba(255,255,255,0.06)';
+        const rCol=agent.rank===1?'#e879f9':agent.rank===2?'#39ff14':agent.rank===3?'#00d4ff':'rgba(255,255,255,0.5)';
+        const rGlow=isTop?`0 0 10px ${rCol}80`:undefined;
+        return <div style={{width:26,height:26,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,fontFamily:'Geist Mono,monospace',background:rBg,color:rCol,boxShadow:rGlow,border:isTop?`1px solid ${rCol}33`:undefined,flexShrink:0}}>{agent.rank}</div>;
+      })()}
+      <div style={{display:'flex',alignItems:'center',gap:9,minWidth:0}}>
+        <div style={{width:32,height:32,borderRadius:5,flexShrink:0,background:avatarBg(agent.handle),display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:'white',border:'1px solid rgba(255,255,255,0.1)',boxShadow:agent.rank<=3?`0 0 12px ${agent.rank===1?'rgba(232,121,249,0.3)':agent.rank===2?'rgba(57,255,20,0.25)':'rgba(0,212,255,0.25)'}`:undefined}}>{agent.name[0]}</div>
+        <div style={{minWidth:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:3}}>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:600,color:'rgba(255,255,255,0.92)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{agent.name}</span>
+            <span style={{width:5,height:5,borderRadius:'50%',background:'#4ade80',flexShrink:0,boxShadow:'0 0 5px #4ade80'}}/>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:3}}>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.28)'}}>@{agent.handle}</span>
+            <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.22)'}}>↑ Strong upward move</span>
+          </div>
+          <span style={{display:'inline-flex',alignItems:'center',padding:'2px 8px',borderRadius:3,border:`1px solid ${ac.border}`,color:ac.color,background:ac.bg,fontSize:8,fontWeight:600,letterSpacing:'.07em',textTransform:'uppercase',boxShadow:`0 0 8px ${ac.color}33`}}>{agent.arch}</span>
+        </div>
+      </div>
+      <div>
+        <span style={{borderRadius:4,border:'1px solid rgba(57,255,20,0.3)',background:'rgba(57,255,20,0.1)',padding:'3px 9px',fontSize:13,fontWeight:700,color:'#39ff14',fontVariantNumeric:'tabular-nums',boxShadow:'0 0 10px rgba(57,255,20,0.18)',display:'inline-block'}}>+{agent.delta}</span>
+      </div>
+      <div className="rank-col-score">
+        <span style={{fontFamily:'Geist Mono,monospace',fontSize:14,fontWeight:700,color:'rgba(255,255,255,0.92)',fontVariantNumeric:'tabular-nums'}}>{agent.score}</span>
+        <div style={{fontFamily:'Geist Mono,monospace',fontSize:7,color:'rgba(255,255,255,0.2)',letterSpacing:'.05em'}}>SCORE</div>
+      </div>
+      <div className="rank-col-vis"><Bar v={agent.vis} col="#00d4ff"/><div style={{fontFamily:'Geist Mono,monospace',fontSize:7,color:'rgba(255,255,255,0.2)',marginTop:1}}>/100</div></div>
+      <div className="rank-col-rep"><Bar v={agent.rep} col="#e879f9"/><div style={{fontFamily:'Geist Mono,monospace',fontSize:7,color:'rgba(255,255,255,0.2)',marginTop:1}}>/100</div></div>
+    </div>
+  );
+}
+
+/* ── SIGNAL FEED ── */
+function SignalFeed(){
+  const [rows,setRows]=useState(()=>SIGNAL_POOL.slice(0,8).map((s,i)=>({...s,id:i,ts:Date.now()-i*280000,fresh:false})));
+  const idRef=useRef(100);
+
+  useEffect(()=>{
+    let idx=8;
+    const t=setInterval(()=>{
+      const s=SIGNAL_POOL[idx%SIGNAL_POOL.length];
+      idx++;
+      const newRow={...s,id:idRef.current++,ts:Date.now(),fresh:true};
+      setRows(prev=>[newRow,...prev.slice(0,14)]);
+      setTimeout(()=>setRows(prev=>prev.map(r=>r.id===newRow.id?{...r,fresh:false}:r)),800);
+    },3200);
+    return()=>clearInterval(t);
+  },[]);
+
+  function relTime(ts){
+    const d=(Date.now()-ts)/1000;
+    if(d<60)return`${Math.floor(d)}s ago`;
+    if(d<3600)return`${Math.floor(d/60)}m ago`;
+    return`${Math.floor(d/3600)}h ago`;
+  }
+
+  return(
+    <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',position:'relative',overflow:'hidden'}}>
+      <CA/>
+      <div style={{display:'flex',alignItems:'center',gap:6,borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'8px 14px'}}>
+        <span style={{fontSize:10,color:'#a78bfa'}}>⚡</span>
+        <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>SIGNAL FEED</span>
+        <span style={{width:6,height:6,borderRadius:'50%',background:'#a78bfa',animation:'pulse 1.4s ease infinite',display:'inline-block',marginLeft:2}}/>
+        <span style={{marginLeft:'auto',fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.2)'}}>{rows.length}</span>
+      </div>
+      <div style={{maxHeight:420,overflowY:'auto'}}>
+        {rows.map(row=>(
+          <div key={row.id} style={{
+            display:'flex',alignItems:'flex-start',gap:9,padding:'8px 14px',
+            borderBottom:'1px solid rgba(255,255,255,0.04)',
+            animation:row.fresh?'newRow .5s ease both':'none',
+            transition:'background .3s',
+          }}>
+            <span style={{marginTop:4,width:7,height:7,borderRadius:'50%',background:row.dot,boxShadow:`0 0 6px ${row.dot}`,display:'inline-block',flexShrink:0,animation:row.fresh?'ping .8s ease':'none'}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:'flex',alignItems:'baseline',gap:5,minWidth:0}}>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:600,color:'rgba(255,255,255,0.85)',flexShrink:0}}>{row.name}</span>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{row.label}</span>
+              </div>
+              <div style={{display:'flex',gap:8,marginTop:2}}>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,fontWeight:600,color:row.dot}}>{row.type.replace(/_/g,' ')}</span>
+                <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.2)'}}>{relTime(row.ts)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── BIGGEST MOVERS ── */
+function Movers(){
+  const [agents,setAgents]=useState(()=>[...AGENTS].sort((a,b)=>b.delta-a.delta));
+  useEffect(()=>{
+    const t=setInterval(()=>{
+      setAgents(prev=>prev.map(a=>{
+        const jitter=Math.random()<0.25?(Math.random()<0.5?1:-1)*Math.floor(Math.random()*2):0;
+        return jitter?{...a,delta:Math.max(1,a.delta+jitter)}:a;
+      }).sort((a,b)=>b.delta-a.delta));
+    },3500);
+    return()=>clearInterval(t);
+  },[]);
+  return(
+    <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',position:'relative',overflow:'hidden'}}>
+      <CA/>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'8px 14px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:5}}>
+          <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'#39ff14'}}>↑</span>
+          <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>BIGGEST MOVERS</span>
+        </div>
+        <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.2)'}}>7d delta</span>
+      </div>
+      {agents.map(a=>(
+        <div key={a.id} className="mover-row" style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,0.04)',cursor:'pointer',transition:'background .12s',overflow:'hidden'}}
+          onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.025)'}
+          onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+        >
+          <div style={{width:28,height:28,borderRadius:4,flexShrink:0,background:avatarBg(a.handle),display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',border:'1px solid rgba(255,255,255,0.07)'}}>{a.name[0]}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:600,color:'rgba(255,255,255,0.9)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.name}</div>
+            <div style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)',fontVariantNumeric:'tabular-nums'}}>#{a.rank} · score {a.score}</div>
+          </div>
+          <span className="mover-delta" style={{borderRadius:4,border:'1px solid rgba(57,255,20,0.25)',background:'rgba(57,255,20,0.08)',padding:'2px 9px',fontSize:12,fontWeight:700,color:'#39ff14',fontVariantNumeric:'tabular-nums',transition:'all .3s',flexShrink:0,minWidth:52,textAlign:'center'}}>+{a.delta}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── VALUE PROPS ── */
+function ValueProps(){
+  const props=[
+    {icon:'📊',title:'Get tracked',body:'Multi-signal scoring from GitHub, X mentions, and ecosystem integration depth. No hype, no synthetic signals.'},
+    {icon:'🎯',title:'Get discovered',body:'1,225+ agents indexed. Your page ranks for your agent\'s name. Builders find you through comparison pages and rankings.'},
+    {icon:'⚡',title:'Claim your profile',body:'Respond to users, update your bio, verify your agent. Free to claim.'},
+  ];
+  return(
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:12}} className="value-props">
+      {props.map((p,i)=>{
+        const ref=useRef(); const [vis,setVis]=useState(false);
+        useEffect(()=>{const obs=new IntersectionObserver(([e])=>{if(e.isIntersecting){setTimeout(()=>setVis(true),i*120);obs.disconnect();}},{threshold:.15});if(ref.current)obs.observe(ref.current);return()=>obs.disconnect();},[]);
+        return(
+          <div ref={ref} key={p.title} style={{
+            borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',padding:'14px 16px',position:'relative',overflow:'hidden',
+            opacity:vis?1:0,transform:vis?'none':'translateY(16px)',
+            transition:'opacity .6s ease, transform .6s ease, border-color .2s',
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(232,121,249,0.25)';e.currentTarget.style.boxShadow='0 0 20px rgba(232,121,249,0.06)'}}
+          onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.06)';e.currentTarget.style.boxShadow='none'}}
+          >
+            <CA/>
+            <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:8}}>
+              <span style={{fontSize:16}}>{p.icon}</span>
+              <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>{p.title}</span>
+            </div>
+            <p style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.35)',lineHeight:1.7}}>{p.body}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── MAIN APP ── */
+function App(){
+  return(
+    <div style={{minHeight:'100vh',background:'#08080f'}}>
+      <Particles/>
+      <Scanline/>
+      <Header/>
+      <Hero/>
+      <IntelTicker/>
+
+      {/* Data section */}
+      <div id="rankings" style={{position:'relative',zIndex:10,background:'linear-gradient(to bottom, #08080f, #08080f)'}}>
+        {/* Ambient fog from the purple warehouse image */}
+        <div style={{position:'absolute',top:0,left:0,right:0,height:400,overflow:'hidden',pointerEvents:'none',zIndex:0}}>
+          <div style={{position:'absolute',width:800,height:800,borderRadius:'50%',background:'radial-gradient(ellipse, rgba(167,139,250,0.06) 0%, transparent 70%)',top:-300,left:'20%',animation:'fogDrift 18s ease-in-out infinite'}}/>
+          <div style={{position:'absolute',width:600,height:600,borderRadius:'50%',background:'radial-gradient(ellipse, rgba(232,121,249,0.05) 0%, transparent 70%)',top:-200,right:'10%',animation:'fogDrift 24s ease-in-out infinite 6s'}}/>
+        </div>
+
+        <div style={{maxWidth:1200,margin:'0 auto',padding:'24px 20px',position:'relative',zIndex:1}}>
+          <ValueProps/>
+
+          <div style={{display:'grid',gridTemplateColumns:'1fr 340px',gap:12,alignItems:'start'}} className="data-grid">
+            {/* Left col */}
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              {/* Rising Now */}
+              <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',position:'relative',overflow:'hidden'}}>
+                <CA/>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'8px 14px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'#e879f9'}}>◆</span>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white',letterSpacing:'.04em'}}>RISING NOW</span>
+                    <LiveDot color="#e879f9" size={5}/>
+                  </div>
+                  <a href="#" style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)',textDecoration:'none'}}>All Rankings →</a>
+                </div>
+                {/* Inner header */}
+                <div style={{padding:'8px 14px 4px',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                  <div style={{fontFamily:'Michroma,sans-serif',fontSize:20,color:'white'}}>Rising Now</div>
+                  <div style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:2}}>{AGENTS.length} agents · All →</div>
+                </div>
+                {/* Col headers */}
+                <div className="rank-row" style={{display:'grid',gridTemplateColumns:'36px 1fr 70px 56px 86px 86px',gap:8,padding:'5px 14px',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'.06em'}}>#</span>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'.06em'}}>AGENT</span>
+                  <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'.06em'}}>7D</span>
+                  <span className="rank-col-score" style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'.06em'}}>SCORE</span>
+                  <span className="rank-col-vis" style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'.06em'}}>VIS</span>
+                  <span className="rank-col-rep" style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'.06em'}}>REP</span>
+                </div>
+                {AGENTS.map((a,i)=><RankRow key={a.id} agent={a} delay={i*60} highlight={i===3}/>)}
+              </div>
+
+              {/* Bottom row: recently indexed + submit */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="bottom-grid">
+                {/* Recently Indexed */}
+                <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.06)',background:'#0a0a14',position:'relative',overflow:'hidden'}}>
+                  <CA/>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'8px 14px'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:5}}>
+                      <span style={{fontSize:10,color:'#fbbf24'}}>✦</span>
+                      <span style={{fontFamily:'Geist Mono,monospace',fontSize:11,fontWeight:700,color:'white'}}>RECENTLY INDEXED</span>
+                    </div>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.3)'}}>All →</span>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,padding:8}}>
+                    {['awesome-llm-apps','career-ops','1Panel','firecrawl','goose','CowAgent','nanobot','Agentic-AI','genai-jobs','live','spm-agent','FastAgent'].map((n,i)=>(
+                      <div key={n} style={{display:'flex',alignItems:'center',gap:6,borderRadius:4,border:'1px solid rgba(255,255,255,0.05)',background:'rgba(255,255,255,0.015)',padding:'5px 8px',cursor:'pointer',transition:'all .12s'}}
+                        onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.04)';e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}}
+                        onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.015)';e.currentTarget.style.borderColor='rgba(255,255,255,0.05)'}}
+                      >
+                        <div style={{width:18,height:18,borderRadius:3,flexShrink:0,background:avatarBg(n),display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'white'}}>{n[0].toUpperCase()}</div>
+                        <span style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{n}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{borderTop:'1px solid rgba(255,255,255,0.04)',padding:'4px 14px'}}>
+                    <span style={{fontFamily:'Geist Mono,monospace',fontSize:9,color:'rgba(255,255,255,0.2)'}}>2h ago · latest</span>
+                  </div>
+                </div>
+
+                {/* Submit + Follow */}
+                <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                  <a href="#" style={{
+                    borderRadius:8,border:'1px solid rgba(232,121,249,0.4)',background:'rgba(232,121,249,0.07)',
+                    padding:'14px',position:'relative',overflow:'hidden',display:'block',textDecoration:'none',cursor:'pointer',transition:'all .2s',
+                    boxShadow:'0 0 30px rgba(232,121,249,0.04)',
+                  }}
+                  onMouseEnter={e=>{e.currentTarget.style.background='rgba(232,121,249,0.14)';e.currentTarget.style.boxShadow='0 0 40px rgba(232,121,249,0.12)'}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='rgba(232,121,249,0.07)';e.currentTarget.style.boxShadow='0 0 30px rgba(232,121,249,0.04)'}}
+                  >
+                    <CA/>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+                      <span style={{fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:700,color:'#e879f9'}}>Submit an Agent</span>
+                      <span style={{color:'#e879f9',fontSize:14}}>→</span>
+                    </div>
+                    <div style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.35)'}}>List your agent in the index. Free.</div>
+                  </a>
+                  <div style={{borderRadius:8,border:'1px solid rgba(255,255,255,0.05)',background:'#0a0a14',padding:'14px',position:'relative',overflow:'hidden'}}>
+                    <CA c="rgba(0,212,255,0.3)"/>
+                    <h2 style={{fontFamily:'Geist Mono,monospace',fontSize:12,fontWeight:700,color:'white',marginBottom:4}}>Follow the ecosystem</h2>
+                    <p style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.35)',lineHeight:1.6,marginBottom:10}}>Track rank moves, new launches, and signal intelligence.</p>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                      {['AgentCrush on Farcaster','Browse Categories →'].map(l=>(
+                        <a key={l} href="#" style={{display:'inline-flex',alignItems:'center',borderRadius:4,border:'1px solid rgba(255,255,255,0.09)',background:'rgba(255,255,255,0.03)',padding:'5px 10px',fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.55)',textDecoration:'none',transition:'all .15s'}}
+                          onMouseEnter={e=>{e.currentTarget.style.color='white';e.currentTarget.style.borderColor='rgba(255,255,255,0.18)'}}
+                          onMouseLeave={e=>{e.currentTarget.style.color='rgba(255,255,255,0.55)';e.currentTarget.style.borderColor='rgba(255,255,255,0.09)'}}
+                        >{l}</a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right col */}
+            <div style={{display:'flex',flexDirection:'column',gap:12,position:'sticky',top:72}} className="right-col">
+              <SignalFeed/>
+              <Movers/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer style={{borderTop:'1px solid rgba(255,255,255,0.04)',padding:'16px 20px',textAlign:'center',position:'relative',zIndex:10}}>
+        <p style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.2)'}}>© 2026 AgentCrush · The AI Agent Ecosystem Index</p>
+        <div style={{marginTop:4,display:'flex',justifyContent:'center',gap:20}}>
+          {['About','Terms'].map(l=><a key={l} href="#" style={{fontFamily:'Geist Mono,monospace',fontSize:10,color:'rgba(255,255,255,0.2)',textDecoration:'none'}}>{l}</a>)}
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

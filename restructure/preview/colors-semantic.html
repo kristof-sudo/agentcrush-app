@@ -1,0 +1,37 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#08080f; font-family:'Geist Mono',monospace; padding:16px; }
+.grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:12px; }
+.swatch { border-radius:4px; overflow:hidden; }
+.color { height:44px; }
+.label { padding:5px 8px; background:#0a0a14; border:1px solid rgba(255,255,255,0.06); border-top:none; }
+.name { font-size:9px; color:rgba(255,255,255,0.5); }
+.val  { font-size:9px; color:rgba(255,255,255,0.25); margin-top:1px; }
+.section { font-size:9px; color:rgba(255,255,255,0.25); text-transform:uppercase; letter-spacing:.08em; margin:10px 0 6px; }
+.signal-row { display:flex; gap:8px; flex-wrap:wrap; }
+.sig { display:flex; align-items:center; gap:6px; background:#0a0a14; border:1px solid rgba(255,255,255,0.06); border-radius:4px; padding:5px 10px; }
+.dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.sig-label { font-size:9px; color:rgba(255,255,255,0.5); }
+</style></head><body>
+<div class="section">Signal / Delta Colors</div>
+<div class="grid">
+  <div class="swatch"><div class="color" style="background:#39ff14"></div><div class="label"><div class="name">Positive</div><div class="val">#39ff14</div></div></div>
+  <div class="swatch"><div class="color" style="background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.25)"></div><div class="label"><div class="name">Pos Dim</div><div class="val">badge bg</div></div></div>
+  <div class="swatch"><div class="color" style="background:#f87171"></div><div class="label"><div class="name">Negative</div><div class="val">#f87171</div></div></div>
+  <div class="swatch"><div class="color" style="background:#f0a500"></div><div class="label"><div class="name">Amber</div><div class="val">#f0a500</div></div></div>
+  <div class="swatch"><div class="color" style="background:#a78bfa"></div><div class="label"><div class="name">Violet</div><div class="val">#a78bfa</div></div></div>
+</div>
+<div class="section">Signal Dot Palette</div>
+<div class="signal-row">
+  <div class="sig"><div class="dot" style="background:#4ade80;box-shadow:0 0 5px #4ade80"></div><div class="sig-label">star growth</div></div>
+  <div class="sig"><div class="dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa"></div><div class="sig-label">dev activity</div></div>
+  <div class="sig"><div class="dot" style="background:#e879f9;box-shadow:0 0 5px #e879f9"></div><div class="sig-label">new release</div></div>
+  <div class="sig"><div class="dot" style="background:#00d4ff;box-shadow:0 0 5px #00d4ff"></div><div class="sig-label">integration</div></div>
+  <div class="sig"><div class="dot" style="background:#39ff14;box-shadow:0 0 5px #39ff14"></div><div class="sig-label">rank jump</div></div>
+  <div class="sig"><div class="dot" style="background:#f0a500;box-shadow:0 0 5px #f0a500"></div><div class="sig-label">collab win</div></div>
+  <div class="sig"><div class="dot" style="background:#fb923c;box-shadow:0 0 5px #fb923c"></div><div class="sig-label">just joined</div></div>
+  <div class="sig"><div class="dot" style="background:#a78bfa;box-shadow:0 0 5px #a78bfa"></div><div class="sig-label">eco mention</div></div>
+</div>
+</body></html>
