@@ -1,347 +1,486 @@
-export const metadata = {
-  title: 'AI Agent Evidence Rankings 2026 · AgentCrush',
-  description: 'Evidence-ranked AI agents with verified GitHub activity, ecosystem signals, and real adoption data. Updated from real ecosystem signals.',
-  openGraph: {
-    title: 'AI Agent Evidence Rankings 2026 · AgentCrush',
-    description: 'Evidence-ranked AI agents with verified GitHub activity, ecosystem signals, and real adoption data.',
-    url: 'https://agentcrush.xyz/rankings',
-    siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AI Agent Rankings — AgentCrush' }],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'AI Agent Evidence Rankings 2026 · AgentCrush',
-    description: 'Evidence-ranked AI agents with verified GitHub activity, ecosystem signals, and real adoption data.',
-    images: ['https://agentcrush.xyz/og-default.png'],
-  },
-}
-
-import SearchableRankings from '@/components/rankings/SearchableRankings'
-import HowCalculatedBar from '@/components/rankings/HowCalculatedBar'
 import Link from 'next/link'
 import { supabaseAnon } from '@/lib/supabase'
 import { getMovementReason, formatRelativeTime } from '@/lib/why-moving'
 
+export const dynamic = 'force-dynamic'
+
+export const metadata = {
+  title: 'AI Agent Rankings — 4 Category Indices · AgentCrush',
+  description: 'Developer, Model Families, Tokenized, and Service agent rankings — all four evidence-based indices in one place. AgentCrush is the public record of AI agents.',
+  alternates: { canonical: 'https://www.agentcrush.xyz/rankings' },
+  openGraph: {
+    title: 'AI Agent Rankings · AgentCrush',
+    description: '4 category indices: Developer · Model Families · Tokenized · Service. Evidence-ranked, open methodology.',
+    url: 'https://www.agentcrush.xyz/rankings',
+    siteName: 'AgentCrush',
+    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AI Agent Rankings · AgentCrush',
+    description: '4 category indices: Developer · Model Families · Tokenized · Service.',
+    images: ['https://www.agentcrush.xyz/og-default.png'],
+  },
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
 function toPublicImageUrl(path) {
-  if (!path) return '/placeholder.png'
+  if (!path) return null
   if (path.startsWith('http://') || path.startsWith('https://')) return path
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!base) return '/placeholder.png'
-  return `${base}/storage/v1/object/public/${path}`
+  return base ? `${base}/storage/v1/object/public/${path}` : null
 }
 
-function generateWeeklyStory(rows) {
-  if (!rows.length) return null
-  const sentences = []
-
-  const leader = rows.find((r) => r.global_rank === 1)
-  if (leader) {
-    const delta = leader.weekly_delta || 0
-    const name = leader.display_name || leader.handle
-    if (delta > 0) sentences.push(`${name} extended its lead at #1, gaining +${delta} spot${delta !== 1 ? 's' : ''} this week.`)
-    else if (delta < 0) sentences.push(`${name} holds #1 despite slipping ${Math.abs(delta)} spot${Math.abs(delta) !== 1 ? 's' : ''} from last week.`)
-    else sentences.push(`${name} holds firm at #1.`)
-  }
-
-  const top5 = rows.filter((r) => r.global_rank <= 5)
-  if (top5.length >= 3) {
-    const counts = {}
-    for (const r of top5) if (r.archetype) counts[r.archetype] = (counts[r.archetype] || 0) + 1
-    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-    if (top && top[1] >= 2) sentences.push(`${top[0]}-class agents hold ${top[1]} of the top 5 spots.`)
-  }
-
-  const biggestGainer = rows
-    .filter((r) => (r.weekly_delta || 0) > 0 && r.global_rank !== 1)
-    .sort((a, b) => b.weekly_delta - a.weekly_delta)[0]
-  if (biggestGainer) {
-    const reason = biggestGainer.rank_move_reason
-    const base = `${biggestGainer.display_name || biggestGainer.handle} climbed +${biggestGainer.weekly_delta} to #${biggestGainer.global_rank}`
-    sentences.push(reason ? `${base} — ${reason.replace(/^Rose \d+ spots? — /, '')}.` : `${base}.`)
-  }
-
-  return sentences.slice(0, 3).join(' ') || null
+const AVATAR_COLORS = [
+  'bg-violet-500/25 text-violet-300', 'bg-emerald-500/25 text-emerald-300',
+  'bg-sky-500/25 text-sky-300',       'bg-amber-500/25 text-amber-300',
+  'bg-pink-500/25 text-pink-300',     'bg-cyan-500/25 text-cyan-300',
+]
+function avatarColor(handle) {
+  if (!handle) return AVATAR_COLORS[0]
+  let h = 0
+  for (let i = 0; i < handle.length; i++) h = (h * 31 + handle.charCodeAt(i)) & 0xffff
+  return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
 
-function CornerAccent() {
+// ── Category config ────────────────────────────────────────────────────────
+
+const CATEGORIES = [
+  {
+    id: 'developer',
+    label: 'Developer',
+    href: '/rankings/developer',
+    methodology: 'v2.c-public',
+    color: '#00d4ff',
+    colorDim: 'rgba(0,212,255,0.08)',
+    colorBorder: 'rgba(0,212,255,0.25)',
+    signals: [
+      { key: 'github_score',        label: 'GitHub',    color: '#00d4ff' },
+      { key: 'package_usage_score', label: 'Packages',  color: '#a78bfa' },
+      { key: 'ecosystem_score',     label: 'Ecosystem', color: '#e91e80' },
+    ],
+    scoreKey: 'score_v2_c_public_candidate',
+    rankKey:  'rank_v2_c_public',
+    description: 'Open-source developer agents — GitHub activity, package adoption, dependency graph, ecosystem relationships.',
+  },
+  {
+    id: 'model-families',
+    label: 'Model Families',
+    href: '/rankings/model-families',
+    methodology: 'v1.4-with-deployment',
+    color: '#a78bfa',
+    colorDim: 'rgba(167,139,250,0.08)',
+    colorBorder: 'rgba(167,139,250,0.25)',
+    signals: [
+      { key: 'hf_score',          label: 'HuggingFace', color: '#a78bfa' },
+      { key: 'lmarena_score',     label: 'LMArena',     color: '#00d4ff' },
+      { key: 'deployment_score',  label: 'Deployment',  color: '#e91e80' },
+    ],
+    scoreKey: 'model_family_score',
+    rankKey:  'rank_in_model_family',
+    description: 'Base/foundation model lineages — HuggingFace adoption, LMArena capability, fine-tune derivatives, citations.',
+  },
+  {
+    id: 'tokenized',
+    label: 'Tokenized',
+    href: '/rankings/tokenized-agents',
+    methodology: 'v1.1-tokenized-tvl',
+    color: '#39ff14',
+    colorDim: 'rgba(57,255,20,0.06)',
+    colorBorder: 'rgba(57,255,20,0.2)',
+    signals: [
+      { key: 'market_cap_score',         label: 'Market Cap', color: '#39ff14' },
+      { key: 'liquidity_volume_score',   label: 'Liquidity',  color: '#00d4ff' },
+      { key: 'holders_basket_score',     label: 'Holders',    color: '#a78bfa' },
+    ],
+    scoreKey: 'tokenized_score',
+    rankKey:  'rank_in_tokenized',
+    description: 'On-chain tokenized agents — market cap, liquidity, holder distribution, TVL, momentum.',
+  },
+  {
+    id: 'service',
+    label: 'Service',
+    href: '/rankings/service-agents',
+    methodology: 'v1.1-service-forks',
+    color: '#f0a500',
+    colorDim: 'rgba(240,165,0,0.06)',
+    colorBorder: 'rgba(240,165,0,0.2)',
+    signals: [
+      { key: 'adoption_score',        label: 'Adoption', color: '#f0a500' },
+      { key: 'source_quality_score',  label: 'Quality',  color: '#a78bfa' },
+      { key: 'activity_score',        label: 'Activity', color: '#39ff14' },
+    ],
+    scoreKey: 'service_score',
+    rankKey:  'rank_in_service',
+    description: 'Callable AI agents — A2A, Agentverse, ERC-8004 service endpoints. Adoption, quality, protocol breadth.',
+  },
+]
+
+// ── Row component (server) ─────────────────────────────────────────────────
+
+function HubAgentRow({ agent, rank, scoreKey, signals, catColor }) {
+  const avatarUrl = toPublicImageUrl(agent.custom_background_url || agent.avatar_url)
+  const displayName = agent.display_name || agent.handle || '?'
+  const score = Math.round(agent[scoreKey] ?? 0)
+  const delta = agent.weekly_delta || 0
+  const isTop3 = rank <= 3
+
   return (
-    <>
-      <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(233,30,128,0.35)]" />
-      <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(233,30,128,0.35)]" />
-      <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(233,30,128,0.35)]" />
-      <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(233,30,128,0.35)]" />
-    </>
+    <Link
+      href={`/agent/${encodeURIComponent(agent.handle)}`}
+      className="flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.025] transition-colors group"
+      style={{ borderLeft: isTop3 ? `2px solid ${catColor}` : '2px solid transparent' }}
+    >
+      {/* Rank */}
+      <span
+        className="font-mono text-[10px] font-bold tabular-nums shrink-0 w-5 text-right"
+        style={{ color: isTop3 ? catColor : 'rgba(255,255,255,0.3)' }}
+      >
+        {rank}
+      </span>
+
+      {/* Avatar */}
+      <div className={`h-7 w-7 shrink-0 rounded overflow-hidden border border-white/[0.08] flex items-center justify-center ${!avatarUrl ? avatarColor(agent.handle) : 'bg-white/[0.04]'}`}>
+        {avatarUrl
+          ? <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+          : <span className="font-mono text-[9px] font-bold">{displayName[0].toUpperCase()}</span>
+        }
+      </div>
+
+      {/* Name + signal bars */}
+      <div className="min-w-0 flex-1">
+        <div className="font-mono text-[11px] font-semibold text-white/90 truncate group-hover:text-white transition-colors">
+          {displayName}
+        </div>
+        <div className="mt-1 flex gap-1.5 items-center">
+          {signals.map((sig) => {
+            const val = Math.min(100, Math.max(0, agent[sig.key] ?? 0))
+            return (
+              <div key={sig.key} className="flex-1 min-w-0" title={`${sig.label}: ${val}`}>
+                <div className="h-[3px] rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${val}%`, background: sig.color, boxShadow: `0 0 4px ${sig.color}88` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Score */}
+      <div className="shrink-0 text-right">
+        <div className="font-mono text-xs font-bold tabular-nums text-white/85">{score}</div>
+        {delta !== 0 && (
+          <div className={`font-mono text-[9px] font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            {delta > 0 ? '+' : ''}{delta}
+          </div>
+        )}
+      </div>
+    </Link>
   )
 }
 
-export const dynamic = 'force-dynamic'
+// ── Category tile ──────────────────────────────────────────────────────────
 
-export default async function RankingsPage({ searchParams }) {
-  const initialQuery = (await searchParams)?.q || ''
+function CategoryTile({ cat, rows, evidenceCount, totalCount }) {
+  return (
+    <div
+      className="relative rounded-lg overflow-hidden flex flex-col"
+      style={{ border: `1px solid ${cat.colorBorder}`, background: '#0a0a14' }}
+    >
+      {/* Corner accents */}
+      <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l" style={{ borderColor: cat.colorBorder }} />
+      <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r" style={{ borderColor: cat.colorBorder }} />
+      <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l" style={{ borderColor: cat.colorBorder }} />
+      <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r" style={{ borderColor: cat.colorBorder }} />
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/[0.06]" style={{ background: cat.colorDim }}>
+        <div>
+          <span className="font-mono text-sm font-bold" style={{ color: cat.color }}>{cat.label}</span>
+          <span className="ml-2 font-mono text-[9px] text-white/30 uppercase tracking-wider">{cat.methodology}</span>
+        </div>
+        <div className="text-right">
+          <div className="font-mono text-[10px] font-bold tabular-nums" style={{ color: cat.color }}>{evidenceCount} ranked</div>
+          <div className="font-mono text-[9px] text-white/25">{totalCount} tracked</div>
+        </div>
+      </div>
+
+      {/* Description */}
+      <p className="font-mono text-[10px] text-white/35 px-3 pt-2 pb-1 leading-relaxed">{cat.description}</p>
+
+      {/* Column headers */}
+      <div className="grid grid-cols-[20px_28px_1fr_40px] gap-2 px-3 py-1 border-b border-white/[0.04]">
+        {['#', '', 'AGENT', 'SCORE'].map((h) => (
+          <span key={h} className="font-mono text-[9px] text-white/20 uppercase tracking-wider">{h}</span>
+        ))}
+      </div>
+
+      {/* Rows */}
+      <div className="flex-1 divide-y divide-white/[0.04]">
+        {rows.length === 0 ? (
+          <div className="px-3 py-4 font-mono text-[11px] text-white/25">Populating…</div>
+        ) : (
+          rows.map((agent, i) => (
+            <HubAgentRow
+              key={agent.handle}
+              agent={agent}
+              rank={i + 1}
+              scoreKey={cat.scoreKey}
+              signals={cat.signals}
+              catColor={cat.color}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="px-3 py-2 border-t border-white/[0.04] flex items-center justify-between">
+        <span className="font-mono text-[9px] text-white/25">
+          {evidenceCount > 5 ? `+${evidenceCount - 5} more` : 'evidence-ranked'}
+        </span>
+        <Link
+          href={cat.href}
+          className="font-mono text-[10px] font-semibold transition-colors"
+          style={{ color: cat.color }}
+        >
+          Full ranking →
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────
+
+export default async function RankingsHub() {
   const supabase = supabaseAnon()
 
-  // Note: view name "top50" is misleading — it has no LIMIT. Filtered by
-  // evidence_ready_for_public_rank=true this returns ALL evidence-ranked agents.
-  // Promotion rule now lives in the view itself (migration 20260514_2100_update_evidence_ready_rule.sql).
-  // The view's evidence_ready_for_public_rank includes:
-  //   (a) active_weight_total >= 0.55 (multi-signal coverage), OR
-  //   (b) current_rank <= 100 AND active_weight_total >= 0.45, OR
-  //   (c) (primary signal >= 90) AND (count of signals > 50) >= 2
-  //       (top-tier single signal with corroboration)
-  const { data: v2Rows, error: v2Error } = await supabase
-    .from('agent_score_v2_top50_public_candidate')
-    .select('handle, display_name, rank_v2_c_public, score_v2_c_public_candidate, active_weight_total, coverage_tier, github_score, package_usage_score, dependency_score, ecosystem_score, docs_quality_score, hn_score, trust_score')
-    .eq('evidence_ready_for_public_rank', true)
-    .order('rank_v2_c_public', { ascending: true })
-
-  if (v2Error) throw new Error(v2Error.message)
-
-  const handles = (v2Rows || []).map((r) => r.handle).filter(Boolean)
-
+  // Fetch top 5 evidence-ranked from each category view + counts
   const [
-    { data: agentsData },
-    { data: latestRanking },
-    { count: totalIndexed },
-    { data: allAgentArchetypes },
+    { data: devRows },
+    { data: mfRows },
+    { data: tokRows },
+    { data: svcRows },
+    { count: devCount },
+    { count: mfCount },
+    { count: tokCount },
+    { count: svcCount },
+    { data: biggestMovers },
   ] = await Promise.all([
-    handles.length > 0
-      ? supabase
-          .from('agents')
-          .select('id, handle, display_name, bio, archetype, avatar_url, custom_background_url, tagline, weekly_delta, verified, identity_status, website_url, github_url')
-          .in('handle', handles)
-      : { data: [] },
-    supabase
-      .from('rankings')
-      .select('computed_at')
-      .order('computed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from('agents')
-      .select('id', { count: 'exact', head: true }),
-    supabase
-      .from('agents')
-      .select('archetype')
-      .not('archetype', 'is', null),
+    supabase.from('agent_score_v2_top50_public_candidate')
+      .select('handle, display_name, rank_v2_c_public, score_v2_c_public_candidate, github_score, package_usage_score, ecosystem_score')
+      .eq('evidence_ready_for_public_rank', true)
+      .order('rank_v2_c_public', { ascending: true })
+      .limit(5),
+
+    supabase.from('agent_score_model_family_v1')
+      .select('agent_id, handle, display_name, model_family_score, rank_in_model_family, hf_score, lmarena_score, deployment_score')
+      .eq('evidence_ready_for_public_rank', true)
+      .order('rank_in_model_family', { ascending: true })
+      .limit(5),
+
+    supabase.from('agent_score_tokenized_v1')
+      .select('agent_id, handle, display_name, tokenized_score, rank_in_tokenized, market_cap_score, liquidity_volume_score, holders_basket_score')
+      .eq('evidence_ready_for_public_rank', true)
+      .order('rank_in_tokenized', { ascending: true })
+      .limit(5),
+
+    supabase.from('agent_score_service_v1')
+      .select('agent_id, handle, display_name, service_score, rank_in_service, adoption_score, source_quality_score, activity_score')
+      .eq('evidence_ready_for_public_rank', true)
+      .order('rank_in_service', { ascending: true })
+      .limit(5),
+
+    supabase.from('agent_score_v2_top50_public_candidate')
+      .select('handle', { count: 'exact', head: true })
+      .eq('evidence_ready_for_public_rank', true),
+
+    supabase.from('agent_score_model_family_v1')
+      .select('agent_id', { count: 'exact', head: true })
+      .eq('evidence_ready_for_public_rank', true),
+
+    supabase.from('agent_score_tokenized_v1')
+      .select('agent_id', { count: 'exact', head: true })
+      .eq('evidence_ready_for_public_rank', true),
+
+    supabase.from('agent_score_service_v1')
+      .select('agent_id', { count: 'exact', head: true })
+      .eq('evidence_ready_for_public_rank', true),
+
+    supabase.from('agents')
+      .select('id, handle, display_name, avatar_url, custom_background_url, weekly_delta, archetype')
+      .gt('weekly_delta', 0)
+      .order('weekly_delta', { ascending: false })
+      .limit(8),
   ])
 
-  // Per-category agent counts — mirrors src/app/categories/page.js
-  const totalByArchetype = {}
-  for (const row of allAgentArchetypes || []) {
-    const key = row.archetype || 'Other'
-    totalByArchetype[key] = (totalByArchetype[key] || 0) + 1
+  // Enrich the 4 category view rows with avatar/delta from agents table
+  const allHandles = [
+    ...(devRows || []).map(r => r.handle),
+    ...(mfRows || []).map(r => r.handle),
+    ...(tokRows || []).map(r => r.handle),
+    ...(svcRows || []).map(r => r.handle),
+  ].filter(Boolean)
+
+  const { data: agentsData } = allHandles.length > 0
+    ? await supabase.from('agents')
+        .select('id, handle, display_name, avatar_url, custom_background_url, weekly_delta, archetype')
+        .in('handle', allHandles)
+    : { data: [] }
+
+  const byHandle = {}
+  for (const a of agentsData || []) byHandle[a.handle] = a
+
+  function enrichRows(rows, scoreKey, rankKey) {
+    return (rows || []).map(row => ({
+      ...row,
+      ...(byHandle[row.handle] || {}),
+      [scoreKey]: row[scoreKey],
+      [rankKey]: row[rankKey],
+    }))
   }
-  const categoryCounts = Object.entries(totalByArchetype)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
 
-  const agentsByHandle = {}
-  for (const a of agentsData || []) {
-    agentsByHandle[a.handle] = a
-  }
+  const devEnriched  = enrichRows(devRows,  'score_v2_c_public_candidate', 'rank_v2_c_public')
+  const mfEnriched   = enrichRows(mfRows,   'model_family_score', 'rank_in_model_family')
+  const tokEnriched  = enrichRows(tokRows,  'tokenized_score', 'rank_in_tokenized')
+  const svcEnriched  = enrichRows(svcRows,  'service_score', 'rank_in_service')
 
-  // Fetch trending for agent IDs
-  const agentIds = (agentsData || []).map((a) => a.id).filter(Boolean)
-  let trendingByAgentId = {}
-  if (agentIds.length > 0) {
-    const { data: trendingRows } = await supabase
-      .from('v_agent_trending_summary')
-      .select('*')
-      .in('agent_id', agentIds)
-    trendingByAgentId = Object.fromEntries((trendingRows || []).map((row) => [row.agent_id, row]))
-  }
+  // Fetch total tracked counts
+  const [{ count: devTotal }, { count: mfTotal }, { count: tokTotal }, { count: svcTotal }] = await Promise.all([
+    supabase.from('agent_score_v2_top50_public_candidate').select('handle', { count: 'exact', head: true }),
+    supabase.from('agent_score_model_family_v1').select('agent_id', { count: 'exact', head: true }),
+    supabase.from('agent_score_tokenized_v1').select('agent_id', { count: 'exact', head: true }),
+    supabase.from('agent_score_service_v1').select('agent_id', { count: 'exact', head: true }),
+  ])
 
-  const rows = (v2Rows || []).map((v2, idx) => {
-    const agent = agentsByHandle[v2.handle] || {}
-    const trending = trendingByAgentId[agent.id] || null
-    return {
-      id: agent.id || v2.handle,
-      global_rank: v2.rank_v2_c_public ?? idx + 1,
-      handle: v2.handle,
-      display_name: agent.display_name || v2.display_name || v2.handle,
-      bio: agent.bio || '',
-      archetype: agent.archetype || '',
-      avatar_url: toPublicImageUrl(agent.custom_background_url || agent.avatar_url),
-      weekly_delta: agent.weekly_delta || 0,
-      tagline: agent.tagline || '',
-      trending,
-      rank_move_reason: getMovementReason(agent.weekly_delta, trending?.latest_event_type),
-      verified: agent.verified || agent.identity_status === 'verified',
-      external_url: agent.website_url || agent.github_url || null,
-      score_total: v2.score_v2_c_public_candidate ?? 0,
-      visibility_score: 0,
-      reputation_score: 0,
-      // v2 signal scores — null when signal has no data for this agent
-      github_score:        v2.github_score        ?? null,
-      package_usage_score: v2.package_usage_score ?? null,
-      dependency_score:    v2.dependency_score    ?? null,
-      ecosystem_score:     v2.ecosystem_score     ?? null,
-      docs_quality_score:  v2.docs_quality_score  ?? null,
-      hn_score:            v2.hn_score            ?? null,
-      trust_score:         v2.trust_score         ?? null,
-      coverage_tier:       v2.coverage_tier       ?? null,
-      active_weight_total: v2.active_weight_total ?? null,
-    }
-  })
+  const categoryData = [
+    { cat: CATEGORIES[0], rows: devEnriched,  evidenceCount: devCount || 0,  totalCount: devTotal || 0  },
+    { cat: CATEGORIES[1], rows: mfEnriched,   evidenceCount: mfCount || 0,   totalCount: mfTotal || 0   },
+    { cat: CATEGORIES[2], rows: tokEnriched,  evidenceCount: tokCount || 0,  totalCount: tokTotal || 0  },
+    { cat: CATEGORIES[3], rows: svcEnriched,  evidenceCount: svcCount || 0,  totalCount: svcTotal || 0  },
+  ]
 
-  const risingCount = rows.filter((r) => (r.weekly_delta || 0) > 0).length
-  const weeklyStory = generateWeeklyStory(rows)
-  const topRisers = rows.filter((r) => (r.weekly_delta || 0) > 0).sort((a, b) => b.weekly_delta - a.weekly_delta).slice(0, 5)
-  const topFallers = rows.filter((r) => (r.weekly_delta || 0) < 0).sort((a, b) => a.weekly_delta - b.weekly_delta).slice(0, 5)
+  const totalEvidenceRanked = (devCount || 0) + (mfCount || 0) + (tokCount || 0) + (svcCount || 0)
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      {/* Header */}
-      <div className="mb-4">
+
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <div className="mb-6">
         <div className="flex items-center gap-3 mb-3">
-          <span className="font-mono text-[9px] font-bold uppercase tracking-widest" style={{ color: '#00d4ff' }}>TIER 02</span>
-          <div style={{ flex: 1, height: 1, background: 'rgba(0,212,255,0.25)' }} />
+          <span className="font-mono text-[9px] font-bold uppercase tracking-widest" style={{ color: '#e91e80' }}>RANKINGS</span>
+          <div className="flex-1 h-px" style={{ background: 'rgba(233,30,128,0.2)' }} />
         </div>
         <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "var(--font-michroma,'Michroma',sans-serif)" }}>
-          Evidence <span style={{ color: '#00d4ff', textShadow: '0 0 20px rgba(0,212,255,0.5)' }}>Rankings</span>
+          The <span style={{ color: '#e91e80' }}>4 Indices</span>
         </h1>
         <p className="mt-1 font-mono text-xs text-white/40">
-          {rows.length} evidence-ranked ·{' '}
-          {totalIndexed ?? 0} total indexed ·{' '}
-          <span style={{ color: '#4ade80' }}>{risingCount} rising</span>
-          {latestRanking?.computed_at ? (
-            <> · <span className="text-white/30">updated {formatRelativeTime(latestRanking.computed_at)}</span></>
-          ) : null}
-          {' '}·{' '}
-          <Link href="/explore" className="text-white/35 hover:text-white/60 transition-colors underline underline-offset-2">
-            browse all agents →
+          {totalEvidenceRanked} evidence-ranked agents across 4 category methodologies ·{' '}
+          <Link href="/methodology" className="text-white/35 hover:text-white/60 transition-colors underline underline-offset-2">
+            how rankings work →
           </Link>
         </p>
       </div>
 
-      {/* Per-category indices — Category Index Pivot (2026-05-15) */}
-      <div className="mb-4 rounded-lg border border-white/[0.08] bg-[#0a0a14] px-4 py-3">
-        <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/40 mb-2">
-          ◆ Per-category indices
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-[11px] text-white/80">
-            <span>Developer</span>
-            <span className="text-[9px] uppercase tracking-wider text-[#00d4ff]">this page</span>
-          </span>
-          <Link
-            href="/rankings/model-families"
-            className="inline-flex items-center gap-1.5 rounded-md border border-[rgba(233,30,128,0.30)] bg-[rgba(233,30,128,0.06)] px-2.5 py-1 font-mono text-[11px] text-white/85 hover:bg-[rgba(233,30,128,0.12)] hover:border-[rgba(233,30,128,0.50)] transition-colors"
-          >
-            <span>Model Families</span>
-            <span className="text-[9px] uppercase tracking-wider text-[#e91e80]">live →</span>
-          </Link>
-          <Link
-            href="/rankings/tokenized-agents"
-            className="inline-flex items-center gap-1.5 rounded-md border border-[rgba(233,30,128,0.30)] bg-[rgba(233,30,128,0.06)] px-2.5 py-1 font-mono text-[11px] text-white/85 hover:bg-[rgba(233,30,128,0.12)] hover:border-[rgba(233,30,128,0.50)] transition-colors"
-          >
-            <span>Tokenized</span>
-            <span className="text-[9px] uppercase tracking-wider text-[#e91e80]">live →</span>
-          </Link>
-          <Link
-            href="/rankings/service-agents"
-            className="inline-flex items-center gap-1.5 rounded-md border border-[rgba(233,30,128,0.30)] bg-[rgba(233,30,128,0.06)] px-2.5 py-1 font-mono text-[11px] text-white/85 hover:bg-[rgba(233,30,128,0.12)] hover:border-[rgba(233,30,128,0.50)] transition-colors"
-          >
-            <span>Service</span>
-            <span className="text-[9px] uppercase tracking-wider text-[#e91e80]">live →</span>
-          </Link>
-        </div>
+      {/* ── 2×2 Grid ────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        {categoryData.map(({ cat, rows, evidenceCount, totalCount }) => (
+          <CategoryTile
+            key={cat.id}
+            cat={cat}
+            rows={rows}
+            evidenceCount={evidenceCount}
+            totalCount={totalCount}
+          />
+        ))}
       </div>
 
-      {/* Evidence explanation */}
-      <div className="mb-4 rounded-lg border border-[rgba(57,255,20,0.15)] bg-[rgba(57,255,20,0.04)] px-4 py-3 font-mono text-[11px] text-white/50 leading-relaxed">
-        These rankings include only agents with enough public evidence to score reliably. Signals include GitHub activity, package usage, dependency adoption, docs quality, ecosystem relationships, and public discourse. The list grows automatically as indexed agents accumulate evidence.{' '}
-        <Link href="/how-we-rank" className="text-white/40 hover:text-white/70 transition-colors underline underline-offset-2">How we rank →</Link>
-      </div>
+      {/* ── Cross-index movers + narrative ──────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-      {/* Weekly Narrative */}
-      {weeklyStory && (
-        <div className="mb-4 relative rounded-lg bg-[#0a0a14] border border-white/[0.08] px-4 py-3 overflow-hidden">
-          <CornerAccent />
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-widest" style={{ color: '#e91e80' }}>◆ WEEKLY NARRATIVE</span>
-          </div>
-          <p className="font-mono text-sm text-white/80 leading-relaxed">{weeklyStory}</p>
-        </div>
-      )}
-
-      <HowCalculatedBar />
-
-      {/* Movers strip */}
-      {(topRisers.length > 0 || topFallers.length > 0) && (
-        <div className="my-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {topRisers.length > 0 && (
-            <div className="relative rounded-lg bg-[#0a0a14] border border-white/[0.08] px-3 py-2.5 overflow-hidden">
-              <CornerAccent />
-              <div className="font-mono text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: '#e91e80' }}>↑ RISING NOW</div>
-              <div className="space-y-1.5">
-                {topRisers.map((r) => (
-                  <div key={r.handle} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-mono text-[10px] text-white/30 tabular-nums w-4 text-right shrink-0">#{r.global_rank}</span>
-                      <span className="font-mono text-sm text-white/70 truncate">{r.display_name || r.handle}</span>
-                    </div>
-                    <span className="font-mono text-sm font-bold tabular-nums shrink-0" style={{ color: '#4ade80', textShadow: '0 0 8px rgba(74,222,128,0.6)' }}>+{r.weekly_delta}</span>
-                  </div>
-                ))}
-              </div>
+        {/* Biggest movers (cross-index) */}
+        {(biggestMovers || []).length > 0 && (
+          <div className="relative rounded-lg border border-white/[0.08] bg-[#0a0a14] overflow-hidden">
+            <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(57,255,20,0.3)]" />
+            <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(57,255,20,0.3)]" />
+            <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(57,255,20,0.3)]" />
+            <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(57,255,20,0.3)]" />
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06]">
+              <span className="font-mono text-[10px] font-bold" style={{ color: '#39ff14' }}>↑</span>
+              <span className="font-mono text-xs font-bold text-white">CROSS-INDEX BIGGEST MOVERS</span>
+              <span className="ml-auto font-mono text-[9px] text-white/20">7d delta</span>
             </div>
-          )}
-          {topFallers.length > 0 && (
-            <div className="relative rounded-lg bg-[#0a0a14] border border-white/[0.08] px-3 py-2.5 overflow-hidden">
-              <CornerAccent />
-              <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-red-400/60 mb-2">↓ BIGGEST FALLERS</div>
-              <div className="space-y-1.5">
-                {topFallers.map((r) => (
-                  <div key={r.handle} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-mono text-[10px] text-white/30 tabular-nums w-4 text-right shrink-0">#{r.global_rank}</span>
-                      <span className="font-mono text-sm text-white/70 truncate">{r.display_name || r.handle}</span>
+            <div className="divide-y divide-white/[0.04]">
+              {(biggestMovers || []).map((agent) => {
+                const avatarUrl = toPublicImageUrl(agent.custom_background_url || agent.avatar_url)
+                const displayName = agent.display_name || agent.handle || '?'
+                return (
+                  <Link key={agent.id} href={`/agent/${encodeURIComponent(agent.handle)}`}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-white/[0.025] transition-colors">
+                    <div className={`h-6 w-6 shrink-0 rounded overflow-hidden border border-white/[0.08] flex items-center justify-center text-[8px] font-bold font-mono ${!avatarUrl ? avatarColor(agent.handle) : 'bg-white/[0.04]'}`}>
+                      {avatarUrl ? <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" /> : displayName[0].toUpperCase()}
                     </div>
-                    <span className="font-mono text-sm font-bold text-red-400 tabular-nums shrink-0">{r.weekly_delta}</span>
-                  </div>
-                ))}
-              </div>
+                    <span className="font-mono text-[11px] font-semibold text-white/85 truncate flex-1 min-w-0">{displayName}</span>
+                    {agent.archetype && (
+                      <span className="font-mono text-[9px] text-white/30 shrink-0">{agent.archetype}</span>
+                    )}
+                    <span className="shrink-0 rounded border border-[rgba(57,255,20,0.25)] bg-[rgba(57,255,20,0.06)] px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums" style={{ color: '#39ff14' }}>
+                      +{agent.weekly_delta}
+                    </span>
+                  </Link>
+                )
+              })}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Per-category counts — display only, mirrors /categories source-of-truth */}
-      {categoryCounts.length > 0 && (
-        <div className="mb-4">
-          <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30 mb-2">
-            Indexed by category
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {categoryCounts.map((c) => (
-              <span
-                key={c.name}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 font-mono text-[11px] text-white/60"
-              >
-                <span>{c.name}</span>
-                <span className="tabular-nums text-white/40">{c.count}</span>
-              </span>
+        )}
+
+        {/* Weekly narrative */}
+        <div className="relative rounded-lg border border-[rgba(233,30,128,0.12)] bg-[#0a0a14] overflow-hidden">
+          <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(233,30,128,0.3)]" />
+          <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(233,30,128,0.3)]" />
+          <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[rgba(233,30,128,0.3)]" />
+          <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[rgba(233,30,128,0.3)]" />
+          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06]">
+            <span className="font-mono text-[10px] font-bold text-[#e91e80]">◆</span>
+            <span className="font-mono text-xs font-bold text-white">THIS WEEK'S INDICES</span>
+          </div>
+          <div className="px-3 py-3 space-y-3">
+            {categoryData.map(({ cat, evidenceCount }) => (
+              <div key={cat.id} className="flex items-center gap-3">
+                <span className="font-mono text-[11px] font-semibold w-28 shrink-0" style={{ color: cat.color }}>
+                  {cat.label}
+                </span>
+                <div className="flex-1 h-1.5 rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, (evidenceCount / 100) * 100)}%`,
+                      background: cat.color,
+                      boxShadow: `0 0 6px ${cat.color}66`,
+                    }}
+                  />
+                </div>
+                <span className="font-mono text-[10px] text-white/50 tabular-nums shrink-0 w-12 text-right">
+                  {evidenceCount} ranked
+                </span>
+              </div>
             ))}
+            <div className="pt-2 border-t border-white/[0.04] font-mono text-[10px] text-white/30 leading-relaxed">
+              Multi-signal scoring inverts single-source rankings. Different signals tell different stories — this is the defensible value.{' '}
+              <Link href="/methodology" className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2">
+                Read methodology →
+              </Link>
+            </div>
           </div>
         </div>
-      )}
 
-      <SearchableRankings rows={rows} initialQuery={initialQuery} />
-
-      {/* Explore link */}
-      <div className="mt-8 text-center">
-        <p className="font-mono text-xs text-white/30 mb-2">
-          Only showing {rows.length} evidence-ranked agents. {(totalIndexed ?? 0) - rows.length} more are indexed but lack sufficient evidence.
-        </p>
-        <Link
-          href="/explore"
-          className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-4 py-2 font-mono text-xs text-white/50 hover:text-white hover:border-white/20 transition-colors"
-        >
-          View all indexed agents →
-        </Link>
       </div>
+
     </main>
   )
 }

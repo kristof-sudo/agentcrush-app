@@ -1,0 +1,56 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#08080f; font-family:'Geist Mono',monospace; padding:14px; display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; }
+.section { font-size:9px; color:rgba(255,255,255,0.25); text-transform:uppercase; letter-spacing:.08em; width:100%; }
+.row { display:flex; gap:16px; flex-wrap:wrap; align-items:center; width:100%; }
+@keyframes ping { 0%{transform:scale(1);opacity:.5} 75%,100%{transform:scale(2.2);opacity:0} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+@keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+</style></head><body>
+
+<div class="section">Live Indicator</div>
+<div class="row" style="margin-bottom:4px">
+  <div style="display:flex;align-items:center;gap:6px">
+    <span style="position:relative;display:inline-flex;width:8px;height:8px">
+      <span style="position:absolute;inset:0;border-radius:50%;background:#4ade80;opacity:.5;animation:ping 1.5s cubic-bezier(0,0,.2,1) infinite"></span>
+      <span style="position:relative;width:8px;height:8px;border-radius:50%;background:#4ade80;display:block"></span>
+    </span>
+    <span style="font-size:10px;color:rgba(255,255,255,0.3)">LIVE</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:5px">
+    <span style="width:6px;height:6px;border-radius:50%;background:#a78bfa;animation:pulse 1.5s ease infinite;display:inline-block"></span>
+    <span style="font-size:10px;color:rgba(255,255,255,0.5)">SIGNAL FEED</span>
+  </div>
+</div>
+
+<div class="section" style="margin-top:8px">Signal Dots (with glow)</div>
+<div class="row" style="margin-bottom:4px">
+  <div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;display:block"></span><span style="font-size:9px;color:rgba(255,255,255,0.4)">star growth</span></div>
+  <div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#60a5fa;box-shadow:0 0 6px #60a5fa;display:block"></span><span style="font-size:9px;color:rgba(255,255,255,0.4)">dev activity</span></div>
+  <div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#e879f9;box-shadow:0 0 6px #e879f9;display:block"></span><span style="font-size:9px;color:rgba(255,255,255,0.4)">new release</span></div>
+  <div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#00d4ff;box-shadow:0 0 6px #00d4ff;display:block"></span><span style="font-size:9px;color:rgba(255,255,255,0.4)">integration</span></div>
+  <div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#39ff14;box-shadow:0 0 6px #39ff14;display:block"></span><span style="font-size:9px;color:rgba(255,255,255,0.4)">rank jump</span></div>
+  <div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#f0a500;box-shadow:0 0 6px #f0a500;display:block"></span><span style="font-size:9px;color:rgba(255,255,255,0.4)">collab win</span></div>
+  <div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#fb923c;box-shadow:0 0 6px #fb923c;display:block"></span><span style="font-size:9px;color:rgba(255,255,255,0.4)">just joined</span></div>
+  <div style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#a78bfa;box-shadow:0 0 6px #a78bfa;display:block"></span><span style="font-size:9px;color:rgba(255,255,255,0.4)">eco mention</span></div>
+</div>
+
+<div class="section" style="margin-top:8px">Stat Strip (desktop)</div>
+<div class="row">
+  <div style="background:rgba(232,121,249,0.02);border:1px solid rgba(232,121,249,0.08);border-radius:6px;padding:6px 14px;display:flex;align-items:center;gap:20px">
+    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.07em">AGENTS</span><span style="font-size:11px;font-weight:700;color:white;font-variant-numeric:tabular-nums">1225</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.07em">SIGNALS TODAY</span><span style="font-size:11px;font-weight:700;color:white;font-variant-numeric:tabular-nums">70</span><span style="font-size:10px;font-weight:600;color:#f87171">-66%</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.07em">RANKED</span><span style="font-size:11px;font-weight:700;color:white;font-variant-numeric:tabular-nums">15</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.07em">TOP MOVER</span><span style="font-size:11px;font-weight:700;color:white">Autonolas Agents</span><span style="font-size:11px;font-weight:700;color:#39ff14;font-variant-numeric:tabular-nums">+40</span></div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <span style="position:relative;display:inline-flex;width:7px;height:7px">
+        <span style="position:absolute;inset:0;border-radius:50%;background:#4ade80;opacity:.5;animation:ping 1.5s cubic-bezier(0,0,.2,1) infinite"></span>
+        <span style="position:relative;width:7px;height:7px;border-radius:50%;background:#4ade80;display:block"></span>
+      </span>
+      <span style="font-size:9px;color:rgba(255,255,255,0.3)">LIVE</span>
+    </div>
+  </div>
+</div>
+</body></html>

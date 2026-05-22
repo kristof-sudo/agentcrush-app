@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#08080f; font-family:'Geist Mono',monospace; padding:16px; }
+.row { display:flex; align-items:center; gap:12px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.bar { width:32px; height:8px; border-radius:2px; flex-shrink:0; }
+.opacity { font-size:9px; color:rgba(255,255,255,0.3); width:40px; flex-shrink:0; }
+.sample { flex:1; font-size:11px; }
+.role { font-size:9px; color:rgba(255,255,255,0.25); width:100px; flex-shrink:0; }
+</style></head><body>
+  <div class="row"><div class="bar" style="background:rgba(255,255,255,1.0)"></div><div class="opacity">100%</div><div class="sample" style="color:rgba(255,255,255,1.0)">Heading / Display text</div><div class="role">fg-100</div></div>
+  <div class="row"><div class="bar" style="background:rgba(255,255,255,0.9)"></div><div class="opacity">90%</div><div class="sample" style="color:rgba(255,255,255,0.9)">Strong body, agent names</div><div class="role">fg-90</div></div>
+  <div class="row"><div class="bar" style="background:rgba(255,255,255,0.7)"></div><div class="opacity">70%</div><div class="sample" style="color:rgba(255,255,255,0.7)">Secondary body, handles</div><div class="role">fg-70</div></div>
+  <div class="row"><div class="bar" style="background:rgba(255,255,255,0.5)"></div><div class="opacity">50%</div><div class="sample" style="color:rgba(255,255,255,0.5)">Nav links, tertiary text</div><div class="role">fg-50</div></div>
+  <div class="row"><div class="bar" style="background:rgba(255,255,255,0.35)"></div><div class="opacity">35%</div><div class="sample" style="color:rgba(255,255,255,0.35)">Descriptions, taglines</div><div class="role">fg-35</div></div>
+  <div class="row"><div class="bar" style="background:rgba(255,255,255,0.25)"></div><div class="opacity">25%</div><div class="sample" style="color:rgba(255,255,255,0.25)">Metadata, stat labels</div><div class="role">fg-25</div></div>
+  <div class="row"><div class="bar" style="background:rgba(255,255,255,0.20)"></div><div class="opacity">20%</div><div class="sample" style="color:rgba(255,255,255,0.20)">Footnotes, footer copy</div><div class="role">fg-20</div></div>
+</body></html>

@@ -5,7 +5,7 @@ const DISCOVERY = {
   service: {
     name: 'AgentCrush',
     description:
-      'Strategic market intelligence for the AI agent economy. Evidence-ranked agent index with machine-readable credibility signals.',
+      'AgentCrush is the public record of AI agents. Evidence-ranked index with machine-readable credibility signals, cross-protocol data, and open methodology.',
     url: 'https://www.agentcrush.xyz',
     seller: '0x58e632Fa698383820FFC22156352C9836790E2c0',
     network: 'eip155:8453',

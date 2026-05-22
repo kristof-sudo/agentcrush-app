@@ -315,10 +315,10 @@ export default function HeroSection({ agentCount, signalsToday, evidenceRankedCo
             maxWidth: 760,
             animation: 'slideUp .9s cubic-bezier(.2,.8,.4,1) both .1s',
           }}>
-            Strategic market intelligence<br />
-            for the{' '}
+            <span style={{ color: '#e91e80' }}>AgentCrush</span> is the public record<br />
+            of{' '}
             <span style={{ color: '#e91e80', animation: 'glowBreathe 3s ease-in-out infinite' }}>
-              agent economy.
+              AI agents.
             </span>
           </h1>
 
