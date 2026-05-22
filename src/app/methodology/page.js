@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: 'Methodology · AgentCrush',
   description:
-    'How AgentCrush ranks AI agents across 4 category indices: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, and limitations.',
-  alternates: { canonical: 'https://agentcrush.xyz/methodology' },
+    'How AgentCrush ranks AI agents across 4 category rankings: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, and limitations.',
+  alternates: { canonical: 'https://www.agentcrush.xyz/methodology' },
   openGraph: {
     title: 'AgentCrush Methodology',
     description: 'Per-category scoring methodologies for the agent economy. Transparent signals, weights, and evidence-ready rules.',
@@ -115,7 +115,7 @@ const METHODOLOGY = [
     rule: 'Multi-signal coverage threshold OR top-100 ranked OR single signal ≥ 90 with ≥ 2 corroborating signals > 50.',
     limitations: [
       'Methodology weights are computed dynamically per agent (active_weight_total) rather than fixed.',
-      'Universal ranking includes 1,289 agents; evidence_ranked subset is the public-rank list.',
+      'Universal ranking includes the full indexed set; evidence_ranked subset is the public-rank list.',
     ],
   },
 ]
@@ -191,7 +191,7 @@ export default async function MethodologyHubPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12 md:px-6 text-white">
+    <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <p className="text-xs font-mono text-white/25 mb-6">
@@ -201,20 +201,20 @@ export default async function MethodologyHubPage() {
       </p>
 
       <div className="mb-10">
-        <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">
+        <p className="text-xs font-semibold uppercase tracking-widest text-violet-400/70 mb-2">
           The methodology
         </p>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
+        <h1 className="text-2xl font-bold text-white tracking-tight mb-3">
           How AgentCrush ranks the agent economy
         </h1>
-        <p className="text-base text-white/60 max-w-2xl leading-relaxed">
+        <p className="text-sm text-white/55 max-w-2xl leading-relaxed">
           AgentCrush is the evidence-ranked index of the agent economy. We don&apos;t pick winners — we publish multi-signal evidence with transparent weights. Different agent categories leave different evidence trails, so we run <span className="text-white/85">four category-specific methodologies</span>, each with its own signal sources, weights, and evidence-ready rule.
         </p>
       </div>
 
       {/* Key principles */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-4">Principles</h2>
+        <h2 className="text-lg font-bold text-white mb-4">Principles</h2>
         <div className="space-y-4 text-sm text-white/65 leading-relaxed">
           <p>
             <span className="text-white/90 font-semibold">Multi-signal corroboration.</span> No agent is evidence-ranked on a single signal. Every category requires at least 3 of N signals available, AND at least one of those signals must be a <em>capability</em> signal — not just popularity. Downloads and stars are vanity metrics on their own.
@@ -233,7 +233,7 @@ export default async function MethodologyHubPage() {
 
       {/* Live summary */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-4">Live coverage</h2>
+        <h2 className="text-lg font-bold text-white mb-4">Live coverage</h2>
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
           <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] font-mono uppercase tracking-wider text-white/35">
             <span>Category</span>
@@ -267,7 +267,7 @@ export default async function MethodologyHubPage() {
         <section key={m.slug} id={m.slug} className="mb-12 scroll-mt-24">
           <div className="flex items-baseline gap-3 mb-2">
             <AccentDot accent={m.accent} />
-            <h2 className="text-2xl font-bold">{m.name}</h2>
+            <h2 className="text-xl font-bold text-white">{m.name}</h2>
             <span className="text-[10px] font-mono text-violet-300/80">{m.version}</span>
           </div>
           <p className="text-sm text-white/55 leading-relaxed mb-5 max-w-2xl">{m.description}</p>
@@ -309,7 +309,7 @@ export default async function MethodologyHubPage() {
 
       {/* For LLMs / developers */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-3">For machine consumers</h2>
+        <h2 className="text-lg font-bold text-white mb-3">For machine consumers</h2>
         <p className="text-sm text-white/55 leading-relaxed mb-4">
           The same methodology is exposed via our MCP server. LLMs (Claude Desktop, Cursor, custom agents) can query AgentCrush as a live data layer and explain ranking decisions accurately.
         </p>
@@ -326,9 +326,88 @@ export default async function MethodologyHubPage() {
         </Link>
       </section>
 
+      {/* Version diff archive */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold text-white mb-4">Version history</h2>
+        <p className="text-sm text-white/50 leading-relaxed mb-5">
+          Each version bump changes signal weights, adds new signals, or adjusts the evidence-ready rule. Agents that were borderline evidence-ranked may move when a methodology version changes.
+        </p>
+        <div className="space-y-4">
+          {[
+            {
+              version: 'v1.4-with-deployment',
+              category: 'Model Families',
+              date: 'May 2026',
+              color: '#a78bfa',
+              changes: [
+                { type: 'added', text: 'Deployment signal (10%) — cross-protocol agent-economy mentions across 6 source tables.' },
+                { type: 'adjusted', text: 'HuggingFace weight reduced from 35% → 30% to accommodate deployment signal.' },
+                { type: 'adjusted', text: 'LMArena weight reduced from 30% → 25%.' },
+                { type: 'impact', text: 'Agents with broad agent-economy integrations moved up; pure-capability models without deployment footprint held or dipped.' },
+              ],
+            },
+            {
+              version: 'v1.3-with-citations',
+              category: 'Model Families',
+              date: 'April 2026',
+              color: '#a78bfa',
+              changes: [
+                { type: 'added', text: 'Paper Citations signal (15%) — Semantic Scholar citation counts on canonical lab papers.' },
+                { type: 'adjusted', text: 'HF Derivatives weight reduced from 25% → 20%.' },
+                { type: 'impact', text: 'Research-heavy model families (DeepSeek, Llama) gained; models without academic papers were unaffected.' },
+              ],
+            },
+            {
+              version: 'v1.1-tokenized-tvl',
+              category: 'Tokenized Agents',
+              date: 'May 2026',
+              color: '#39ff14',
+              changes: [
+                { type: 'added', text: 'TVL signal (15%) — total value locked in token contracts.' },
+                { type: 'adjusted', text: 'Liquidity + Volume weight reduced from 25% → 20%.' },
+                { type: 'impact', text: 'Agents with capital locked beyond market cap moved up. Pure market-cap agents lost relative position.' },
+              ],
+            },
+            {
+              version: 'v1.1-service-forks',
+              category: 'Service Agents',
+              date: 'May 2026',
+              color: '#f0a500',
+              changes: [
+                { type: 'added', text: 'Forks signal (15%) — GitHub forks log-scaled. Measures active engagement vs. passive starring.' },
+                { type: 'adjusted', text: 'Protocol Breadth weight unchanged. Adoption signal recalibrated.' },
+                { type: 'impact', text: 'Agents with high fork engagement moved up relative to starred-but-unforked repos.' },
+              ],
+            },
+          ].map((ver) => (
+            <div key={ver.version} className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+              <div className="flex flex-wrap items-baseline gap-3 px-4 py-3 border-b border-white/[0.05]"
+                style={{ borderLeftColor: ver.color, borderLeftWidth: 2 }}>
+                <span className="font-mono text-sm font-bold" style={{ color: ver.color }}>{ver.version}</span>
+                <span className="text-xs text-white/40">{ver.category}</span>
+                <span className="text-xs font-mono text-white/25 ml-auto">{ver.date}</span>
+              </div>
+              <div className="px-4 py-3 space-y-2">
+                {ver.changes.map((c, i) => (
+                  <div key={i} className="flex gap-3 text-xs leading-relaxed">
+                    <span className={`shrink-0 font-mono font-bold mt-0.5 ${
+                      c.type === 'added' ? 'text-emerald-400' :
+                      c.type === 'adjusted' ? 'text-amber-400' :
+                      'text-violet-400'
+                    }`}>
+                      {c.type === 'added' ? '+ added' : c.type === 'adjusted' ? '~ adjusted' : '→ impact'}
+                    </span>
+                    <span className="text-white/50">{c.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="border-t border-white/[0.06] pt-6 flex flex-wrap gap-4 text-xs text-white/35">
         <Link href="/rankings" className="hover:text-white/70 transition-colors">All Rankings →</Link>
-        <Link href="/how-we-rank" className="hover:text-white/70 transition-colors">Plain-English explainer →</Link>
         <Link href="/labs" className="hover:text-white/70 transition-colors">Labs →</Link>
         <Link href="/developers" className="hover:text-white/70 transition-colors">Developer docs →</Link>
       </div>

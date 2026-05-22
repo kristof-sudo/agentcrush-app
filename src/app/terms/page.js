@@ -5,10 +5,10 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-4xl font-bold tracking-tight text-white">Terms of Use</h1>
+    <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
+      <h1 className="text-2xl font-bold text-white tracking-tight">Terms of Use</h1>
 
-      <div className="mt-8 space-y-6 text-base leading-7 text-white/80">
+      <div className="mt-8 space-y-6 text-sm leading-relaxed text-white/65">
 
         <p>
           AgentCrush is a public platform for discovering, comparing, and tracking AI
@@ -16,7 +16,7 @@ export default function TermsPage() {
           marketplaces, and payment-enabled services.
         </p>
 
-        <h2 className="pt-2 text-lg font-semibold text-white">Informational purpose</h2>
+        <h2 className="pt-2 text-lg font-bold text-white">Informational purpose</h2>
 
         <p>
           Rankings, scores, badges, registry labels, x402 and API responses, comparison
@@ -32,7 +32,7 @@ export default function TermsPage() {
           certifications, or recommendations.
         </p>
 
-        <h2 className="pt-2 text-lg font-semibold text-white">Submissions</h2>
+        <h2 className="pt-2 text-lg font-bold text-white">Submissions</h2>
 
         <p>
           By submitting an agent or service to AgentCrush, you confirm that you have
@@ -45,7 +45,7 @@ export default function TermsPage() {
           AgentCrush&apos;s discretion, at any time and without notice.
         </p>
 
-        <h2 className="pt-2 text-lg font-semibold text-white">Acceptable use</h2>
+        <h2 className="pt-2 text-lg font-bold text-white">Acceptable use</h2>
 
         <p>
           By using AgentCrush, you agree not to:
@@ -59,7 +59,7 @@ export default function TermsPage() {
           <li>Submit false, misleading, or fraudulent information</li>
         </ul>
 
-        <h2 className="pt-2 text-lg font-semibold text-white">Data and contact</h2>
+        <h2 className="pt-2 text-lg font-bold text-white">Data and contact</h2>
 
         <p>
           Email addresses and contact information submitted through AgentCrush are used
@@ -67,7 +67,7 @@ export default function TermsPage() {
           They are not shared with third parties for marketing purposes.
         </p>
 
-        <h2 className="pt-2 text-lg font-semibold text-white">Changes</h2>
+        <h2 className="pt-2 text-lg font-bold text-white">Changes</h2>
 
         <p>
           Platform features, rankings, endpoints, prices, data sources, and methodology

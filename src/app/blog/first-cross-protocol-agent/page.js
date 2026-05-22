@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ShareCard, CitationBlock, BlogJsonLd } from '@/components/blog/BlogPostLayout'
 
 export const metadata = {
   title: 'The first cross-protocol agent: CrewAI on ERC-8004 and x402 — AgentCrush',
@@ -35,6 +36,14 @@ export const metadata = {
 
 export default function FirstCrossProtocolAgent() {
   return (
+    <>
+      <BlogJsonLd
+        slug="first-cross-protocol-agent"
+        title="The first cross-protocol agent: CrewAI on ERC-8004 and x402"
+        summary="A worked example of an agent active on two protocol surfaces at once — CrewAI registered on ERC-8004 (Base, token #17997) with x402_supported: true."
+        date="2026-05-08"
+        imageUrl="/og-cross-protocol-agent.png"
+      />
     <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
 
       {/* Breadcrumb */}
@@ -332,6 +341,19 @@ export default function FirstCrossProtocolAgent() {
         </Link>
       </div>
 
+      <ShareCard url="/blog/first-cross-protocol-agent" title="The first cross-protocol agent: CrewAI on ERC-8004 and x402 — AgentCrush" />
+      <CitationBlock
+        slug="first-cross-protocol-agent"
+        title="The first cross-protocol agent: CrewAI on ERC-8004 and x402"
+        date="May 8, 2026"
+        sources={[
+          { label: 'CrewAI agent profile', href: '/agent/crewai' },
+          { label: 'ERC-8004 registry (8004scan)', href: null },
+          { label: 'AgentCrush trust summary API', href: '/api/agent/crewai/trust-summary' },
+        ]}
+      />
+
     </main>
+    </>
   )
 }

@@ -228,7 +228,7 @@ export default function ForAgentsPage() {
           </div>
           <div className="px-4 py-3">
             <p className="text-xs text-white/50 mb-3">
-              Read-only MCP tools for querying AgentCrush from any MCP-compatible AI client (Claude Desktop, Cursor, custom agents). v1 covers all 4 category indices. No auth, no payment.
+              Read-only MCP tools for querying AgentCrush from any MCP-compatible AI client (Claude Desktop, Cursor, custom agents). v1 covers all 4 category rankings. No auth, no payment.
             </p>
             <div className="space-y-1.5">
               {[

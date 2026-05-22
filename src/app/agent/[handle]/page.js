@@ -14,8 +14,8 @@ import IndexedBadge from '@/components/ui/IndexedBadge'
 import ScoreBreakdown from '@/components/ui/ScoreBreakdown'
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'build-only'
 )
 
 const PAYMENT_RAIL_LABELS = {
@@ -1104,7 +1104,7 @@ export default async function AgentPage({ params }) {
           ) : (
             <IndexedBadge size="md" />
           )}
-          <Link href="/api-docs" style={{
+          <Link href="/developers#api" style={{
             display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px',
             borderRadius: 4, border: '1px solid rgba(167,139,250,0.25)', background: 'rgba(167,139,250,0.07)',
             fontFamily: 'ui-monospace, monospace', fontSize: 9, fontWeight: 600,
@@ -1219,6 +1219,85 @@ export default async function AgentPage({ params }) {
                 compact={false}
                 showThreshold={true}
               />
+            </div>
+          </div>
+        )}
+
+        {/* ── 3b. SIGNAL SOURCES (auditability) ───────────────────────── */}
+        {agentV2 && (
+          <div style={{ ...PANEL, padding: 0, overflow: 'hidden' }}>
+            <CornerAccentsServer color="#818cf8" />
+            <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ ...LABEL_STYLE, color: '#818cf8' }}>◆ Signal Sources</span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>Raw values from primary sources</span>
+            </div>
+            <div style={{ padding: '8px 0' }}>
+              {[
+                {
+                  label: 'GitHub Activity',
+                  score: agentV2.github_score,
+                  sourceUrl: agent.github_url || (agent.github_full_name ? `https://github.com/${agent.github_full_name}` : null),
+                  sourceLabel: agent.github_full_name || agent.github_url ? 'GitHub' : null,
+                },
+                {
+                  label: 'Package Usage',
+                  score: agentV2.package_usage_score,
+                  sourceUrl: agent.npm_package ? `https://npmjs.com/package/${agent.npm_package}` : (agent.pypi_package ? `https://pypi.org/project/${agent.pypi_package}` : null),
+                  sourceLabel: agent.npm_package ? 'npm' : agent.pypi_package ? 'PyPI' : null,
+                },
+                {
+                  label: 'Dependency Adoption',
+                  score: agentV2.dependency_score,
+                  sourceUrl: null,
+                  sourceLabel: null,
+                },
+                {
+                  label: 'Docs Quality',
+                  score: agentV2.docs_quality_score,
+                  sourceUrl: agent.website_url || agent.github_url || null,
+                  sourceLabel: 'Source',
+                },
+                {
+                  label: 'Ecosystem',
+                  score: agentV2.ecosystem_score,
+                  sourceUrl: null,
+                  sourceLabel: null,
+                },
+                {
+                  label: 'HN Discourse',
+                  score: agentV2.hn_score,
+                  sourceUrl: agent.handle ? `https://hn.algolia.com/?q=${encodeURIComponent(agent.display_name || agent.handle)}` : null,
+                  sourceLabel: 'HN',
+                },
+              ].filter((row) => row.score != null).map((row) => (
+                <div key={row.label} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: 8, padding: '5px 12px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <span style={{ fontSize: 11, color: 'rgba(226,232,240,0.65)' }}>{row.label}</span>
+                  <span style={{ fontSize: 11, fontFamily: 'ui-monospace, monospace', fontVariantNumeric: 'tabular-nums', color: '#818cf8', minWidth: 28, textAlign: 'right' }}>{row.score}</span>
+                  {row.sourceUrl ? (
+                    <a
+                      href={row.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', color: 'rgba(129,140,248,0.5)', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                    >
+                      {row.sourceLabel || 'source'} ↗
+                    </a>
+                  ) : (
+                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>—</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>
+                Snapshot updated every 4h · <Link href="/methodology" style={{ color: 'rgba(129,140,248,0.6)', textDecoration: 'none' }}>methodology</Link>
+              </span>
+              <a
+                href={`mailto:flag@agentcrush.xyz?subject=Signal dispute: ${encodeURIComponent(agent.handle)}&body=Agent: ${encodeURIComponent(agent.handle)}%0ASignal: %0AIssue: `}
+                style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', color: 'rgba(248,113,113,0.5)', textDecoration: 'none' }}
+              >
+                Flag / Dispute
+              </a>
             </div>
           </div>
         )}

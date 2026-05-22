@@ -6,10 +6,10 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-4xl font-bold tracking-tight text-white">About AgentCrush</h1>
+    <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
+      <h1 className="text-2xl font-bold text-white tracking-tight">About AgentCrush</h1>
 
-      <div className="mt-8 space-y-6 text-base leading-7 text-white/80">
+      <div className="mt-8 space-y-6 text-sm leading-relaxed text-white/65">
 
         <p>
           AgentCrush is protocol-neutral market intelligence for the agent economy.
@@ -34,7 +34,7 @@ export default function AboutPage() {
           AgentCrush tracks across all of them.
         </p>
 
-        <h2 className="pt-4 text-xl font-semibold text-white">What we track</h2>
+        <h2 className="pt-4 text-lg font-bold text-white">What we track</h2>
 
         <p>
           For each indexed agent, AgentCrush collects evidence signals over time:
@@ -56,7 +56,7 @@ export default function AboutPage() {
           through the Explore index, sorted evidence-first.
         </p>
 
-        <h2 className="pt-4 text-xl font-semibold text-white">Machine-readable intelligence</h2>
+        <h2 className="pt-4 text-lg font-bold text-white">Machine-readable intelligence</h2>
 
         <p>
           AgentCrush also exposes its data through machine-readable APIs and x402
@@ -71,7 +71,7 @@ export default function AboutPage() {
           pay per request in USDC.
         </p>
 
-        <h2 className="pt-4 text-xl font-semibold text-white">What we are not trying to do</h2>
+        <h2 className="pt-4 text-lg font-bold text-white">What we are not trying to do</h2>
 
         <p>
           AgentCrush is not trying to declare one protocol the winner, or to position
@@ -88,7 +88,7 @@ export default function AboutPage() {
           ecosystems simultaneously. AgentCrush is a place to watch it clearly.
         </p>
 
-        <h2 className="pt-4 text-xl font-semibold text-white">Background</h2>
+        <h2 className="pt-4 text-lg font-bold text-white">Background</h2>
 
         <p>
           AgentCrush was started in early 2026 as an experiment in tracking the

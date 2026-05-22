@@ -1,55 +1,32 @@
-import Link from 'next/link'
+'use client'
 
-export const metadata = {
-  title: 'Blog · AgentCrush',
-  description: 'Notes from building AgentCrush — the agent economy, x402, and the AI agent ecosystem.',
-  alternates: {
-    canonical: 'https://agentcrush.xyz/blog',
-  },
-  openGraph: {
-    title: 'Blog · AgentCrush',
-    description: 'Notes from building AgentCrush — the agent economy, x402, and the AI agent ecosystem.',
-    url: 'https://agentcrush.xyz/blog',
-    siteName: 'AgentCrush',
-    images: [
-      {
-        url: 'https://agentcrush.xyz/og-default.png',
-        width: 1200,
-        height: 630,
-        alt: 'AgentCrush — AI Agent Rankings',
-      },
-    ],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Blog · AgentCrush',
-    description: 'Notes from building AgentCrush — the agent economy, x402, and the AI agent ecosystem.',
-    images: ['https://agentcrush.xyz/og-default.png'],
-  },
-}
+import Link from 'next/link'
+import { useState } from 'react'
 
 const POSTS = [
   {
     slug: 'agent-commerce-readiness-three-audits',
+    category: 'Findings',
     image: '/og-three-audits.png',
     imageAlt: 'The state of agent commerce readiness: three audits, three shapes of unfinished',
     title: 'The state of agent commerce readiness: three audits, three shapes of unfinished',
     date: 'May 13, 2026',
     summary:
-      'We ran the Agent Commerce Readiness Audit against aixbt, Coral Protocol, and Daydreams / Lucid Agents in one pass. The meta-finding: most teams in agent commerce are 80% built and 20% published. Spectrum, evidence, and roadmaps.',
+      'We ran the Agent Commerce Readiness Audit against aixbt, Coral Protocol, and Daydreams / Lucid Agents in one pass. The meta-finding: most teams in agent commerce are 80% built and 20% published.',
   },
   {
     slug: 'first-cross-protocol-agent',
+    category: 'Findings',
     image: '/og-cross-protocol-agent.png',
     imageAlt: 'First cross-protocol agent indexed: CrewAI on ERC-8004 and x402',
     title: 'The first cross-protocol agent: CrewAI on ERC-8004 and x402',
     date: 'May 8, 2026',
     summary:
-      'A worked example of an agent active on two protocol surfaces at once — CrewAI registered on ERC-8004 (Base, token #17997) with x402_supported: true. What AgentCrush sees when we cross the data, and why multi-rail becomes the default.',
+      'A worked example of an agent active on two protocol surfaces at once — CrewAI registered on ERC-8004 (Base, token #17997) with x402_supported: true. What AgentCrush sees when we cross the data.',
   },
   {
     slug: 'x402-discovery-postmortem',
+    category: 'Updates',
     image: '/og-x402-postmortem.png',
     imageAlt: "Working x402 payment isn't the same as working x402 discovery",
     title: "Working x402 payment isn't the same as working x402 discovery",
@@ -59,11 +36,22 @@ const POSTS = [
   },
 ]
 
+const TABS = ['All', 'Findings', 'Updates', 'Weekly Digest']
+
+const CATEGORY_COLORS = {
+  Findings: '#e91e80',
+  Updates: '#a78bfa',
+  'Weekly Digest': '#00d4ff',
+}
+
 export default function BlogIndexPage() {
+  const [active, setActive] = useState('All')
+  const filtered = active === 'All' ? POSTS : POSTS.filter((p) => p.category === active)
+
   return (
     <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
 
-      <div className="mb-10">
+      <div className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-widest text-[#e91e80]/70 mb-2">
           Blog
         </p>
@@ -75,39 +63,81 @@ export default function BlogIndexPage() {
         </p>
       </div>
 
+      {/* Category filter */}
+      <div className="flex flex-wrap gap-2 mb-8">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActive(tab)}
+            className={`rounded-full px-3 py-1 text-xs font-mono transition-colors border ${
+              active === tab
+                ? 'border-[#e91e80]/60 bg-[#e91e80]/10 text-[#e91e80]'
+                : 'border-white/[0.08] bg-white/[0.03] text-white/45 hover:text-white/70'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <p className="text-sm text-white/30 py-8">No posts in this category yet.</p>
+      )}
+
       <div className="space-y-6">
-        {POSTS.map((post) => (
+        {filtered.map((post) => (
           <article
             key={post.slug}
             className="rounded-lg border border-white/[0.07] bg-white/[0.02] overflow-hidden hover:border-white/[0.12] transition-colors"
           >
             <Link href={`/blog/${post.slug}`} className="block">
-              <img
-                src={post.image}
-                alt={post.imageAlt}
-                className="w-full h-auto"
-              />
+              <img src={post.image} alt={post.imageAlt} className="w-full h-auto" />
             </Link>
             <div className="px-5 py-5">
-              <time className="text-xs font-mono text-white/25 block mb-2">{post.date}</time>
-              <h2 className="text-base font-semibold text-white leading-snug mb-2">
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className="hover:text-[#e91e80] transition-colors"
+              <div className="flex items-center gap-3 mb-2">
+                <time className="text-xs font-mono text-white/25">{post.date}</time>
+                <span
+                  className="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                  style={{
+                    color: CATEGORY_COLORS[post.category] || '#a78bfa',
+                    borderColor: `${CATEGORY_COLORS[post.category] || '#a78bfa'}33`,
+                    background: `${CATEGORY_COLORS[post.category] || '#a78bfa'}10`,
+                  }}
                 >
+                  {post.category}
+                </span>
+              </div>
+              <h2 className="text-base font-semibold text-white leading-snug mb-2">
+                <Link href={`/blog/${post.slug}`} className="hover:text-[#e91e80] transition-colors">
                   {post.title}
                 </Link>
               </h2>
               <p className="text-sm text-white/45 leading-relaxed mb-4">{post.summary}</p>
-              <Link
-                href={`/blog/${post.slug}`}
-                className="text-xs font-mono text-violet-400/70 hover:text-violet-300 transition-colors"
-              >
+              <Link href={`/blog/${post.slug}`} className="text-xs font-mono text-violet-400/70 hover:text-violet-300 transition-colors">
                 Read →
               </Link>
             </div>
           </article>
         ))}
+      </div>
+
+      {/* Data downloads */}
+      <div className="mt-12 rounded-lg border border-white/[0.06] bg-white/[0.01] px-5 py-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">Data</p>
+        <p className="text-xs text-white/35 leading-relaxed mb-3">
+          The rankings and signals described in these posts are machine-readable via MCP and x402.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <Link href="/developers#mcp" className="text-xs font-mono text-violet-400/70 hover:text-violet-300 transition-colors">
+            MCP tools →
+          </Link>
+          <Link href="/developers#api" className="text-xs font-mono text-violet-400/70 hover:text-violet-300 transition-colors">
+            REST API →
+          </Link>
+          <Link href="/methodology" className="text-xs font-mono text-violet-400/70 hover:text-violet-300 transition-colors">
+            Methodology →
+          </Link>
+        </div>
       </div>
 
     </main>

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ShareCard, CitationBlock, BlogJsonLd } from '@/components/blog/BlogPostLayout'
 
 export const metadata = {
   title: "The state of agent commerce readiness: three audits, three shapes of unfinished — AgentCrush",
@@ -39,6 +40,14 @@ const code = (s) => (
 
 export default function AgentCommerceReadinessThreeAudits() {
   return (
+    <>
+      <BlogJsonLd
+        slug="agent-commerce-readiness-three-audits"
+        title="The state of agent commerce readiness: three audits, three shapes of unfinished"
+        summary="We ran the Agent Commerce Readiness Audit against aixbt, Coral Protocol, and Daydreams / Lucid Agents in one pass. The meta-finding: most teams in agent commerce are 80% built and 20% published."
+        date="2026-05-13"
+        imageUrl="/og-three-audits.png"
+      />
     <main className="mx-auto max-w-[760px] px-4 md:px-6 py-14">
 
       {/* Breadcrumb */}
@@ -524,6 +533,19 @@ const network = (process.env.NETWORK as Network) || "base-sepolia";`}
         </Link>
       </div>
 
+      <ShareCard url="/blog/agent-commerce-readiness-three-audits" title="The state of agent commerce readiness: three audits, three shapes of unfinished — AgentCrush" />
+      <CitationBlock
+        slug="agent-commerce-readiness-three-audits"
+        title="The state of agent commerce readiness: three audits, three shapes of unfinished"
+        date="May 13, 2026"
+        sources={[
+          { label: 'aixbt agent profile', href: '/agent/aixbt' },
+          { label: 'AgentCrush MCP trust tools', href: '/developers#mcp' },
+          { label: 'Methodology', href: '/methodology' },
+        ]}
+      />
+
     </main>
+    </>
   )
 }

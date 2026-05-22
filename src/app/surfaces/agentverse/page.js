@@ -33,17 +33,18 @@ function truncate(s, n) {
 
 export default async function AgentversePage() {
   // Stats
-  const { count: total } = await supabaseAnon
+  const supabase = supabaseAnon()
+  const { count: total } = await supabase
     .from('agentverse_agents')
     .select('*', { count: 'exact', head: true })
 
-  const { count: active } = await supabaseAnon
+  const { count: active } = await supabase
     .from('agentverse_agents')
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
 
   // Latest 50 by last_seen_at
-  const { data: rows } = await supabaseAnon
+  const { data: rows } = await supabase
     .from('agentverse_agents')
     .select('agentverse_id, name, address, category, runtime, status, is_active, interactions_count, rating, last_seen_at')
     .order('last_seen_at', { ascending: false })

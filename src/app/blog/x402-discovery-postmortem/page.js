@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ShareCard, CitationBlock, BlogJsonLd } from '@/components/blog/BlogPostLayout'
 
 export const metadata = {
   title: "Working x402 payment isn't the same as working x402 discovery — AgentCrush",
@@ -35,6 +36,14 @@ export const metadata = {
 
 export default function X402DiscoveryPostmortem() {
   return (
+    <>
+      <BlogJsonLd
+        slug="x402-discovery-postmortem"
+        title="Working x402 payment isn't the same as working x402 discovery"
+        summary="Notes from getting AgentCrush indexed on Agentic.Market: the boring metadata gotchas that almost stopped me, and the checklist that finally worked."
+        date="2026-04-30"
+        imageUrl="/og-x402-postmortem.png"
+      />
     <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
 
       {/* Breadcrumb */}
@@ -297,6 +306,19 @@ export default function X402DiscoveryPostmortem() {
         </Link>
       </div>
 
+      <ShareCard url="/blog/x402-discovery-postmortem" title="Working x402 payment isn't the same as working x402 discovery — AgentCrush" />
+      <CitationBlock
+        slug="x402-discovery-postmortem"
+        title="Working x402 payment isn't the same as working x402 discovery"
+        date="April 30, 2026"
+        sources={[
+          { label: 'AgentCrush x402 discovery endpoint', href: '/.well-known/x402' },
+          { label: 'AgentCrush agent index', href: '/api/agent/agentcrush/trust-summary' },
+          { label: 'Methodology', href: '/methodology' },
+        ]}
+      />
+
     </main>
+    </>
   )
 }

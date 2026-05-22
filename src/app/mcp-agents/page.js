@@ -86,7 +86,7 @@ export default function McpAgentsPage() {
             { n: 'get_agent_details',     u: 'Full per-agent breakdown — cross-category scores, identity, signals' },
             { n: 'get_agent_history',     u: 'Daily snapshot history 1–90 days with trend summary' },
             { n: 'compare_agents',        u: 'Side-by-side 2–5 agents across all relevant categories' },
-            { n: 'list_categories',       u: 'The 4 category indices with counts + methodology versions' },
+            { n: 'list_categories',       u: 'The 4 category rankings with counts + methodology versions' },
             { n: 'get_category_ranking',  u: 'Full ranking for one category with all sub-scores' },
             { n: 'get_methodology',       u: 'Weights, formulas, evidence-ready rule, AND limitations per category' },
           ].map((t) => (
