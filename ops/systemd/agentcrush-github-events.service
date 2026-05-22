@@ -1,0 +1,18 @@
+[Unit]
+Description=github-events fetcher (Layer 1) — pull recent commits/releases/PRs from configured competitor repos
+Documentation=https://github.com/kristof-sudo/agentcrush-app/blob/main/runtime/github-events-fetcher.mjs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStartPre=/bin/bash -lc 'cd ${BRAIN_PATH:-/opt/agentcrush-brain} && git pull --rebase --quiet origin main 2>/dev/null || true'
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/github-events-fetcher.mjs
+StandardOutput=append:/var/log/agentcrush/github-events.log
+StandardError=append:/var/log/agentcrush/github-events.log
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

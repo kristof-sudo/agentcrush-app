@@ -1,0 +1,17 @@
+[Unit]
+Description=competitor-watcher (Layer 2 sub-agent) — summarize competitor GitHub moves via Haiku 4.5
+Documentation=https://github.com/kristof-sudo/agentcrush-app/blob/main/runtime/competitor-watcher.mjs
+After=network-online.target agentcrush-github-events.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/competitor-watcher.mjs
+StandardOutput=append:/var/log/agentcrush/competitor-watcher.log
+StandardError=append:/var/log/agentcrush/competitor-watcher.log
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target

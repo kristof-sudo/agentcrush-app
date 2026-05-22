@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily 09:15 Budapest — competitor-watcher (10 min after github-events fetcher)
+
+[Timer]
+OnCalendar=*-*-* 09:15:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-competitor-watcher.service
+
+[Install]
+WantedBy=timers.target
