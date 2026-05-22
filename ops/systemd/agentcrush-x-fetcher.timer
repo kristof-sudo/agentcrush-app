@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily 07:46 Budapest — fire X (Twitter) fetcher (1 min after Neynar to avoid burst)
+Documentation=https://github.com/kristof-sudo/agentcrush-brain/blob/main/Playbooks/morning-routine.md
+
+[Timer]
+OnCalendar=*-*-* 07:46:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-x-fetcher.service
+
+[Install]
+WantedBy=timers.target
