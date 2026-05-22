@@ -32,7 +32,7 @@ console.log(`[snapshot] date=${TODAY}`)
 
 const { data: agents, error: agentsErr } = await db
   .from('agents')
-  .select('id, visibility_score, reputation_score, weekly_delta, claim_status, identity_type, github_stars, github_forks, follower_count')
+  .select('id, visibility_score, reputation_score, weekly_delta, claim_status, identity_type')
   .order('id', { ascending: true })
 
 if (agentsErr) {
@@ -98,9 +98,9 @@ for (const agent of agents) {
     reputation:    ranking?.score_reputation ?? agent.reputation_score ?? null,
     weekly_delta:  agent.weekly_delta        ?? null,
 
-    github_stars:  agent.github_stars        ?? null,
-    github_forks:  agent.github_forks        ?? null,
-    follower_count: agent.follower_count     ?? null,
+    github_stars:  null,
+    github_forks:  null,
+    follower_count: null,
 
     claim_status:  agent.claim_status        ?? null,
     identity_type: agent.identity_type       ?? null,
