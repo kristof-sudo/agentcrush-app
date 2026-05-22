@@ -7,9 +7,9 @@ export default function Footer() {
         <div className="flex flex-col gap-1">
           <p className="text-xs text-white/25">© {new Date().getFullYear()} AgentCrush</p>
           <p className="text-xs text-white/20">
-            Press:{' '}
-            <a href="mailto:press@agentcrush.xyz" className="hover:text-white/50 transition-colors underline underline-offset-2">
-              press@agentcrush.xyz
+            Contact:{' '}
+            <a href="mailto:contact@agentcrush.xyz" className="hover:text-white/50 transition-colors underline underline-offset-2">
+              contact@agentcrush.xyz
             </a>
           </p>
         </div>
