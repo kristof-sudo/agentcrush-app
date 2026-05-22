@@ -249,7 +249,11 @@ async function callAnthropic({ systemPrompt, userPrompt }) {
     messages: [{ role: 'user', content: userPrompt }],
   };
 
-  const maxAttempts = 2;
+  // Retry policy: 4 attempts with exponential backoff [15s, 30s, 60s, 120s].
+  // Total window ~3.5 min — covers typical Anthropic transient overloads (HTTP 529).
+  // If all attempts fail, caller will send a Telegram failure alert.
+  const BACKOFF_MS = [15_000, 30_000, 60_000, 120_000];
+  const maxAttempts = BACKOFF_MS.length;
   let lastErr = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -274,21 +278,52 @@ async function callAnthropic({ systemPrompt, userPrompt }) {
       }
       const usage = json.usage || {};
       const stopReason = json.stop_reason;
-      console.log(`[ajsa-morning-brief] Anthropic ok. Input tokens: ${usage.input_tokens}, output tokens: ${usage.output_tokens}, stop_reason: ${stopReason}`);
+      console.log(`[ajsa-morning-brief] Anthropic ok on attempt ${attempt}. Input tokens: ${usage.input_tokens}, output tokens: ${usage.output_tokens}, stop_reason: ${stopReason}`);
       if (stopReason === 'max_tokens') {
         throw new Error(`Anthropic hit max_tokens (${MAX_OUTPUT_TOKENS}) before completing. Output is truncated and unsafe to parse. Bump MAX_OUTPUT_TOKENS, shorten the prompt, or tighten the brief format spec.`);
       }
       return text;
     } catch (err) {
       lastErr = err;
-      console.warn(`[ajsa-morning-brief] Anthropic attempt ${attempt} failed: ${err.message}`);
+      const waitMs = attempt < maxAttempts ? BACKOFF_MS[attempt - 1] : 0;
+      console.warn(`[ajsa-morning-brief] Anthropic attempt ${attempt}/${maxAttempts} failed: ${err.message}${waitMs ? ` — waiting ${waitMs / 1000}s before retry` : ''}`);
       if (attempt < maxAttempts) {
-        await new Promise((r) => setTimeout(r, 2000 * attempt));
+        await new Promise((r) => setTimeout(r, waitMs));
       }
     }
   }
 
-  throw new Error(`Anthropic failed after ${maxAttempts} attempts: ${lastErr?.message}`);
+  throw new Error(`Anthropic failed after ${maxAttempts} attempts (~3.5 min window): ${lastErr?.message}`);
+}
+
+// ── Telegram failure alert ────────────────────────────────────────────────────
+
+async function sendFailureAlert(errorMessage) {
+  // On total failure, push a short Telegram alert so Kris knows the brief
+  // didn't land instead of silently missing it. Best-effort: if this also
+  // fails, just log it; the brief incident is already in incidents.md.
+  return new Promise((resolve) => {
+    const senderPath = '/opt/agentcrush/tools/telegram-sender.mjs';
+    const alertText =
+      `❌ Morning brief failed for ${RUN_DATE}.\n\n` +
+      `Error: ${errorMessage.slice(0, 500)}\n\n` +
+      `The worker will be re-attempted by Kris or by the next scheduled run. ` +
+      `Incident logged at brain/Agents/ajsa/incidents.md.`;
+    const child = spawn(
+      'node',
+      [senderPath, '--message', alertText, '--header', `⚠️ AgentCrush — morning brief failure ${RUN_DATE}`],
+      { stdio: ['ignore', 'inherit', 'inherit'], env: process.env },
+    );
+    child.on('exit', (code) => {
+      if (code === 0) console.log('[ajsa-morning-brief] Failure alert pushed to Telegram.');
+      else console.error(`[ajsa-morning-brief] Failure alert send exited with code ${code}; user is unaware.`);
+      resolve();
+    });
+    child.on('error', (err) => {
+      console.error(`[ajsa-morning-brief] Failure alert spawn failed: ${err.message}; user is unaware.`);
+      resolve();
+    });
+  });
 }
 
 // ── Output parsing ────────────────────────────────────────────────────────────
@@ -383,7 +418,10 @@ async function main() {
     rawOutput = await callAnthropic({ systemPrompt, userPrompt });
   } catch (err) {
     console.error(`[ajsa-morning-brief] FATAL: ${err.message}`);
-    if (!isDryRun) await appendIncident(`Anthropic call failed: ${err.message}`);
+    if (!isDryRun) {
+      await appendIncident(`Anthropic call failed: ${err.message}`);
+      if (!skipTelegram) await sendFailureAlert(err.message);
+    }
     process.exit(1);
   }
 
