@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      { source: '/how-we-rank', destination: '/methodology', permanent: true },
+      { source: '/for-agents', destination: '/developers#for-agents', permanent: true },
+      { source: '/api-docs', destination: '/developers#api', permanent: true },
+      { source: '/developers/mcp', destination: '/developers#mcp', permanent: true },
+    ]
+  },
   async rewrites() {
     return [
       {
