@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'build-only'
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+  );
+}
 
 async function sendTelegramBuildApproval(row) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -58,6 +60,7 @@ export async function POST(req) {
       status: "pending",
     };
 
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from("build_approvals")
       .insert(payload)
