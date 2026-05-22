@@ -5,7 +5,7 @@ import { getMovementReason, formatRelativeTime } from '@/lib/why-moving'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'AI Agent Rankings — 4 Category Indices · AgentCrush',
+  title: 'AI Agent Rankings — 4 Category Rankings · AgentCrush',
   description: 'Developer, Model Families, Tokenized, and Service agent rankings — all four evidence-based rankings in one place. AgentCrush is the public record of AI agents.',
   alternates: { canonical: 'https://www.agentcrush.xyz/rankings' },
   openGraph: {
@@ -377,7 +377,7 @@ export default async function RankingsHub() {
           <div className="flex-1 h-px" style={{ background: 'rgba(233,30,128,0.2)' }} />
         </div>
         <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "var(--font-michroma,'Michroma',sans-serif)" }}>
-          The <span style={{ color: '#e91e80' }}>4 Indices</span>
+          The <span style={{ color: '#e91e80' }}>4 Rankings</span>
         </h1>
         <p className="mt-1 font-mono text-xs text-white/40">
           {totalEvidenceRanked} evidence-ranked agents across 4 category methodologies ·{' '}
