@@ -4,20 +4,20 @@ export const metadata = {
   title: 'x402 for AI Agents — Machine-Payable APIs · AgentCrush',
   description:
     'x402 is the HTTP-native payment protocol for machine-payable APIs. AgentCrush exposes 7 resources in CDP Bazaar via x402 — but AgentCrush is NOT built on x402. It is protocol-neutral and tracks across x402, MCP, ERC-8004, Agentverse, A2A, and Virtuals.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/x402-agents' },
+  alternates: { canonical: 'https://agentcrush.xyz/x402-agents' },
   openGraph: {
     title: 'x402 for AI Agents — AgentCrush',
     description: 'HTTP-native payment for AI agents. What x402 is, what AgentCrush exposes, free vs paid data.',
-    url: 'https://www.agentcrush.xyz/x402-agents',
+    url: 'https://agentcrush.xyz/x402-agents',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'x402 — AgentCrush' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'x402 — AgentCrush' }],
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'x402 for AI Agents — AgentCrush',
     description: 'HTTP-native payment for AI agents.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
@@ -27,11 +27,11 @@ export default function X402AgentsPage() {
     '@type': 'TechArticle',
     headline: 'x402 for AI Agents — Machine-Payable APIs',
     description: 'HTTP-native payment protocol for agent-to-agent commerce. What x402 is, what AgentCrush exposes, free vs paid data.',
-    url: 'https://www.agentcrush.xyz/x402-agents',
+    url: 'https://agentcrush.xyz/x402-agents',
     dateModified: '2026-05-16',
     author: { '@type': 'Organization', name: 'AgentCrush' },
-    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://www.agentcrush.xyz/x402-agents' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://agentcrush.xyz/x402-agents' },
     about: ['x402', 'AI agent payments', 'CDP Bazaar', 'machine-payable APIs'],
   }
 

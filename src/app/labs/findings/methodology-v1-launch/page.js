@@ -7,13 +7,13 @@ export const metadata = {
   title: 'Methodology v1 Launch — Findings · AgentCrush Labs',
   description:
     'Structured findings from the AgentCrush 4-category methodology launch (May 2026). Multi-signal inversions, evidence-ready admissions, and what the data reveals that single-source rankings hide.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/labs/findings/methodology-v1-launch' },
+  alternates: { canonical: 'https://agentcrush.xyz/labs/findings/methodology-v1-launch' },
   openGraph: {
     title: 'AgentCrush Methodology v1 Launch — Findings',
     description: 'What the agent economy looks like when measured across 5+ signals per category.',
-    url: 'https://www.agentcrush.xyz/labs/findings/methodology-v1-launch',
+    url: 'https://agentcrush.xyz/labs/findings/methodology-v1-launch',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Methodology Findings' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Methodology Findings' }],
     type: 'article',
     publishedTime: '2026-05-16T12:00:00Z',
   },
@@ -21,7 +21,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'AgentCrush Methodology v1 — Findings',
     description: 'What the agent economy looks like when measured across 5+ signals per category.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 

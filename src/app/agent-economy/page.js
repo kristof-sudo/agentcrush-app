@@ -7,20 +7,20 @@ export const metadata = {
   title: 'What is the agent economy? · AgentCrush',
   description:
     'The agent economy is the emerging stack where AI agents discover, evaluate, transact, and verify each other. AgentCrush is the protocol-neutral intelligence layer that tracks ACROSS frameworks, registries, payment rails, and identity standards — NOT built on any single protocol.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/agent-economy' },
+  alternates: { canonical: 'https://agentcrush.xyz/agent-economy' },
   openGraph: {
     title: 'The Agent Economy — AgentCrush',
     description: 'What is the agent economy? The stack of frameworks, registries, payment rails, and identity standards for autonomous AI agents.',
-    url: 'https://www.agentcrush.xyz/agent-economy',
+    url: 'https://agentcrush.xyz/agent-economy',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'The Agent Economy — AgentCrush' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'The Agent Economy — AgentCrush' }],
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'The Agent Economy — AgentCrush',
     description: 'The stack of frameworks, registries, payment rails, and identity standards for autonomous AI agents.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
@@ -47,11 +47,11 @@ export default async function AgentEconomyPage() {
     '@type': 'TechArticle',
     headline: 'The Agent Economy',
     description: 'The emerging stack where AI agents discover, evaluate, transact, and verify each other — frameworks, registries, payment rails, identity standards, marketplaces.',
-    url: 'https://www.agentcrush.xyz/agent-economy',
+    url: 'https://agentcrush.xyz/agent-economy',
     dateModified: '2026-05-16',
-    author: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://www.agentcrush.xyz/agent-economy' },
+    author: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://agentcrush.xyz/agent-economy' },
     about: ['AI agents', 'agent economy', 'A2A commerce', 'autonomous systems'],
   }
 

@@ -8,21 +8,21 @@ export const metadata = {
   description:
     'Cross-protocol ranking of AI model families — Hermes, Llama, Mistral, Qwen, DeepSeek and others. Scored on HuggingFace adoption, derivatives, LMArena, citations, and discourse. v1.0 launching — rankings populate as evidence accumulates.',
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/rankings/model-families',
+    canonical: 'https://agentcrush.xyz/rankings/model-families',
   },
   openGraph: {
     title: 'Model Family Rankings · AgentCrush',
     description: 'Cross-protocol ranking of AI model families. Evidence-based, transparent methodology.',
-    url: 'https://www.agentcrush.xyz/rankings/model-families',
+    url: 'https://agentcrush.xyz/rankings/model-families',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Model Family Rankings' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Model Family Rankings' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Model Family Rankings · AgentCrush',
     description: 'Cross-protocol ranking of AI model families. Evidence-based, transparent methodology.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
@@ -138,13 +138,13 @@ export default async function ModelFamiliesRankingsPage() {
     '@type': 'ItemList',
     name: 'AgentCrush Model Family Rankings',
     description: 'Evidence-ranked model families scored on HuggingFace adoption, LMArena capability, HF derivatives, paper citations, and cross-protocol deployment. Methodology v1.4.',
-    url: 'https://www.agentcrush.xyz/rankings/model-families',
+    url: 'https://agentcrush.xyz/rankings/model-families',
     numberOfItems: evidenceReadyCount,
     isPartOf: {
       '@type': 'Dataset',
-      '@id': 'https://www.agentcrush.xyz/methodology',
+      '@id': 'https://agentcrush.xyz/methodology',
       name: 'AgentCrush Evidence-Ranked Index',
-      license: 'https://www.agentcrush.xyz/terms',
+      license: 'https://agentcrush.xyz/terms',
       isAccessibleForFree: true,
     },
     itemListElement: rows.filter(r => r.evidence_ready_for_public_rank).slice(0, 50).map((r) => ({
@@ -153,7 +153,7 @@ export default async function ModelFamiliesRankingsPage() {
       item: {
         '@type': 'SoftwareApplication',
         name: r.display_name || r.handle,
-        url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`,
+        url: `https://agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`,
         applicationCategory: 'AI Model',
         aggregateRating: r.model_family_score > 0 ? {
           '@type': 'AggregateRating',

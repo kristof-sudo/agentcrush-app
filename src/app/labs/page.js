@@ -5,17 +5,17 @@ export const metadata = {
   description:
     'We audit whether agents can discover, understand, pay for, and verify your service — across x402, ERC-8004, MCP, A2A, and the rest of the stack. $299 for startups.',
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/labs',
+    canonical: 'https://agentcrush.xyz/labs',
   },
   openGraph: {
     title: 'AgentCrush Labs — Agent Commerce Readiness Audit',
     description:
       'We audit whether agents can discover, understand, pay for, and verify your service — across x402, ERC-8004, MCP, A2A, and the rest of the stack. $299 for startups.',
-    url: 'https://www.agentcrush.xyz/labs',
+    url: 'https://agentcrush.xyz/labs',
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://www.agentcrush.xyz/og-default.png',
+        url: 'https://agentcrush.xyz/og-default.png',
         width: 1200,
         height: 630,
         alt: 'AgentCrush Labs',
@@ -28,7 +28,7 @@ export const metadata = {
     title: 'AgentCrush Labs — Agent Commerce Readiness Audit',
     description:
       'We audit whether agents can discover, understand, pay for, and verify your service — across x402, ERC-8004, MCP, A2A, and the rest of the stack. $299 for startups.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 

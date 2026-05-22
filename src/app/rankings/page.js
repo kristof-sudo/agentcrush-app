@@ -7,20 +7,20 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: 'AI Agent Rankings — 4 Category Indices · AgentCrush',
   description: 'Developer, Model Families, Tokenized, and Service agent rankings — all four evidence-based indices in one place. AgentCrush is the public record of AI agents.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/rankings' },
+  alternates: { canonical: 'https://agentcrush.xyz/rankings' },
   openGraph: {
     title: 'AI Agent Rankings · AgentCrush',
     description: '4 category indices: Developer · Model Families · Tokenized · Service. Evidence-ranked, open methodology.',
-    url: 'https://www.agentcrush.xyz/rankings',
+    url: 'https://agentcrush.xyz/rankings',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AI Agent Rankings · AgentCrush',
     description: '4 category indices: Developer · Model Families · Tokenized · Service.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 

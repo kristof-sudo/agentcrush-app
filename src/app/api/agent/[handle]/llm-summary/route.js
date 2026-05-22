@@ -84,7 +84,7 @@ export async function GET(req, { params }) {
         hint: suggestions.length > 0
           ? 'Did you mean one of the suggestions? Try GET /api/agent/{suggested_handle}/llm-summary.'
           : 'Use GET /api/agent-economy/llm-summary or the MCP search_agents tool for discovery.',
-        source_urls: ['https://www.agentcrush.xyz/explore'],
+        source_urls: ['https://agentcrush.xyz/explore'],
       }, { status: 404, headers: HEADERS })
     }
 
@@ -153,7 +153,7 @@ export async function GET(req, { params }) {
       type: 'agent_llm_summary',
       handle: agent.handle,
       name: agent.display_name || agent.handle,
-      url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
+      url: `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
       primary_category: agent.primary_category,
       secondary_categories: agent.secondary_categories || [],
       summary: agent.bio || agent.tagline || `${agent.display_name || agent.handle} is indexed by AgentCrush.`,
@@ -180,11 +180,11 @@ export async function GET(req, { params }) {
         'Methodology versions evolve. Scores are valid for the methodology version shown.',
         'Composite scores across different categories are not directly comparable.',
       ],
-      methodology_url: 'https://www.agentcrush.xyz/methodology',
+      methodology_url: 'https://agentcrush.xyz/methodology',
       last_updated: new Date().toISOString(),
       source_urls: [
-        `https://www.agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
-        'https://www.agentcrush.xyz/methodology',
+        `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
+        'https://agentcrush.xyz/methodology',
       ],
     }, { headers: HEADERS })
 
@@ -192,7 +192,7 @@ export async function GET(req, { params }) {
     return Response.json({
       error: 'temporary_unavailable',
       message: 'Agent summary temporarily unavailable.',
-      fallback_url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(handle)}`,
+      fallback_url: `https://agentcrush.xyz/agent/${encodeURIComponent(handle)}`,
     }, { status: 503, headers: HEADERS })
   }
 }

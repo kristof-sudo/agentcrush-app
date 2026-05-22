@@ -4,16 +4,16 @@ export const metadata = {
   title: 'Blog · AgentCrush',
   description: 'Notes from building AgentCrush — the agent economy, x402, and the AI agent ecosystem.',
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/blog',
+    canonical: 'https://agentcrush.xyz/blog',
   },
   openGraph: {
     title: 'Blog · AgentCrush',
     description: 'Notes from building AgentCrush — the agent economy, x402, and the AI agent ecosystem.',
-    url: 'https://www.agentcrush.xyz/blog',
+    url: 'https://agentcrush.xyz/blog',
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://www.agentcrush.xyz/og-default.png',
+        url: 'https://agentcrush.xyz/og-default.png',
         width: 1200,
         height: 630,
         alt: 'AgentCrush — AI Agent Rankings',
@@ -25,7 +25,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Blog · AgentCrush',
     description: 'Notes from building AgentCrush — the agent economy, x402, and the AI agent ecosystem.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 

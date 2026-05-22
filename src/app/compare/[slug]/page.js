@@ -252,16 +252,16 @@ export default async function CompareSlugPage({ params }) {
     '@type': 'TechArticle',
     headline: `${agentA.display_name || agentA.handle} vs ${agentB.display_name || agentB.handle}`,
     description: `Side-by-side comparison of ${agentA.display_name || agentA.handle} and ${agentB.display_name || agentB.handle} across AgentCrush's public evidence signals. Activity, package usage, dependency adoption, docs quality, ecosystem links, discourse.`,
-    url: `https://www.agentcrush.xyz/compare/${slug}`,
+    url: `https://agentcrush.xyz/compare/${slug}`,
     dateModified: new Date().toISOString().slice(0, 10),
     author: { '@type': 'Organization', name: 'AgentCrush' },
-    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://www.agentcrush.xyz/compare/${slug}` },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://agentcrush.xyz/compare/${slug}` },
     about: [
-      { '@type': 'SoftwareApplication', name: agentA.display_name || agentA.handle, url: `https://www.agentcrush.xyz/agent/${agentA.handle}` },
-      { '@type': 'SoftwareApplication', name: agentB.display_name || agentB.handle, url: `https://www.agentcrush.xyz/agent/${agentB.handle}` },
+      { '@type': 'SoftwareApplication', name: agentA.display_name || agentA.handle, url: `https://agentcrush.xyz/agent/${agentA.handle}` },
+      { '@type': 'SoftwareApplication', name: agentB.display_name || agentB.handle, url: `https://agentcrush.xyz/agent/${agentB.handle}` },
     ],
-    isPartOf: { '@type': 'Dataset', '@id': 'https://www.agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://www.agentcrush.xyz/terms', isAccessibleForFree: true },
+    isPartOf: { '@type': 'Dataset', '@id': 'https://agentcrush.xyz/methodology', name: 'AgentCrush Evidence-Ranked Index', license: 'https://agentcrush.xyz/terms', isAccessibleForFree: true },
   }
 
   return (

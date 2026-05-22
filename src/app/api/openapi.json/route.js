@@ -22,11 +22,11 @@ export async function GET() {
         'This OpenAPI spec covers the free flat JSON endpoints designed for LLM/agent retrieval. ' +
         'For JSON-RPC MCP access, see /api/mcp/v1 (manifest at /.well-known/mcp.json). ' +
         'For paid x402 endpoints (history, trust-summary, verification-status), see /api-docs.',
-      contact: { name: 'AgentCrush', email: 'contact@agentcrush.xyz', url: 'https://www.agentcrush.xyz' },
-      license: { name: 'AgentCrush Terms', url: 'https://www.agentcrush.xyz/terms' },
+      contact: { name: 'AgentCrush', email: 'contact@agentcrush.xyz', url: 'https://agentcrush.xyz' },
+      license: { name: 'AgentCrush Terms', url: 'https://agentcrush.xyz/terms' },
     },
-    servers: [{ url: 'https://www.agentcrush.xyz', description: 'Production' }],
-    externalDocs: { description: 'Methodology hub', url: 'https://www.agentcrush.xyz/methodology' },
+    servers: [{ url: 'https://agentcrush.xyz', description: 'Production' }],
+    externalDocs: { description: 'Methodology hub', url: 'https://agentcrush.xyz/methodology' },
     tags: [
       { name: 'discovery',   description: 'Market-level and category-level discovery endpoints' },
       { name: 'agent',       description: 'Single-agent details and history' },

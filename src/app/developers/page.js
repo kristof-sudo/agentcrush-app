@@ -11,7 +11,7 @@ const SURFACES = [
     label: 'MCP Server',
     badge: 'Free · v0',
     href: '/developers/mcp',
-    endpoint: 'POST https://www.agentcrush.xyz/api/mcp',
+    endpoint: 'POST https://agentcrush.xyz/api/mcp',
     description:
       'Read-only MCP tools for querying AgentCrush agent intelligence from any MCP-compatible AI client or agent. No auth, no payment.',
     details: [

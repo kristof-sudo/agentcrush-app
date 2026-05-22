@@ -7,20 +7,20 @@ export const metadata = {
   title: 'Methodology · AgentCrush',
   description:
     'How AgentCrush ranks AI agents across 4 category indices: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, and limitations.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/methodology' },
+  alternates: { canonical: 'https://agentcrush.xyz/methodology' },
   openGraph: {
     title: 'AgentCrush Methodology',
     description: 'Per-category scoring methodologies for the agent economy. Transparent signals, weights, and evidence-ready rules.',
-    url: 'https://www.agentcrush.xyz/methodology',
+    url: 'https://agentcrush.xyz/methodology',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Methodology' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Methodology' }],
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AgentCrush Methodology',
     description: 'Per-category scoring methodologies for the agent economy.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
@@ -163,20 +163,20 @@ export default async function MethodologyHubPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    '@id': 'https://www.agentcrush.xyz/methodology',
+    '@id': 'https://agentcrush.xyz/methodology',
     name: 'AgentCrush Evidence-Ranked Index',
     description: 'Multi-signal agent reputation methodologies across 4 categories: model families (v1.4), tokenized agents (v1.1), service agents (v1.1), developer agents (v2.c). Every weight, formula, evidence-ready rule, and known limitation is published.',
-    url: 'https://www.agentcrush.xyz/methodology',
+    url: 'https://agentcrush.xyz/methodology',
     keywords: ['AI agents', 'agent ranking', 'agent economy', 'multi-signal scoring', 'evidence-ranked', 'methodology', 'model families', 'tokenized agents', 'service agents'],
-    creator: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
+    creator: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
     dateModified: '2026-05-17',
-    license: 'https://www.agentcrush.xyz/terms',
+    license: 'https://agentcrush.xyz/terms',
     isAccessibleForFree: true,
     distribution: [
-      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/api/agent-economy/llm-summary', description: 'Market-level summary across all 4 categories' },
-      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/api/methodology/model_family/llm-summary', description: 'Model-family methodology breakdown' },
-      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://www.agentcrush.xyz/.well-known/mcp.json', description: 'MCP server discovery manifest' },
+      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://agentcrush.xyz/api/agent-economy/llm-summary', description: 'Market-level summary across all 4 categories' },
+      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://agentcrush.xyz/api/methodology/model_family/llm-summary', description: 'Model-family methodology breakdown' },
+      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://agentcrush.xyz/.well-known/mcp.json', description: 'MCP server discovery manifest' },
     ],
     measurementTechnique: 'Multi-signal scoring with category-specific weights. Per-category methodology versions (v1.4 / v1.1 / v2.c). Evidence-ready rule: 3+ of N signals AND ≥1 capability signal.',
     variableMeasured: [
@@ -315,11 +315,11 @@ export default async function MethodologyHubPage() {
         </p>
         <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3 mb-4">
           <p className="text-xs font-mono text-white/40 mb-2">Endpoint</p>
-          <code className="text-xs text-white/75 font-mono">POST https://www.agentcrush.xyz/api/mcp/v1</code>
+          <code className="text-xs text-white/75 font-mono">POST https://agentcrush.xyz/api/mcp/v1</code>
         </div>
         <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3 mb-4">
           <p className="text-xs font-mono text-white/40 mb-2">Discovery</p>
-          <code className="text-xs text-white/75 font-mono">GET https://www.agentcrush.xyz/.well-known/mcp.json</code>
+          <code className="text-xs text-white/75 font-mono">GET https://agentcrush.xyz/.well-known/mcp.json</code>
         </div>
         <Link href="/developers/mcp" className="inline-flex items-center gap-1 text-xs font-mono text-violet-300 hover:text-violet-200 transition-colors">
           Full MCP docs →

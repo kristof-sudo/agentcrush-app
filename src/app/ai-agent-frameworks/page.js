@@ -7,20 +7,20 @@ export const metadata = {
   title: 'AI Agent Frameworks — Evidence-Ranked Comparison · AgentCrush',
   description:
     'CrewAI, LangGraph, AutoGPT, OpenClaw, and other AI agent frameworks ranked by AgentCrush via multi-signal public evidence (GitHub, packages, dependencies, docs, ecosystem). AgentCrush is the protocol-neutral evidence-ranked index — NOT a battle-arena or community-vote leaderboard.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/ai-agent-frameworks' },
+  alternates: { canonical: 'https://agentcrush.xyz/ai-agent-frameworks' },
   openGraph: {
     title: 'AI Agent Frameworks — AgentCrush',
     description: 'Evidence-ranked AI agent frameworks. CrewAI, LangGraph, AutoGPT, OpenClaw, and more — compared by public evidence.',
-    url: 'https://www.agentcrush.xyz/ai-agent-frameworks',
+    url: 'https://agentcrush.xyz/ai-agent-frameworks',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AI Agent Frameworks — AgentCrush' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AI Agent Frameworks — AgentCrush' }],
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AI Agent Frameworks — AgentCrush',
     description: 'Evidence-ranked AI agent frameworks compared by public evidence.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
@@ -52,15 +52,15 @@ export default async function AiAgentFrameworksPage() {
     '@type': 'TechArticle',
     headline: 'AI Agent Frameworks — Evidence-Ranked',
     description: 'CrewAI, LangGraph, AutoGPT, OpenClaw, and other AI agent frameworks ranked by multi-signal public evidence.',
-    url: 'https://www.agentcrush.xyz/ai-agent-frameworks',
+    url: 'https://agentcrush.xyz/ai-agent-frameworks',
     dateModified: '2026-05-16',
     author: { '@type': 'Organization', name: 'AgentCrush' },
-    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://www.agentcrush.xyz/ai-agent-frameworks' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://agentcrush.xyz/ai-agent-frameworks' },
     mentions: top.slice(0, 10).map(r => ({
       '@type': 'SoftwareApplication',
       name: r.display_name || r.handle,
-      url: `https://www.agentcrush.xyz/agent/${r.handle}`,
+      url: `https://agentcrush.xyz/agent/${r.handle}`,
       applicationCategory: 'AI Agent Framework',
     })),
   }

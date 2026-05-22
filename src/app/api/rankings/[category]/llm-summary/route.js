@@ -88,7 +88,7 @@ export async function GET(req, { params }) {
       error: 'invalid_category',
       message: `Category must be one of: ${VALID.join(', ')}`,
       valid_categories: VALID,
-      source_urls: ['https://www.agentcrush.xyz/methodology'],
+      source_urls: ['https://agentcrush.xyz/methodology'],
     }, { status: 400, headers: HEADERS })
   }
 
@@ -111,7 +111,7 @@ export async function GET(req, { params }) {
       composite_score: r[meta.score_col] ?? null,
       evidence_ready: r.evidence_ready_for_public_rank ?? false,
       signals_available: r.signals_available_count ?? null,
-      profile_url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`,
+      profile_url: `https://agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`,
       // Category-specific sub-scores
       sub_scores: Object.fromEntries(
         Object.entries(r).filter(([k]) =>
@@ -131,8 +131,8 @@ export async function GET(req, { params }) {
       category,
       name: meta.name,
       methodology_version: meta.version,
-      methodology_url: `https://www.agentcrush.xyz/methodology#${category}`,
-      ranking_page_url: `https://www.agentcrush.xyz${meta.page}`,
+      methodology_url: `https://agentcrush.xyz/methodology#${category}`,
+      ranking_page_url: `https://agentcrush.xyz${meta.page}`,
       filter: { evidence_ready_only: evidenceReadyOnly, limit },
       count: ranking.length,
       ranking,
@@ -143,8 +143,8 @@ export async function GET(req, { params }) {
       ],
       last_updated: new Date().toISOString(),
       source_urls: [
-        `https://www.agentcrush.xyz${meta.page}`,
-        `https://www.agentcrush.xyz/methodology#${category}`,
+        `https://agentcrush.xyz${meta.page}`,
+        `https://agentcrush.xyz/methodology#${category}`,
       ],
     }, { headers: HEADERS })
 
@@ -152,7 +152,7 @@ export async function GET(req, { params }) {
     return Response.json({
       error: 'temporary_unavailable',
       message: 'Category ranking summary temporarily unavailable.',
-      fallback_url: `https://www.agentcrush.xyz${meta.page}`,
+      fallback_url: `https://agentcrush.xyz${meta.page}`,
     }, { status: 503, headers: HEADERS })
   }
 }

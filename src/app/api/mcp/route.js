@@ -405,8 +405,8 @@ export async function GET() {
       description:
         'Read-only AI agent market intelligence. Evidence-ranked index of the agent economy.',
       tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
-      endpoint: 'POST https://www.agentcrush.xyz/api/mcp',
-      docs: 'https://www.agentcrush.xyz/developers/mcp',
+      endpoint: 'POST https://agentcrush.xyz/api/mcp',
+      docs: 'https://agentcrush.xyz/developers/mcp',
     },
     { headers: CORS }
   )

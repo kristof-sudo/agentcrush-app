@@ -767,8 +767,8 @@ export async function GET(request) {
     protocolVersion: '2024-11-05',
     description: 'Read-only AI agent market intelligence. Evidence-ranked across 4 category indices: model families, tokenized agents, service agents, developer agents. Live deployment, citation, on-chain, and adoption signals.',
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
-    endpoint: 'POST https://www.agentcrush.xyz/api/mcp/v1',
-    docs: 'https://www.agentcrush.xyz/developers/mcp',
+    endpoint: 'POST https://agentcrush.xyz/api/mcp/v1',
+    docs: 'https://agentcrush.xyz/developers/mcp',
     rate_limit: `${RATE_LIMIT} requests/minute per IP`,
   }, { headers: buildHeaders(rl, 3600) })
 }

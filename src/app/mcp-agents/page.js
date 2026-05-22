@@ -4,20 +4,20 @@ export const metadata = {
   title: 'MCP for AI Agents — Model Context Protocol · AgentCrush',
   description:
     'MCP (Model Context Protocol) is the open standard for connecting LLM clients to external tools. AgentCrush exposes 7 MCP tools at /api/mcp/v1. AgentCrush is NOT a payment protocol, NOT an identity layer, and NOT a coding assistant — it is the protocol-neutral agent-economy intelligence index.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/mcp-agents' },
+  alternates: { canonical: 'https://agentcrush.xyz/mcp-agents' },
   openGraph: {
     title: 'MCP for AI Agents — AgentCrush',
     description: 'Model Context Protocol for AI agents. AgentCrush MCP server v1 with 7 tools.',
-    url: 'https://www.agentcrush.xyz/mcp-agents',
+    url: 'https://agentcrush.xyz/mcp-agents',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'MCP — AgentCrush' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'MCP — AgentCrush' }],
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'MCP for AI Agents — AgentCrush',
     description: 'Model Context Protocol for AI agents.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
@@ -27,11 +27,11 @@ export default function McpAgentsPage() {
     '@type': 'TechArticle',
     headline: 'MCP for AI Agents — Model Context Protocol',
     description: 'The open standard for connecting LLM clients to external tools and data sources. AgentCrush MCP server with 7 tools.',
-    url: 'https://www.agentcrush.xyz/mcp-agents',
+    url: 'https://agentcrush.xyz/mcp-agents',
     dateModified: '2026-05-16',
     author: { '@type': 'Organization', name: 'AgentCrush' },
-    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://www.agentcrush.xyz/mcp-agents' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://agentcrush.xyz/mcp-agents' },
     about: ['Model Context Protocol', 'MCP', 'LLM tools', 'AI agent infrastructure'],
   }
 
@@ -110,7 +110,7 @@ export default function McpAgentsPage() {
 {`{
   "mcpServers": {
     "agentcrush": {
-      "url": "https://www.agentcrush.xyz/api/mcp/v1"
+      "url": "https://agentcrush.xyz/api/mcp/v1"
     }
   }
 }`}

@@ -4,26 +4,26 @@ export const metadata = {
   title: 'MCP Server v1 | AgentCrush Developers',
   description:
     'AgentCrush MCP Server v1 — read-only AI agent market intelligence across 4 category indices. 7 tools, JSON-RPC 2.0 over HTTP, free, no auth.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/developers/mcp' },
+  alternates: { canonical: 'https://agentcrush.xyz/developers/mcp' },
 }
 
-const ENDPOINT = 'https://www.agentcrush.xyz/api/mcp/v1'
-const WELL_KNOWN = 'https://www.agentcrush.xyz/.well-known/mcp.json'
+const ENDPOINT = 'https://agentcrush.xyz/api/mcp/v1'
+const WELL_KNOWN = 'https://agentcrush.xyz/.well-known/mcp.json'
 
 const CONFIG_EXAMPLE = `{
   "mcpServers": {
     "agentcrush": {
-      "url": "https://www.agentcrush.xyz/api/mcp/v1"
+      "url": "https://agentcrush.xyz/api/mcp/v1"
     }
   }
 }`
 
-const CURL_LIST = `curl -s https://www.agentcrush.xyz/api/mcp/v1 \\
+const CURL_LIST = `curl -s https://agentcrush.xyz/api/mcp/v1 \\
   -H "Content-Type: application/json" \\
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \\
   -X POST`
 
-const CURL_DETAILS = `curl -s https://www.agentcrush.xyz/api/mcp/v1 \\
+const CURL_DETAILS = `curl -s https://agentcrush.xyz/api/mcp/v1 \\
   -H "Content-Type: application/json" \\
   -X POST \\
   -d '{
@@ -36,7 +36,7 @@ const CURL_DETAILS = `curl -s https://www.agentcrush.xyz/api/mcp/v1 \\
     }
   }'`
 
-const CURL_METHODOLOGY = `curl -s https://www.agentcrush.xyz/api/mcp/v1 \\
+const CURL_METHODOLOGY = `curl -s https://agentcrush.xyz/api/mcp/v1 \\
   -H "Content-Type: application/json" \\
   -X POST \\
   -d '{

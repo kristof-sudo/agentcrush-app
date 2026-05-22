@@ -5,15 +5,15 @@ export const metadata = {
   description:
     'A plain-language intro to AI agents, the agent economy, and why this matters now. No jargon. No prior knowledge needed.',
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/learn',
+    canonical: 'https://agentcrush.xyz/learn',
   },
   openGraph: {
     title: 'Learn — What are AI agents? | AgentCrush',
     description:
       'A plain-language intro to AI agents, the agent economy, and why this matters now.',
-    url: 'https://www.agentcrush.xyz/learn',
+    url: 'https://agentcrush.xyz/learn',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — Learn about AI agents' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — Learn about AI agents' }],
     type: 'website',
   },
   twitter: {
@@ -21,7 +21,7 @@ export const metadata = {
     title: 'Learn — What are AI agents? | AgentCrush',
     description:
       'A plain-language intro to AI agents, the agent economy, and why this matters now.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 

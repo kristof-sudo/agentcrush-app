@@ -102,8 +102,8 @@ export async function GET(req) {
       const summary = {
         handle: a.handle,
         name: a.display_name || a.handle,
-        url: `https://www.agentcrush.xyz/agent/${encodeURIComponent(a.handle)}`,
-        full_summary_url: `https://www.agentcrush.xyz/api/agent/${encodeURIComponent(a.handle)}/llm-summary`,
+        url: `https://agentcrush.xyz/agent/${encodeURIComponent(a.handle)}`,
+        full_summary_url: `https://agentcrush.xyz/api/agent/${encodeURIComponent(a.handle)}/llm-summary`,
         primary_category: a.primary_category,
         secondary_categories: a.secondary_categories || [],
         tier: a.tier,
@@ -136,7 +136,7 @@ export async function GET(req) {
         'Cross-category composite scores are not directly comparable (different methodology versions per category).',
         'AgentCrush tracks public evidence only.',
       ],
-      methodology_url: 'https://www.agentcrush.xyz/methodology',
+      methodology_url: 'https://agentcrush.xyz/methodology',
       last_updated: new Date().toISOString(),
     }, { headers: HEADERS })
 

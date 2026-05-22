@@ -1,20 +1,20 @@
 export const metadata = {
   title: 'Developer Agent Rankings · AgentCrush',
   description: 'Evidence-ranked developer / open-source AI agents with verified GitHub activity, ecosystem signals, and real adoption data.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/rankings/developer' },
+  alternates: { canonical: 'https://agentcrush.xyz/rankings/developer' },
   openGraph: {
     title: 'Developer Agent Rankings · AgentCrush',
     description: 'Evidence-ranked developer AI agents — GitHub activity, package adoption, ecosystem signals.',
-    url: 'https://www.agentcrush.xyz/rankings/developer',
+    url: 'https://agentcrush.xyz/rankings/developer',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'Developer Agent Rankings — AgentCrush' }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'Developer Agent Rankings — AgentCrush' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Developer Agent Rankings · AgentCrush',
     description: 'Evidence-ranked developer AI agents — GitHub activity, package adoption, ecosystem signals.',
-    images: ['https://www.agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/og-default.png'],
   },
 }
 
