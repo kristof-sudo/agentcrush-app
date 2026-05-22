@@ -4,15 +4,15 @@ export const metadata = {
   title: 'W21 · May 19–25, 2026 — AgentCrush Weekly',
   description: 'AgentCrush weekly signal digest for W21 2026. Ranking moves across all four category rankings, ecosystem events, protocol activity.',
   alternates: {
-    canonical: 'https://www.agentcrush.xyz/weekly/2026-W21',
-    types: { 'application/rss+xml': 'https://www.agentcrush.xyz/weekly.xml' },
+    canonical: 'https://agentcrush.xyz/weekly/2026-W21',
+    types: { 'application/rss+xml': 'https://agentcrush.xyz/weekly.xml' },
   },
   openGraph: {
     title: 'AgentCrush Weekly · W21 2026',
     description: 'Ranking moves, ecosystem signals, and protocol activity for the week of May 19–25, 2026.',
-    url: 'https://www.agentcrush.xyz/weekly/2026-W21',
+    url: 'https://agentcrush.xyz/weekly/2026-W21',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://www.agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
     type: 'article',
     publishedTime: '2026-05-25T00:00:00.000Z',
   },
@@ -23,11 +23,11 @@ const jsonLd = {
   '@type': 'Article',
   headline: 'AgentCrush Weekly W21 · May 19–25, 2026',
   description: 'Weekly signal digest: ranking moves across all four category rankings, ecosystem events, protocol activity.',
-  url: 'https://www.agentcrush.xyz/weekly/2026-W21',
+  url: 'https://agentcrush.xyz/weekly/2026-W21',
   datePublished: '2026-05-25T00:00:00.000Z',
-  author: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-  publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-  isPartOf: { '@type': 'WebPage', name: 'AgentCrush Weekly', url: 'https://www.agentcrush.xyz/weekly' },
+  author: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+  publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+  isPartOf: { '@type': 'WebPage', name: 'AgentCrush Weekly', url: 'https://agentcrush.xyz/weekly' },
 }
 
 export default function W21Page() {

@@ -4,7 +4,7 @@ export const metadata = {
   title: 'MCP Server v1 | AgentCrush Developers',
   description:
     'AgentCrush MCP Server v1 — read-only AI agent market intelligence across 4 category rankings. 7 tools, JSON-RPC 2.0 over HTTP, free, no auth.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/developers/mcp' },
+  alternates: { canonical: 'https://agentcrush.xyz/developers/mcp' },
 }
 
 const ENDPOINT = 'https://agentcrush.xyz/api/mcp/v1'

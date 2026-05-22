@@ -7,7 +7,7 @@ export const metadata = {
   title: 'Methodology · AgentCrush',
   description:
     'How AgentCrush ranks AI agents across 4 category rankings: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, and limitations.',
-  alternates: { canonical: 'https://www.agentcrush.xyz/methodology' },
+  alternates: { canonical: 'https://agentcrush.xyz/methodology' },
   openGraph: {
     title: 'AgentCrush Methodology',
     description: 'Per-category scoring methodologies for the agent economy. Transparent signals, weights, and evidence-ready rules.',

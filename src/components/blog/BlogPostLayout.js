@@ -5,7 +5,7 @@ import { useState } from 'react'
 
 export function ShareCard({ url, title }) {
   const [copied, setCopied] = useState(false)
-  const full = `https://www.agentcrush.xyz${url}`
+  const full = `https://agentcrush.xyz${url}`
 
   function copy() {
     navigator.clipboard.writeText(full).then(() => {
@@ -40,7 +40,7 @@ export function ShareCard({ url, title }) {
 }
 
 export function CitationBlock({ slug, title, date, sources }) {
-  const url = `https://www.agentcrush.xyz/blog/${slug}`
+  const url = `https://agentcrush.xyz/blog/${slug}`
   return (
     <div className="mt-6 rounded-lg border border-white/[0.06] bg-white/[0.01] px-5 py-4">
       <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
@@ -74,12 +74,12 @@ export function BlogJsonLd({ slug, title, summary, date, imageUrl }) {
     '@type': 'Article',
     headline: title,
     description: summary,
-    url: `https://www.agentcrush.xyz/blog/${slug}`,
+    url: `https://agentcrush.xyz/blog/${slug}`,
     datePublished: date,
-    image: imageUrl ? `https://www.agentcrush.xyz${imageUrl}` : 'https://www.agentcrush.xyz/og-default.png',
-    author: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://www.agentcrush.xyz' },
-    isPartOf: { '@type': 'Blog', name: 'AgentCrush Blog', url: 'https://www.agentcrush.xyz/blog' },
+    image: imageUrl ? `https://agentcrush.xyz${imageUrl}` : 'https://agentcrush.xyz/og-default.png',
+    author: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
+    isPartOf: { '@type': 'Blog', name: 'AgentCrush Blog', url: 'https://agentcrush.xyz/blog' },
   }
   return (
     <script

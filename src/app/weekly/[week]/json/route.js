@@ -5,7 +5,7 @@ const ISSUES = {
     week: '2026-W21',
     period: 'May 19–25, 2026',
     published: '2026-05-25T00:00:00.000Z',
-    url: 'https://www.agentcrush.xyz/weekly/2026-W21',
+    url: 'https://agentcrush.xyz/weekly/2026-W21',
     summary: 'Ranking moves across all four category rankings, first multi-protocol agent milestone, x402 payment activity on Base mainnet.',
     stats: {
       agents_tracked: 1400,
