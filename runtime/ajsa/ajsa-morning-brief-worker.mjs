@@ -404,9 +404,51 @@ async function sendTelegram(telegramMsg) {
   });
 }
 
+// ── Idempotency + alert dedup ─────────────────────────────────────────────────
+
+const ALERT_MARKER_DIR = '/var/run/agentcrush';
+
+async function briefAlreadyWritten() {
+  const outPath = path.join(BRAIN_PATH, 'Agents', 'ajsa', 'output', `social-brief-${RUN_DATE}.md`);
+  try {
+    await fs.access(outPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function alertAlreadySentToday() {
+  const markerPath = path.join(ALERT_MARKER_DIR, `morning-brief-alert-${RUN_DATE}.flag`);
+  try {
+    await fs.access(markerPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function markAlertSent() {
+  const markerPath = path.join(ALERT_MARKER_DIR, `morning-brief-alert-${RUN_DATE}.flag`);
+  try {
+    await fs.mkdir(ALERT_MARKER_DIR, { recursive: true });
+    await fs.writeFile(markerPath, new Date().toISOString());
+  } catch (err) {
+    console.warn(`[ajsa-morning-brief] Could not write alert marker: ${err.message}`);
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
+  // Idempotency: if today's brief is already written, no-op silently. This
+  // makes the worker safe to invoke on a retry timer many times per day —
+  // first success writes, subsequent invocations exit cleanly.
+  if (!isDryRun && (await briefAlreadyWritten())) {
+    console.log(`[ajsa-morning-brief] Brief for ${RUN_DATE} already exists. Nothing to do.`);
+    process.exit(0);
+  }
+
   const inputs = await gatherInputs();
   const systemPrompt = buildSystemPrompt(inputs);
   const userPrompt = buildUserPrompt(inputs);
@@ -420,7 +462,16 @@ async function main() {
     console.error(`[ajsa-morning-brief] FATAL: ${err.message}`);
     if (!isDryRun) {
       await appendIncident(`Anthropic call failed: ${err.message}`);
-      if (!skipTelegram) await sendFailureAlert(err.message);
+      // Alert dedup: only send a Telegram failure alert once per day.
+      // Subsequent failures the same day still log incidents but don't spam.
+      if (!skipTelegram) {
+        if (await alertAlreadySentToday()) {
+          console.log(`[ajsa-morning-brief] Failure alert already sent today; skipping duplicate alert.`);
+        } else {
+          await sendFailureAlert(err.message);
+          await markAlertSent();
+        }
+      }
     }
     process.exit(1);
   }

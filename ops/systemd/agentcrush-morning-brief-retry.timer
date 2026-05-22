@@ -1,0 +1,16 @@
+[Unit]
+Description=Retry Ajsa Morning Brief every 20min between 08:30–14:00 Budapest (no-op if brief already exists)
+Documentation=https://github.com/kristof-sudo/agentcrush-brain/blob/main/Playbooks/morning-routine.md
+
+[Timer]
+# 08:30, 08:50, 09:10, 09:30, 09:50, 10:10, 10:30, 10:50, 11:10, 11:30, 11:50,
+# 12:10, 12:30, 12:50, 13:10, 13:30, 13:50, 14:00 Budapest. ~18 attempts after
+# the original 08:00 fire. Worker is idempotent — first success writes, rest no-op.
+OnCalendar=*-*-* 08,09,10,11,12,13:30,50:00 Europe/Budapest
+OnCalendar=*-*-* 09,10,11,12,13:10:00 Europe/Budapest
+OnCalendar=*-*-* 14:00:00 Europe/Budapest
+Persistent=false
+Unit=agentcrush-morning-brief.service
+
+[Install]
+WantedBy=timers.target
