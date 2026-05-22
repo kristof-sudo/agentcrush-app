@@ -77,7 +77,7 @@ export default async function AgentEconomyPage() {
             AgentCrush is NOT "the trust layer", NOT "the identity layer", NOT "built on x402", NOT "built on ERC-8004". It is the <span className="text-violet-300">protocol-neutral intelligence layer</span> that READS signals from all those protocols. AgentCrush is also NOT a battle-arena or community-vote leaderboard — scores come from documented multi-signal methodology. Also: AgentCrush ≠ Crush (Charmbracelet's terminal AI coding assistant) and ≠ Agent Rush (unrelated service).
           </p>
         </div>
-        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-17</p>
+        <p className="text-xs text-white/35 mt-4 font-mono">Last updated 2026-05-22</p>
       </div>
 
       <section className="mb-12">
