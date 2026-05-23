@@ -13,14 +13,14 @@ export const metadata = {
     description: 'Live 6-layer map of the agent payments stack — who covers what, ranked by stack coverage.',
     url: 'https://agentcrush.xyz/rankings/agent-payments-stack',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Agent Payments Stack' }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=Agent%20Payments%20Stack&kicker=PAYMENTS%20STACK&subtitle=Live%206-layer%20map%3A%20settlement%2C%20wallets%2C%20routing%2C%20protocol%2C%20governance%2C%20application', width: 1200, height: 630, alt: 'AgentCrush Agent Payments Stack' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Agent Payments Stack · AgentCrush',
     description: 'Live 6-layer map of the agent payments stack.',
-    images: ['https://agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/api/og?title=Agent%20Payments%20Stack&kicker=PAYMENTS%20STACK&subtitle=Live%206-layer%20map%3A%20settlement%2C%20wallets%2C%20routing%2C%20protocol%2C%20governance%2C%20application'],
   },
 }
 

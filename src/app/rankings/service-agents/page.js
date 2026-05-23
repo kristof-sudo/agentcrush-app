@@ -13,10 +13,10 @@ export const metadata = {
     description: 'Callable AI agents ranked by adoption, source quality, and cross-protocol presence.',
     url: 'https://agentcrush.xyz/rankings/service-agents',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=Service%20Agent%20Rankings&kicker=SERVICE&subtitle=Callable%20agents%20across%20A2A%2C%20Agentverse%2C%20ERC-8004%2C%20x402', width: 1200, height: 630 }],
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'Service Agent Rankings · AgentCrush', images: ['https://agentcrush.xyz/og-default.png'] },
+  twitter: { card: 'summary_large_image', title: 'Service Agent Rankings · AgentCrush', images: ['https://agentcrush.xyz/api/og?title=Service%20Agent%20Rankings&kicker=SERVICE&subtitle=Callable%20agents%20across%20A2A%2C%20Agentverse%2C%20ERC-8004%2C%20x402'] },
 }
 
 const CAT_COLOR = '#f0a500'

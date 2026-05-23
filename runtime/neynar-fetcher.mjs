@@ -55,7 +55,20 @@ if (!NEYNAR_API_KEY) {
 }
 
 const NEYNAR_BASE = 'https://api.neynar.com';
-const KEYWORDS = ['agentcrush', 'x402', 'ERC-8004', 'MCP agents', 'AgentCrush'];
+// Grouped by purpose for legibility. Neynar search is cheap; bigger list OK,
+// but each keyword adds ~25 casts to the brief synthesis input.
+// Competitor-by-name monitoring belongs in the `competitor-watcher` Layer 2
+// sub-agent, not here.
+const KEYWORDS = [
+  // brand
+  'agentcrush', 'AgentCrush',
+  // protocols
+  'x402', 'ERC-8004', 'MCP agents', 'A2A protocol',
+  // ecosystems we index
+  'Virtuals Protocol', 'Agentverse',
+  // by-name watch (high-signal projects)
+  'aixbt', 'CrewAI',
+];
 
 console.log(`[neynar-fetcher] Mode: ${isDryRun ? 'DRY-RUN' : 'WRITE'}`);
 console.log(`[neynar-fetcher] FID: ${AGENTCRUSH_FID}  Lookback: ${LOOKBACK_HOURS}h`);

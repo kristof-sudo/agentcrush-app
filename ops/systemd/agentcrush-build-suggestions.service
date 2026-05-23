@@ -1,0 +1,17 @@
+[Unit]
+Description=build-suggestions (Layer 3 sub-agent) — daily concrete actions from morning brief + STATE + Queue + competitor watcher
+Documentation=https://github.com/kristof-sudo/agentcrush-app/blob/main/runtime/build-suggestions-worker.mjs
+After=network-online.target agentcrush-morning-brief.service agentcrush-competitor-watcher.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/build-suggestions-worker.mjs
+StandardOutput=append:/var/log/agentcrush/build-suggestions.log
+StandardError=append:/var/log/agentcrush/build-suggestions.log
+TimeoutStartSec=240
+
+[Install]
+WantedBy=multi-user.target

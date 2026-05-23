@@ -7,14 +7,14 @@ export const metadata = {
     description: 'Evidence-ranked developer AI agents — GitHub activity, package adoption, ecosystem signals.',
     url: 'https://agentcrush.xyz/rankings/developer',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'Developer Agent Rankings — AgentCrush' }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=Developer%20Agent%20Rankings&kicker=DEVELOPER&subtitle=GitHub%20activity%2C%20package%20adoption%2C%20ecosystem%20signals', width: 1200, height: 630, alt: 'Developer Agent Rankings — AgentCrush' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Developer Agent Rankings · AgentCrush',
     description: 'Evidence-ranked developer AI agents — GitHub activity, package adoption, ecosystem signals.',
-    images: ['https://agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/api/og?title=Developer%20Agent%20Rankings&kicker=DEVELOPER&subtitle=GitHub%20activity%2C%20package%20adoption%2C%20ecosystem%20signals'],
   },
 }
 

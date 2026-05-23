@@ -13,10 +13,10 @@ export const metadata = {
     description: 'Cross-protocol ranking of AI model families. Evidence-based, transparent methodology.',
     url: 'https://agentcrush.xyz/rankings/model-families',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=Model%20Family%20Rankings&kicker=MODEL%20FAMILIES&subtitle=Cross-protocol%20signals%3A%20HuggingFace%2C%20LMArena%2C%20derivatives%2C%20citations', width: 1200, height: 630 }],
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'Model Family Rankings · AgentCrush', images: ['https://agentcrush.xyz/og-default.png'] },
+  twitter: { card: 'summary_large_image', title: 'Model Family Rankings · AgentCrush', images: ['https://agentcrush.xyz/api/og?title=Model%20Family%20Rankings&kicker=MODEL%20FAMILIES&subtitle=Cross-protocol%20signals%3A%20HuggingFace%2C%20LMArena%2C%20derivatives%2C%20citations'] },
 }
 
 const CAT_COLOR = '#a78bfa'

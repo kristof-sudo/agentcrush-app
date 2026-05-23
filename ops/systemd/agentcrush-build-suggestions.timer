@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily 09:45 Budapest — build-suggestions (after morning brief 08:00 + competitor-watcher 09:15)
+
+[Timer]
+OnCalendar=*-*-* 09:45:00 Europe/Budapest
+Persistent=true
+Unit=agentcrush-build-suggestions.service
+
+[Install]
+WantedBy=timers.target
