@@ -1293,7 +1293,7 @@ export default async function AgentPage({ params }) {
                 Snapshot updated every 4h · <Link href="/methodology" style={{ color: 'rgba(129,140,248,0.6)', textDecoration: 'none' }}>methodology</Link>
               </span>
               <a
-                href={`mailto:flag@agentcrush.xyz?subject=Signal dispute: ${encodeURIComponent(agent.handle)}&body=Agent: ${encodeURIComponent(agent.handle)}%0ASignal: %0AIssue: `}
+                href={`mailto:contact@agentcrush.xyz?subject=Signal dispute: ${encodeURIComponent(agent.handle)}&body=Agent: ${encodeURIComponent(agent.handle)}%0ASignal: %0AIssue: `}
                 style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', color: 'rgba(248,113,113,0.5)', textDecoration: 'none' }}
               >
                 Flag / Dispute
