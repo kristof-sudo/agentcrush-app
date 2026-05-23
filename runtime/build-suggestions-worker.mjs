@@ -312,18 +312,20 @@ async function writeToInbox(fileBody) {
   return outPath;
 }
 
-function sendTelegram(message) {
+function sendTelegram(messageBody) {
   return new Promise((resolve, reject) => {
-    const senderPath = path.join(path.dirname(new URL(import.meta.url).pathname), 'telegram-sender.mjs');
-    const child = spawn('node', [senderPath], {
-      stdio: ['pipe', 'inherit', 'inherit'],
-      env: process.env,
-    });
-    child.stdin.write(message);
-    child.stdin.end();
-    child.on('close', (code) => {
+    // Canonical telegram-sender lives in /opt/agentcrush/tools/ on the VPS
+    // (same path morning-brief uses). Override via env for local testing.
+    const senderPath = process.env.TELEGRAM_SENDER_PATH || '/opt/agentcrush/tools/telegram-sender.mjs';
+    const headerText = `🛠️ AgentCrush build suggestions — ${RUN_DATE}`;
+    const child = spawn(
+      'node',
+      [senderPath, '--message', messageBody, '--header', headerText],
+      { stdio: ['ignore', 'inherit', 'inherit'], env: process.env },
+    );
+    child.on('exit', (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`telegram-sender exited ${code}`));
+      else reject(new Error(`telegram-sender exited with code ${code}`));
     });
     child.on('error', reject);
   });
@@ -359,7 +361,8 @@ async function main() {
     return;
   }
 
-  const tgMessage = `🛠️ AgentCrush build suggestions — ${RUN_DATE}\n\n${telegram}\n\nFull file: brain/Inbox/${RUN_DATE}-build-suggestions.md`;
+  // Header is added by sendTelegram; body = model's telegram block + footer.
+  const tgMessage = `${telegram}\n\nFull file: brain/Inbox/${RUN_DATE}-build-suggestions.md`;
   try {
     await sendTelegram(tgMessage);
     console.log('[build-suggestions] Telegram sent.');
