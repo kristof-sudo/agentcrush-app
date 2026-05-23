@@ -13,14 +13,14 @@ export const metadata = {
     description: '4 category rankings: Developer · Model Families · Tokenized · Service. Evidence-ranked, open methodology.',
     url: 'https://agentcrush.xyz/rankings',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=AI%20Agent%20Rankings&kicker=4%20CATEGORY%20RANKINGS&subtitle=Developer%20-%20Model%20Families%20-%20Tokenized%20-%20Service%20-%20Payments%20Stack', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AI Agent Rankings · AgentCrush',
     description: '4 category rankings: Developer · Model Families · Tokenized · Service.',
-    images: ['https://agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/api/og?title=AI%20Agent%20Rankings&kicker=4%20CATEGORY%20RANKINGS&subtitle=Developer%20-%20Model%20Families%20-%20Tokenized%20-%20Service%20-%20Payments%20Stack'],
   },
 }
 

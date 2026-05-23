@@ -13,10 +13,10 @@ export const metadata = {
     description: 'Tokenized AI agents ranked by economic signals — market cap, liquidity, holders, cross-protocol presence.',
     url: 'https://agentcrush.xyz/rankings/tokenized-agents',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=Tokenized%20Agent%20Rankings&kicker=TOKENIZED&subtitle=Market%20cap%2C%20liquidity%2C%20holders%2C%20TVL%20-%20honeypot-aware', width: 1200, height: 630 }],
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'Tokenized Agent Rankings · AgentCrush', images: ['https://agentcrush.xyz/og-default.png'] },
+  twitter: { card: 'summary_large_image', title: 'Tokenized Agent Rankings · AgentCrush', images: ['https://agentcrush.xyz/api/og?title=Tokenized%20Agent%20Rankings&kicker=TOKENIZED&subtitle=Market%20cap%2C%20liquidity%2C%20holders%2C%20TVL%20-%20honeypot-aware'] },
 }
 
 const CAT_COLOR = '#39ff14'

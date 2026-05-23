@@ -12,7 +12,7 @@ export const metadata = {
     description: 'Ranking moves, ecosystem signals, and protocol activity for the week of May 19–25, 2026.',
     url: 'https://agentcrush.xyz/weekly/2026-W21',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=W21%20-%20May%2019-25%2C%202026&kicker=WEEKLY%20DIGEST&subtitle=Ranking%20moves%2C%20ecosystem%20signals%2C%20protocol%20activity', width: 1200, height: 630 }],
     type: 'article',
     publishedTime: '2026-05-25T00:00:00.000Z',
   },

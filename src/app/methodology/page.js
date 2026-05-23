@@ -13,14 +13,14 @@ export const metadata = {
     description: 'Per-category scoring methodologies for the agent economy. Transparent signals, weights, and evidence-ready rules.',
     url: 'https://agentcrush.xyz/methodology',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush Methodology' }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=AgentCrush%20Methodology&kicker=METHODOLOGY&subtitle=Per-category%20scoring%20for%20the%20agent%20economy.%20Signals%2C%20weights%2C%20limitations.', width: 1200, height: 630, alt: 'AgentCrush Methodology' }],
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AgentCrush Methodology',
     description: 'Per-category scoring methodologies for the agent economy.',
-    images: ['https://agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/api/og?title=AgentCrush%20Methodology&kicker=METHODOLOGY&subtitle=Per-category%20scoring%20for%20the%20agent%20economy.%20Signals%2C%20weights%2C%20limitations.'],
   },
 }
 

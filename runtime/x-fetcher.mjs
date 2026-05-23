@@ -61,7 +61,20 @@ if (!X_BEARER_TOKEN) {
 }
 
 const X_BASE = 'https://api.x.com/2';
-const KEYWORDS = ['agentcrush', 'x402', 'ERC-8004', '"MCP agents"', 'AgentCrush'];
+// Grouped by purpose for legibility. X API charges per call; keep this list
+// curated — each addition adds ~$1/mo at current pay-as-you-go rates.
+// Competitor-by-name monitoring belongs in the `competitor-watcher` Layer 2
+// sub-agent, not here.
+const KEYWORDS = [
+  // brand
+  'agentcrush', 'AgentCrush',
+  // protocols
+  'x402', 'ERC-8004', '"MCP agents"', '"A2A protocol"',
+  // ecosystems we index
+  '"Virtuals Protocol"', 'Agentverse',
+  // by-name watch (high-signal projects)
+  'aixbt', 'CrewAI',
+];
 
 console.log(`[x-fetcher] Mode: ${isDryRun ? 'DRY-RUN' : 'WRITE'}`);
 console.log(`[x-fetcher] Handle: @${X_HANDLE}  Lookback: ${LOOKBACK_HOURS}h`);

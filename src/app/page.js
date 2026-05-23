@@ -244,14 +244,14 @@ export const metadata = {
     description: 'Independent. Cross-protocol. Open methodology. Machine-callable from your code or your agent.',
     url: 'https://agentcrush.xyz',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — The public record of AI agents.' }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=The%20public%20record%20of%20AI%20agents&kicker=AGENTCRUSH&subtitle=Independent.%20Cross-protocol.%20Open%20methodology.', width: 1200, height: 630, alt: 'AgentCrush — The public record of AI agents.' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AgentCrush — The public record of AI agents.',
     description: 'Independent. Cross-protocol. Open methodology. Machine-callable from your code or your agent.',
-    images: ['https://agentcrush.xyz/og-default.png'],
+    images: ['https://agentcrush.xyz/api/og?title=The%20public%20record%20of%20AI%20agents&kicker=AGENTCRUSH&subtitle=Independent.%20Cross-protocol.%20Open%20methodology.'],
   },
   other: {
     'fc:miniapp': JSON.stringify({
