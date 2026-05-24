@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'W21 · May 19–25, 2026 — AgentCrush Weekly',
+  title: 'W21 · May 18–24, 2026 — AgentCrush Weekly',
   description: 'AgentCrush weekly signal digest for W21 2026. Where the four category rankings stand, what shipped, and the protocol signals worth noting.',
   alternates: {
     canonical: 'https://agentcrush.xyz/weekly/2026-W21',
@@ -9,10 +9,10 @@ export const metadata = {
   },
   openGraph: {
     title: 'AgentCrush Weekly · W21 2026',
-    description: 'Where the four category rankings stand, what shipped, and the protocol signals worth noting — week of May 19–25, 2026.',
+    description: 'Where the four category rankings stand, what shipped, and the protocol signals worth noting — week of May 18–24, 2026.',
     url: 'https://agentcrush.xyz/weekly/2026-W21',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/weekly/W21_cover.png', width: 1672, height: 941, alt: 'AgentCrush Weekly Digest — W21, May 19–25, 2026' }],
+    images: [{ url: 'https://agentcrush.xyz/weekly/W21_cover.png', width: 1672, height: 941, alt: 'AgentCrush Weekly Digest — W21, May 18–24, 2026' }],
     type: 'article',
     publishedTime: '2026-05-24T00:00:00.000Z',
   },
@@ -27,7 +27,7 @@ export const metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
-  headline: 'AgentCrush Weekly W21 · May 19–25, 2026',
+  headline: 'AgentCrush Weekly W21 · May 18–24, 2026',
   description: 'Weekly signal digest: where the four category rankings stand, what shipped, and protocol signals.',
   url: 'https://agentcrush.xyz/weekly/2026-W21',
   image: 'https://agentcrush.xyz/weekly/W21_cover.png',
@@ -60,14 +60,14 @@ export default function W21Page() {
         <p className="text-xs font-mono text-white/25 mb-6">
           <Link href="/weekly" className="hover:text-white/50 transition-colors">Weekly</Link>
           <span className="mx-2 text-white/15">/</span>
-          W21 · May 19–25, 2026
+          W21 · May 18–24, 2026
         </p>
 
         {/* Cover */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/weekly/W21_cover.png"
-          alt="AgentCrush Weekly Digest — W21, May 19–25, 2026"
+          alt="AgentCrush Weekly Digest — W21, May 18–24, 2026"
           width={1672}
           height={941}
           className="w-full rounded-xl border border-white/[0.08] mb-8"
@@ -78,7 +78,7 @@ export default function W21Page() {
           Weekly Digest
         </p>
         <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight tracking-tight">
-          W21 · May 19–25, 2026
+          W21 · May 18–24, 2026
         </h1>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-mono text-white/30">
           <span>Published May 24, 2026</span>
