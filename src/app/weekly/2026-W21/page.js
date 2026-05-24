@@ -12,7 +12,7 @@ export const metadata = {
     description: 'Where the four category rankings stand, what shipped, and the protocol signals worth noting — week of May 18–24, 2026.',
     url: 'https://agentcrush.xyz/weekly/2026-W21',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/weekly/W21_cover.png', width: 1536, height: 1024, alt: 'AgentCrush Weekly Digest — W21, May 18–24, 2026' }],
+    images: [{ url: 'https://agentcrush.xyz/weekly/W21_cover.png', width: 1729, height: 910, alt: 'AgentCrush Weekly Digest — W21, May 18–24, 2026' }],
     type: 'article',
     publishedTime: '2026-05-24T00:00:00.000Z',
   },
@@ -68,8 +68,8 @@ export default function W21Page() {
         <img
           src="/weekly/W21_cover.png"
           alt="AgentCrush Weekly Digest — W21, May 18–24, 2026"
-          width={1536}
-          height={1024}
+          width={1729}
+          height={910}
           className="w-full rounded-xl border border-white/[0.08] mb-8"
         />
 
