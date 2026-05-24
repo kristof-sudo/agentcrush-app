@@ -55,6 +55,15 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(RUN_DATE)) {
   process.exit(2);
 }
 
+// Deterministic weekday — computed here so the LLM never has to infer it.
+// Bug fixed 2026-05-24: brief reasoned from the wrong day-of-week (said
+// "Saturday" on a Sunday), which fed bad cadence/posture logic. Anchor to
+// UTC noon to avoid any DST/midnight-boundary drift.
+const RUN_WEEKDAY = new Date(`${RUN_DATE}T12:00:00Z`).toLocaleDateString('en-US', {
+  weekday: 'long',
+  timeZone: 'UTC',
+});
+
 // ── Env ───────────────────────────────────────────────────────────────────────
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -285,7 +294,7 @@ function buildUserPrompt(inputs) {
   const stalenessNote = inputs.neynarStaleness ? `\n\n⚠️ DATA NOTE: ${inputs.neynarStaleness}\n` : '';
   const xNote = inputs.xData ? '' : '\n\n📝 NOTE: No X data today. X Bearer Token may not be live yet — proceed with Farcaster only.\n';
 
-  return `Today's date is ${RUN_DATE}.${stalenessNote}${xNote}
+  return `Today is ${RUN_WEEKDAY}, ${RUN_DATE}. Use this weekday exactly — do not infer or recompute it.${stalenessNote}${xNote}
 
 ═══════════════════════════════════════════════════════════════════════════════
 CURRENT PRODUCT STATE (STATE.md — what shipped this week, what's queued)
