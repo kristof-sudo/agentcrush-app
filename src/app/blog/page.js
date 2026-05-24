@@ -36,7 +36,7 @@ const POSTS = [
   },
 ]
 
-const TABS = ['All', 'Findings', 'Updates', 'Weekly Digest']
+const TABS = ['All', 'Findings', 'Updates']
 
 const CATEGORY_COLORS = {
   Findings: '#e91e80',
@@ -62,6 +62,24 @@ export default function BlogIndexPage() {
           Field notes on the agent economy, x402 commerce, and building AgentCrush.
         </p>
       </div>
+
+      {/* Weekly Digest window */}
+      <Link
+        href="/weekly"
+        className="group block rounded-lg border border-[#00d4ff]/20 bg-[#00d4ff]/[0.04] px-5 py-4 mb-8 hover:border-[#00d4ff]/40 hover:bg-[#00d4ff]/[0.07] transition-colors"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#00d4ff]/80 mb-1">
+              Weekly Digest
+            </p>
+            <p className="text-sm text-white/60 leading-relaxed">
+              The live index distilled every week — ranking standings, what shipped, protocol signals.
+            </p>
+          </div>
+          <span className="text-[#00d4ff]/70 group-hover:text-[#00d4ff] transition-colors text-lg shrink-0">→</span>
+        </div>
+      </Link>
 
       {/* Category filter */}
       <div className="flex flex-wrap gap-2 mb-8">

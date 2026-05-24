@@ -12,8 +12,8 @@ export const metadata = {
 const ISSUES = [
   {
     week: '2026-W21',
-    label: 'W21 · May 19–25, 2026',
-    summary: 'Ranking shifts across all four categories, first multi-protocol agent milestone, x402 payment activity.',
+    label: 'W21 · May 18–24, 2026',
+    summary: 'Where the four category rankings stand, the Agent Payments Stack index goes live, and confidence tiers ship on every score.',
     href: '/weekly/2026-W21',
   },
 ]
