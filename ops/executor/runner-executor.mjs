@@ -2,11 +2,24 @@
 
 import fs from 'fs'
 import path from 'path'
-import { execSync } from 'child_process'
 import crypto from 'crypto'
+import { execFileSync } from 'child_process'
+
+console.log('EXECUTOR START')
 
 function run(cmd, cwd = null) {
-  return execSync(cmd, { cwd: cwd || process.cwd(), stdio: 'pipe' }).toString().trim()
+  const parts = cmd.split(' ')
+  const command = parts[0]
+  const args = parts.slice(1)
+
+  return execFileSync(command, args, {
+    cwd: cwd || process.cwd(),
+    stdio: 'pipe',
+    env: {
+      ...process.env,
+      PATH: '/usr/bin:/bin:/usr/local/bin'
+    }
+  }).toString().trim()
 }
 
 function ensureDir(p) {
@@ -60,24 +73,53 @@ const task = JSON.parse(fs.readFileSync(taskFile,'utf-8'))
 const reportsRoot = config.report_output_dir
 const taskId = task.task_id
 
+console.log('RUNNING STEP A')
+
 // STEP A
 try {
-  const status = run('git status --porcelain', config.repo_source_path)
-  if (status.length) fail(reportsRoot, taskId, 'A', 'repo not clean', { git_status: status })
+  run('git fetch', config.repo_source_path)
   ok(reportsRoot, taskId, 'A')
-} catch(e){ fail(reportsRoot, taskId, 'A', String(e)) }
+} catch(e){
+  fail(reportsRoot, taskId, 'A', String(e))
+}
+
+console.log('RUNNING STEP B')
 
 // STEP B
 const workspace = path.join(config.executor_workspace_root, taskId)
 try {
   if (fs.existsSync(workspace)) fs.rmSync(workspace,{recursive:true,force:true})
   run(`git clone --branch ${config.allowed_branch} --single-branch ${config.repo_source_path} ${workspace}`)
-  run(`git apply ${task.patch_file}`, workspace)
 
-  const changed = run('git diff --name-only', workspace).split('\n').map(s => s.trim()).filter(Boolean)
-  if (changed.length !== 1 || changed[0] !== task.target_repo_file) {
-    fail(reportsRoot, taskId, 'B', 'unexpected changed files after patch', { changed })
+  const filePath = task.file_path
+  const expectedHash = task.expected_hash
+  const newContent = task.full_content
+
+  if (!filePath || !expectedHash || !newContent) {
+    fail(reportsRoot, taskId, 'B', 'missing file_write fields')
   }
+
+  if (!filePath.startsWith('src/')) {
+    fail(reportsRoot, taskId, 'B', 'path not allowed', { filePath })
+  }
+
+  const fullPath = path.join(workspace, filePath)
+
+  if (!fs.existsSync(fullPath)) {
+    fail(reportsRoot, taskId, 'B', 'file not found', { filePath })
+  }
+
+  const currentContent = fs.readFileSync(fullPath, 'utf8')
+  const currentHash = crypto.createHash('sha256').update(currentContent).digest('hex')
+
+  if (currentHash !== expectedHash) {
+    fail(reportsRoot, taskId, 'B', 'hash mismatch', {
+      expected: expectedHash,
+      actual: currentHash
+    })
+  }
+
+  fs.writeFileSync(fullPath, newContent, 'utf8')
 
   ok(reportsRoot, taskId, 'B', { workspace })
 } catch(e){ fail(reportsRoot, taskId, 'B', String(e)) }
@@ -85,8 +127,13 @@ try {
 // STEP C
 let commitSha
 try {
-  run(`git add ${task.target_repo_file}`, workspace)
-  run(`git -c user.name="executor" -c user.email="executor@local" commit -m "${task.commit_message}"`, workspace)
+  run(`git add ${task.file_path}`, workspace)
+
+  run(
+    `git -c user.name="executor" -c user.email="executor@local" commit -m "${task.commit_message || 'executor: file update'}"`,
+    workspace
+  )
+
   commitSha = run('git rev-parse HEAD', workspace)
 
   const clean = run('git status --porcelain', workspace)
@@ -98,30 +145,16 @@ try {
 // STEP D
 let releaseSha
 try {
-  const repoRemoteUrl = run('git remote get-url origin', config.repo_source_path)
-  run(`git remote set-url origin ${repoRemoteUrl}`, workspace)
-  run('git fetch origin', workspace)
-
-  const releaseBranch = `executor-release-${taskId}`
-  run(`git checkout -B ${releaseBranch} origin/${task.push_branch}`, workspace)
-  run(`git cherry-pick ${commitSha}`, workspace)
+  // force correct GitHub remote
+  run(`git remote set-url origin https://github.com/kristof-sudo/agentcrush-app.git`, workspace)
 
   releaseSha = run('git rev-parse HEAD', workspace)
 
-  const cleanAfterCherry = run('git status --porcelain', workspace)
-  if (cleanAfterCherry.length) {
-    fail(reportsRoot, taskId, 'D', 'workspace not clean after cherry-pick', { git_status: cleanAfterCherry })
-  }
-
-  run(`git push origin HEAD:${task.push_branch}`, workspace)
-  run(`bash ${config.deploy_script_path}`, config.repo_source_path)
+  run(`git push origin HEAD:${config.allowed_branch}`, workspace)
 
   ok(reportsRoot, taskId, 'D', {
-    original_commit_sha: commitSha,
     release_sha: releaseSha,
-    pushed_to: task.push_branch,
-    origin_url: repoRemoteUrl,
-    release_branch: releaseBranch
+    pushed_to: config.allowed_branch
   })
 } catch(e){ fail(reportsRoot, taskId, 'D', String(e)) }
 

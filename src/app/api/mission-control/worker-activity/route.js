@@ -6,10 +6,15 @@ const supabase = createClient(
 )
 
 const WORKERS = [
-  { label: 'Iris', runner: 'canon_enqueuer' },
-  { label: 'Caspian', runner: 'x_selector' },
-  { label: 'Zhao', runner: 'copydesk' },
-  { label: 'Mateo', runner: 'x_publisher' },
+  { label: 'Scanner',    runner: 'x_scanner' },
+  { label: 'Selector',   runner: 'x_selector' },
+  { label: 'CopyDesk',   runner: 'copydesk' },
+  { label: 'Notifier',   runner: 'approval_notifier' },
+  { label: 'Listener',   runner: 'approval_listener' },
+  { label: 'Publisher',  runner: 'x_publisher' },
+  { label: 'Briefing',   runner: 'briefing_worker' },
+  { label: 'Canon',      runner: 'canon_enqueuer' },
+  { label: 'Canonkeeper',runner: 'canonkeeper' },
 ]
 
 export async function GET() {

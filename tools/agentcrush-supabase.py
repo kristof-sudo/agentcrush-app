@@ -20,6 +20,7 @@ ALLOWED_ACTIONS = {
     "reschedule_post_by_id",
     "resolve_alert_by_id",
    "interaction_jobs_summary",
+    "spend_summary",
 }
 
 
@@ -260,6 +261,56 @@ def reschedule_post_by_id(base, key):
         "new_time": new_time_iso,
     }
 
+def spend_summary(base, key):
+    now = datetime.datetime.now(datetime.UTC)
+    month_start = f"{now.year}-{now.month:02d}-01T00:00:00"
+
+    # X today — read from state file (resets daily)
+    x_today = 0.0
+    try:
+        import json as _json
+        state = _json.loads(Path("/opt/agentcrush/state/x_api_cost.json").read_text())
+        x_today = float(state.get("estimated_usd", 0.0))
+    except Exception:
+        pass
+
+    # X MTD — sum x_api_cost_usd from scanner runs this month
+    scanner_runs = api_get(base, key, "runs", {
+        "select": "meta",
+        "runner": "eq.x_scanner",
+        "status": "eq.ok",
+        "created_at": f"gte.{month_start}",
+        "limit": "5000",
+    })
+    x_mtd = sum(
+        float((r.get("meta") or {}).get("x_api_cost_usd", 0) or 0)
+        for r in (scanner_runs or [])
+    )
+
+    # OpenAI MTD — sum tokens from copydesk_outputs this month
+    oai_rows = api_get(base, key, "copydesk_outputs", {
+        "select": "tokens_in,tokens_out",
+        "created_at": f"gte.{month_start}",
+        "limit": "5000",
+    })
+    tok_in = sum(int(r.get("tokens_in") or 0) for r in (oai_rows or []))
+    tok_out = sum(int(r.get("tokens_out") or 0) for r in (oai_rows or []))
+    # gpt-4o-mini pricing: $0.15/1M in, $0.60/1M out (conservative default)
+    oai_mtd = tok_in * 0.15 / 1_000_000 + tok_out * 0.60 / 1_000_000
+
+    combined_mtd = x_mtd + oai_mtd
+
+    return {
+        "x_today_usd": round(x_today, 3),
+        "x_mtd_usd": round(x_mtd, 2),
+        "oai_mtd_usd": round(oai_mtd, 2),
+        "combined_mtd_usd": round(combined_mtd, 2),
+        "oai_tok_in": tok_in,
+        "oai_tok_out": tok_out,
+        "month": f"{now.year}-{now.month:02d}",
+    }
+
+
 DISPATCH = {
     "scheduled_posts_summary": scheduled_posts_summary,
     "copydesk_jobs_summary": copydesk_jobs_summary,
@@ -272,6 +323,7 @@ DISPATCH = {
     "reschedule_post_by_id": reschedule_post_by_id,
     "resolve_alert_by_id": resolve_alert_by_id,
    "interaction_jobs_summary": interaction_jobs_summary,
+    "spend_summary": spend_summary,
 }
 
 

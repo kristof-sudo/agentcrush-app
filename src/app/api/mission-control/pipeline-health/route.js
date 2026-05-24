@@ -71,7 +71,8 @@ export async function GET() {
       alerts.push({
         key: 'selector',
         label: 'Selector backlog',
-        description: 'Interaction jobs have been waiting too long for decision.',
+        description: `${selectorStuck.length} signal${selectorStuck.length > 1 ? 's' : ''} waiting >${THRESHOLDS.selectorMinutes}min for ranking.`,
+        action: 'Run: systemctl start x-selector.service',
         count: selectorStuck.length,
         severity: 'warning',
       })
@@ -81,7 +82,8 @@ export async function GET() {
       alerts.push({
         key: 'copydesk',
         label: 'CopyDesk stalled',
-        description: 'Writing jobs are queued or processing longer than expected.',
+        description: `${copydeskStuck.length} writing job${copydeskStuck.length > 1 ? 's' : ''} stuck >${THRESHOLDS.copydeskMinutes}min.`,
+        action: 'Check: journalctl -u copydesk.service -n 20 — then use Retry Job below',
         count: copydeskStuck.length,
         severity: 'warning',
       })
@@ -91,7 +93,8 @@ export async function GET() {
       alerts.push({
         key: 'approval',
         label: 'Approval overdue',
-        description: 'Posts have been waiting too long for operator approval.',
+        description: `${approvalStuck.length} post${approvalStuck.length > 1 ? 's' : ''} waiting >${THRESHOLDS.approvalMinutes}min for approval.`,
+        action: 'Approve or reject posts in the Approval Queue above',
         count: approvalStuck.length,
         severity: 'warning',
       })
@@ -101,7 +104,8 @@ export async function GET() {
       alerts.push({
         key: 'publish',
         label: 'Publish overdue',
-        description: 'Approved posts missed their intended publishing window.',
+        description: `${publishStuck.length} approved post${publishStuck.length > 1 ? 's' : ''} missed publishing window.`,
+        action: 'Run: systemctl start x-publisher.service — check for X API errors',
         count: publishStuck.length,
         severity: 'critical',
       })

@@ -47,12 +47,11 @@ const PERSISTENT_ALERT_COOLDOWN_MS = 2 * 60 * 60 * 1000;
 const QUIET_START = 23;
 const QUIET_END = 7;
 
-// X API cost estimate — scanner doesn't log to DB, so use the state file run count.
-const CALLS_PER_SCANNER_RUN = 5 + 47 + 1; // 5 search queries + 47 watchlist + 1 reply scan
-const COST_PER_CALL_USD = 0.0033;
-// Weekdays target $2-2.5/day, so alert earlier. Weekends allow up to $4.50.
-const DAILY_COST_ALERT_THRESHOLD_WEEKDAY = 3.50;
-const DAILY_COST_ALERT_THRESHOLD_WEEKEND = 4.00;
+// X API cost alert threshold — must be below the hard cap ($2.00) and ideally between
+// scanner sub-cap ($1.40) and buffer cap ($1.90), so it fires only when real spend is elevated.
+// Alert at $1.50 (above scanner cap, below buffer cap): scanner already throttled by cap system,
+// but total budget is still available for output workers.
+const COST_ALERT_THRESHOLD_USD = 1.50;
 
 const MONTHLY_BUDGET_FILE = "/opt/agentcrush/state/monthly_budget.json";
 const X_API_COST_FILE = "/opt/agentcrush/state/x_api_cost.json";
@@ -81,20 +80,12 @@ function isQuietHours() {
   return h >= QUIET_START || h < QUIET_END;
 }
 
-function isWeekend() {
-  const day = new Date().getUTCDay(); // 0=Sun, 6=Sat
-  return day === 0 || day === 6;
-}
 
 function todayUTC() {
   const d = new Date();
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
-function startOfDayUTC() {
-  const d = new Date();
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString();
-}
 
 async function sendOpsMessage(text) {
   if (!TELEGRAM_OPS_BOT_TOKEN || !TELEGRAM_OPS_CHAT_ID) return;
@@ -141,33 +132,20 @@ function readXApiCapState() {
   return { paused: !!data.paused, estimatedUsd: data.estimated_usd ?? 0, callsToday: data.calls_today ?? 0 };
 }
 
-async function estimateDailyCost() {
-  // Scanner doesn't log to DB — use the last_run state file and activity-level interval
-  // to estimate runs today instead.
-  const scannerState = readJsonSafe(SCANNER_LAST_RUN_FILE, null);
-  if (!scannerState?.last_run) return null;
+function estimateDailyCost() {
+  // Use the same state file as the cap system — actual tracked spend, no projections.
+  const data = readJsonSafe(X_API_COST_FILE, null);
+  if (!data || data.date !== todayUTC()) return null;
 
-  const since = startOfDayUTC();
-  const sinceMs = new Date(since).getTime();
-  const lastRunMs = new Date(scannerState.last_run).getTime();
-
-  // Estimate: assume 120-min average interval on weekdays (NORMAL weekday baseline), 90-min on weekends
-  const avgIntervalMs = (isWeekend() ? 90 : 120) * 60 * 1000;
-  const elapsedMs = Date.now() - sinceMs;
-  const estimatedRunsToday = Math.max(1, Math.round(elapsedMs / avgIntervalMs));
-
-  const callsToday = estimatedRunsToday * CALLS_PER_SCANNER_RUN;
-  const costSoFar = callsToday * COST_PER_CALL_USD;
-  const hourOfDay = new Date().getUTCHours();
-  const projectedDailyCost = hourOfDay > 0 ? (costSoFar / hourOfDay) * 24 : costSoFar;
-
+  const actualUsd = data.estimated_usd ?? 0;
   return {
-    scanner_last_run: scannerState.last_run,
-    estimated_runs_today: estimatedRunsToday,
-    estimated_cost_so_far: Number(costSoFar.toFixed(2)),
-    projected_daily_cost: Number(projectedDailyCost.toFixed(2)),
-    over_threshold: projectedDailyCost > (isWeekend() ? DAILY_COST_ALERT_THRESHOLD_WEEKEND : DAILY_COST_ALERT_THRESHOLD_WEEKDAY),
-    threshold_used: isWeekend() ? DAILY_COST_ALERT_THRESHOLD_WEEKEND : DAILY_COST_ALERT_THRESHOLD_WEEKDAY,
+    calls_today: data.calls_today ?? 0,
+    actual_cost_usd: +actualUsd.toFixed(4),
+    scanner_cap_usd: 1.40,
+    buffer_cap_usd: 1.90,
+    over_threshold: actualUsd >= COST_ALERT_THRESHOLD_USD,
+    threshold_used: COST_ALERT_THRESHOLD_USD,
+    scanner_paused: !!(data.paused),
   };
 }
 
@@ -192,7 +170,7 @@ async function main() {
     if (!latest[row.runner]) latest[row.runner] = row;
   }
 
-  const costEstimate = await estimateDailyCost();
+  const costEstimate = estimateDailyCost();
   if (costEstimate) {
     console.log(`cost estimate: ${JSON.stringify(costEstimate)}`);
   }
@@ -340,7 +318,7 @@ async function main() {
     const summary = [
       healed.length > 0 ? `${healed.length} healed` : null,
       timerIssues.length > 0 ? `${timerIssues.length} timer(s) fixed` : null,
-      costEstimate ? `projected $${costEstimate.projected_daily_cost}/day` : null,
+      costEstimate ? `actual $${costEstimate.actual_cost_usd} today (${costEstimate.calls_today} calls)` : null,
     ].filter(Boolean).join(", ");
     console.log(`health-check complete: ${summary || "all workers healthy"}`);
     return;
@@ -392,8 +370,9 @@ async function main() {
     }
 
     lines.push(
-      `\n💸 X API Cost Alert: projected $${costEstimate.projected_daily_cost}/day ` +
-      `(threshold $${costEstimate.threshold_used}) | est. runs today: ${costEstimate.estimated_runs_today}` +
+      `\n💸 X API Cost Alert: actual $${costEstimate.actual_cost_usd} today` +
+      ` (${costEstimate.calls_today} calls, threshold $${costEstimate.threshold_used})` +
+      ` | scanner_cap=$${costEstimate.scanner_cap_usd} buffer_cap=$${costEstimate.buffer_cap_usd}` +
       ` | scanner throttled to 3h for rest of day`
     );
   }

@@ -1,5 +1,5 @@
 {
-  "repo_source_path": "/root/agentcrush-app",
+  "repo_source_path": "https://github.com/kristof-sudo/agentcrush-app.git",
   "allowed_branch": "main",
   "allowed_release_lane": "direct_deploy_v1",
   "runtime_target_file": "/opt/agentcrush/selector/x-selector-worker.mjs",

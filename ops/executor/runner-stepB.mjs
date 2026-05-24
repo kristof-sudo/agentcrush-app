@@ -3,6 +3,11 @@
 import fs from 'fs'
 import path from 'path'
 import { execSync } from 'child_process'
+import crypto from 'crypto'
+
+function sha256(content) {
+  return crypto.createHash('sha256').update(content).digest('hex')
+}
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -46,6 +51,7 @@ if (!taskFile) {
 const config = JSON.parse(
   fs.readFileSync(path.resolve('ops/executor/config.v1.json'), 'utf-8'),
 )
+
 const task = JSON.parse(fs.readFileSync(taskFile, 'utf-8'))
 
 if (!config.report_output_dir) {
@@ -55,16 +61,13 @@ if (!config.report_output_dir) {
 
 const reportPath = path.join(config.report_output_dir, `${task.task_id}.json`)
 
-// --- BASIC VALIDATION ---
-if (!task.patch_file) fail('patch_apply', 'Missing patch_file', reportPath)
-if (!fs.existsSync(task.patch_file)) {
-  fail('patch_apply', 'Patch file not found', reportPath)
+// --- VALIDATION (NEW CONTRACT) ---
+if (!task.file_path || !task.expected_hash || !task.full_content) {
+  fail('file_write', 'Missing required file_write fields', reportPath)
 }
-if (!task.target_repo_file) {
-  fail('patch_apply', 'Missing target_repo_file', reportPath)
-}
-if (Array.isArray(task.target_repo_file)) {
-  fail('patch_apply', 'Multiple target repo files not allowed', reportPath)
+
+if (Array.isArray(task.file_path)) {
+  fail('file_write', 'Multiple file edits not allowed', reportPath)
 }
 
 // --- WORKSPACE SETUP ---
@@ -86,7 +89,7 @@ try {
   })
 }
 
-// --- VERIFY WORKSPACE CLEAN ---
+// --- VERIFY CLEAN ---
 try {
   const status = run('git status --porcelain', workspaceDir)
   if (status.length > 0) {
@@ -100,33 +103,40 @@ try {
   })
 }
 
-// --- PATCH VALIDATION ---
-const patchContent = fs.readFileSync(task.patch_file, 'utf-8')
-const files = [...patchContent.matchAll(/^\+\+\+ b\/(.+)$/gm)].map((m) => m[1])
-
-if (files.length !== 1) {
-  fail('patch_apply', 'Patch must affect exactly one file', reportPath, {
-    patch_files: files,
-  })
-}
-
-if (files[0] !== task.target_repo_file) {
-  fail('patch_apply', 'Patch file mismatch with target_repo_file', reportPath, {
-    patch_file: files[0],
-    target_repo_file: task.target_repo_file,
-  })
-}
-
-// --- APPLY PATCH ---
+// --- FILE WRITE (DETERMINISTIC) ---
 try {
-  run(`git apply ${task.patch_file}`, workspaceDir)
+  const filePath = task.file_path
+
+  // allowlist (tight)
+  if (!filePath.startsWith('src/')) {
+    fail('file_write', 'Path not allowed', reportPath, { filePath })
+  }
+
+  const fullPath = path.join(workspaceDir, filePath)
+
+  if (!fs.existsSync(fullPath)) {
+    fail('file_write', 'Target file does not exist', reportPath, { filePath })
+  }
+
+  const currentContent = fs.readFileSync(fullPath, 'utf8')
+  const currentHash = sha256(currentContent)
+
+  if (currentHash !== task.expected_hash) {
+    fail('file_write', 'Hash mismatch', reportPath, {
+      expected: task.expected_hash,
+      actual: currentHash,
+    })
+  }
+
+  fs.writeFileSync(fullPath, task.full_content, 'utf8')
+
 } catch (e) {
-  fail('patch_apply', 'git apply failed', reportPath, {
+  fail('file_write', 'File write failed', reportPath, {
     error: String(e?.message || e),
   })
 }
 
-// --- VERIFY PATCH RESULT ---
+// --- VERIFY CHANGE ---
 try {
   const changedRaw = run('git diff --name-only', workspaceDir)
   const changedFiles = changedRaw
@@ -135,19 +145,20 @@ try {
     .filter(Boolean)
 
   if (changedFiles.length !== 1) {
-    fail('patch_apply', 'Unexpected number of changed files after patch', reportPath, {
+    fail('file_write', 'Unexpected number of changed files', reportPath, {
       changed_files: changedFiles,
     })
   }
 
-  if (changedFiles[0] !== task.target_repo_file) {
-    fail('patch_apply', 'Changed file mismatch after patch', reportPath, {
+  if (changedFiles[0] !== task.file_path) {
+    fail('file_write', 'Changed file mismatch', reportPath, {
       changed_file: changedFiles[0],
-      target_repo_file: task.target_repo_file,
+      expected: task.file_path,
     })
   }
+
 } catch (e) {
-  fail('patch_apply', 'Post-patch validation failed', reportPath, {
+  fail('file_write', 'Post-write validation failed', reportPath, {
     error: String(e?.message || e),
   })
 }

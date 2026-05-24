@@ -67,73 +67,43 @@ export async function POST(request) {
     }
 
     if (action === 'approve_scheduled_post') {
-      const approvedAt = new Date().toISOString()
       const supabase = getSupabaseAdmin()
-      const missingSupabaseEnv =
-        !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY
-      const localTestMode = process.env.NODE_ENV !== "production" && missingSupabaseEnv
-
-      if (process.env.NODE_ENV === "production" && !supabase) {
-        throw new Error("Missing Supabase admin env")
+      if (!supabase) {
+        throw new Error('Missing Supabase admin env')
       }
 
-      if (!localTestMode) {
-        const { error } = await supabase
-          .from('scheduled_posts')
-          .update({
-            approved: true,
-            publish_ready: true,
-            approved_at: approvedAt,
-            approved_by: 'mission_control',
-          })
-          .eq('id', targetId)
+      const { error } = await supabase
+        .from('scheduled_posts')
+        .update({
+          approved: true,
+          publish_ready: true,
+          approved_at: new Date().toISOString(),
+          approved_by: 'mission_control',
+        })
+        .eq('id', targetId)
 
-        if (error) throw error
-      }
+      if (error) throw error
 
-      const repo = 'kristof-sudo/agentcrush-app'
-      if (!pr) {
-        throw new Error("Missing PR number for ship trigger")
-      }
-
-      console.log("APPROVAL → SHIP", {
-        repo,
-        pr,
-        action,
-        targetId,
-        timestamp: new Date().toISOString()
-      })
-
-      if (!process.env.NEXT_SHIP_BASE_URL) {
-        throw new Error("Missing NEXT_SHIP_BASE_URL")
-      }
-
-      const shipRes = await fetch(new URL("/ship", process.env.NEXT_SHIP_BASE_URL), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repo, pr, approved: true })
-      })
-
-      const shipData = await shipRes.json()
-
-      if (!shipRes.ok) {
-        throw new Error(shipData.error || 'Ship trigger failed')
-      }
-
-      if (localTestMode) {
+      // Only trigger ship deploy if a PR number was explicitly provided
+      if (pr && process.env.NEXT_SHIP_BASE_URL) {
+        const repo = 'kristof-sudo/agentcrush-app'
+        const shipRes = await fetch(new URL('/ship', process.env.NEXT_SHIP_BASE_URL), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ repo, pr, approved: true }),
+        })
+        const shipData = await shipRes.json()
+        if (!shipRes.ok) {
+          throw new Error(shipData.error || 'Ship trigger failed')
+        }
         return Response.json({
           success: true,
-          local_test_mode: true,
-          supabase_skipped: true,
+          message: 'Post approved and ship triggered',
           ship: shipData,
         })
       }
 
-      return Response.json({
-        success: true,
-        message: 'Scheduled post approved and ship triggered',
-        ship: shipData,
-      })
+      return Response.json({ success: true, message: 'Post approved' })
     }
 
     if (action === 'reject_scheduled_post') {

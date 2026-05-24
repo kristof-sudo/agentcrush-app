@@ -43,11 +43,11 @@ systemctl restart approval-notifier.timer || true
 systemctl restart approval-listener.timer || true
 systemctl restart x-publisher.timer || true
 systemctl restart canon-enqueuer.timer || true
-systemctl restart canonkeeper.timer || true
+systemctl restart agentcrush-github-snapshot.timer || true
 
 echo "[4] Health check"
 sleep 2
-systemctl list-timers --all | egrep 'x-scanner|x-selector|copydesk|canon-enqueuer|scheduler-prep|approval-notifier|approval-listener|x-publisher|canonkeeper' || true
+systemctl list-timers --all | egrep 'x-scanner|x-selector|copydesk|canon-enqueuer|scheduler-prep|approval-notifier|approval-listener|x-publisher|agentcrush-github-snapshot' || true
 for svc in \
   x-scanner.service \
   x-selector.service \
@@ -57,7 +57,7 @@ for svc in \
   approval-notifier.service \
   approval-listener.service \
   x-publisher.service \
-  canonkeeper.service
+  agentcrush-github-snapshot.service
 do
   printf "%-28s" "$svc"
   systemctl is-enabled "$svc" 2>/dev/null | tr '\n' ' '

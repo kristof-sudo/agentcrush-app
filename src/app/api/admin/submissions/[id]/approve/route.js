@@ -79,6 +79,7 @@ export async function POST(_req, context) {
         bio: payload.bio || null,
         avatar_url: payload.avatar_url || null,
         status: 'active',
+        entity_type: 'agent',
         visibility_score: 46,
         reputation_score: 44,
         weekly_delta: 0,

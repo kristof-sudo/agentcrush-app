@@ -59,9 +59,9 @@ set -a
 source /opt/agentcrush/copydesk/.env
 set +a
 
-curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_OPS_BOT_TOKEN}/sendMessage" \
   -H "Content-Type: application/json" \
   -d "{
-    \"chat_id\": \"${TELEGRAM_CHAT_ID}\",
+    \"chat_id\": \"${TELEGRAM_OPS_CHAT_ID}\",
     \"text\": \"${OUTPUT}\"
   }" > /dev/null

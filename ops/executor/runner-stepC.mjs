@@ -93,17 +93,26 @@ try {
   })
 }
 
-// --- COMMIT ---
+// --- COMMIT + PUSH ---
 let commitSha = null
 try {
-  run(`git add ${task.target_repo_file}`, workspaceDir)
+  run(`git add ${task.file_path}`, workspaceDir)
+
   run(
-    `git -c user.name="executor" -c user.email="executor@local" commit -m "${task.commit_message}"`,
+    `git -c user.name="executor" -c user.email="executor@local" commit -m "${task.commit_message || 'executor: file update'}"`,
     workspaceDir,
   )
+
   commitSha = run('git rev-parse HEAD', workspaceDir)
+
+  // ensure correct remote
+  run(`git remote set-url origin https://github.com/kristof-sudo/agentcrush-app.git`, workspaceDir)
+
+  // push to GitHub
+  run(`git push origin HEAD:${config.allowed_branch}`, workspaceDir)
+
 } catch (e) {
-  fail('commit', 'Commit failed', reportPath, {
+  fail('commit_push', 'Commit or push failed', reportPath, {
     error: String(e?.message || e),
   })
 }

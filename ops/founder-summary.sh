@@ -34,6 +34,12 @@ check_unit() {
 scheduled_json="$(python3 tools/agentcrush-supabase.py scheduled_posts_summary 2>/dev/null || true)"
 alerts_json="$(python3 tools/agentcrush-supabase.py alerts_open 2>/dev/null || true)"
 runs_json="$(python3 tools/agentcrush-supabase.py runs_recent 2>/dev/null || true)"
+spend_json="$(python3 tools/agentcrush-supabase.py spend_summary 2>/dev/null || true)"
+
+x_today_usd="$(printf '%s' "$spend_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"\${d.get('result',{}).get('x_today_usd','?'):.3f}\")" 2>/dev/null || echo '?')"
+x_mtd_usd="$(printf '%s' "$spend_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"\${d.get('result',{}).get('x_mtd_usd','?'):.2f}\")" 2>/dev/null || echo '?')"
+oai_mtd_usd="$(printf '%s' "$spend_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"\${d.get('result',{}).get('oai_mtd_usd','?'):.2f}\")" 2>/dev/null || echo '?')"
+combined_mtd_usd="$(printf '%s' "$spend_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"\${d.get('result',{}).get('combined_mtd_usd','?'):.2f}\")" 2>/dev/null || echo '?')"
 
 queued_count="$(printf '%s' "$scheduled_json" | grep -c '"status": "queued"' || true)"
 sent_count="$(printf '%s' "$scheduled_json" | grep -c '"status": "sent"' || true)"
@@ -88,13 +94,19 @@ $PIPELINE_BLOCK
 - cancelled posts in window: $cancelled_count
 - approval waiting count: $approved_waiting_count
 
-[4] Risk signals
+[4] Estimated spend
+- X today: \$$x_today_usd
+- X month-to-date: \$$x_mtd_usd
+- OpenAI month-to-date: \$$oai_mtd_usd
+- Combined month-to-date: \$$combined_mtd_usd
+
+[5] Risk signals
 - open alerts: $open_alerts_count
 - recent failed runs: $failed_runs_count
 - scanner 402/rate issues (24h): $scanner_402
 - scanner runs (24h): $scanner_runs
 
-[5] Issues"
+[6] Issues"
 
 if [ "${#ISSUES[@]}" -eq 0 ]; then
   OUTPUT="$OUTPUT
@@ -116,7 +128,7 @@ fi
 
 OUTPUT="$OUTPUT
 
-[6] Recommendation
+[7] Recommendation
 - $RECOMMENDATION"
 
 printf '%s\n' "$OUTPUT"

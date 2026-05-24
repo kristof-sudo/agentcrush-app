@@ -23,8 +23,7 @@ export async function GET() {
       `)
       .eq('approved', false)
       .eq('status', 'queued')
-      .not('approval_requested_at', 'is', null)
-      .order('approval_requested_at', { ascending: false })
+      .order('created_at', { ascending: true })
       .limit(20)
 
     if (error) throw error
