@@ -663,7 +663,7 @@ function buildRow(agent, repoData, result, fetchErrors, now, snapshotDate) {
       components: result.components,
     },
     errors:     fetchErrors,
-    raw:        rawMeta,
+    raw:        rawMeta ?? {},
     updated_at: now,
   };
 }
