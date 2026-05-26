@@ -58,3 +58,4 @@ ops/logs/
 .claude/worktrees/
 runtime/brain-mcp/node_modules/
 runtime/mobile-qa/node_modules/
+.claude/settings.local.json

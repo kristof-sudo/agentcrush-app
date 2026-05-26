@@ -8,6 +8,12 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-05-26
+- `migrations/20260526_1000_confidence_tier_all_categories.sql` — Extends confidence_tier wrapper pattern (established in 20260523_0753) to remaining 3 categories. Creates `agent_score_tokenized_v1_with_confidence` (6 signals), `agent_score_service_v1_with_confidence` (6 signals), and `agent_score_developer_v2c_with_confidence` (developer uses active_weight_total fraction directly, cutoffs ≥0.95/0.75/0.55). All non-destructive CREATE OR REPLACE VIEW — base views unchanged. Completes Caliber-inspired structural primitive across all 4 category scoring views.
+  **STATUS: PENDING — apply in Supabase SQL editor.**
+- `migrations/20260526_1100_risk_flags_view.sql` — Risk flags infrastructure. Caliber methodology follow-up (b). Creates helper function `build_risk_flag()` + per-category risk-flag views. Implements 2 of 4 rules where data exists: (1) `concentration_risk` for tokenized (top10_holder_pct > 80%, joins virtuals_agents); (2) `dormancy_risk` for developer (github_pushed_at NULL or > 90 days, joins agent_score_v2_top50_public_candidate). Unified view `agent_risk_flags_v1` (UNION of per-category views). Stubs for sybil_risk + volume_anomaly_risk pending data ingestion. All non-destructive — no changes to base tables or scoring views.
+  **STATUS: PENDING — apply in Supabase SQL editor.**
+
 ### 2026-05-23
 - `migrations/20260523_0753_score_confidence_tier.sql` — Caliber methodology lesson applied (smallest durable diff). Creates `score_confidence_tier(signals_present, signals_total)` function mapping signal coverage to {high, medium, low, provisional} with cutoffs 95/75/55%. Creates wrapper view `agent_score_model_family_v1_with_confidence` exposing base v1.4 view + new `confidence_tier` column. Non-destructive: base view unchanged, consumers opt in per page. Expected end-state: Qwen/Gemini/DeepSeek/Llama/Mistral/Cohere → high (5/5); Hermes → medium (4/5). Filed as separate Queue items: (b) risk_flags JSONB, (c) credibility weighting, methodology page changelog, extending the wrapper pattern to tokenized/service/developer.
   **STATUS: APPLIED 2026-05-23 by Kris.**

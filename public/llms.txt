@@ -34,6 +34,7 @@ AgentCrush is not built on x402, ERC-8004, Agentverse, or any single protocol. I
 - [How we rank](https://agentcrush.xyz/how-we-rank) — Universal-ranking methodology explainer (developer category).
 - [Findings: methodology v1 launch](https://agentcrush.xyz/labs/findings/methodology-v1-launch) — Multi-signal inversion findings (Qwen #1 HF, Gemini #1 deployments, Llama #1 citations).
 - [Agent Economy Index](https://agentcrush.xyz/agent-economy-index) — Market-level metrics and tracked protocol surfaces.
+- [Agent Payments Stack](https://agentcrush.xyz/agent-payments-stack) — The 6-layer infrastructure map for how AI agents pay and get paid. 38 projects tracked.
 - [Rankings overview](https://agentcrush.xyz/rankings) — All 4 category rankings with per-category links.
 - [Categories](https://agentcrush.xyz/categories) — Agent archetypes + counts.
 - [Use cases](https://agentcrush.xyz/use-cases) — Task-organized agent discovery.
@@ -53,7 +54,8 @@ AgentCrush is not built on x402, ERC-8004, Agentverse, or any single protocol. I
   - `/api/agents/bulk?handles=a,b,c,...` — bulk lookup, up to 50 agents in one call
   - `/api/agent-economy/llm-summary` — market-level summary
   - `/api/methodology/{category}/llm-summary` — methodology breakdown per category
-  - `/api/rankings/{category}/llm-summary` — full ranking for one category
+  - `/api/rankings/{category}/llm-summary` — full ranking for one category (model_family, tokenized, service, developer)
+  - `/api/rankings/agent-payments-stack/llm-summary` — Agent Payments Stack: 38 projects, 6-layer map, stack coverage scores
   - `/api/compare/llm-summary?agents=a,b[,c,d,e]` — 2-5 agent comparison
 - [OpenAPI 3.1 spec](https://agentcrush.xyz/api/openapi.json) — single machine-readable schema for all endpoints. Auto-generate typed clients.
 - Feedback channel (POST, no auth): `/api/agent-feedback` — agents tell us what's missing or wrong. Rate-limited 10/min, 50/day per IP.

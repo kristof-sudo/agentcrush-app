@@ -5,6 +5,16 @@ import { useState } from 'react'
 
 const POSTS = [
   {
+    slug: 'agent-payments-stack-live',
+    category: 'Findings',
+    image: '/api/og?title=Agent%20Payments%20Stack%2C%20Live&kicker=BLOG&subtitle=38%20projects%2C%206%20layers%2C%20tracked%20live',
+    imageAlt: 'The Agent Payments Stack, Live — AgentCrush',
+    title: 'The Agent Payments Stack, Live',
+    date: 'May 26, 2026',
+    summary:
+      'Keyrock mapped 6 layers of agent payments infrastructure. We indexed all 38 projects, scored them by stack depth, and now track it live. Coinbase spans 5/6 layers. Governance is the hardest layer to clone.',
+  },
+  {
     slug: 'agent-commerce-readiness-three-audits',
     category: 'Findings',
     image: '/og-three-audits.png',

@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Bash(cd /Users/pk/projects/agentcrush-brain *)"
+    ]
+  },
+  "skipDangerousModePermissionPrompt": true,
   "hooks": {
     "SessionStart": [
       {

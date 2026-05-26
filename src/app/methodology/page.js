@@ -48,6 +48,13 @@ const METHODOLOGY = [
       'Citation backfill depends on Semantic Scholar API; some papers may have 0 cites due to S2 indexing delay.',
       'Deployment signal is volume-based — high counts can indicate broad model adoption rather than specific deployment of one variant.',
     ],
+    changelog: [
+      { version: 'v1.4-with-deployment', date: 'May 2026', summary: 'Added deployment signal (10%) sourcing 6 agent-economy tables. HuggingFace 35% → 30%, LMArena 30% → 25%.' },
+      { version: 'v1.3-with-citations',  date: 'Apr 2026', summary: 'Added paper citations via Semantic Scholar (15%). HF Derivatives 25% → 20%.' },
+      { version: 'v1.2',                 date: 'Apr 2026', summary: 'Added HuggingFace derivatives signal (downstream model count by base). Full 5-signal structure established.' },
+      { version: 'v1.1',                 date: 'Mar 2026', summary: 'Added LMArena Bradley-Terry capability scores. First external quality signal.' },
+      { version: 'v1.0',                 date: 'Feb 2026', summary: 'Initial model-family methodology. HuggingFace adoption only. Established log-scaled scoring pattern.' },
+    ],
   },
   {
     slug: 'tokenized',
@@ -70,6 +77,10 @@ const METHODOLOGY = [
       'Cross-protocol presence signal tracked but currently unweighted — agent economy hasn\'t penetrated cross-protocol descriptions enough yet.',
       'Social signal in v1.1 is binary; aixbt is the only socially-flagged agent.',
       'Currently covers Virtuals Protocol agents only (16 promoted). Other tokenized ecosystems not yet integrated.',
+    ],
+    changelog: [
+      { version: 'v1.1-tokenized-tvl', date: 'May 2026', summary: 'Added TVL signal (15%). Liquidity + Volume weight 25% → 20%. Agents with capital locked beyond market cap gained.' },
+      { version: 'v1.0-tokenized-v0',  date: 'May 2026', summary: 'Initial tokenized methodology. 6-signal economics-first scoring. Social placeholder binary flag.' },
     ],
   },
   {
@@ -94,6 +105,10 @@ const METHODOLOGY = [
       'v1.2 will add ERC-8004 registry (29K agents) and Bazaar x402 endpoints (46K) as additional service surfaces.',
       'Cross-protocol presence tracked in cross_protocol_presence but unweighted in v1.1 composite.',
     ],
+    changelog: [
+      { version: 'v1.1-service-forks', date: 'May 2026', summary: 'Added Forks signal (15%). Measures active engagement vs passive starring. Adoption signal recalibrated.' },
+      { version: 'v1.0-service-v0',    date: 'May 2026', summary: 'Initial service-agent methodology. 6-signal composite. Discourse signal placeholder.' },
+    ],
   },
   {
     slug: 'developer',
@@ -116,6 +131,38 @@ const METHODOLOGY = [
     limitations: [
       'Methodology weights are computed dynamically per agent (active_weight_total) rather than fixed.',
       'Universal ranking includes the full indexed set; evidence_ranked subset is the public-rank list.',
+    ],
+    changelog: [
+      { version: 'v2.c-public', date: 'May 2026', summary: 'Public-rank normalization via active_weight_total. evidence_ready_for_public_rank gate at 0.40 weight coverage.' },
+      { version: 'v2.b',        date: 'Apr 2026', summary: 'Added docs_quality signal. HN discourse signal. Trust signals from registry context.' },
+      { version: 'v2.a',        date: 'Apr 2026', summary: 'GitHub + package + dependency basket. Dependency-weighted strength scoring.' },
+    ],
+  },
+  {
+    slug: 'agent_payments_stack',
+    name: 'Agent Payments Stack',
+    page: '/rankings/agent-payments-stack',
+    accent: 'amber',
+    version: 'v1.0-aps',
+    description:
+      'A 6-layer map of the agent payments infrastructure — settlement, wallets, routing, protocol, governance, application. Scores projects (companies, protocols, standards) by stack depth. Inspired by Keyrock "Who Pays the Agent?" (May 2026), kept live and methodology-disclosed.',
+    signals: [
+      { label: 'L0 Settlement',  weight: 4, note: 'Settlement chain or network (Base, Solana, XRPL, Tempo, VisaNet).', formula: 'presence × 4' },
+      { label: 'L1 Wallets',     weight: 3, note: 'Agent key management + policy-gated signing (AgentKit, Safe, Privy).', formula: 'presence × 3' },
+      { label: 'L2 Routing',     weight: 2, note: 'Cross-chain bridging + abstraction (CCTP, deBridge, LayerZero).', formula: 'presence × 2' },
+      { label: 'L3 Protocol',    weight: 4, note: 'Payment protocol definition (x402, MPP, AP2, ACP, Nanopayments).', formula: 'presence × 4' },
+      { label: 'L4 Governance',  weight: 5, note: 'Authorisation, compliance, identity. Highest weight — hardest to replicate.', formula: 'presence × 5' },
+      { label: 'L5 Application', weight: 3, note: 'Frameworks, marketplaces, autonomous services (Virtuals, ElizaOS, Olas).', formula: 'presence × 3' },
+    ],
+    rule: 'All tracked projects are displayed. No evidence-ready gate — layer coverage is the qualification.',
+    limitations: [
+      'This is a project taxonomy, not an agent ranking. Projects are companies, protocols, and standards.',
+      'Layer coverage is determined by documented public evidence as of the source date; self-reporting is not accepted.',
+      'Scores within this category are not comparable to scores in model_family, tokenized, service, or developer categories.',
+      'Source: Keyrock "Who Pays the Agent?" May 2026, extended by AgentCrush. Maximum score is 21 (all 6 layers).',
+    ],
+    changelog: [
+      { version: 'v1.0-aps', date: 'May 2026', summary: 'Initial Agent Payments Stack methodology. 6-layer map, 38 projects. Layer weights: L4 Governance highest (5) as hardest to replicate.' },
     ],
   },
 ]
@@ -152,6 +199,7 @@ function AccentDot({ accent }) {
     pink: 'bg-pink-400',
     cyan: 'bg-cyan-400',
     green: 'bg-emerald-400',
+    amber: 'bg-amber-400',
   }
   return <span className={`inline-block h-2.5 w-2.5 rounded-full ${map[accent] || 'bg-white/50'}`} />
 }
@@ -170,7 +218,7 @@ export default async function MethodologyHubPage() {
     keywords: ['AI agents', 'agent ranking', 'agent economy', 'multi-signal scoring', 'evidence-ranked', 'methodology', 'model families', 'tokenized agents', 'service agents'],
     creator: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
     publisher: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
-    dateModified: '2026-05-17',
+    dateModified: '2026-05-26',
     license: 'https://agentcrush.xyz/terms',
     isAccessibleForFree: true,
     distribution: [
@@ -300,6 +348,23 @@ export default async function MethodologyHubPage() {
               {m.limitations.map((l, i) => <li key={i}>{l}</li>)}
             </ul>
           </div>
+
+          {m.changelog && m.changelog.length > 0 && (
+            <div className="mb-5 rounded-lg border border-white/[0.06] bg-white/[0.01] overflow-hidden">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 px-4 pt-3 pb-2 border-b border-white/[0.05]">
+                Changelog
+              </p>
+              <div className="divide-y divide-white/[0.04]">
+                {m.changelog.map((entry) => (
+                  <div key={entry.version} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5">
+                    <span className="text-[10px] font-mono font-bold text-violet-300/80 shrink-0">{entry.version}</span>
+                    <span className="text-[10px] font-mono text-white/25 shrink-0">{entry.date}</span>
+                    <span className="text-xs text-white/45 leading-relaxed">{entry.summary}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Link href={m.page} className="inline-flex items-center gap-1 text-xs font-mono text-violet-300 hover:text-violet-200 transition-colors">
             See the {m.name.toLowerCase()} ranking →

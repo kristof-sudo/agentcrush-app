@@ -133,3 +133,71 @@ for (let i = 0; i < rows.length; i += BATCH) {
 }
 
 console.log(`[snapshot] done. ${written} snapshots written for ${TODAY}`)
+
+// ── 6. Compute and write weekly_delta to agents table ─────────────────────
+//
+// weekly_delta = rank_7dago - rank_today
+//   positive → agent moved UP (e.g. was #20, now #15 → delta = +5)
+//   negative → agent moved DOWN
+//   null     → no 7-day history available
+//
+// Writes agents.weekly_delta so the weekly digest and ranking pages show
+// real week-over-week moves instead of stale / null values.
+
+const SEVEN_DAYS_AGO = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+console.log(`[snapshot] computing weekly_delta vs ${SEVEN_DAYS_AGO}`)
+
+const { data: oldSnaps, error: oldErr } = await db
+  .from('agent_snapshots')
+  .select('agent_id, rank')
+  .eq('snapshot_date', SEVEN_DAYS_AGO)
+
+if (oldErr) {
+  console.warn('[snapshot] Could not load 7-day-old snapshots — weekly_delta skipped:', oldErr.message)
+} else {
+  const rankMap7d = {}
+  for (const s of (oldSnaps || [])) {
+    if (s.rank != null) rankMap7d[s.agent_id] = s.rank
+  }
+
+  console.log(`[snapshot] 7d reference: ${Object.keys(rankMap7d).length} agents with rank on ${SEVEN_DAYS_AGO}`)
+
+  const { data: todaySnaps, error: todayErr } = await db
+    .from('agent_snapshots')
+    .select('agent_id, rank')
+    .eq('snapshot_date', TODAY)
+
+  if (todayErr) {
+    console.warn('[snapshot] Could not load today snapshots — weekly_delta skipped:', todayErr.message)
+  } else {
+    const agentUpdates = []
+    for (const s of (todaySnaps || [])) {
+      const oldRank = rankMap7d[s.agent_id]
+      if (s.rank != null && oldRank != null) {
+        agentUpdates.push({ id: s.agent_id, weekly_delta: oldRank - s.rank })
+      }
+    }
+
+    console.log(`[snapshot] weekly_delta computable for ${agentUpdates.length} agents`)
+
+    if (agentUpdates.length > 0) {
+      let deltaWritten = 0
+      for (let i = 0; i < agentUpdates.length; i += BATCH) {
+        const batch = agentUpdates.slice(i, i + BATCH)
+        const { error: deltaErr } = await db
+          .from('agents')
+          .upsert(batch, { onConflict: 'id' })
+
+        if (deltaErr) {
+          console.error(`[snapshot] weekly_delta upsert error (batch ${i / BATCH + 1}):`, deltaErr.message)
+          // Non-fatal — partial writes are acceptable; retry next run
+        } else {
+          deltaWritten += batch.length
+        }
+      }
+      console.log(`[snapshot] weekly_delta written for ${deltaWritten} agents`)
+    } else {
+      console.log('[snapshot] weekly_delta: no agents with 7-day history yet (normal for first week)')
+    }
+  }
+}
