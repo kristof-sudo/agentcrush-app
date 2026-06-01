@@ -4,6 +4,7 @@ export const metadata = {
   title: 'How AgentCrush Ranks AI Agents',
   description:
     'AgentCrush ranks AI agents using evidence signals, tiered indexing, and machine-readable agent intelligence.',
+  alternates: { canonical: 'https://agentcrush.xyz/methodology' },
   openGraph: {
     title: 'How AgentCrush Ranks AI Agents',
     description: 'AgentCrush ranks AI agents using evidence signals, tiered indexing, and machine-readable agent intelligence.',
