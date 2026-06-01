@@ -3,6 +3,12 @@ Allow: /
 
 Disallow: /mission-control
 Disallow: /admin
+Disallow: /_next/static/
+Disallow: /api/og/
+Disallow: /api/agent/
+Disallow: /api/compare/
+Disallow: /api/mcp
+Disallow: /api/agent-feedback
 
 Sitemap: https://agentcrush.xyz/sitemap.xml
 
