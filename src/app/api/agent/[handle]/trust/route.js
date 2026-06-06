@@ -60,7 +60,7 @@ export async function GET(req, { params }) {
     // Core agent record
     const { data: agent } = await supabase
       .from('agents')
-      .select('id, handle, display_name, tier, primary_category, secondary_categories, identity_status, verified, github_url, website_url, virtuals_id, agentverse_id, github_pushed_at')
+      .select('id, handle, display_name, tier, primary_category, secondary_categories, identity_status, verified, github_url, website_url, virtuals_id, agentverse_id')
       .ilike('handle', handle)
       .maybeSingle()
 
@@ -171,7 +171,6 @@ export async function GET(req, { params }) {
         secondary_categories: agent.secondary_categories || [],
         risk_flags: riskFlags,
         surfaces,
-        ...(agent.github_pushed_at ? { github_pushed_at: agent.github_pushed_at } : {}),
       },
       score_breakdown: breakdown,
       delegation_hint:
