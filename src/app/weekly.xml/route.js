@@ -2,6 +2,13 @@ export const dynamic = 'force-static'
 
 const ISSUES = [
   {
+    week: '2026-W22',
+    title: 'AgentCrush Weekly · W22 · May 25–31, 2026',
+    link: 'https://agentcrush.xyz/weekly/2026-W22',
+    pubDate: 'Sun, 31 May 2026 00:00:00 +0000',
+    description: 'Confidence tiers extended to every category, risk-flag infrastructure ships, and the Agent Payments Stack gets its full LLM Gateway treatment.',
+  },
+  {
     week: '2026-W21',
     title: 'AgentCrush Weekly · W21 · May 19–25, 2026',
     link: 'https://agentcrush.xyz/weekly/2026-W21',

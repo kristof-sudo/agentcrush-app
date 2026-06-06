@@ -11,6 +11,12 @@ export const metadata = {
 
 const ISSUES = [
   {
+    week: '2026-W22',
+    label: 'W22 · May 25–31, 2026',
+    summary: 'Confidence tiers extended to every category, risk-flag infrastructure ships, and the Agent Payments Stack gets its full LLM Gateway treatment.',
+    href: '/weekly/2026-W22',
+  },
+  {
     week: '2026-W21',
     label: 'W21 · May 18–24, 2026',
     summary: 'Where the four category rankings stand, the Agent Payments Stack index goes live, and confidence tiers ship on every score.',
