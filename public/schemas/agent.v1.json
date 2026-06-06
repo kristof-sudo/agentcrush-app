@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentcrush.xyz/schemas/agent.v1.json",
+  "title": "agent.json v0.1",
+  "description": "Open standard for declaring an AI agent's identity, capabilities, endpoints, trust signals, and safety policies in a single machine-discoverable file. Hosted at /.well-known/agent.json on the agent's canonical domain. Stewarded by AgentCrush; reference implementation at https://agentcrush.xyz/.well-known/agent.json.",
+  "type": "object",
+  "required": ["agent_json_version", "name", "homepage_url", "description"],
+  "properties": {
+    "agent_json_version": {
+      "type": "string",
+      "const": "0.1",
+      "description": "Version of the agent.json spec this file implements."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "Human-readable name of the agent or agent-provider."
+    },
+    "handle": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "description": "Short URL-safe identifier. Conventionally matches the agent's primary handle on AgentCrush / X / Farcaster."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 2000,
+      "description": "What this agent does. Be specific — agents reading this will use it to decide whether to delegate."
+    },
+    "tagline": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Short one-line value proposition."
+    },
+    "homepage_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical homepage."
+    },
+    "logo_url": { "type": "string", "format": "uri" },
+    "version": {
+      "type": "string",
+      "description": "Version string for the agent itself (not the spec)."
+    },
+    "agent_type": {
+      "type": "string",
+      "enum": [
+        "model_family",
+        "tokenized_agent",
+        "service_agent",
+        "developer_agent",
+        "framework",
+        "platform",
+        "infrastructure",
+        "registry",
+        "other"
+      ]
+    },
+    "ecosystem_layer": {
+      "type": "string",
+      "enum": ["L0_settlement", "L1_wallet", "L2_routing", "L3_protocol", "L4_governance", "L5_application", "data", "compute", "model", "interface"],
+      "description": "Optional layer tag inspired by the Agent Payments Stack 6-layer map."
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "Machine-readable capability declarations. Each capability is one thing an agent can ask this agent to do.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]+$"
+          },
+          "description": { "type": "string" },
+          "entry_points": {
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          },
+          "input_schema_url": { "type": "string", "format": "uri" },
+          "output_schema_url": { "type": "string", "format": "uri" },
+          "examples": {
+            "type": "array",
+            "items": { "type": "object" }
+          },
+          "pricing": {
+            "type": "string",
+            "enum": ["free", "x402", "subscription", "oauth_metered", "custom"]
+          }
+        }
+      }
+    },
+    "endpoints": {
+      "type": "object",
+      "description": "Machine-callable URLs.",
+      "properties": {
+        "mcp": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "transports": { "type": "array", "items": { "type": "string", "enum": ["http", "stdio", "sse"] } },
+            "auth": { "type": "string", "enum": ["none", "api_key", "oauth", "x402"] },
+            "discovery": { "type": "string", "format": "uri" }
+          }
+        },
+        "a2a": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "discovery": { "type": "string", "format": "uri" }
+          }
+        },
+        "openapi": { "type": "string", "format": "uri" },
+        "llms_txt": { "type": "string", "format": "uri" },
+        "llms_full_txt": { "type": "string", "format": "uri" },
+        "ai_agents_json": { "type": "string", "format": "uri" },
+        "feedback": { "type": "string", "format": "uri" }
+      }
+    },
+    "standards_implemented": {
+      "type": "array",
+      "description": "Other open standards this agent supports.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "spec_url": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "description": "Onchain or external identity attestations.",
+      "properties": {
+        "erc_8004": {
+          "type": "object",
+          "properties": {
+            "chain": { "type": "string", "examples": ["base-mainnet", "ethereum-mainnet"] },
+            "registry_address": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+            "agent_id": { "type": ["string", "integer"] }
+          }
+        },
+        "github": { "type": "string" },
+        "huggingface": { "type": "string" },
+        "x_handle": { "type": "string" },
+        "farcaster_fid": { "type": ["string", "integer"] },
+        "agentverse_id": { "type": "string" },
+        "virtuals_token": { "type": "string" }
+      }
+    },
+    "payment": {
+      "type": "object",
+      "description": "Machine-payable surfaces.",
+      "properties": {
+        "x402_endpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "properties": {
+              "url": { "type": "string", "format": "uri" },
+              "description": { "type": "string" },
+              "price_usd_cents": { "type": "number" }
+            }
+          }
+        },
+        "bazaar_listing_url": { "type": "string", "format": "uri" },
+        "pricing_page_url": { "type": "string", "format": "uri" }
+      }
+    },
+    "trust_and_safety": {
+      "type": "object",
+      "properties": {
+        "license": { "type": "string" },
+        "terms_url": { "type": "string", "format": "uri" },
+        "terms_for_agents_url": { "type": "string", "format": "uri" },
+        "rate_limit_policy": { "type": "string" },
+        "data_freshness_policy": { "type": "string" },
+        "audits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["auditor"],
+            "properties": {
+              "auditor": { "type": "string" },
+              "date": { "type": "string", "format": "date" },
+              "report_url": { "type": "string", "format": "uri" }
+            }
+          }
+        },
+        "no_warranty": { "type": "boolean" },
+        "known_limitations": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "support_url": { "type": "string", "format": "uri" },
+        "x_handle": { "type": "string" },
+        "incident_url": { "type": "string", "format": "uri" }
+      }
+    },
+    "registered_with": {
+      "type": "array",
+      "description": "Public registries listing this agent.",
+      "items": {
+        "type": "object",
+        "required": ["registry"],
+        "properties": {
+          "registry": { "type": "string", "examples": ["AgentCrush", "Smithery", "mcp.so", "Official MCP Registry", "Agentverse", "ERC-8004"] },
+          "url": { "type": "string", "format": "uri" },
+          "id": { "type": "string" }
+        }
+      }
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": true
+}
