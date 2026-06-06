@@ -77,10 +77,15 @@ AgentCrush is not built on x402, ERC-8004, Agentverse, or any single protocol. I
 - [/how-agent-rankings-work](https://agentcrush.xyz/how-agent-rankings-work) — methodology overview
 - [/how-agents-prove-identity](https://agentcrush.xyz/how-agents-prove-identity) — ERC-8004 + agent.json + MCP + cross-protocol attestations
 - [/how-agents-pay](https://agentcrush.xyz/how-agents-pay) — 6-layer agent payments stack
+- [/agent-trust-explained](https://agentcrush.xyz/agent-trust-explained) — composite trust score formula + classification thresholds
+- [/erc-8004-explained](https://agentcrush.xyz/erc-8004-explained) — Ethereum standard for autonomous agent identity
+- [/x402-explained](https://agentcrush.xyz/x402-explained) — HTTP 402 micropayment protocol for agents
+- [/mcp-vs-a2a](https://agentcrush.xyz/mcp-vs-a2a) — protocol comparison + when to choose each
+- [/agent-economy-explained](https://agentcrush.xyz/agent-economy-explained) — three substrates (identity / payments / capabilities)
 - [/agent-economy](https://agentcrush.xyz/agent-economy) — market overview
 - [/agent-payments-stack](https://agentcrush.xyz/agent-payments-stack) — stack ranking explainer
 - [/trends](https://agentcrush.xyz/trends) — live ecosystem dashboard
-- [/weekly](https://agentcrush.xyz/weekly) — weekly signal digest
+- [/weekly](https://agentcrush.xyz/weekly) — weekly signal digest (auto-generated Sundays)
 
 ## x402 paid endpoints (machine-payable via Coinbase CDP Bazaar)
 
