@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-06-06
+- `migrations/20260606_2200_weekly_digest_sections.sql` — Auto Weekly Digest (Phase R-3.1). Creates `weekly_digest_sections` table (week_id PK + ecosystem_section TEXT + briefs_included + model + token usage + timestamps). Updated-at trigger. RLS enabled with anon-read policy; service_role bypasses RLS for worker writes. NOTIFY pgrst at end to refresh PostgREST schema cache. Idempotent (CREATE IF NOT EXISTS + DROP/CREATE policy + trigger).
+  **STATUS: PENDING APPLY by Kris.** Auto Weekly Digest worker scheduled Sundays 19:00 UTC; until table exists the worker errors gracefully and the `/weekly/[week]` page renders the "Ecosystem section pending" placeholder.
+
 ### 2026-05-26
 - `migrations/20260526_1000_confidence_tier_all_categories.sql` — Extends confidence_tier wrapper pattern (established in 20260523_0753) to remaining 3 categories. Creates `agent_score_tokenized_v1_with_confidence` (6 signals), `agent_score_service_v1_with_confidence` (6 signals), and `agent_score_developer_v2c_with_confidence` (developer uses active_weight_total fraction directly, cutoffs ≥0.95/0.75/0.55). All non-destructive CREATE OR REPLACE VIEW — base views unchanged. Completes Caliber-inspired structural primitive across all 4 category scoring views.
   **STATUS: APPLIED 2026-05-26 by Kris.** Verified: tokenized → high, service → medium, developer → medium (expected — thin coverage on many service agents).
