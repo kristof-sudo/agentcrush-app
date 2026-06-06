@@ -9,6 +9,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { apiOk, apiError, apiBadRequest, apiNotFound, corsPreflight } from '@/lib/api-response'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -18,13 +19,6 @@ function db() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !key) throw new Error('Supabase not configured')
   return createClient(url, key)
-}
-
-const HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 'public, max-age=120, s-maxage=120, stale-while-revalidate=60',
 }
 
 const CATEGORY_VIEW = {
@@ -56,15 +50,21 @@ async function fuzzySuggest(supabase, q, limit = 5) {
   return (data || []).map(r => ({ handle: r.handle, name: r.display_name || r.handle }))
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: HEADERS })
-}
+export async function OPTIONS() { return corsPreflight() }
 
 export async function GET(req, { params }) {
   const raw = (await params).handle
   const handle = sanitizeHandle(raw)
+  const endpointUrl = `https://agentcrush.xyz/api/agent/${encodeURIComponent(handle || raw || '')}/llm-summary`
+
   if (!handle) {
-    return Response.json({ error: 'invalid_handle', message: 'Handle parameter is required and must be alphanumeric / hyphen / underscore.' }, { status: 400, headers: HEADERS })
+    return apiBadRequest({
+      message: 'Handle parameter is required and must be alphanumeric / hyphen / underscore.',
+      hint: 'Pass a valid handle in the URL path.',
+      suggest: { example_request: 'https://agentcrush.xyz/api/agent/qwen/llm-summary', docs_url: 'https://agentcrush.xyz/developers' },
+      sourceUrl: 'https://agentcrush.xyz/explore',
+      endpointUrl,
+    })
   }
 
   try {
@@ -77,15 +77,17 @@ export async function GET(req, { params }) {
 
     if (!agent) {
       const suggestions = await fuzzySuggest(supabase, handle)
-      return Response.json({
-        error: 'agent_not_found',
-        message: `No agent found with handle "${handle}".`,
-        suggestions,
-        hint: suggestions.length > 0
-          ? 'Did you mean one of the suggestions? Try GET /api/agent/{suggested_handle}/llm-summary.'
-          : 'Use GET /api/agent-economy/llm-summary or the MCP search_agents tool for discovery.',
-        source_urls: ['https://agentcrush.xyz/explore'],
-      }, { status: 404, headers: HEADERS })
+      return apiNotFound({
+        resource: 'Agent',
+        requested: handle,
+        validValues: suggestions.map(s => s.handle),
+        exampleRequest: suggestions[0]
+          ? `https://agentcrush.xyz/api/agent/${encodeURIComponent(suggestions[0].handle)}/llm-summary`
+          : 'https://agentcrush.xyz/api/agent/qwen/llm-summary',
+        docsUrl: 'https://agentcrush.xyz/api/agent-economy/llm-summary',
+        sourceUrl: 'https://agentcrush.xyz/explore',
+        endpointUrl,
+      })
     }
 
     // Collect category scores
@@ -149,7 +151,7 @@ export async function GET(req, { params }) {
       }
     }
 
-    return Response.json({
+    return apiOk({
       type: 'agent_llm_summary',
       handle: agent.handle,
       name: agent.display_name || agent.handle,
@@ -186,13 +188,21 @@ export async function GET(req, { params }) {
         `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
         'https://agentcrush.xyz/methodology',
       ],
-    }, { headers: HEADERS })
+    }, {
+      sourceUrl: `https://agentcrush.xyz/agent/${encodeURIComponent(agent.handle)}`,
+      methodologyUrl: 'https://agentcrush.xyz/methodology',
+      endpointUrl,
+    })
 
   } catch (e) {
-    return Response.json({
-      error: 'temporary_unavailable',
+    return apiError({
+      status: 503,
+      code: 'temporary_unavailable',
       message: 'Agent summary temporarily unavailable.',
-      fallback_url: `https://agentcrush.xyz/agent/${encodeURIComponent(handle)}`,
-    }, { status: 503, headers: HEADERS })
+      hint: 'Data refresh in progress; retry after 30 seconds.',
+      suggest: { docs_url: `https://agentcrush.xyz/agent/${encodeURIComponent(handle)}`, example_request: endpointUrl },
+      sourceUrl: `https://agentcrush.xyz/agent/${encodeURIComponent(handle)}`,
+      endpointUrl,
+    })
   }
 }

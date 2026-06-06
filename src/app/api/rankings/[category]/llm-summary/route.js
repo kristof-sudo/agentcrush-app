@@ -21,12 +21,7 @@ function db() {
   return createClient(url, key)
 }
 
-const HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=60',
-}
+import { apiOk, apiError, apiNotFound, corsPreflight } from '@/lib/api-response'
 
 const VALID = ['model_family', 'tokenized', 'service', 'developer']
 
@@ -75,21 +70,23 @@ function clamp(val, def, min, max) {
   return Math.min(Math.max(Math.floor(n), min), max)
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: HEADERS })
-}
+export async function OPTIONS() { return corsPreflight() }
 
 export async function GET(req, { params }) {
   const raw = (await params).category
   const category = typeof raw === 'string' ? raw.toLowerCase() : ''
+  const endpointUrl = `https://agentcrush.xyz/api/rankings/${encodeURIComponent(category || raw || '')}/llm-summary`
 
   if (!VALID.includes(category)) {
-    return Response.json({
-      error: 'invalid_category',
-      message: `Category must be one of: ${VALID.join(', ')}`,
-      valid_categories: VALID,
-      source_urls: ['https://agentcrush.xyz/methodology'],
-    }, { status: 400, headers: HEADERS })
+    return apiNotFound({
+      resource: 'Category',
+      requested: category || raw,
+      validValues: VALID,
+      docsUrl: 'https://agentcrush.xyz/methodology',
+      exampleRequest: 'https://agentcrush.xyz/api/rankings/model_family/llm-summary',
+      sourceUrl: 'https://agentcrush.xyz/methodology',
+      endpointUrl,
+    })
   }
 
   const meta = CATEGORY_META[category]
@@ -126,7 +123,7 @@ export async function GET(req, { params }) {
       ),
     }))
 
-    return Response.json({
+    return apiOk({
       type: 'category_ranking_llm_summary',
       category,
       name: meta.name,
@@ -146,13 +143,21 @@ export async function GET(req, { params }) {
         `https://agentcrush.xyz${meta.page}`,
         `https://agentcrush.xyz/methodology#${category}`,
       ],
-    }, { headers: HEADERS })
+    }, {
+      sourceUrl: `https://agentcrush.xyz${meta.page}`,
+      methodologyUrl: `https://agentcrush.xyz/methodology#${category}`,
+      endpointUrl,
+    })
 
   } catch (e) {
-    return Response.json({
-      error: 'temporary_unavailable',
+    return apiError({
+      status: 503,
+      code: 'temporary_unavailable',
       message: 'Category ranking summary temporarily unavailable.',
-      fallback_url: `https://agentcrush.xyz${meta.page}`,
-    }, { status: 503, headers: HEADERS })
+      hint: 'Retry after 30 seconds.',
+      suggest: { docs_url: `https://agentcrush.xyz${meta.page}`, example_request: endpointUrl },
+      sourceUrl: `https://agentcrush.xyz${meta.page}`,
+      endpointUrl,
+    })
   }
 }

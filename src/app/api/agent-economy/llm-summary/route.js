@@ -10,9 +10,14 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { apiOk, apiError, corsPreflight } from '@/lib/api-response'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+
+const ENDPOINT_URL = 'https://agentcrush.xyz/api/agent-economy/llm-summary'
+const SOURCE_URL = 'https://agentcrush.xyz/agent-economy'
+const METHODOLOGY_URL = 'https://agentcrush.xyz/methodology'
 
 function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -21,16 +26,7 @@ function db() {
   return createClient(url, key)
 }
 
-const HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=60',
-}
-
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: HEADERS })
-}
+export async function OPTIONS() { return corsPreflight() }
 
 export async function GET() {
   try {
@@ -50,9 +46,9 @@ export async function GET() {
 
     const evidenceRankedTotal = (mfER || 0) + (tkER || 0) + (svcER || 0) + (devER || 0)
 
-    return Response.json({
+    return apiOk({
       type: 'agent_economy_llm_summary',
-      url: 'https://agentcrush.xyz/agent-economy',
+      url: SOURCE_URL,
       summary:
         'AgentCrush is the protocol-neutral market intelligence layer for the AI agent economy. ' +
         `It tracks ${total ? total.toLocaleString() : '1,300+'} agents across HuggingFace, LMArena, ` +
@@ -137,13 +133,17 @@ export async function GET() {
         'https://agentcrush.xyz/methodology',
         'https://agentcrush.xyz/agent-economy-index',
       ],
-    }, { headers: HEADERS })
+    }, { sourceUrl: SOURCE_URL, methodologyUrl: METHODOLOGY_URL, endpointUrl: ENDPOINT_URL })
 
   } catch (e) {
-    return Response.json({
-      error: 'temporary_unavailable',
+    return apiError({
+      status: 503,
+      code: 'temporary_unavailable',
       message: 'Agent economy summary temporarily unavailable.',
-      fallback_url: 'https://agentcrush.xyz/agent-economy',
-    }, { status: 503, headers: HEADERS })
+      hint: 'Retry after 30 seconds; data refresh is in progress.',
+      suggest: { docs_url: SOURCE_URL, example_request: ENDPOINT_URL },
+      sourceUrl: SOURCE_URL,
+      endpointUrl: ENDPOINT_URL,
+    })
   }
 }

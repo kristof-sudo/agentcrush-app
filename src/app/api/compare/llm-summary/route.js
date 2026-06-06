@@ -17,21 +17,16 @@ function db() {
   return createClient(url, key)
 }
 
-const HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 'public, max-age=120, s-maxage=120',
-}
+import { apiOk, apiError, apiBadRequest, corsPreflight } from '@/lib/api-response'
+
+const ENDPOINT_URL = 'https://agentcrush.xyz/api/compare/llm-summary'
 
 function sanitizeHandle(raw) {
   if (typeof raw !== 'string') return ''
   return raw.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: HEADERS })
-}
+export async function OPTIONS() { return corsPreflight() }
 
 export async function GET(req) {
   const url = new URL(req.url)
@@ -40,17 +35,25 @@ export async function GET(req) {
   const unique = [...new Set(handles)]
 
   if (unique.length < 2) {
-    return Response.json({
-      error: 'invalid_request',
-      message: 'Need 2-5 unique agent handles. Pass ?agents=handle1,handle2[,handle3,...]',
-      example: 'GET /api/compare/llm-summary?agents=crewai,langgraph',
-    }, { status: 400, headers: HEADERS })
+    return apiBadRequest({
+      message: 'Need 2-5 unique agent handles.',
+      hint: 'Pass ?agents=handle1,handle2[,handle3,...] in the URL.',
+      suggest: {
+        example_request: `${ENDPOINT_URL}?agents=crewai,langgraph`,
+        docs_url: 'https://agentcrush.xyz/api/agent-economy/llm-summary',
+      },
+      sourceUrl: 'https://agentcrush.xyz/compare',
+      endpointUrl: ENDPOINT_URL,
+    })
   }
   if (unique.length > 5) {
-    return Response.json({
-      error: 'too_many_agents',
+    return apiBadRequest({
       message: 'Maximum 5 agents per comparison.',
-    }, { status: 400, headers: HEADERS })
+      hint: `Got ${unique.length}. Cap is 5 — pass fewer handles or batch your requests.`,
+      suggest: { example_request: `${ENDPOINT_URL}?agents=${unique.slice(0, 5).join(',')}` },
+      sourceUrl: 'https://agentcrush.xyz/compare',
+      endpointUrl: ENDPOINT_URL,
+    })
   }
 
   try {
@@ -140,7 +143,7 @@ export async function GET(req) {
       ? `https://agentcrush.xyz/compare/${handles[0]}-vs-${handles[1]}`
       : null
 
-    return Response.json({
+    return apiOk({
       type: 'agent_comparison_llm_summary',
       agents: summaries,
       compare_page_url: compareUrl,
@@ -160,12 +163,21 @@ export async function GET(req) {
       methodology_url: 'https://agentcrush.xyz/methodology',
       last_updated: new Date().toISOString(),
       source_urls: summaries.map(s => s.url).filter(Boolean),
-    }, { headers: HEADERS })
+    }, {
+      sourceUrl: compareUrl || 'https://agentcrush.xyz/compare',
+      methodologyUrl: 'https://agentcrush.xyz/methodology',
+      endpointUrl: ENDPOINT_URL,
+    })
 
   } catch (e) {
-    return Response.json({
-      error: 'temporary_unavailable',
+    return apiError({
+      status: 503,
+      code: 'temporary_unavailable',
       message: 'Comparison summary temporarily unavailable.',
-    }, { status: 503, headers: HEADERS })
+      hint: 'Retry after 30 seconds.',
+      suggest: { docs_url: 'https://agentcrush.xyz/compare', example_request: `${ENDPOINT_URL}?agents=crewai,langgraph` },
+      sourceUrl: 'https://agentcrush.xyz/compare',
+      endpointUrl: ENDPOINT_URL,
+    })
   }
 }

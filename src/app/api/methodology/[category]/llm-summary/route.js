@@ -7,15 +7,10 @@
  * Mirrors the MCP get_methodology(category) tool for HTTP retrieval clients.
  */
 
+import { apiOk, apiNotFound, corsPreflight } from '@/lib/api-response'
+
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
-const HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=300',
-}
 
 const VALID = ['model_family', 'tokenized', 'service', 'developer']
 
@@ -96,25 +91,28 @@ const METHODOLOGY = {
   },
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: HEADERS })
-}
+export async function OPTIONS() { return corsPreflight() }
 
 export async function GET(req, { params }) {
   const raw = (await params).category
   const category = typeof raw === 'string' ? raw.toLowerCase() : ''
+  const endpointUrl = `https://agentcrush.xyz/api/methodology/${encodeURIComponent(category || raw || '')}/llm-summary`
 
   if (!VALID.includes(category)) {
-    return Response.json({
-      error: 'invalid_category',
-      message: `Category must be one of: ${VALID.join(', ')}`,
-      valid_categories: VALID,
-      source_urls: ['https://agentcrush.xyz/methodology'],
-    }, { status: 400, headers: HEADERS })
+    return apiNotFound({
+      resource: 'Methodology category',
+      requested: category || raw,
+      validValues: VALID,
+      docsUrl: 'https://agentcrush.xyz/methodology',
+      exampleRequest: 'https://agentcrush.xyz/api/methodology/model_family/llm-summary',
+      sourceUrl: 'https://agentcrush.xyz/methodology',
+      endpointUrl,
+    })
   }
 
   const m = METHODOLOGY[category]
-  return Response.json({
+  const sourceUrl = `https://agentcrush.xyz/methodology#${category}`
+  return apiOk({
     type: 'methodology_llm_summary',
     category,
     name: m.name,
@@ -123,15 +121,17 @@ export async function GET(req, { params }) {
     signals: m.signals,
     evidence_ready_rule: m.evidence_ready_rule,
     limitations: m.limitations,
-    methodology_url: `https://agentcrush.xyz/methodology#${category}`,
+    methodology_url: sourceUrl,
     ranking_url: category === 'model_family' ? 'https://agentcrush.xyz/rankings/model-families'
               : category === 'tokenized'    ? 'https://agentcrush.xyz/rankings/tokenized-agents'
               : category === 'service'      ? 'https://agentcrush.xyz/rankings/service-agents'
               : 'https://agentcrush.xyz/rankings',
     last_updated: '2026-05-16',
-    source_urls: [
-      'https://agentcrush.xyz/methodology',
-      `https://agentcrush.xyz/methodology#${category}`,
-    ],
-  }, { headers: HEADERS })
+    source_urls: ['https://agentcrush.xyz/methodology', sourceUrl],
+  }, {
+    sourceUrl,
+    methodologyUrl: 'https://agentcrush.xyz/methodology',
+    endpointUrl,
+    headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=300' },
+  })
 }

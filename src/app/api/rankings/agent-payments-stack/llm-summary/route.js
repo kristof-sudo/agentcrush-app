@@ -13,6 +13,8 @@ import { createClient } from '@supabase/supabase-js'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+import { apiOk, apiError, corsPreflight } from '@/lib/api-response'
+
 function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -20,12 +22,9 @@ function db() {
   return createClient(url, key)
 }
 
-const HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=60',
-}
+const ENDPOINT_URL = 'https://agentcrush.xyz/api/rankings/agent-payments-stack/llm-summary'
+const SOURCE_URL = 'https://agentcrush.xyz/rankings/agent-payments-stack'
+const METHODOLOGY_URL = 'https://agentcrush.xyz/methodology#agent_payments_stack'
 
 const LAYERS = {
   L0: { name: 'Settlement',   weight: 4, description: 'Settlement chain / network — where money actually moves.' },
@@ -36,9 +35,7 @@ const LAYERS = {
   L5: { name: 'Application',  weight: 3, description: 'Frameworks, marketplaces, autonomous services.' },
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: HEADERS })
-}
+export async function OPTIONS() { return corsPreflight() }
 
 export async function GET() {
   try {
@@ -66,7 +63,7 @@ export async function GET() {
       evidence_tier: p.evidence_tier ?? null,
     }))
 
-    return Response.json({
+    return apiOk({
       type: 'agent_payments_stack_llm_summary',
       category: 'agent_payments_stack',
       name: 'Agent Payments Stack',
@@ -94,13 +91,17 @@ export async function GET() {
         'https://agentcrush.xyz/agent-payments-stack',
         'https://agentcrush.xyz/methodology#agent_payments_stack',
       ],
-    }, { headers: HEADERS })
+    }, { sourceUrl: SOURCE_URL, methodologyUrl: METHODOLOGY_URL, endpointUrl: ENDPOINT_URL })
 
   } catch (e) {
-    return Response.json({
-      error: 'temporary_unavailable',
+    return apiError({
+      status: 503,
+      code: 'temporary_unavailable',
       message: 'Agent Payments Stack summary temporarily unavailable.',
-      fallback_url: 'https://agentcrush.xyz/rankings/agent-payments-stack',
-    }, { status: 503, headers: HEADERS })
+      hint: 'Retry after 30 seconds.',
+      suggest: { docs_url: SOURCE_URL, example_request: ENDPOINT_URL },
+      sourceUrl: SOURCE_URL,
+      endpointUrl: ENDPOINT_URL,
+    })
   }
 }
