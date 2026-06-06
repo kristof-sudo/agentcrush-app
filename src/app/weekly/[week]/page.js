@@ -53,6 +53,44 @@ function db() {
   return createClient(url, key)
 }
 
+// Render the cover image if the file exists; otherwise a clean placeholder.
+// Async server component — checks existence server-side so we never serve a broken img.
+async function CoverOrPlaceholder({ coverUrl, weekLabel }) {
+  let coverExists = false
+  try {
+    const fsMod = await import('node:fs/promises')
+    const pathMod = await import('node:path')
+    const fullPath = pathMod.join(process.cwd(), 'public', coverUrl)
+    await fsMod.stat(fullPath)
+    coverExists = true
+  } catch {
+    coverExists = false
+  }
+
+  if (coverExists) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={coverUrl}
+        alt={`AgentCrush Weekly Digest — ${weekLabel}`}
+        width={1731}
+        height={909}
+        className="w-full rounded-xl border border-white/[0.08] mb-8"
+      />
+    )
+  }
+
+  return (
+    <div className="w-full mb-8 rounded-xl border border-white/[0.08] bg-gradient-to-br from-violet-600/15 via-cyan-500/8 to-violet-900/20 aspect-[1731/909] flex items-center justify-center">
+      <div className="text-center px-6">
+        <p className="text-xs uppercase tracking-widest font-mono text-white/40 mb-2">AgentCrush Weekly</p>
+        <p className="text-2xl font-bold text-white/85 tracking-tight">{weekLabel}</p>
+        <p className="text-[11px] font-mono text-white/30 mt-3">Cover image pending</p>
+      </div>
+    </div>
+  )
+}
+
 async function readEcosystemSummary(weekId) {
   // Read from Supabase weekly_digest_sections — written by the
   // weekly-digest-generator worker on Sundays.
@@ -163,17 +201,10 @@ export default async function WeeklyDynamicPage({ params }) {
           W{parsed.week} · {periodShort}
         </p>
 
-        {/* Cover — img tag with onError-style fallback wouldn't work server-only.
-            We render the image; if it 404s, Next/CDN shows a broken img placeholder.
-            Worker generates a placeholder cover if no specific one uploaded. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={coverUrl}
-          alt={`AgentCrush Weekly Digest — W${parsed.week}, ${periodFull}`}
-          width={1731}
-          height={909}
-          className="w-full rounded-xl border border-white/[0.08] mb-8 bg-gradient-to-br from-violet-600/20 via-cyan-500/10 to-violet-900/30"
-        />
+        {/* Cover — Kris manually uploads /weekly/W{n}_cover.png per week.
+            If not yet uploaded, render a clean placeholder card instead of a
+            broken image. Once uploaded, page refreshes show the real cover. */}
+        <CoverOrPlaceholder coverUrl={coverUrl} weekLabel={`W${parsed.week} · ${periodFull}`} />
 
         <p className="text-xs font-semibold uppercase tracking-widest text-[#00d4ff]/70 mb-2">Weekly Digest · auto-generated</p>
         <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight tracking-tight">W{parsed.week} · {periodFull}</h1>
