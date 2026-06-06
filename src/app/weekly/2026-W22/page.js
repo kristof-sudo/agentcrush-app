@@ -12,7 +12,7 @@ export const metadata = {
     description: 'Methodology hardening + Agent Payments Stack through the LLM Gateway — week of May 25–31, 2026.',
     url: 'https://agentcrush.xyz/weekly/2026-W22',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/weekly/W22_cover.png', width: 1729, height: 910, alt: 'AgentCrush Weekly Digest — W22, May 25–31, 2026' }],
+    images: [{ url: 'https://agentcrush.xyz/weekly/W22_cover.png', width: 1731, height: 909, alt: 'AgentCrush Weekly Digest — W22, May 25–31, 2026' }],
     type: 'article',
     publishedTime: '2026-05-31T00:00:00.000Z',
   },
@@ -75,8 +75,8 @@ export default function W22Page() {
         <img
           src="/weekly/W22_cover.png"
           alt="AgentCrush Weekly Digest — W22, May 25–31, 2026"
-          width={1729}
-          height={910}
+          width={1731}
+          height={909}
           className="w-full rounded-xl border border-white/[0.08] mb-8"
         />
 
