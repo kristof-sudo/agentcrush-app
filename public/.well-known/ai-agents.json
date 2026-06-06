@@ -1,0 +1,224 @@
+{
+  "$schema": "https://agentcrush.xyz/schemas/ai-agents.v1.json",
+  "spec_version": "0.1.0",
+  "spec_note": "Universal AI-agent capability advertisement. Following the emerging /.well-known/ai-agents.json pattern for machine discovery of LLM/agent capabilities. AgentCrush hosts this as the canonical descriptor of what an agent can do with this site.",
+  "name": "AgentCrush",
+  "tagline": "Evidence-ranked index of the AI agent economy",
+  "description": "AgentCrush is the protocol-neutral index, methodology, and trust signal for AI agents. CoinMarketCap/Bloomberg for AI agents. Tracks 1,300+ agents across HuggingFace, LMArena, GitHub, Semantic Scholar, ERC-8004, Virtuals, Agentverse, A2A, x402/Bazaar. Four category methodologies. Public, machine-callable, citation-friendly.",
+  "homepage_url": "https://agentcrush.xyz",
+  "logo_url": "https://agentcrush.xyz/agentcrush-logo.png",
+  "version": "1.0.0",
+  "audience": ["llms", "ai_agents", "developers", "researchers"],
+  "purpose": [
+    "discover_agents",
+    "look_up_agent_details_and_scores",
+    "explain_ranking_methodology",
+    "compare_agents",
+    "obtain_machine_readable_trust_signals",
+    "cite_as_source_in_downstream_outputs"
+  ],
+  "standards_implemented": [
+    {
+      "name": "Model Context Protocol (MCP)",
+      "version": "2024-11-05",
+      "endpoint": "https://agentcrush.xyz/api/mcp/v1",
+      "discovery": "https://agentcrush.xyz/.well-known/mcp.json",
+      "transports": ["http"],
+      "auth": "none"
+    },
+    {
+      "name": "OpenAPI",
+      "version": "3.1",
+      "spec_url": "https://agentcrush.xyz/api/openapi.json"
+    },
+    {
+      "name": "llms.txt",
+      "compact": "https://agentcrush.xyz/llms.txt",
+      "full": "https://agentcrush.xyz/llms-full.txt"
+    },
+    {
+      "name": "Schema.org JSON-LD",
+      "note": "Every public page emits Schema.org/Dataset/Article/Organization JSON-LD as appropriate."
+    },
+    {
+      "name": "x402 (machine-payable endpoints)",
+      "discovery": "https://agentcrush.xyz/.well-known/x402.json"
+    },
+    {
+      "name": "Farcaster manifest",
+      "discovery": "https://agentcrush.xyz/.well-known/farcaster.json"
+    }
+  ],
+  "standards_pending": [
+    {
+      "name": "agent.json open standard",
+      "status": "drafting (AgentCrush is the proposing party)",
+      "target_url": "https://agentcrush.xyz/agent-json"
+    },
+    {
+      "name": "A2A (Agent-to-Agent) protocol",
+      "status": "endpoint planned",
+      "reference": "https://google-a2a.github.io/A2A/"
+    },
+    {
+      "name": "ERC-8004 (on-chain agent identity)",
+      "status": "indexed for other agents; registration of AgentCrush itself pending",
+      "reference": "https://eips.ethereum.org/EIPS/eip-8004"
+    }
+  ],
+  "endpoints": {
+    "discovery": [
+      "https://agentcrush.xyz/.well-known/ai-agents.json",
+      "https://agentcrush.xyz/.well-known/mcp.json",
+      "https://agentcrush.xyz/.well-known/x402.json",
+      "https://agentcrush.xyz/.well-known/farcaster.json"
+    ],
+    "llm_summaries": [
+      {
+        "purpose": "Index overview",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/agent-economy/llm-summary"
+      },
+      {
+        "purpose": "Single agent full breakdown",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/agent/{handle}/llm-summary",
+        "example": "https://agentcrush.xyz/api/agent/qwen/llm-summary"
+      },
+      {
+        "purpose": "Category ranking",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/rankings/{category}/llm-summary",
+        "valid_values": ["model_family", "tokenized", "service", "developer"],
+        "example": "https://agentcrush.xyz/api/rankings/model_family/llm-summary?limit=10"
+      },
+      {
+        "purpose": "Agent Payments Stack ranking",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/rankings/agent-payments-stack/llm-summary"
+      },
+      {
+        "purpose": "Methodology explainer per category",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/methodology/{category}/llm-summary",
+        "valid_values": ["model_family", "tokenized", "service", "developer"]
+      },
+      {
+        "purpose": "Compare 2-5 agents",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/compare/llm-summary?agents=handle1,handle2",
+        "example": "https://agentcrush.xyz/api/compare/llm-summary?agents=crewai,langgraph"
+      }
+    ],
+    "mcp": {
+      "endpoint": "https://agentcrush.xyz/api/mcp/v1",
+      "transports": ["http"],
+      "auth": "none",
+      "tools": [
+        "search_agents",
+        "get_agent",
+        "get_ranking",
+        "get_methodology",
+        "compare_agents",
+        "get_agent_economy_summary"
+      ]
+    },
+    "openapi": "https://agentcrush.xyz/api/openapi.json",
+    "feedback": "https://agentcrush.xyz/api/agent-feedback"
+  },
+  "capabilities": [
+    {
+      "id": "search_agents",
+      "description": "Free-text + handle search across the indexed agent set. Returns matched agents with category, tier, and summary.",
+      "entry_points": [
+        "https://agentcrush.xyz/api/mcp/v1 (tool: search_agents)"
+      ]
+    },
+    {
+      "id": "lookup_agent",
+      "description": "Single-agent full breakdown — scores across all qualifying categories, sub-scores, identity signals, source URLs.",
+      "entry_points": [
+        "https://agentcrush.xyz/api/agent/{handle}/llm-summary",
+        "https://agentcrush.xyz/api/mcp/v1 (tool: get_agent)"
+      ]
+    },
+    {
+      "id": "category_ranking",
+      "description": "Top-N ranking within one of the four categories. Filter by evidence_ready, set limit, get composite score + sub-scores.",
+      "entry_points": [
+        "https://agentcrush.xyz/api/rankings/{category}/llm-summary",
+        "https://agentcrush.xyz/api/mcp/v1 (tool: get_ranking)"
+      ]
+    },
+    {
+      "id": "methodology_explainer",
+      "description": "Per-category scoring methodology — signal list, weights, formulas, evidence-ready rule, known limitations.",
+      "entry_points": [
+        "https://agentcrush.xyz/api/methodology/{category}/llm-summary",
+        "https://agentcrush.xyz/api/mcp/v1 (tool: get_methodology)"
+      ]
+    },
+    {
+      "id": "compare_agents",
+      "description": "Side-by-side composite comparison of 2-5 agents with cross-category warning when applicable.",
+      "entry_points": [
+        "https://agentcrush.xyz/api/compare/llm-summary?agents=handle1,handle2",
+        "https://agentcrush.xyz/api/mcp/v1 (tool: compare_agents)"
+      ]
+    },
+    {
+      "id": "agent_payments_stack",
+      "description": "6-layer map of agent-payments infrastructure projects (Coinbase, Stripe, Circle, etc.) with layers spanned + stack coverage score.",
+      "entry_points": [
+        "https://agentcrush.xyz/api/rankings/agent-payments-stack/llm-summary"
+      ]
+    }
+  ],
+  "response_format": {
+    "envelope": "Every JSON response includes _attribution with source_url, methodology_url, cite_as, license, terms_url. Use cite_as verbatim when passing AgentCrush data through to a downstream user or agent.",
+    "errors": "Standardized error envelope: { error: { code, message, hint?, suggest?: { endpoint?, valid_values?, docs_url?, example_request? } }, _attribution }. 404s carry suggest hints to enable agent self-correction.",
+    "cors": "All public endpoints accept * origin. GET + OPTIONS.",
+    "cache": "Public, max-age varies by endpoint (120s for live data, 3600s for methodology)."
+  },
+  "trust_and_safety": {
+    "no_auth_required_for_public_reads": true,
+    "rate_limit_policy": "No fixed rate limit on public reads; respectful crawl encouraged. Reads cached aggressively (Cache-Control headers honored).",
+    "data_freshness": "Snapshot pipeline runs nightly (~02:00 UTC). Live signal endpoints reflect latest scoring view; on-chain fetchers run on category-specific schedules.",
+    "data_provenance": "Every JSON response and every page carries source URLs to the upstream signal (HuggingFace, LMArena, on-chain registries, etc.)",
+    "license": "CC-BY-4.0 — attribute \"AgentCrush (https://agentcrush.xyz)\". Cite the source_url returned in _attribution when passing data downstream.",
+    "terms_for_agents": "https://agentcrush.xyz/terms-for-agents",
+    "no_paid_placement": "Paid placement does not affect rankings. Methodology and weights are publicly disclosed.",
+    "limitations": [
+      "Tracks public evidence only.",
+      "Per-category methodology — scores in different categories are not directly comparable.",
+      "Signal coverage varies per agent.",
+      "Methodology versions evolve; scores valid for the version shown in each response."
+    ]
+  },
+  "discovery_listings": [
+    {
+      "registry": "Smithery",
+      "url": "https://smithery.ai/servers/kristof/agentcrush"
+    },
+    {
+      "registry": "mcp.so",
+      "url": "https://mcp.so/server/agentcrush/AgentCrush"
+    },
+    {
+      "registry": "Official MCP Registry",
+      "id": "io.github.kristof-sudo/agentcrush-app",
+      "url": "https://registry.modelcontextprotocol.io"
+    }
+  ],
+  "contact": {
+    "homepage": "https://agentcrush.xyz",
+    "about": "https://agentcrush.xyz/about",
+    "feedback_endpoint": "https://agentcrush.xyz/api/agent-feedback",
+    "incidents": "Report integration issues via the feedback endpoint. Issues affecting all agents are posted at https://agentcrush.xyz/status when status page ships."
+  },
+  "methodology_pages": [
+    "https://agentcrush.xyz/methodology",
+    "https://agentcrush.xyz/how-we-rank"
+  ],
+  "last_updated": "2026-06-06T00:00:00Z"
+}
