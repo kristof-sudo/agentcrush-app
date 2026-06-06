@@ -45,21 +45,42 @@ AgentCrush is not built on x402, ERC-8004, Agentverse, or any single protocol. I
 
 ## Machine-readable surfaces
 
+- [Universal AI capability advertisement](https://agentcrush.xyz/.well-known/ai-agents.json) — one canonical discovery file: identity, standards implemented, every endpoint, every capability, response format conventions, trust/safety policies, registry listings.
+- [agent.json reference](https://agentcrush.xyz/.well-known/agent.json) — AgentCrush's own agent.json v0.1 implementation.
+- [agent.json open standard](https://agentcrush.xyz/agent-json) — spec page + minimal example + how to validate.
+- [agent.json schema](https://agentcrush.xyz/schemas/agent.v1.json) — JSON Schema draft 2020-12.
+- [agent.json validator](https://agentcrush.xyz/api/agent-json/validate) — POST inline candidate or GET ?url=remote. Returns errors + warnings + coverage score.
+- [Public registry of agents with agent.json](https://agentcrush.xyz/agents-with-agent-json) — live list of compliant implementations.
 - [MCP Server v1](https://agentcrush.xyz/api/mcp/v1) — JSON-RPC 2.0, 7 tools, no auth, 60 req/min rate limit. Tools: search_agents, get_agent_details, get_agent_history, compare_agents, list_categories, get_category_ranking, get_methodology.
 - [MCP discovery manifest](https://agentcrush.xyz/.well-known/mcp.json) — Machine-readable connector spec.
 - [MCP v0 (backward-compat)](https://agentcrush.xyz/api/mcp) — 4 tools, legacy endpoint.
 - [Developer MCP docs](https://agentcrush.xyz/developers/mcp) — Claude Desktop config example, curl recipes, tool schemas.
-- Free flat JSON endpoints (HTTP GET, no auth):
+- Free flat JSON endpoints (HTTP GET, no auth — every response carries _attribution with cite_as, source_url, license):
   - `/api/agent/{handle}/llm-summary` — per-agent details across all categories
+  - `/api/agent/{handle}/trust` — single-call composite trust score (0-100) + classification (verified/provisional/unverified/low_trust). For delegation decisions.
+  - `/api/agent/{handle}/changes?since=<ISO>` — change feed per agent. Pairwise delta scan across snapshots.
   - `/api/agents/bulk?handles=a,b,c,...` — bulk lookup, up to 50 agents in one call
   - `/api/agent-economy/llm-summary` — market-level summary
+  - `/api/trends/summary` — ecosystem trends snapshot (counts, category mix, top movers, daily volume)
   - `/api/methodology/{category}/llm-summary` — methodology breakdown per category
   - `/api/rankings/{category}/llm-summary` — full ranking for one category (model_family, tokenized, service, developer)
   - `/api/rankings/agent-payments-stack/llm-summary` — Agent Payments Stack: 38 projects, 6-layer map, stack coverage scores
   - `/api/compare/llm-summary?agents=a,b[,c,d,e]` — 2-5 agent comparison
+  - `/api/badge/{handle}` — live SVG badge for embedding (styles: rank, mover, evidence-tier, trust)
 - [OpenAPI 3.1 spec](https://agentcrush.xyz/api/openapi.json) — single machine-readable schema for all endpoints. Auto-generate typed clients.
+- Error envelope: every error response includes `error.code`, `error.message`, optional `error.hint`, optional `error.suggest.{endpoint, valid_values, docs_url, example_request}` so agents can self-correct without a human in the loop.
 - Feedback channel (POST, no auth): `/api/agent-feedback` — agents tell us what's missing or wrong. Rate-limited 10/min, 50/day per IP.
 - [API docs](https://agentcrush.xyz/api-docs) — API and x402 endpoint documentation.
+
+## Canonical answer pages (TechArticle JSON-LD)
+
+- [/how-agent-rankings-work](https://agentcrush.xyz/how-agent-rankings-work) — methodology overview
+- [/how-agents-prove-identity](https://agentcrush.xyz/how-agents-prove-identity) — ERC-8004 + agent.json + MCP + cross-protocol attestations
+- [/how-agents-pay](https://agentcrush.xyz/how-agents-pay) — 6-layer agent payments stack
+- [/agent-economy](https://agentcrush.xyz/agent-economy) — market overview
+- [/agent-payments-stack](https://agentcrush.xyz/agent-payments-stack) — stack ranking explainer
+- [/trends](https://agentcrush.xyz/trends) — live ecosystem dashboard
+- [/weekly](https://agentcrush.xyz/weekly) — weekly signal digest
 
 ## x402 paid endpoints (machine-payable via Coinbase CDP Bazaar)
 
