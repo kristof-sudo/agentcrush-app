@@ -403,6 +403,117 @@ const TOOLS = [
       },
     },
   },
+  {
+    name: 'get_agent_trust',
+    title: 'Get Composite Trust Score',
+    description: 'Single-call composite trust score (0-100) + classification (verified / provisional / unverified / low_trust) for delegation decisions. Combines confidence_tier, evidence tier, ERC-8004 verified identity, and risk flags. Mirror of GET /api/agent/{handle}/trust.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
+    inputSchema: {
+      type: 'object',
+      properties: { handle: { type: 'string', description: 'Agent handle slug.' } },
+      required: ['handle'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        handle:                    { type: 'string' },
+        name:                      { type: 'string' },
+        trust_score:               { type: 'number', description: '0-100 composite score.' },
+        classification:            { type: 'string', enum: ['verified', 'provisional', 'unverified', 'low_trust'] },
+        classification_thresholds: { type: 'object' },
+        factors:                   { type: 'object', description: 'confidence_by_category, tier, risk_flags, surfaces.' },
+        score_breakdown:           { type: 'array', items: { type: 'object' } },
+        delegation_hint:           { type: 'string' },
+      },
+    },
+  },
+  {
+    name: 'get_top_movers',
+    title: 'Get Top Weekly Movers',
+    description: 'Returns the top weekly rank movers (up + down) computed from agents.weekly_delta. Useful for surfacing notable changes since last week. Default limit 10 per direction.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        direction: { type: 'string', enum: ['up', 'down', 'both'], description: 'Movement direction. Default "both".' },
+        limit:     { type: 'number', description: 'Max results per direction (1-25, default 10).' },
+        category:  { type: 'string', enum: VALID_CATEGORIES, description: 'Restrict to one category.' },
+      },
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        direction: { type: 'string' },
+        up:        { type: 'array', items: { type: 'object', properties: { handle: { type: 'string' }, name: { type: 'string' }, weekly_delta: { type: 'number' }, tier: { type: 'string' }, primary_category: { type: 'string' }, profile_url: { type: 'string' } } } },
+        down:      { type: 'array', items: { type: 'object' } },
+      },
+    },
+  },
+  {
+    name: 'get_protocol_adoption',
+    title: 'Get Protocol Adoption Counts',
+    description: 'How many indexed agents touch each major protocol/surface (ERC-8004 verified, Virtuals tokens, Agentverse, x402/Bazaar, HuggingFace, GitHub). Useful for ecosystem-state questions.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
+    inputSchema: { type: 'object', properties: {} },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        total_agents:  { type: 'integer' },
+        adoption: {
+          type: 'object',
+          properties: {
+            erc_8004_verified:    { type: 'integer' },
+            virtuals_token:       { type: 'integer' },
+            agentverse_listed:    { type: 'integer' },
+            github_mapped:        { type: 'integer' },
+            x402_bazaar_endpoint: { type: 'integer' },
+          },
+        },
+        last_updated: { type: 'string' },
+      },
+    },
+  },
+  {
+    name: 'get_agent_changes',
+    title: 'Get Per-Agent Change Feed',
+    description: 'Pairwise delta scan over an agent\'s recent snapshots. Reports material changes in score, rank, github_stars, follower_count, identity_type, etc. Mirror of GET /api/agent/{handle}/changes.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        handle: { type: 'string', description: 'Agent handle slug.' },
+        since:  { type: 'string', description: 'ISO date cutoff (default 7 days ago).' },
+        limit:  { type: 'number', description: 'Max changes to return (1-100, default 30).' },
+      },
+      required: ['handle'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        handle:       { type: 'string' },
+        since:        { type: 'string' },
+        change_count: { type: 'integer' },
+        changes:      { type: 'array', items: { type: 'object' } },
+      },
+    },
+  },
+  {
+    name: 'get_ecosystem_summary',
+    title: 'Get Ecosystem Summary',
+    description: 'One-call ecosystem-level summary: counts (total, evidence-ranked, archived), category mix (model_family/tokenized/service/developer), category leaders, snapshot volume last 30 days. Mirror of GET /api/trends/summary.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
+    inputSchema: { type: 'object', properties: {} },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        summary:       { type: 'string' },
+        totals:        { type: 'object' },
+        category_mix:  { type: 'object' },
+        leaders:       { type: 'object' },
+        snapshot_window: { type: 'object' },
+      },
+    },
+  },
 ]
 
 // ── Tool implementations ──────────────────────────────────────────────────────
@@ -684,6 +795,128 @@ async function tool_get_methodology(args) {
   }
 }
 
+// ── New tool implementations (R-4.5) ──────────────────────────────────────────
+
+async function tool_get_agent_trust(args) {
+  const handle = sanitizeHandle(args?.handle)
+  if (!handle) return { error: 'handle is required' }
+  // Reuse the public trust endpoint logic by HTTP-fetching ourselves —
+  // avoids duplicating the score formula in two places.
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://agentcrush.xyz'
+  try {
+    const res = await fetch(`${base}/api/agent/${encodeURIComponent(handle)}/trust`)
+    if (!res.ok) {
+      const j = await res.json().catch(() => null)
+      return { error: j?.error?.message || `Trust lookup failed (${res.status})`, suggest: j?.error?.suggest }
+    }
+    const j = await res.json()
+    // Drop _attribution from MCP payload (already in the JSON-RPC envelope)
+    delete j._attribution
+    return j
+  } catch (e) {
+    return { error: `Trust lookup failed: ${e.message}` }
+  }
+}
+
+async function tool_get_top_movers(args) {
+  const direction = ['up', 'down', 'both'].includes(args?.direction) ? args.direction : 'both'
+  const limit = Math.max(1, Math.min(25, parseInt(args?.limit ?? 10, 10) || 10))
+  const category = isValidCategory(args?.category) ? args.category : null
+  const supabase = db()
+  const sel = 'handle, display_name, weekly_delta, tier, primary_category'
+
+  const fetchSide = async (ascending) => {
+    let q = supabase.from('agents').select(sel)
+      .not('weekly_delta', 'is', null)
+      [ascending ? 'lt' : 'gt']('weekly_delta', 0)
+      .order('weekly_delta', { ascending })
+      .limit(limit)
+    if (category) q = q.eq('primary_category', category)
+    const { data } = await q
+    return (data || []).map(a => ({
+      handle: a.handle, name: a.display_name || a.handle,
+      weekly_delta: a.weekly_delta, tier: a.tier, primary_category: a.primary_category,
+      profile_url: `https://agentcrush.xyz/agent/${encodeURIComponent(a.handle)}`,
+    }))
+  }
+
+  const result = { direction, limit, category, up: [], down: [] }
+  if (direction === 'up' || direction === 'both') result.up = await fetchSide(false)
+  if (direction === 'down' || direction === 'both') result.down = await fetchSide(true)
+  return result
+}
+
+async function tool_get_protocol_adoption() {
+  const supabase = db()
+  const head = (q) => q.select('id', { count: 'exact', head: true })
+  const [
+    { count: total },
+    { count: erc8004 },
+    { count: virtuals },
+    { count: agentverse },
+    { count: github },
+  ] = await Promise.all([
+    head(supabase.from('agents')),
+    head(supabase.from('agents').eq('identity_status', 'verified')),
+    head(supabase.from('agents').not('virtuals_id', 'is', null)),
+    head(supabase.from('agents').not('agentverse_id', 'is', null)),
+    head(supabase.from('agents').not('github_url', 'is', null)),
+  ])
+  // x402 endpoints — counted from bazaar_resources table if it exists
+  let x402 = null
+  try {
+    const { count } = await supabase.from('bazaar_resources').select('id', { count: 'exact', head: true })
+    x402 = count ?? null
+  } catch { /* table may not exist */ }
+  return {
+    total_agents: total || 0,
+    adoption: {
+      erc_8004_verified: erc8004 || 0,
+      virtuals_token: virtuals || 0,
+      agentverse_listed: agentverse || 0,
+      github_mapped: github || 0,
+      x402_bazaar_endpoint: x402,
+    },
+    last_updated: new Date().toISOString(),
+  }
+}
+
+async function tool_get_agent_changes(args) {
+  const handle = sanitizeHandle(args?.handle)
+  if (!handle) return { error: 'handle is required' }
+  const since = args?.since
+  const limit = Math.max(1, Math.min(100, parseInt(args?.limit ?? 30, 10) || 30))
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://agentcrush.xyz'
+  try {
+    const params = new URLSearchParams()
+    if (since) params.set('since', since)
+    params.set('limit', String(limit))
+    const res = await fetch(`${base}/api/agent/${encodeURIComponent(handle)}/changes?${params}`)
+    if (!res.ok) {
+      const j = await res.json().catch(() => null)
+      return { error: j?.error?.message || `Change feed failed (${res.status})`, suggest: j?.error?.suggest }
+    }
+    const j = await res.json()
+    delete j._attribution
+    return j
+  } catch (e) {
+    return { error: `Change feed failed: ${e.message}` }
+  }
+}
+
+async function tool_get_ecosystem_summary() {
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://agentcrush.xyz'
+  try {
+    const res = await fetch(`${base}/api/trends/summary`)
+    if (!res.ok) return { error: `Trends summary failed (${res.status})` }
+    const j = await res.json()
+    delete j._attribution
+    return j
+  } catch (e) {
+    return { error: `Trends summary failed: ${e.message}` }
+  }
+}
+
 // ── JSON-RPC ──────────────────────────────────────────────────────────────────
 
 const CORS = {
@@ -737,6 +970,11 @@ async function dispatchTool(id, params, rl) {
       case 'list_categories':       result = await tool_list_categories(); break
       case 'get_category_ranking':  result = await tool_get_category_ranking(args); break
       case 'get_methodology':       result = await tool_get_methodology(args); break
+      case 'get_agent_trust':       result = await tool_get_agent_trust(args); break
+      case 'get_top_movers':        result = await tool_get_top_movers(args); break
+      case 'get_protocol_adoption': result = await tool_get_protocol_adoption(); break
+      case 'get_agent_changes':     result = await tool_get_agent_changes(args); break
+      case 'get_ecosystem_summary': result = await tool_get_ecosystem_summary(); break
       default:                      return jsonError(id, -32601, `Unknown tool: ${name}`, rl)
     }
   } catch (e) {

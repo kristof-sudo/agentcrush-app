@@ -11,23 +11,32 @@
   "auth": "none",
   "methods": ["POST"],
   "tools": [
-    { "name": "search_agents",        "description": "Search AI agents by name or keyword with structured filters." },
-    { "name": "get_agent_details",    "description": "Full agent details including scores across all categories the agent qualifies for." },
-    { "name": "get_agent_history",    "description": "Daily rank + score snapshots over the past 1-90 days." },
-    { "name": "compare_agents",       "description": "Side-by-side comparison of 2-5 agents." },
-    { "name": "list_categories",      "description": "The 4 category indices with counts and methodology versions." },
-    { "name": "get_category_ranking", "description": "Full ranking for a specific category." },
-    { "name": "get_methodology",      "description": "Scoring methodology for a category — weights, signals, evidence-ready rule, limitations." }
+    { "name": "search_agents",         "description": "Search AI agents by name or keyword with structured filters." },
+    { "name": "get_agent_details",     "description": "Full agent details including scores across all categories the agent qualifies for." },
+    { "name": "get_agent_history",     "description": "Daily rank + score snapshots over the past 1-90 days." },
+    { "name": "compare_agents",        "description": "Side-by-side comparison of 2-5 agents." },
+    { "name": "list_categories",       "description": "The 4 category indices with counts and methodology versions." },
+    { "name": "get_category_ranking",  "description": "Full ranking for a specific category." },
+    { "name": "get_methodology",       "description": "Scoring methodology for a category — weights, signals, evidence-ready rule, limitations." },
+    { "name": "get_agent_trust",       "description": "Single-call composite trust score (0-100) + classification (verified/provisional/unverified/low_trust) for delegation decisions." },
+    { "name": "get_top_movers",        "description": "Top weekly rank movers (up/down) from agents.weekly_delta. Optional per-category filter." },
+    { "name": "get_protocol_adoption", "description": "How many indexed agents touch each major protocol/surface (ERC-8004 verified, Virtuals, Agentverse, GitHub, x402)." },
+    { "name": "get_agent_changes",     "description": "Pairwise delta scan over an agent's recent snapshots. Reports material changes in scoring fields." },
+    { "name": "get_ecosystem_summary", "description": "One-call ecosystem-level summary: counts, category mix, top movers, snapshot volume." }
   ],
   "rate_limit": "60 requests/minute per IP",
   "openapi_spec": "https://agentcrush.xyz/api/openapi.json",
   "flat_json_endpoints": [
     "https://agentcrush.xyz/api/agent/{handle}/llm-summary",
+    "https://agentcrush.xyz/api/agent/{handle}/trust",
+    "https://agentcrush.xyz/api/agent/{handle}/changes",
     "https://agentcrush.xyz/api/agents/bulk?handles=a,b,c",
     "https://agentcrush.xyz/api/agent-economy/llm-summary",
     "https://agentcrush.xyz/api/methodology/{category}/llm-summary",
     "https://agentcrush.xyz/api/rankings/{category}/llm-summary",
-    "https://agentcrush.xyz/api/compare/llm-summary?agents=a,b"
+    "https://agentcrush.xyz/api/compare/llm-summary?agents=a,b",
+    "https://agentcrush.xyz/api/trends/summary",
+    "https://agentcrush.xyz/api/badge/{handle}"
   ],
   "feedback_endpoint": "https://agentcrush.xyz/api/agent-feedback",
   "maintainer": "kristof@patyi.co"
