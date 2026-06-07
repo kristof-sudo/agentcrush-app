@@ -1,0 +1,140 @@
+name: 'Validate agent.json'
+description: 'Validate your agent.json against the AgentCrush open standard schema. Scores coverage and reports errors.'
+author: 'AgentCrush'
+
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  path:
+    description: 'Path to agent.json (default: auto-detect agent.json or .well-known/agent.json)'
+    required: false
+    default: ''
+  fail-on-invalid:
+    description: 'Fail the workflow if agent.json is invalid (default: true)'
+    required: false
+    default: 'true'
+  fail-on-low-coverage:
+    description: 'Minimum coverage % to pass (0-100, default: 0 = no minimum)'
+    required: false
+    default: '0'
+
+outputs:
+  valid:
+    description: 'Whether agent.json is valid (true/false)'
+    value: ${{ steps.validate.outputs.valid }}
+  score:
+    description: 'Coverage score (0-100%)'
+    value: ${{ steps.validate.outputs.score }}
+  errors:
+    description: 'Validation errors as JSON array'
+    value: ${{ steps.validate.outputs.errors }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Find and validate agent.json
+      id: validate
+      shell: bash
+      run: |
+        set -e
+
+        # ── Find the file ──────────────────────────────────────────────────
+        FILE="${{ inputs.path }}"
+        if [ -z "$FILE" ]; then
+          if [ -f "agent.json" ]; then
+            FILE="agent.json"
+          elif [ -f ".well-known/agent.json" ]; then
+            FILE=".well-known/agent.json"
+          else
+            echo "::notice::No agent.json found (checked agent.json and .well-known/agent.json). Skipping."
+            echo "valid=skipped" >> "$GITHUB_OUTPUT"
+            echo "score=0" >> "$GITHUB_OUTPUT"
+            echo 'errors=[]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+        fi
+
+        echo "::group::Validating $FILE"
+        echo "Found: $FILE"
+
+        # ── POST to AgentCrush validator ───────────────────────────────────
+        RESULT=$(curl -s -w "\n%{http_code}" -X POST \
+          "https://agentcrush.xyz/api/agent-json/validate" \
+          -H "Content-Type: application/json" \
+          -H "User-Agent: agentcrush-validate-action/1.0" \
+          --data-binary "@$FILE")
+
+        HTTP_CODE=$(echo "$RESULT" | tail -1)
+        BODY=$(echo "$RESULT" | head -n -1)
+
+        if [ "$HTTP_CODE" != "200" ]; then
+          echo "::error::Validator API returned HTTP $HTTP_CODE"
+          echo "valid=false" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        # ── Parse result ───────────────────────────────────────────────────
+        VALID=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(str(d.get('valid',False)).lower())" 2>/dev/null || echo "false")
+        SCORE=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('score',0))" 2>/dev/null || echo "0")
+        ERRORS=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('errors',[])))" 2>/dev/null || echo "[]")
+        WARNINGS=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('warnings',[])))" 2>/dev/null || echo "[]")
+
+        echo "valid=$VALID" >> "$GITHUB_OUTPUT"
+        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+        echo "errors=$ERRORS" >> "$GITHUB_OUTPUT"
+
+        # ── Print report ───────────────────────────────────────────────────
+        echo ""
+        echo "### AgentCrush agent.json validation"
+        echo ""
+        if [ "$VALID" = "true" ]; then
+          echo "✅ Valid — coverage ${SCORE}%"
+        else
+          echo "❌ Invalid — coverage ${SCORE}%"
+        fi
+        echo ""
+
+        ERROR_COUNT=$(echo "$ERRORS" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+        if [ "$ERROR_COUNT" -gt "0" ]; then
+          echo "**Errors ($ERROR_COUNT):**"
+          echo "$ERRORS" | python3 -c "
+        import sys, json
+        for e in json.load(sys.stdin):
+            field = e.get('field','?')
+            msg = e.get('message', str(e))
+            print(f'  - \`{field}\`: {msg}')
+        " 2>/dev/null || true
+          echo ""
+        fi
+
+        WARN_COUNT=$(echo "$WARNINGS" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+        if [ "$WARN_COUNT" -gt "0" ]; then
+          echo "**Warnings ($WARN_COUNT):**"
+          echo "$WARNINGS" | python3 -c "
+        import sys, json
+        for w in json.load(sys.stdin):
+            field = w.get('field','?') if isinstance(w,dict) else '?'
+            msg = w.get('message', str(w)) if isinstance(w,dict) else str(w)
+            print(f'  - \`{field}\`: {msg}')
+        " 2>/dev/null || true
+          echo ""
+        fi
+
+        echo "Full spec + validator: https://agentcrush.xyz/agent-json"
+        echo "::endgroup::"
+
+        # ── Failure gates ──────────────────────────────────────────────────
+        MIN_COVERAGE="${{ inputs.fail-on-low-coverage }}"
+        if [ "$MIN_COVERAGE" -gt "0" ] 2>/dev/null; then
+          if [ "$(echo "$SCORE < $MIN_COVERAGE" | python3 -c "import sys; a,op,b=sys.stdin.read().split(); print(float(a)<float(b))" 2>/dev/null)" = "True" ]; then
+            echo "::error::Coverage ${SCORE}% is below minimum ${MIN_COVERAGE}%"
+            exit 1
+          fi
+        fi
+
+        if [ "${{ inputs.fail-on-invalid }}" = "true" ] && [ "$VALID" = "false" ]; then
+          echo "::error::agent.json is invalid. Fix the errors above or set fail-on-invalid: false to suppress."
+          exit 1
+        fi

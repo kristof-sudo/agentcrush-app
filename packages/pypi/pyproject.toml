@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentcrush"
+version = "0.1.0"
+description = "Python client and CLI for the AgentCrush agent economy index"
+requires-python = ">=3.8"
+dependencies = []
+keywords = ["ai-agents", "agent-economy", "rankings", "mcp", "erc-8004", "x402"]
+license = {text = "MIT"}
+readme = "README.md"
+authors = [{name = "AgentCrush", email = "hello@agentcrush.xyz"}]
+
+[project.urls]
+Homepage = "https://agentcrush.xyz"
+Repository = "https://github.com/kristof-sudo/agentcrush-app"
+Documentation = "https://agentcrush.xyz/methodology"
+
+[project.scripts]
+agentcrush = "agentcrush._cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentcrush"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/agentcrush/", "README.md"]
