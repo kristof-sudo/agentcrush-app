@@ -31,8 +31,8 @@ export default function Header() {
           <nav className="hidden items-center justify-center gap-5 sm:flex">
             {[
               { href: '/rankings', label: 'Rankings' },
-              { href: '/methodology', label: 'Methodology' },
-              { href: '/use-cases', label: 'Use Cases' },
+              { href: '/ghost-index', label: 'Ghost Index' },
+              { href: '/new', label: 'New' },
               { href: '/developers', label: 'Developers' },
               { href: '/submit', label: 'Submit' },
               { href: '/blog', label: 'Blog' },
