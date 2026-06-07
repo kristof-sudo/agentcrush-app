@@ -21,8 +21,7 @@ INSERT INTO agents (
   github_url,
   x_handle,
   last_event_at,
-  created_at,
-  updated_at
+  created_at
 ) VALUES (
   'claude_code',
   'Claude Code',
@@ -39,7 +38,6 @@ INSERT INTO agents (
   'https://github.com/anthropics/claude-code',
   'AnthropicAI',
   NOW(),
-  NOW(),
   NOW()
 )
 ON CONFLICT (handle) DO UPDATE SET
@@ -53,8 +51,7 @@ ON CONFLICT (handle) DO UPDATE SET
   website_url      = EXCLUDED.website_url,
   github_url       = EXCLUDED.github_url,
   x_handle         = EXCLUDED.x_handle,
-  last_event_at    = EXCLUDED.last_event_at,
-  updated_at       = NOW();
+  last_event_at    = EXCLUDED.last_event_at;
 
 -- ── Nous Research / Hermes ────────────────────────────────────────────────────
 INSERT INTO agents (
@@ -73,8 +70,7 @@ INSERT INTO agents (
   github_url,
   x_handle,
   last_event_at,
-  created_at,
-  updated_at
+  created_at
 ) VALUES (
   'nousresearch',
   'Nous Research / Hermes',
@@ -91,7 +87,6 @@ INSERT INTO agents (
   'https://github.com/NousResearch',
   'NousResearch',
   NOW(),
-  NOW(),
   NOW()
 )
 ON CONFLICT (handle) DO UPDATE SET
@@ -105,8 +100,7 @@ ON CONFLICT (handle) DO UPDATE SET
   website_url      = EXCLUDED.website_url,
   github_url       = EXCLUDED.github_url,
   x_handle         = EXCLUDED.x_handle,
-  last_event_at    = EXCLUDED.last_event_at,
-  updated_at       = NOW();
+  last_event_at    = EXCLUDED.last_event_at;
 
 -- Seed initial agent_snapshots rows so the scoring pipeline can calculate rank
 -- Uses a subquery to get the agent IDs just inserted
