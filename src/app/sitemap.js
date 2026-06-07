@@ -38,6 +38,11 @@ const STATIC_PAGES = [
   { path: '/rankings/developer',    priority: 0.8, changeFrequency: 'daily' },
   { path: '/weekly',                priority: 0.7, changeFrequency: 'weekly'},
   { path: '/weekly/2026-W21',       priority: 0.6, changeFrequency: 'monthly'},
+  { path: '/weekly/2026-W23',       priority: 0.7, changeFrequency: 'monthly'},
+  // 2026-06-07 G-series — Ghost Index, New Agents Radar, Glossary
+  { path: '/ghost-index',           priority: 0.9, changeFrequency: 'daily'  },
+  { path: '/new',                   priority: 0.8, changeFrequency: 'daily'  },
+  { path: '/glossary',              priority: 0.8, changeFrequency: 'weekly' },
 ]
 
 function makeSupabase() {

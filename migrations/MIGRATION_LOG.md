@@ -9,6 +9,10 @@ Older historical DB changes existed before this process was formalized and may n
 ## Entries
 
 ### 2026-06-08
+- `migrations/20260608_0920_model_family_scoring_view.sql` — Creates `agent_score_model_family_v1` view. Methodology v1.0-model-family-v0: expert visibility 40% (analyst-curated proxy for HF/LMSYS/derivatives/adoption pending ingestion) + GitHub stars 20% (log-scaled) + followers 15% (log-scaled) + reputation 15% + recency 10%. Evidence-ready: 3-of-5 signals AND visibility_score ≥ 50. Backs `/api/model-families/v1`. v1.1 will replace expert_visibility with ingested sub-signals.
+  **STATUS: PENDING APPLY by Kris.**
+- `migrations/20260608_0910_backfill_mcp_activity.sql` — Fixes Ghost Index measurement gap. Sets `activity_status='active'` + `last_event_at=NOW()` for 15 mcp_server rows seeded 2026-06-07 without activity columns (caused 0/15 alive readout despite all being live official MCP repos). Idempotent.
+  **STATUS: PENDING APPLY by Kris.**
 - `migrations/20260608_0900_model_family_seed_big10.sql` — model_family scoring seed for the big 10 models. UPSERTs evidence-ranked entries for: OpenAI/GPT-4o (95), Anthropic Claude model (94), Google Gemini (88), Meta Llama (86), Alibaba Qwen (83), DeepSeek (80), Mistral (76), xAI Grok (72), Cohere Command (65). Hermes (82) already seeded 2026-06-07. Updates existing low-score handles (gemini/llama/qwen/deepseek/mistral/cohere) and inserts new handles (openai, anthropic_claude, xai_grok). Seeds initial agent_snapshots with baseline rank + GitHub stars. Scoring rubric: HF downloads 25% + LMSYS rank 25% + GitHub stars 15% + derivative count 15% + agentic adoption 20%. Idempotent (ON CONFLICT DO UPDATE / DO NOTHING).
   **STATUS: PENDING APPLY by Kris.**
 
