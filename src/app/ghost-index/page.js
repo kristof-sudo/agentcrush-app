@@ -105,6 +105,11 @@ const CATEGORY_COLORS = {
   mcp_server:   '#f97316',
 }
 
+// Categories where v1.0 activity ingestion is not yet wired. The "0% alive" we
+// would otherwise show for these is a measurement artifact, not ecosystem
+// signal. Surface as "ingestion pending" until the workers land (tracked).
+const INGESTION_PENDING_CATEGORIES = new Set(['service', 'tokenized'])
+
 export default async function GhostIndexPage() {
   let ghostData
   try {
@@ -225,28 +230,50 @@ export default async function GhostIndexPage() {
                 .map(([cat, data]) => {
                   const pct = Number(data.liveness)
                   const color = CATEGORY_COLORS[cat] || '#ffffff'
+                  const pending = INGESTION_PENDING_CATEGORIES.has(cat)
                   return (
                     <div key={cat} className="flex items-center gap-3">
                       <span className="text-xs font-mono text-white/40 w-28 shrink-0">
                         {CATEGORY_LABELS[cat] || cat}
                       </span>
                       <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: color + 'aa' }}
-                        />
+                        {!pending && (
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: color + 'aa' }}
+                          />
+                        )}
                       </div>
-                      <span className="text-xs font-mono font-semibold w-12 text-right"
-                            style={{ color }}>
-                        {pct}%
-                      </span>
-                      <span className="text-[10px] text-white/25 font-mono w-20 text-right">
-                        {data.alive}/{data.total}
-                      </span>
+                      {pending ? (
+                        <>
+                          <span className="text-[10px] font-mono font-semibold text-white/30 w-12 text-right" title="Liveness ingestion not yet wired for this category">
+                            —
+                          </span>
+                          <span className="text-[10px] text-white/25 font-mono w-20 text-right" title="Activity ingestion pending — see /methodology#ingestion-coverage">
+                            pending
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-xs font-mono font-semibold w-12 text-right"
+                                style={{ color }}>
+                            {pct}%
+                          </span>
+                          <span className="text-[10px] text-white/25 font-mono w-20 text-right">
+                            {data.alive}/{data.total}
+                          </span>
+                        </>
+                      )}
                     </div>
                   )
                 })}
             </div>
+            {/* Pending-ingestion disclosure */}
+            {Object.keys(categories).some(c => INGESTION_PENDING_CATEGORIES.has(c)) && (
+              <p className="text-[11px] text-white/30 mt-3 leading-relaxed">
+                <span className="font-mono text-white/45">pending</span> means liveness ingestion isn&apos;t yet wired for this category — the agents are indexed but we have no activity signal to score them. <Link href="/methodology#ingestion-coverage" className="text-[#00d4ff]/70 hover:text-[#00d4ff]">methodology →</Link>
+              </p>
+            )}
           </section>
         )}
 

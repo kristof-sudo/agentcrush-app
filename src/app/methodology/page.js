@@ -310,6 +310,43 @@ export default async function MethodologyHubPage() {
         </p>
       </section>
 
+      {/* Ghost Index ingestion coverage */}
+      <section id="ingestion-coverage" className="mb-10 scroll-mt-24">
+        <h2 className="text-lg font-bold text-white mb-3">Ghost Index ingestion coverage</h2>
+        <p className="text-sm text-white/55 leading-relaxed mb-4">
+          The <Link href="/ghost-index" className="text-[#00d4ff]/80 hover:text-[#00d4ff] underline underline-offset-2">Ghost Index</Link> counts an agent as &ldquo;alive&rdquo; when{' '}
+          <span className="font-mono text-white/70">activity_status = &lsquo;active&rsquo;</span> or{' '}
+          <span className="font-mono text-white/70">last_event_at</span> is within 30 days. Whether that signal exists depends on whether a worker writes to it for that category. v1.0 wires activity ingestion for some categories, not others — and we surface that gap honestly instead of reporting 0% for categories we&apos;re not actually measuring.
+        </p>
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] font-mono uppercase tracking-wider text-white/35">
+            <span>Category</span>
+            <span className="text-right">Ingestion source</span>
+            <span className="text-right">Status</span>
+          </div>
+          {[
+            { cat: 'Developer',      src: 'GitHub push events, repo snapshots',  status: 'live'    },
+            { cat: 'Model Families', src: 'Big-10 seed (manual) + nightly snapshots', status: 'live'    },
+            { cat: 'MCP Servers',    src: 'Seed + registry crawl (planned weekly)',  status: 'live'    },
+            { cat: 'Service',        src: 'A2A ecosystem crawl — worker pending',     status: 'pending' },
+            { cat: 'Tokenized',      src: 'Virtuals on-chain — worker pending',       status: 'pending' },
+          ].map(({ cat, src, status }) => (
+            <div key={cat} className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-3 items-center border-b border-white/[0.04] last:border-b-0">
+              <span className="text-sm font-semibold text-white">{cat}</span>
+              <span className="text-xs text-white/45 text-right">{src}</span>
+              <span className={`text-[10px] font-mono font-bold tracking-wider rounded px-1.5 py-0.5 border ${
+                status === 'live'
+                  ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+                  : 'border-amber-400/40 bg-amber-400/10 text-amber-300'
+              }`}>{status.toUpperCase()}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-white/40 mt-3 leading-relaxed">
+          For pending categories the index correctly shows the agents as indexed-but-no-activity-signal — surfaced on <Link href="/ghost-index" className="text-[#00d4ff]/70 hover:text-[#00d4ff]">/ghost-index</Link> as <span className="font-mono text-white/55">pending</span> rather than 0%. The aggregate headline liveness number includes all categories: it&apos;s a lower bound, and will rise as ingestion coverage grows.
+        </p>
+      </section>
+
       {/* Per-category methodology cards */}
       {METHODOLOGY.map((m) => (
         <section key={m.slug} id={m.slug} className="mb-12 scroll-mt-24">
