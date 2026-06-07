@@ -1,0 +1,12 @@
+[Unit]
+Description=AgentCrush trust-fall checker — 07:30 UTC (09:30 Budapest) daily
+Documentation=Phase R-2.2 / R-5 — trust-fall autonomous posting lane
+
+[Timer]
+# 07:30 UTC = 09:30 Budapest, after mid-morning executor (07:00) settles
+OnCalendar=*-*-* 07:30:00 UTC
+Persistent=true
+Unit=agentcrush-trust-fall.service
+
+[Install]
+WantedBy=timers.target

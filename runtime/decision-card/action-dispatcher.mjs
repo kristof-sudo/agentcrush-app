@@ -12,14 +12,19 @@
  *
  * Exposes: dispatch(action) → { ok, message, details? }
  *
- * Registry (v1):
- *   post-x          — post to X via API v2 (requires X_BEARER + X_API_KEY)
- *   post-fc         — post to Farcaster via Neynar
- *   reply-x         — reply to an X post (queued, not auto-posted in v1 — logs intent)
+ * Registry (v2 — X posting fully wired):
+ *   post-x          — post to X via API v2 with OAuth 1.0a signing
+ *   post-fc         — post to Farcaster via Neynar (needs NEYNAR_SIGNER_UUID)
+ *   reply-x         — reply to an X post (executes via OAuth 1.0a)
+ *   quote-x         — quote-tweet an X post
  *   build-suggestion — log a Kris-approved build-suggestion item to brain Queue
  *   noop            — for testing; just logs
+ *
+ * Required env vars for X posting (all present on VPS in copydesk/.env):
+ *   X_CONSUMER_KEY, X_CONSUMER_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET
  */
 
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -34,6 +39,88 @@ async function logAction(record) {
   await fs.appendFile(ACTIONS_LOG, JSON.stringify({ ts: new Date().toISOString(), ...record }) + '\n');
 }
 
+// ── X OAuth 1.0a signing ─────────────────────────────────────────────────────
+// Ported from runtime/copydesk/x-publisher.mjs. No external deps — pure Node crypto.
+
+function enc(str) {
+  return encodeURIComponent(String(str))
+    .replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+}
+
+function xOauthHeader({ method, url }) {
+  const {
+    X_CONSUMER_KEY:         consumerKey,
+    X_CONSUMER_SECRET:      consumerSecret,
+    X_ACCESS_TOKEN:         token,
+    X_ACCESS_TOKEN_SECRET:  tokenSecret,
+  } = process.env;
+
+  if (!consumerKey || !consumerSecret || !token || !tokenSecret) {
+    throw new Error('X OAuth credentials missing (need X_CONSUMER_KEY/SECRET + X_ACCESS_TOKEN/SECRET)');
+  }
+
+  const oauth = {
+    oauth_consumer_key:     consumerKey,
+    oauth_nonce:            crypto.randomBytes(16).toString('hex'),
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp:        Math.floor(Date.now() / 1000).toString(),
+    oauth_token:            token,
+    oauth_version:          '1.0',
+  };
+
+  // For JSON-body POST requests, only oauth params go in the signature base string
+  // (no body params — per Twitter API v2 with Content-Type: application/json)
+  const paramString = Object.keys(oauth).sort()
+    .map(k => `${enc(k)}=${enc(oauth[k])}`)
+    .join('&');
+
+  const baseString = [method.toUpperCase(), enc(url), enc(paramString)].join('&');
+  const signingKey = `${enc(consumerSecret)}&${enc(tokenSecret)}`;
+
+  oauth.oauth_signature = crypto
+    .createHmac('sha1', signingKey)
+    .update(baseString)
+    .digest('base64');
+
+  return 'OAuth ' + Object.keys(oauth).sort()
+    .map(k => `${enc(k)}="${enc(oauth[k])}"`)
+    .join(', ');
+}
+
+async function xPost(body) {
+  const url = 'https://api.twitter.com/2/tweets';
+  const auth = xOauthHeader({ method: 'POST', url });
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`X API ${res.status}: ${JSON.stringify(json).slice(0, 300)}`);
+  return json;
+}
+
+// ── Quality gate — basic safety checks before any public post ────────────────
+// Returns { ok: true } or { ok: false, reason }
+
+const BLOCK_PATTERNS = [
+  /\bsponsor(ed|ship)\b/i,
+  /\bpartner(ship)?\b/i,
+  /\bpaid\b/i,
+  /\bgiveaway\b/i,
+  /\bnot financial advice\b/i,
+  /\bDM(s?) (me|us)\b/i,
+];
+
+function qualityGate(text) {
+  for (const pat of BLOCK_PATTERNS) {
+    if (pat.test(text)) return { ok: false, reason: `blocked pattern: ${pat.source}` };
+  }
+  if (text.length > 280) return { ok: false, reason: `text too long (${text.length} chars, max 280)` };
+  if (text.trim().length < 10) return { ok: false, reason: 'text too short' };
+  return { ok: true };
+}
+
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
 async function handleNoop(action) {
@@ -44,40 +131,101 @@ async function handlePostX(action) {
   const text = action.payload?.text;
   if (!text) return { ok: false, message: 'no text in payload' };
 
-  const bearer = process.env.X_BEARER_TOKEN || process.env.TWITTER_BEARER_TOKEN;
-  // v2 post requires OAuth 1.0a user context. Most setups have bearer for read,
-  // user-context tokens for write. Until X writing is wired end-to-end, we LOG
-  // the intent + queue for human review and return ok-with-warning.
-  if (!process.env.X_OAUTH_USER_TOKEN) {
-    await logAction({ action_id: action.action_id, type: 'post-x', status: 'queued-for-write-impl', text });
-    return {
-      ok: true,
-      message: 'queued (X write API not yet wired — text logged to actions-log.jsonl for manual post)',
-      details: { text: text.slice(0, 100) + '…' },
-    };
+  const gate = qualityGate(text);
+  if (!gate.ok) {
+    await logAction({ action_id: action.action_id, type: 'post-x', status: 'blocked', reason: gate.reason, text });
+    return { ok: false, message: `quality gate blocked: ${gate.reason}` };
   }
 
-  // Real write path (TODO: implement OAuth 1.0a signing or use a 3rd-party SDK)
-  // For now, this branch is dead-code until X write credentials are provisioned.
-  return { ok: false, message: 'X write path not yet implemented (no X_OAUTH_USER_TOKEN handler)' };
+  const json = await xPost({ text });
+  const tweetId = json?.data?.id;
+  await logAction({ action_id: action.action_id, type: 'post-x', status: 'posted', tweet_id: tweetId, text });
+  return {
+    ok: true,
+    message: 'posted to X',
+    details: { tweet_id: tweetId, url: tweetId ? `https://x.com/agentcrush_xyz/status/${tweetId}` : null },
+  };
+}
+
+async function handleReplyX(action) {
+  const text = action.payload?.text;
+  const replyToId = action.payload?.reply_to_tweet_id;
+
+  if (!text) return { ok: false, message: 'no text in payload' };
+
+  // If no tweet ID to reply to, fall back to logging (engagement executor queues these)
+  if (!replyToId) {
+    const inboxPath = path.join(BRAIN_PATH, 'Inbox', `${new Date().toISOString().slice(0, 10)}-approved-replies.md`);
+    await fs.mkdir(path.dirname(inboxPath), { recursive: true });
+    await fs.appendFile(inboxPath, `- [${new Date().toISOString()}] ${text}\n`);
+    await logAction({ action_id: action.action_id, type: 'reply-x', status: 'queued-no-target', text });
+    return { ok: true, message: 'logged to approved-replies.md (no reply_to_tweet_id — engagement executor will pick up)' };
+  }
+
+  const gate = qualityGate(text);
+  if (!gate.ok) {
+    await logAction({ action_id: action.action_id, type: 'reply-x', status: 'blocked', reason: gate.reason });
+    return { ok: false, message: `quality gate blocked: ${gate.reason}` };
+  }
+
+  const json = await xPost({ text, reply: { in_reply_to_tweet_id: replyToId } });
+  const tweetId = json?.data?.id;
+  await logAction({ action_id: action.action_id, type: 'reply-x', status: 'posted', tweet_id: tweetId, reply_to: replyToId });
+  return { ok: true, message: 'reply posted to X', details: { tweet_id: tweetId } };
+}
+
+async function handleQuoteX(action) {
+  const text = action.payload?.text;
+  const quoteUrl = action.payload?.quote_tweet_url || action.payload?.url;
+
+  if (!text) return { ok: false, message: 'no text in payload' };
+
+  const gate = qualityGate(text);
+  if (!gate.ok) {
+    await logAction({ action_id: action.action_id, type: 'quote-x', status: 'blocked', reason: gate.reason });
+    return { ok: false, message: `quality gate blocked: ${gate.reason}` };
+  }
+
+  // Quote tweet: for API v2, include the quoted tweet URL in the text itself
+  // (v2 doesn't have a dedicated quote_tweet_id param in the same way; appending URL works)
+  const fullText = quoteUrl ? `${text}\n${quoteUrl}` : text;
+  if (fullText.length > 280) {
+    // Truncate gracefully
+    const truncated = text.slice(0, 280 - (quoteUrl?.length || 0) - 2) + '\n' + (quoteUrl || '');
+    return handleQuoteX({ ...action, payload: { ...action.payload, text: truncated } });
+  }
+
+  const json = await xPost({ text: fullText });
+  const tweetId = json?.data?.id;
+  await logAction({ action_id: action.action_id, type: 'quote-x', status: 'posted', tweet_id: tweetId, quote_url: quoteUrl });
+  return { ok: true, message: 'quote tweet posted', details: { tweet_id: tweetId } };
 }
 
 async function handlePostFC(action) {
   const text = action.payload?.text;
   const NEYNAR = process.env.NEYNAR_API_KEY;
-  const FID = process.env.NEYNAR_SIGNER_FID;
   const SIGNER_UUID = process.env.NEYNAR_SIGNER_UUID;
+
   if (!text) return { ok: false, message: 'no text in payload' };
+
   if (!NEYNAR || !SIGNER_UUID) {
+    // Log and give Kris the signer provisioning reminder
     await logAction({ action_id: action.action_id, type: 'post-fc', status: 'queued-no-signer', text });
-    return { ok: true, message: 'queued (Neynar signer UUID missing — logged)' };
+    return {
+      ok: true,
+      message: 'queued (NEYNAR_SIGNER_UUID missing — provision at neynar.com/managed-signers, add to fetchers/.env)',
+    };
   }
+
+  const gate = qualityGate(text);
+  if (!gate.ok) {
+    await logAction({ action_id: action.action_id, type: 'post-fc', status: 'blocked', reason: gate.reason });
+    return { ok: false, message: `quality gate blocked: ${gate.reason}` };
+  }
+
   const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
     method: 'POST',
-    headers: {
-      'api_key': NEYNAR,
-      'content-type': 'application/json',
-    },
+    headers: { 'api_key': NEYNAR, 'content-type': 'application/json' },
     body: JSON.stringify({ signer_uuid: SIGNER_UUID, text }),
   });
   const json = await res.json().catch(() => ({}));
@@ -86,17 +234,6 @@ async function handlePostFC(action) {
   }
   await logAction({ action_id: action.action_id, type: 'post-fc', status: 'posted', cast_hash: json?.cast?.hash, text });
   return { ok: true, message: 'cast published', details: { hash: json?.cast?.hash } };
-}
-
-async function handleReplyX(action) {
-  // v1: log to actions-log + Inbox so it appears in next morning brief as visible queue
-  const description = action.payload?.description || action.label;
-  const inboxPath = path.join(BRAIN_PATH, 'Inbox', `${new Date().toISOString().slice(0, 10)}-approved-replies.md`);
-  await fs.mkdir(path.dirname(inboxPath), { recursive: true });
-  const line = `- [${new Date().toISOString()}] ${description}\n`;
-  await fs.appendFile(inboxPath, line);
-  await logAction({ action_id: action.action_id, type: 'reply-x', status: 'approved-queued', description });
-  return { ok: true, message: 'reply approved + queued to engagement executor (when built)' };
 }
 
 async function handleBuildSuggestion(action) {
@@ -113,13 +250,42 @@ async function handleBuildSuggestion(action) {
   return { ok: true, message: 'added to brain Queue/open.md' };
 }
 
+// Trust-fall: auto-posts without card approval for tightly-scoped events.
+// Called by trust-fall-checker.mjs, not via the approval queue.
+export async function trustFallPost({ text, platform = 'x', reason }) {
+  const gate = qualityGate(text);
+  if (!gate.ok) throw new Error(`trust-fall quality gate: ${gate.reason}`);
+  if (platform === 'x') {
+    const json = await xPost({ text });
+    const id = json?.data?.id;
+    await logAction({ type: 'trust-fall-post-x', status: 'posted', reason, tweet_id: id, text });
+    return { ok: true, tweet_id: id, url: id ? `https://x.com/agentcrush_xyz/status/${id}` : null };
+  }
+  if (platform === 'fc') {
+    const NEYNAR = process.env.NEYNAR_API_KEY;
+    const SIGNER = process.env.NEYNAR_SIGNER_UUID;
+    if (!NEYNAR || !SIGNER) throw new Error('Farcaster signer not configured');
+    const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
+      method: 'POST',
+      headers: { 'api_key': NEYNAR, 'content-type': 'application/json' },
+      body: JSON.stringify({ signer_uuid: SIGNER, text }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`Neynar ${res.status}: ${JSON.stringify(json).slice(0, 200)}`);
+    await logAction({ type: 'trust-fall-post-fc', status: 'posted', reason, cast_hash: json?.cast?.hash, text });
+    return { ok: true, cast_hash: json?.cast?.hash };
+  }
+  throw new Error(`unknown platform: ${platform}`);
+}
+
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 const HANDLERS = {
-  'noop': handleNoop,
-  'post-x': handlePostX,
-  'post-fc': handlePostFC,
-  'reply-x': handleReplyX,
+  'noop':             handleNoop,
+  'post-x':           handlePostX,
+  'post-fc':          handlePostFC,
+  'reply-x':          handleReplyX,
+  'quote-x':          handleQuoteX,
   'build-suggestion': handleBuildSuggestion,
 };
 

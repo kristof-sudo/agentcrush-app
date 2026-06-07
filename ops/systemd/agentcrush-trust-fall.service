@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentCrush trust-fall checker — autonomous posts for tightly-scoped events
+After=network-online.target agentcrush-executor-morning.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/decision-card
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/briefing/.env
+EnvironmentFile=-/opt/agentcrush/copydesk/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/decision-card/trust-fall-checker.mjs
+StandardOutput=append:/var/log/agentcrush/trust-fall.log
+StandardError=append:/var/log/agentcrush/trust-fall.log
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

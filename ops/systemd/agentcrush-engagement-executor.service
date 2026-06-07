@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentCrush engagement executor — replies/quotes/likes autonomous lane
+After=network-online.target agentcrush-trust-fall.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/decision-card
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/briefing/.env
+EnvironmentFile=-/opt/agentcrush/copydesk/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/decision-card/engagement-executor.mjs
+StandardOutput=append:/var/log/agentcrush/engagement-executor.log
+StandardError=append:/var/log/agentcrush/engagement-executor.log
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

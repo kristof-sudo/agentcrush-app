@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush engagement executor timer — 07:45 UTC (09:45 Budapest) daily
+Documentation=Phase R-3.2 — engagement executor
+
+[Timer]
+OnCalendar=*-*-* 07:45:00 UTC
+Persistent=true
+Unit=agentcrush-engagement-executor.service
+
+[Install]
+WantedBy=timers.target
