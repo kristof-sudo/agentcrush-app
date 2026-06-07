@@ -10,7 +10,7 @@ Older historical DB changes existed before this process was formalized and may n
 
 ### 2026-06-07
 - `migrations/20260607_0900_mcp_server_category.sql` — R-4.3 MCP Server Index (v3 — extends check constraint). **Step 0:** `DROP CONSTRAINT agents_primary_category_check` + `ADD CONSTRAINT` with 5 values (adds `mcp_server` to model_family/tokenized/service/developer). Creates `mcp_server_metadata` table (tool_count, resource_count, transport_types, registry_listings, mcp_spec_version, server_url, npm_package, pypi_package, npx_install). Seeds 15 top MCP servers using correct column names (display_name/bio/primary_category/website_url). Creates `agent_score_mcp_server_v1` view: stars 30% + tool_count 25% + registry_count 20% + forks 15% + followers 10%. Fully idempotent.
-  **STATUS: PENDING APPLY by Kris (v3 fix).** v1 failed on wrong column names; v2 failed on check constraint; v3 fixes both.
+  **STATUS: APPLIED 2026-06-07 by Kris (v3).** v1 failed on wrong column names; v2 failed on check constraint; v3 succeeded.
 
 ### 2026-06-06
 - `migrations/20260606_2200_weekly_digest_sections.sql` — Auto Weekly Digest (Phase R-3.1). Creates `weekly_digest_sections` table (week_id PK + ecosystem_section TEXT + briefs_included + model + token usage + timestamps). Updated-at trigger. RLS enabled with anon-read policy; service_role bypasses RLS for worker writes. NOTIFY pgrst at end to refresh PostgREST schema cache. Idempotent (CREATE IF NOT EXISTS + DROP/CREATE policy + trigger).
