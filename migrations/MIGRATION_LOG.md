@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-06-08
+- `migrations/20260608_0900_model_family_seed_big10.sql` — model_family scoring seed for the big 10 models. UPSERTs evidence-ranked entries for: OpenAI/GPT-4o (95), Anthropic Claude model (94), Google Gemini (88), Meta Llama (86), Alibaba Qwen (83), DeepSeek (80), Mistral (76), xAI Grok (72), Cohere Command (65). Hermes (82) already seeded 2026-06-07. Updates existing low-score handles (gemini/llama/qwen/deepseek/mistral/cohere) and inserts new handles (openai, anthropic_claude, xai_grok). Seeds initial agent_snapshots with baseline rank + GitHub stars. Scoring rubric: HF downloads 25% + LMSYS rank 25% + GitHub stars 15% + derivative count 15% + agentic adoption 20%. Idempotent (ON CONFLICT DO UPDATE / DO NOTHING).
+  **STATUS: PENDING APPLY by Kris.**
+
 ### 2026-06-07 (continued)
 - `migrations/20260607_2100_seed_claude_code_nous_research.sql` — Adds Claude Code (Anthropic, developer, evidence_ranked, visibility 92) and Nous Research / Hermes (model_family, evidence_ranked, visibility 82). Both seeded with initial agent_snapshots. **STATUS: PENDING APPLY by Kris.**
 - `migrations/20260607_1400_ghost_index.sql` — G-1 Ghost Index. Creates `ghost_index_daily` table (snapshot_date PK, liveness_score, total/alive/ghost agents, category_breakdown JSONB, tier counts). Creates `ghost_index_live` view for real-time computation (alive = activity_status=active OR last_event_at<30d). Seeds today's first snapshot. RLS: anon read, service_role write. Worker runs nightly 23:50 UTC.
