@@ -2,15 +2,17 @@
  * GET /api/model-families/v1
  *
  * Ranked model families with composite score, sub-scores, and raw signals.
- * Mirrors /api/ghost-index/v1: CORS-open, intentionally free, citation-friendly.
+ * Methodology v1.4-with-deployment: HF (30%) + derivatives (20%) + LMArena
+ * (25%) + citations (15%) + deployment (10%). Deployment is the cross-protocol
+ * agent-economy moat signal — unique to AgentCrush.
  *
  * Query params:
  *   ?limit=N            — top N rows (default 25, max 100)
  *   ?evidence_only=true — only rows where evidence_ready_for_public_rank = true
  *
- * Backing view: agent_score_model_family_v1 (methodology v1.0-model-family-v0)
+ * Backing view: agent_score_model_family_v1_with_confidence
  *
- * Cache: 1h (composite score moves with daily snapshot ingestion).
+ * Cache: 1h. CORS-open. Intentionally free.
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -43,7 +45,7 @@ export async function GET(req) {
 
   try {
     let q = supabase
-      .from('agent_score_model_family_v1')
+      .from('agent_score_model_family_v1_with_confidence')
       .select('*')
       .order('model_family_score', { ascending: false })
       .limit(limit)
@@ -58,54 +60,62 @@ export async function GET(req) {
       display_name:           r.display_name,
       rank:                   r.rank_in_model_family,
       score:                  r.model_family_score,
-      tier:                   r.tier,
-      activity_status:        r.activity_status,
       evidence_ready:         r.evidence_ready_for_public_rank,
+      confidence_tier:        r.confidence_tier,
       signals_available:      r.signals_available_count,
       sub_scores: {
-        expert_visibility:    r.expert_visibility_score,
-        github_stars:         r.github_stars_score,
-        followers:            r.followers_score,
-        reputation:           r.reputation_basket_score,
-        recency:              r.recency_score,
+        hf:           r.hf_score,
+        derivatives:  r.derivatives_score,
+        lmarena:      r.lmarena_score,
+        citations:    r.citations_score,
+        deployment:   r.deployment_score,
       },
       raw: {
-        visibility_score:     r.raw_visibility_score,
-        reputation_score:     r.raw_reputation_score,
-        github_stars:         r.raw_github_stars,
-        follower_count:       r.raw_follower_count,
-        last_event_at:        r.raw_last_event_at,
-        latest_snapshot_date: r.latest_snapshot_date,
+        hf_author:                  r.hf_author,
+        total_downloads:            r.total_downloads,
+        total_likes:                r.total_likes,
+        model_count:                r.model_count,
+        most_recent_modified:       r.most_recent_modified,
+        lmarena_top_score:          r.lmarena_top_arena_score,
+        lmarena_total_votes:        r.lmarena_total_votes,
+        total_derivatives:          r.total_derivatives,
+        total_derivative_downloads: r.total_derivative_downloads,
+        total_citations:            r.total_citations,
+        total_influential_citations:r.total_influential_citations,
+        total_deployments:          r.total_deployments,
+        deployments_by_source:      r.deployments_by_source,
       },
       links: {
-        profile:  `https://agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`,
-        website:  r.website_url,
-        github:   r.github_url,
-        x:        r.x_handle ? `https://x.com/${r.x_handle}` : null,
+        profile: `https://agentcrush.xyz/agent/${encodeURIComponent(r.handle)}`,
       },
-      bio: r.bio,
     }))
 
     const payload = {
       ranking: rows,
       meta: {
-        count:                rows.length,
-        evidence_only:        evidenceOnly,
-        methodology_version:  'v1.0-model-family-v0',
+        count:               rows.length,
+        evidence_only:       evidenceOnly,
+        methodology_version: 'v1.4-with-deployment',
         weights: {
-          expert_visibility:  0.40,
-          github_stars:       0.20,
-          followers:          0.15,
-          reputation:         0.15,
-          recency:            0.10,
+          hf:           0.30,
+          derivatives:  0.20,
+          lmarena:      0.25,
+          citations:    0.15,
+          deployment:   0.10,
         },
-        methodology_url:      'https://agentcrush.xyz/methodology#model-family',
-        source_url:           'https://agentcrush.xyz/rankings/model-families',
-        note: 'v1.0 anchors on expert_visibility (analyst-curated from HuggingFace downloads, LMSYS Arena rank, derivative model count, and agentic adoption). v1.1 will replace it with ingested sub-signals.',
+        confidence_tiers: {
+          high:        '5 of 5 signals',
+          medium:      '4 of 5 signals',
+          low:         '3 of 5 signals (still evidence-ready)',
+          provisional: '<3 of 5 signals (not evidence-ready)',
+        },
+        methodology_url: 'https://agentcrush.xyz/methodology#model-family',
+        source_url:      'https://agentcrush.xyz/rankings/model-families',
+        note: 'Deployment signal aggregates cross-protocol mentions across agents/bazaar_resources/erc8004_registry/agentverse_agents/virtuals_agents/a2a_agents — unique to AgentCrush. Closed-weights families (OpenAI, Anthropic, xAI) are indexed but currently unranked under v1.4; LMArena + citations + deployment backfill pending.',
       },
       _attribution: {
         index:       'AgentCrush Model Family Ranking',
-        version:     '1.0',
+        version:     '1.4',
         produced_by: 'https://agentcrush.xyz',
         license:     'CC-BY-4.0',
       },
@@ -117,7 +127,7 @@ export async function GET(req) {
     })
   } catch (err) {
     return Response.json(
-      { error: err.message, hint: 'agent_score_model_family_v1 view may not be migrated yet. Apply migrations/20260608_0920_model_family_scoring_view.sql.' },
+      { error: err.message, hint: 'View agent_score_model_family_v1_with_confidence may not exist. Apply migrations/20260608_1000_restore_model_family_v14.sql.' },
       { status: 500, headers: CORS }
     )
   }

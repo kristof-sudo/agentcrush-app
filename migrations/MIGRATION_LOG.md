@@ -9,6 +9,8 @@ Older historical DB changes existed before this process was formalized and may n
 ## Entries
 
 ### 2026-06-08
+- `migrations/20260608_1000_restore_model_family_v14.sql` — **URGENT RESTORATION.** Restores `agent_score_model_family_v1` to v1.4-with-deployment (HF 30% + derivatives 20% + LMArena 25% + citations 15% + deployment 10%) plus the dependent wrapper view `agent_score_model_family_v1_with_confidence`. Both were dropped by today's earlier `20260608_0920` which mistakenly assumed model_family had no scoring view and replaced it with a simpler v1.0 lacking columns the rankings page depends on. `/rankings/model-families` was broken in prod between apply of 0920 and apply of this migration. `/api/model-families/v1` route also rewritten to consume v1.4 columns + confidence_tier.
+  **STATUS: PENDING APPLY by Kris (URGENT).**
 - `migrations/20260608_0920_model_family_scoring_view.sql` — Creates `agent_score_model_family_v1` view. Methodology v1.0-model-family-v0: expert visibility 40% (analyst-curated proxy for HF/LMSYS/derivatives/adoption pending ingestion) + GitHub stars 20% (log-scaled) + followers 15% (log-scaled) + reputation 15% + recency 10%. Evidence-ready: 3-of-5 signals AND visibility_score ≥ 50. Backs `/api/model-families/v1`. v1.1 will replace expert_visibility with ingested sub-signals.
   **STATUS: PENDING APPLY by Kris.**
 - `migrations/20260608_0910_backfill_mcp_activity.sql` — Fixes Ghost Index measurement gap. Sets `activity_status='active'` + `last_event_at=NOW()` for 15 mcp_server rows seeded 2026-06-07 without activity columns (caused 0/15 alive readout despite all being live official MCP repos). Idempotent.
