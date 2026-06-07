@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentCrush Ghost Index — nightly liveness computation + X post
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/ghost-index
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/briefing/.env
+EnvironmentFile=-/opt/agentcrush/copydesk/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/ghost-index/ghost-index-worker.mjs
+StandardOutput=append:/var/log/agentcrush/ghost-index.log
+StandardError=append:/var/log/agentcrush/ghost-index.log
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

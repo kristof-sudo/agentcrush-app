@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush Ghost Index timer — 23:50 UTC daily
+Documentation=Ghost Index nightly computation + X post
+
+[Timer]
+OnCalendar=*-*-* 23:50:00 UTC
+Persistent=true
+Unit=agentcrush-ghost-index.service
+
+[Install]
+WantedBy=timers.target
