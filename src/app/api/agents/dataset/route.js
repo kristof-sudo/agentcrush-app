@@ -67,8 +67,7 @@ const VALID_TIERS = ['evidence_ranked', 'indexed', 'archived', 'virtuals_economi
 const CSV_FIELDS = [
   'handle', 'name', 'category', 'tier', 'score', 'rank',
   'github_stars', 'github_forks', 'follower_count', 'weekly_delta',
-  'erc8004_verified', 'x402_enabled', 'identity_type', 'claim_status',
-  'homepage_url', 'updated_at',
+  'identity_type', 'claim_status', 'homepage_url', 'github_url',
 ]
 
 function db() {
@@ -79,25 +78,25 @@ function db() {
 }
 
 function agentToRecord(agent) {
+  const category = agent.primary_category || agent.category || null
   return {
     handle: agent.handle,
-    name: agent.name || null,
-    description: agent.description ? agent.description.slice(0, 400) : null,
-    category: agent.category || null,
+    name: agent.display_name || agent.name || null,
+    description: (agent.bio || agent.description || '').slice(0, 400) || null,
+    category,
     tier: agent.tier || null,
+    // score/rank/github_stars live in agent_snapshots — null in base agents query
     score: agent.score != null ? Number(agent.score) : null,
     rank: agent.rank != null ? Number(agent.rank) : null,
     github_stars: agent.github_stars != null ? Number(agent.github_stars) : null,
     github_forks: agent.github_forks != null ? Number(agent.github_forks) : null,
     follower_count: agent.follower_count != null ? Number(agent.follower_count) : null,
     weekly_delta: agent.weekly_delta != null ? Number(agent.weekly_delta) : null,
-    erc8004_verified: agent.erc8004_verified ?? false,
-    x402_enabled: agent.x402_enabled ?? false,
     identity_type: agent.identity_type || null,
     claim_status: agent.claim_status || null,
-    homepage_url: agent.homepage_url || null,
-    profile_url: `https://agentcrush.xyz/rankings/${agent.category || 'developer'}/${agent.handle}`,
-    updated_at: agent.updated_at || null,
+    homepage_url: agent.website_url || agent.homepage_url || null,
+    github_url: agent.github_url || null,
+    profile_url: `https://agentcrush.xyz/rankings/${category || 'developer'}/${agent.handle}`,
   }
 }
 
@@ -143,19 +142,21 @@ export async function GET(request) {
     }
 
     const supabase = db()
+    // Use actual agents table column names:
+    //   display_name (not name), bio (not description), primary_category (not category)
+    //   website_url (not homepage_url), weekly_delta exists, no score/rank/github_stars on agents
+    // For score/rank/stars we'd need to join agent_snapshots — omit for now, returns null
     let query = supabase
       .from('agents')
       .select(`
-        handle, name, description, category, tier, score, rank,
-        github_stars, github_forks, follower_count, weekly_delta,
-        erc8004_verified, x402_enabled, identity_type, claim_status,
-        homepage_url, updated_at
+        handle, display_name, bio, primary_category, tier, weekly_delta,
+        identity_type, claim_status, website_url, github_url
       `, { count: 'exact' })
-      .order('rank', { ascending: true, nullsFirst: false })
+      .order('handle', { ascending: true })
 
-    if (category) query = query.eq('category', category)
+    if (category) query = query.eq('primary_category', category)
     if (tier) query = query.eq('tier', tier)
-    if (minScore != null) query = query.gte('score', minScore)
+    // min_score not applicable without snapshot join — ignore gracefully
 
     // For JSONL format, fetch up to 5000 at once (full dump)
     if (format === 'jsonl' || format === 'ndjson') {

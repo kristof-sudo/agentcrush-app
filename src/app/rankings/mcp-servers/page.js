@@ -196,26 +196,34 @@ export default async function MCPServersPage() {
   let rows = []
   let usingFallback = false
 
-  const { data: viewData, error: viewError } = await supabase
-    .rpc('query_mcp_server_ranking')
+  // Primary: query the scoring view (populated after migration)
+  const { data: scoreViewData } = await supabase
+    .from('agent_score_mcp_server_v1')
+    .select('*')
     .limit(50)
 
-  if (viewError || !viewData) {
-    // View doesn't exist yet — fall back to raw agents query
+  if (scoreViewData?.length) {
+    rows = scoreViewData.map((r, i) => ({ ...r, rank: i + 1 }))
+  } else {
+    // Fallback: raw agents query with correct column names (display_name/bio/primary_category)
     usingFallback = true
     const { data: fallbackData } = await supabase
       .from('agents')
-      .select(`
-        handle, name, description, tier,
-        github_stars, github_forks, follower_count,
-        homepage_url, github_url, updated_at
-      `)
-      .eq('category', 'mcp_server')
-      .order('github_stars', { ascending: false, nullsFirst: false })
+      .select('handle, display_name, bio, tier, website_url, github_url')
+      .eq('primary_category', 'mcp_server')
+      .order('created_at', { ascending: false })
       .limit(50)
 
     rows = (fallbackData || []).map((a, i) => ({
-      ...a,
+      handle: a.handle,
+      name: a.display_name,
+      description: a.bio,
+      tier: a.tier,
+      homepage_url: a.website_url,
+      github_url: a.github_url,
+      github_stars: null,
+      github_forks: null,
+      follower_count: null,
       rank: i + 1,
       score: null,
       tool_count: null,
@@ -223,27 +231,6 @@ export default async function MCPServersPage() {
       registry_listings: null,
       npx_install: null,
     }))
-  } else {
-    rows = (viewData || []).map((r, i) => ({
-      ...r,
-      rank: i + 1,
-    }))
-  }
-
-  // If view fallback also failed, try the scoring view directly
-  if (usingFallback) {
-    const { data: scoreViewData } = await supabase
-      .from('agent_score_mcp_server_v1')
-      .select('*')
-      .limit(50)
-
-    if (scoreViewData?.length) {
-      usingFallback = false
-      rows = (scoreViewData || []).map((r, i) => ({
-        ...r,
-        rank: i + 1,
-      }))
-    }
   }
 
   // For each row, fetch mcp_server_metadata if not already joined
