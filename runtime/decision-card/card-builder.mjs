@@ -310,30 +310,38 @@ function extractEcosystemPulse(briefMd) {
   if (!briefMd) return [];
   const lines = [];
 
-  // Section 2: "Trending in the ecosystem" — has **Topic** — N posts/casts format
-  // e.g. "**x402 payments infrastructure** — 17 casts/posts across both surfaces, 32 total engagement. Theme: ..."
-  const trendSection = briefMd.match(/##\s*(?:\d+\.\s*)?Trending in the ecosystem([\s\S]*?)(?:\n##|\Z)/m);
+  // Section 2: "Trending in the ecosystem"
+  // Two brief formats exist:
+  //   Format A: **Topic** — N posts... (stats on same line)
+  //   Format B: **Topic — signal label**\nN casts... (stats on next line, dash inside bold)
+  const trendSection = briefMd.match(/##\s*(?:\d+\.\s*)?Trending in the ecosystem([\s\S]*?)(?=\n##|$)/);
   if (trendSection) {
     const body = trendSection[1];
-    // Match each **Topic** — lead line
-    const topicMatches = [...body.matchAll(/\*\*([^*\n]{3,60})\*\*\s*[—–-]+\s*([^\n]{20,300})/g)];
+    // Match bold headings + whatever follows (same-line or next-line stats)
+    // Captures: group1 = topic text, group2 = same-line content OR group3 = next-line content
+    const topicMatches = [...body.matchAll(
+      /\*\*([^*\n]{3,80})\*\*[ \t]*(?:[—–-]+[ \t]*([^\n]{20,200})|[ \t]*\n+[ \t]*(\d[^\n]{10,200}))/g
+    )];
     for (const m of topicMatches) {
       const topic = m[1].trim();
-      // Extract the stats and first observation sentence, strip URLs/markdown
-      let summary = m[2]
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-        .replace(/\*+/g, '')
-        .trim();
-      // Grab up to first "Observation:" sentence if present
-      const obsMatch = body.slice(m.index).match(/\*\*Observation:\*\*\s*([^.]+\.)/);
+      // Skip sub-headers that are clearly not top-level signals
+      if (topic.length < 5 || /^(source|url|signal|engagement)$/i.test(topic)) continue;
+      // Try to get the **Observation:** sentence from the surrounding text
+      const blockText = body.slice(m.index, m.index + 600);
+      const obsMatch = blockText.match(/\*\*Observation:\*\*\s*([^*\n][^.]*\.)/);
+      let summary;
       if (obsMatch) {
         summary = obsMatch[1].trim();
       } else {
-        // Trim to first sentence
-        summary = summary.split(/(?<=\.)\s/)[0];
+        // Fall back to inline stats or next-line content
+        const statLine = (m[2] || m[3] || '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*+/g, '').trim();
+        summary = statLine.split(/\.\s/)[0];
       }
+      if (!summary || summary.length < 15) continue;
       if (summary.length > 220) summary = summary.slice(0, 217) + '…';
-      lines.push(`• *${topic}*: ${summary}`);
+      // Strip markdown links from topic
+      const cleanTopic = topic.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+      lines.push(`• *${cleanTopic}*: ${summary}`);
       if (lines.length >= 4) break;
     }
   }
