@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: '2026-W23',
+    label: 'W23 · June 2–8, 2026',
+    summary: 'MCP Server Index launches as the 5th category ranking. ERC-8004 trust layer tooling arrives in a cluster (Boon, Argus, avisradar). Autonomous pipeline — 8 timers — goes live.',
+    href: '/weekly/2026-W23',
+  },
+  {
     week: '2026-W22',
     label: 'W22 · May 25–31, 2026',
     summary: 'Confidence tiers extended to every category, risk-flag infrastructure ships, and the Agent Payments Stack gets its full LLM Gateway treatment.',
