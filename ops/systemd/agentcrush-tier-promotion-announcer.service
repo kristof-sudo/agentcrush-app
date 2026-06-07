@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentCrush Tier Promotion Announcer — weekly post of newly evidence-ranked agents
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/tier-promotion
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/briefing/.env
+EnvironmentFile=-/opt/agentcrush/copydesk/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/tier-promotion/tier-promotion-announcer.mjs
+StandardOutput=append:/var/log/agentcrush/tier-promotion-announcer.log
+StandardError=append:/var/log/agentcrush/tier-promotion-announcer.log
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

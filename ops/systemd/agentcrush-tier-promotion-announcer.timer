@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush Tier Promotion Announcer timer — Sundays 07:45 UTC
+Documentation=Fires 45 min after tier-promotion-worker (07:00) to announce newly evidence-ranked agents
+
+[Timer]
+OnCalendar=Sun *-*-* 07:45:00 UTC
+Persistent=true
+Unit=agentcrush-tier-promotion-announcer.service
+
+[Install]
+WantedBy=timers.target

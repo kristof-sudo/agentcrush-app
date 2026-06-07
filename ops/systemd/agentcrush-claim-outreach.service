@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentCrush Claim Outreach — weekly post of top unclaimed agents
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/claim-outreach
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/briefing/.env
+EnvironmentFile=-/opt/agentcrush/copydesk/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/claim-outreach/claim-outreach-worker.mjs
+StandardOutput=append:/var/log/agentcrush/claim-outreach.log
+StandardError=append:/var/log/agentcrush/claim-outreach.log
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target
