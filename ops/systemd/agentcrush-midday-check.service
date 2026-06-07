@@ -1,0 +1,17 @@
+[Unit]
+Description=AgentCrush midday status check — 11:00 UTC (13:00 Budapest)
+Documentation=https://github.com/kristof-sudo/agentcrush-app/tree/main/runtime/decision-card
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/decision-card
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/decision-card/midday-check.mjs
+StandardOutput=append:/var/log/agentcrush/midday-check.log
+StandardError=append:/var/log/agentcrush/midday-check.log
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

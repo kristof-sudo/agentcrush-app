@@ -1,0 +1,14 @@
+[Unit]
+Description=AgentCrush midday check timer — 11:00 UTC (13:00 Budapest) weekdays
+Documentation=Phase R-5 — mid-day status check
+
+[Timer]
+# 11:00 UTC = 13:00 Budapest. Mon-Fri only (weekends: weekly digest covers it).
+# Note: systemd doesn't natively filter by weekday in OnCalendar — the service
+# itself skips weekends to avoid noise.
+OnCalendar=*-*-* 11:00:00 UTC
+Persistent=false
+Unit=agentcrush-midday-check.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=AgentCrush mid-morning executor timer — 07:00 UTC (09:00 Budapest) daily
+Documentation=Phase R-5 — mid-morning ship after Kris's morning tap
+
+[Timer]
+# 07:00 UTC = 09:00 Budapest. Kris taps the morning card at ~06:00 Budapest;
+# executor runs 3 hours later to catch his approvals + any snooze time.
+OnCalendar=*-*-* 07:00:00 UTC
+Persistent=true
+Unit=agentcrush-executor-morning.service
+
+[Install]
+WantedBy=timers.target

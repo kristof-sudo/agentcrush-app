@@ -1,0 +1,15 @@
+[Unit]
+Description=AgentCrush overnight executor timer — 21:00 UTC (23:00 Budapest)
+Documentation=Phase R-5 — overnight safe-ship window
+
+[Timer]
+# 21:00 UTC = 23:00 Budapest.
+# This is the low-risk publish window — after Kris's evening card tap (~20:00 Budapest),
+# system runs approved items before midnight. Safe-ship: social posts, blog publishes.
+# Anything that executed is reported in next morning's Decision Card.
+OnCalendar=*-*-* 21:00:00 UTC
+Persistent=true
+Unit=agentcrush-executor-overnight.service
+
+[Install]
+WantedBy=timers.target

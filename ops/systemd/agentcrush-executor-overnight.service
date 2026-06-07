@@ -1,0 +1,17 @@
+[Unit]
+Description=AgentCrush overnight safe-ship executor — dispatches approved actions during low-risk window
+Documentation=https://github.com/kristof-sudo/agentcrush-app/tree/main/runtime/decision-card
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/decision-card
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/decision-card/scheduled-executor.mjs overnight
+StandardOutput=append:/var/log/agentcrush/executor-overnight.log
+StandardError=append:/var/log/agentcrush/executor-overnight.log
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
