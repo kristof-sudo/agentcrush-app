@@ -555,11 +555,12 @@ async function main() {
     const issuedDate = a.issued_at ? a.issued_at.slice(5, 10) : 'prev'; // MM-DD
     return { ...a, label: `${a.label} [carried ${issuedDate}]`, deferred: true };
   });
-  // Dedup by label
+  // Dedup by normalized label (strip "[carried ...]" suffix before comparing)
+  const normalizeLabel = (l) => l.toLowerCase().replace(/\s*\[carried [^\]]+\]/, '').replace(/\s*\(deferred\)/g, '').trim().slice(0, 60);
   const seenLabels = new Set();
   const decideActions = [];
   for (const a of [...carriedFlagged, ...fresh]) {
-    const key = a.label.toLowerCase().slice(0, 60);
+    const key = normalizeLabel(a.label);
     if (seenLabels.has(key)) continue;
     seenLabels.add(key);
     decideActions.push(a);
