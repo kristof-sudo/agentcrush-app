@@ -49,12 +49,28 @@
       "discovery": "https://agentcrush.xyz/.well-known/farcaster.json"
     }
   ],
-  "standards_pending": [
+  "standards_implemented_additional": [
     {
-      "name": "agent.json open standard",
-      "status": "drafting (AgentCrush is the proposing party)",
-      "target_url": "https://agentcrush.xyz/agent-json"
-    },
+      "name": "agent.json v0.1",
+      "status": "live — AgentCrush is the proposing party and reference implementation",
+      "spec_url": "https://agentcrush.xyz/agent-json",
+      "schema_url": "https://agentcrush.xyz/schemas/agent.v1.json",
+      "validator_url": "https://agentcrush.xyz/api/agent-json/validate",
+      "own_file": "https://agentcrush.xyz/.well-known/agent.json"
+    }
+  ],
+  "packages": {
+    "npm": "https://npmjs.com/package/agentcrush",
+    "pypi": "https://pypi.org/project/agentcrush/",
+    "install_npm": "npx agentcrush trends",
+    "install_python": "pip install agentcrush"
+  },
+  "framework_integrations": {
+    "langchain": "https://github.com/kristof-sudo/agentcrush-app/blob/main/packages/framework-adapters/langchain/agentcrush_tool.py",
+    "crewai": "https://github.com/kristof-sudo/agentcrush-app/blob/main/packages/framework-adapters/crewai/agentcrush_tool.py",
+    "llamaindex": "https://github.com/kristof-sudo/agentcrush-app/blob/main/packages/framework-adapters/llamaindex/agentcrush_reader.py"
+  },
+  "standards_pending": [
     {
       "name": "A2A (Agent-to-Agent) protocol",
       "status": "endpoint planned",
@@ -73,6 +89,30 @@
       "https://agentcrush.xyz/.well-known/x402.json",
       "https://agentcrush.xyz/.well-known/farcaster.json"
     ],
+    "bulk_data": [
+      {
+        "purpose": "Full agent index — paginated JSON",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/agents/dataset",
+        "note": "500 agents per page. Use ?page=N for pagination. Headers: X-Total-Count, Link rel=next/prev."
+      },
+      {
+        "purpose": "Full agent index — JSONL stream (training data / dataset ingestion)",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/agents/dataset?format=jsonl",
+        "note": "First line is metadata header, subsequent lines are agents. Up to 5000 agents per request."
+      },
+      {
+        "purpose": "Full agent index — CSV",
+        "method": "GET",
+        "url": "https://agentcrush.xyz/api/agents/dataset?format=csv"
+      },
+      {
+        "purpose": "HuggingFace dataset (daily export)",
+        "url": "https://huggingface.co/datasets/agentcrush/agents-index",
+        "note": "Updated daily. Configs: agents, evidence_ranked, snapshots_latest. License: CC-BY-4.0."
+      }
+    ],
     "llm_summaries": [
       {
         "purpose": "Index overview",
@@ -89,7 +129,7 @@
         "purpose": "Category ranking",
         "method": "GET",
         "url": "https://agentcrush.xyz/api/rankings/{category}/llm-summary",
-        "valid_values": ["model_family", "tokenized", "service", "developer"],
+        "valid_values": ["model_family", "tokenized", "service", "developer", "mcp_server"],
         "example": "https://agentcrush.xyz/api/rankings/model_family/llm-summary?limit=10"
       },
       {
@@ -220,5 +260,5 @@
     "https://agentcrush.xyz/methodology",
     "https://agentcrush.xyz/how-we-rank"
   ],
-  "last_updated": "2026-06-06T00:00:00Z"
+  "last_updated": "2026-06-07T00:00:00Z"
 }

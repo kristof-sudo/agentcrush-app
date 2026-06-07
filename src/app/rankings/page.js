@@ -400,6 +400,25 @@ export default async function RankingsHub() {
         ))}
       </div>
 
+      {/* ── MCP Server Index callout ─────────────────────────────────────── */}
+      <Link
+        href="/rankings/mcp-servers"
+        className="group block mb-4 rounded-lg border border-orange-400/20 bg-gradient-to-br from-orange-400/[0.04] to-transparent hover:border-orange-400/40 transition-colors px-5 py-4"
+      >
+        <div className="flex items-baseline gap-2 mb-2">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-orange-400">NEW · MCP</span>
+          <span className="font-mono text-[9px] text-white/30">v1.0-mcp</span>
+          <span className="ml-auto font-mono text-[10px] text-white/40 group-hover:text-white/70 transition-colors">open →</span>
+        </div>
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <span className="font-bold text-white text-base">MCP Server Rankings</span>
+          <span className="text-xs text-white/45">tool count · registry listings · install popularity</span>
+        </div>
+        <p className="mt-2 text-xs text-white/55 leading-relaxed max-w-3xl">
+          The first evidence-based index for Model Context Protocol servers. Ranked by tool count, GitHub stars, registry presence (Smithery · mcp.so · Official), and real-world adoption. Includes official Anthropic servers, GitHub MCP, and third-party leaders.
+        </p>
+      </Link>
+
       {/* ── Agent Payments Stack callout (Phase 3.5 Week 1) ─────────────── */}
       <Link
         href="/rankings/agent-payments-stack"
