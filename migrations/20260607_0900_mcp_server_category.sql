@@ -1,11 +1,21 @@
--- Migration: 20260607_0900_mcp_server_category.sql  (v2 — corrected column names)
+-- Migration: 20260607_0900_mcp_server_category.sql  (v3 — extend check constraint)
 -- Purpose: Add mcp_server as a valid primary_category + seed top MCP servers
 --
 -- Fixed vs v1: agents table uses display_name/bio/primary_category/website_url,
 -- not name/description/category/homepage_url. github_stars/forks/follower_count
 -- live in agent_snapshots, not agents — scoring view joins the latest snapshot.
 --
+-- Fixed vs v2: DROP + recreate agents_primary_category_check to include 'mcp_server'
+-- before any INSERT.
+--
 -- Apply: Supabase SQL editor (copy-paste)
+
+-- ── 0. Extend primary_category check constraint ───────────────────────────────
+-- Original constraint allows: model_family | tokenized | service | developer
+-- We extend it to also allow: mcp_server
+ALTER TABLE agents DROP CONSTRAINT IF EXISTS agents_primary_category_check;
+ALTER TABLE agents ADD CONSTRAINT agents_primary_category_check
+  CHECK (primary_category IN ('model_family', 'tokenized', 'service', 'developer', 'mcp_server'));
 
 -- ── 1. Create mcp_server_metadata table ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS mcp_server_metadata (
