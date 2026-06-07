@@ -1,0 +1,35 @@
+{
+  "name": "agentcrush",
+  "version": "0.1.0",
+  "description": "CLI for the AgentCrush agent economy index — rankings, trust scores, trends, and ecosystem data",
+  "type": "module",
+  "bin": {
+    "agentcrush": "./bin/agentcrush.mjs"
+  },
+  "exports": {
+    ".": "./lib/api.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "ai-agents",
+    "agent-economy",
+    "rankings",
+    "mcp",
+    "erc-8004",
+    "x402",
+    "agentcrush"
+  ],
+  "homepage": "https://agentcrush.xyz",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kristof-sudo/agentcrush-app.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "files": [
+    "bin/",
+    "lib/"
+  ]
+}
