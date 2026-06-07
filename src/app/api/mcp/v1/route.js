@@ -9,7 +9,7 @@
  *
  * v1 changes from v0 (/api/mcp):
  *   - 7 tools (up from 4): adds list_categories, get_category_ranking, get_methodology
- *   - Knows about the 4 category rankings: model_families, tokenized, service, developer
+ *   - Knows about the 5 category rankings: model_families, tokenized, service, developer, mcp_server
  *   - get_agent_details returns scores across ALL of an agent's relevant categories
  *   - search_agents takes a structured `filters` object (future-proofs for new filters)
  *   - Fuzzy-match suggestions on not-found (LLMs don't hallucinate "doesn't exist")
@@ -36,12 +36,13 @@ function db() {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const VALID_CATEGORIES = ['model_family', 'tokenized', 'service', 'developer']
+const VALID_CATEGORIES = ['model_family', 'tokenized', 'service', 'developer', 'mcp_server']
 
 const CATEGORY_VIEW = {
   model_family: 'agent_score_model_family_v1',
   tokenized:    'agent_score_tokenized_v1',
   service:      'agent_score_service_v1',
+  mcp_server:   'agent_score_mcp_server_v1',
   // 'developer' uses the existing universal rankings (agent_score_v2 view) — handled separately
 }
 
@@ -100,6 +101,24 @@ const METHODOLOGY = {
       'Currently sources from A2A (28 agents) + Agentverse (0 active — all is_active=false in current scrape).',
       'v1.2 will add ERC-8004 registry (29K agents) and Bazaar x402 endpoints (46K) as additional service surfaces.',
       'Cross-protocol presence tracked in cross_protocol_presence but unweighted in v1.1 composite.',
+    ],
+  },
+  mcp_server: {
+    name: 'MCP Server',
+    version: 'v1.0-mcp',
+    description: 'Scores Model Context Protocol servers on tool count, GitHub stars/forks, registry listings (Smithery, mcp.so, Official, Glama, Continue.dev), and community adoption. The first evidence-based ranking for the MCP ecosystem.',
+    signals: [
+      { key: 'github_stars',      label: 'GitHub Stars',       weight: 30, note: 'Proxy for developer trust + discoverability. Capped at 50k.' },
+      { key: 'tool_count',        label: 'Tool Count',         weight: 25, note: 'Number of tools the MCP server exposes. Capped at 30.' },
+      { key: 'registry_listings', label: 'Registry Listings',  weight: 20, note: 'Presence on Smithery, mcp.so, Official registry, Glama, Continue.dev. Each = verified quality signal.' },
+      { key: 'github_forks',      label: 'GitHub Forks',       weight: 15, note: 'Actual integrations — fork = someone using it. Capped at 5k.' },
+      { key: 'follower_count',    label: 'Community Signal',   weight: 10, note: 'Follower count / social signal. Capped at 100k.' },
+    ],
+    evidence_ready_rule: 'At least 1 registry listing AND (github_stars > 0 OR tool_count > 0).',
+    limitations: [
+      'Tool counts are hand-seeded in v1.0; automated tool-count fetching from registry APIs planned for v1.1.',
+      'Only covers MCP servers with a public GitHub repo or registry entry.',
+      'Seed set of 15 servers (June 2026). New servers added via evidence ingest pipeline.',
     ],
   },
   developer: {
@@ -358,7 +377,7 @@ const TOOLS = [
   {
     name: 'get_category_ranking',
     title: 'Get Category Ranking',
-    description: 'Get the full ranking for one of the 4 categories. Returns agents ordered by composite score with all sub-scores visible. Defaults to evidence-ranked only.',
+    description: 'Get the full ranking for one of the 5 categories. Returns agents ordered by composite score with all sub-scores visible. Defaults to evidence-ranked only.',
     annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: {
       type: 'object',
@@ -500,7 +519,7 @@ const TOOLS = [
   {
     name: 'get_ecosystem_summary',
     title: 'Get Ecosystem Summary',
-    description: 'One-call ecosystem-level summary: counts (total, evidence-ranked, archived), category mix (model_family/tokenized/service/developer), category leaders, snapshot volume last 30 days. Mirror of GET /api/trends/summary.',
+    description: 'One-call ecosystem-level summary: counts (total, evidence-ranked, archived), category mix (model_family/tokenized/service/developer/mcp_server), category leaders, snapshot volume last 30 days. Mirror of GET /api/trends/summary.',
     annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: { type: 'object', properties: {} },
     outputSchema: {
@@ -737,7 +756,7 @@ async function tool_list_categories() {
       methodology_version: meta.version,
       total_tracked: totalCount,
       evidence_ranked: evidenceCount,
-      ranking_url: `https://agentcrush.xyz/rankings/${cat === 'model_family' ? 'model-families' : cat === 'tokenized' ? 'tokenized-agents' : cat === 'service' ? 'service-agents' : ''}`,
+      ranking_url: `https://agentcrush.xyz/rankings/${cat === 'model_family' ? 'model-families' : cat === 'tokenized' ? 'tokenized-agents' : cat === 'service' ? 'service-agents' : cat === 'mcp_server' ? 'mcp-servers' : 'developer'}`,
     })
   }
   return { categories: out }
@@ -768,9 +787,15 @@ async function tool_get_category_ranking(args) {
   }
 
   const view = CATEGORY_VIEW[cat]
-  const orderCol = cat === 'model_family' ? 'rank_in_model_family' : cat === 'tokenized' ? 'rank_in_tokenized' : 'rank_in_service'
-  let q = supabase.from(view).select('*').order(orderCol, { ascending: true }).limit(limit)
-  if (evidenceReadyOnly) q = q.eq('evidence_ready_for_public_rank', true)
+  const orderCol = cat === 'model_family' ? 'rank_in_model_family'
+    : cat === 'tokenized' ? 'rank_in_tokenized'
+    : cat === 'mcp_server' ? 'score'  // mcp_server view orders by score DESC natively; use score for limit
+    : 'rank_in_service'
+  // mcp_server view is already sorted by score DESC — order ascending=false for score
+  const ascending = cat === 'mcp_server' ? false : true
+  let q = supabase.from(view).select('*').order(orderCol, { ascending }).limit(limit)
+  // mcp_server doesn't have evidence_ready_for_public_rank column
+  if (evidenceReadyOnly && cat !== 'mcp_server') q = q.eq('evidence_ready_for_public_rank', true)
   const { data } = await q
   return {
     category: cat,
@@ -791,7 +816,7 @@ async function tool_get_methodology(args) {
     signals: meta.signals,
     evidence_ready_rule: meta.evidence_ready_rule,
     limitations: meta.limitations,
-    methodology_url: `https://agentcrush.xyz/rankings/${args.category === 'model_family' ? 'model-families' : args.category === 'tokenized' ? 'tokenized-agents' : args.category === 'service' ? 'service-agents' : ''}`,
+    methodology_url: `https://agentcrush.xyz/rankings/${args.category === 'model_family' ? 'model-families' : args.category === 'tokenized' ? 'tokenized-agents' : args.category === 'service' ? 'service-agents' : args.category === 'mcp_server' ? 'mcp-servers' : 'developer'}`,
   }
 }
 
@@ -1003,7 +1028,7 @@ export async function GET(request) {
     api_version: 'v1',
     protocol: 'MCP',
     protocolVersion: '2024-11-05',
-    description: 'Read-only AI agent market intelligence. Evidence-ranked across 4 category rankings: model families, tokenized agents, service agents, developer agents. Live deployment, citation, on-chain, and adoption signals.',
+    description: 'Read-only AI agent market intelligence. Evidence-ranked across 5 category rankings: model families, tokenized agents, service agents, developer agents, MCP servers. Live deployment, citation, on-chain, and adoption signals.',
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
     endpoint: 'POST https://agentcrush.xyz/api/mcp/v1',
     docs: 'https://agentcrush.xyz/developers/mcp',
