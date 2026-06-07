@@ -9,6 +9,7 @@ Older historical DB changes existed before this process was formalized and may n
 ## Entries
 
 ### 2026-06-07 (continued)
+- `migrations/20260607_2100_seed_claude_code_nous_research.sql` — Adds Claude Code (Anthropic, developer, evidence_ranked, visibility 92) and Nous Research / Hermes (model_family, evidence_ranked, visibility 82). Both seeded with initial agent_snapshots. **STATUS: PENDING APPLY by Kris.**
 - `migrations/20260607_1400_ghost_index.sql` — G-1 Ghost Index. Creates `ghost_index_daily` table (snapshot_date PK, liveness_score, total/alive/ghost agents, category_breakdown JSONB, tier counts). Creates `ghost_index_live` view for real-time computation (alive = activity_status=active OR last_event_at<30d). Seeds today's first snapshot. RLS: anon read, service_role write. Worker runs nightly 23:50 UTC.
   **STATUS: PENDING APPLY by Kris.**
 
