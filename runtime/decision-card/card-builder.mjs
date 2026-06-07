@@ -169,7 +169,12 @@ async function pendingFromQueue() {
   if (!raw) return [];
   try {
     const queue = JSON.parse(raw);
-    return (queue.actions || []).filter(a => a.status === 'pending');
+    // Auto-expire items older than 36h — avoids accumulation across multiple missed cards.
+    const cutoff = Date.now() - 36 * 3600 * 1000;
+    return (queue.actions || []).filter(a =>
+      a.status === 'pending' &&
+      new Date(a.issued_at || 0).getTime() > cutoff
+    );
   } catch (_) { return []; }
 }
 
@@ -242,6 +247,39 @@ function extractAjsaActions(briefMd) {
   return actions;
 }
 
+function extractRepostActions(briefMd) {
+  if (!briefMd) return [];
+  // Section 6: "Engagement queue — quote/repost with observation"
+  const section = briefMd.match(/##\s*(?:\d+\.\s*)?Engagement queue\s*[—–-]\s*quote(?:\/repost)?([\s\S]*?)(?:\n##|\Z)/mi);
+  if (!section) return [];
+  const body = section[1];
+  // Skip if empty / no reposts
+  if (/\b0\s+repost|\bno\s+repost|\bnone\b/i.test(body.slice(0, 120))) return [];
+  if (!/drafted|suggestion|draft/i.test(body.slice(0, 200))) return [];
+
+  const actions = [];
+  // Pull source handle + quote text
+  const sourceMatch = body.match(/\*\*Source:\*\*\s*([^\n]+)/);
+  const urlMatch = body.match(/https?:\/\/(?:warpcast\.com|x\.com|twitter\.com)\/[^\s)]+/);
+  const quoteMatch = body.match(/\*\*Quote text suggestion:\*\*\s*"([\s\S]*?)"/m)
+    || body.match(/"([^"]{40,500})"/s);
+
+  if (quoteMatch) {
+    const quoteText = quoteMatch[1].trim();
+    const source = sourceMatch
+      ? sourceMatch[1].replace(/\*+/g, '').trim().split(',')[0].slice(0, 60)
+      : 'ecosystem post';
+    actions.push({
+      action_id: uuid(),
+      type: 'quote-x',
+      label: `Quote-post: ${source}`,
+      preview: quoteText.slice(0, 200),
+      payload: { text: quoteText, source_url: urlMatch ? urlMatch[0] : null, surface: 'x' },
+    });
+  }
+  return actions;
+}
+
 function extractBuildSuggestionActions(md) {
   if (!md) return [];
   const actions = [];
@@ -272,49 +310,55 @@ function extractEcosystemPulse(briefMd) {
   if (!briefMd) return [];
   const lines = [];
 
-  // 1. Headline trend from "Trending in the ecosystem" section
-  const trendSection = briefMd.match(/##\s*(?:\d+\.\s*)?Trending in the ecosystem([\s\S]*?)(?:^##|\Z)/m);
+  // Section 2: "Trending in the ecosystem" — has **Topic** — N posts/casts format
+  // e.g. "**x402 payments infrastructure** — 17 casts/posts across both surfaces, 32 total engagement. Theme: ..."
+  const trendSection = briefMd.match(/##\s*(?:\d+\.\s*)?Trending in the ecosystem([\s\S]*?)(?:\n##|\Z)/m);
   if (trendSection) {
-    // Pull the observation sentence — usually the first 1-2 sentences with concrete numbers
-    const cleanBody = trendSection[1].replace(/\*+/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').trim();
-    // Find the most quantified opening line (has digit + word context)
-    const firstNumeric = cleanBody.split('\n').find(l => /\d/.test(l) && l.length > 30 && l.length < 280);
-    if (firstNumeric) {
-      lines.push(`• ${firstNumeric.trim().replace(/^[•\-*]\s*/, '')}`);
-    }
-  }
-
-  // 2-4. Top-3 keyword signals — pull the keyword + top engagement count + 1-line summary
-  const keywordSection = briefMd.match(/##\s*(?:\d+\.\s*)?Keyword signal([\s\S]*?)(?:^##|\Z)/m);
-  if (keywordSection) {
-    // Each keyword block typically starts with **<keyword>** or ### <keyword>
-    const keywordBlocks = [...keywordSection[1].matchAll(/(?:^|\n)(?:###?\s*|\*\*|-\s+\*\*)([A-Za-z][A-Za-z0-9 \-_]+?)(?:\*\*)?\s*[:—-]?\s*\n([\s\S]*?)(?=\n(?:###|\*\*[A-Z]|-\s+\*\*[A-Z])|$)/g)];
-    const seenKeywords = new Set();
-    for (const block of keywordBlocks) {
-      const keyword = block[1].trim().toLowerCase();
-      if (seenKeywords.has(keyword) || keyword.length > 30) continue;
-      seenKeywords.add(keyword);
-      const body = block[2].replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*+/g, '');
-      // Count posts in this block
-      const posts = (body.match(/https?:\/\//g) || []).length;
-      // Try to find a punchy quote
-      const quote = body.match(/"([^"]{20,140})"/);
-      if (quote) {
-        lines.push(`• ${block[1].trim()}: ${posts} posts · "${quote[1]}"`);
-      } else if (posts > 0) {
-        // Fall back to first non-URL sentence
-        const firstSentence = body.split(/[.\n]/).map(s => s.trim()).find(s => s.length > 25 && s.length < 200 && !/^https?/.test(s));
-        if (firstSentence) lines.push(`• ${block[1].trim()}: ${posts} posts · ${firstSentence}`);
+    const body = trendSection[1];
+    // Match each **Topic** — lead line
+    const topicMatches = [...body.matchAll(/\*\*([^*\n]{3,60})\*\*\s*[—–-]+\s*([^\n]{20,300})/g)];
+    for (const m of topicMatches) {
+      const topic = m[1].trim();
+      // Extract the stats and first observation sentence, strip URLs/markdown
+      let summary = m[2]
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\*+/g, '')
+        .trim();
+      // Grab up to first "Observation:" sentence if present
+      const obsMatch = body.slice(m.index).match(/\*\*Observation:\*\*\s*([^.]+\.)/);
+      if (obsMatch) {
+        summary = obsMatch[1].trim();
+      } else {
+        // Trim to first sentence
+        summary = summary.split(/(?<=\.)\s/)[0];
       }
-      if (lines.length >= 4) break; // cap at headline + 3 keywords
+      if (summary.length > 220) summary = summary.slice(0, 217) + '…';
+      lines.push(`• *${topic}*: ${summary}`);
+      if (lines.length >= 4) break;
     }
   }
 
-  // 5. Top creator engagement — if Ajsa included follower-count signals
-  const creatorMentions = [...briefMd.matchAll(/@([a-zA-Z0-9_.]+)\s*\(([\d,]+)\s+followers\)/g)];
-  if (creatorMentions.length > 0) {
-    const top3 = [...new Set(creatorMentions.map(m => `@${m[1]} (${m[2]})`))].slice(0, 3);
-    if (top3.length > 0) lines.push(`• Top voices: ${top3.join(' · ')}`);
+  // Keyword section: pull the #1 post per keyword (by engagement) as a quick signal
+  // Format: "### x402\n**Top 3 casts by engagement:**\n\n1. **@handle** (Nk followers) — description\n   - Engagement: N likes..."
+  const keywordSection = briefMd.match(/##\s*(?:\d+\.\s*)?Keyword signal([\s\S]*?)(?:\n##|\Z)/m);
+  if (keywordSection && lines.length < 5) {
+    const kwBody = keywordSection[1];
+    const kwBlocks = [...kwBody.matchAll(/###\s+([A-Za-z][A-Za-z0-9 \-_.]+)\n([\s\S]*?)(?=\n###|\Z)/g)];
+    const addedKw = new Set();
+    for (const block of kwBlocks) {
+      const kw = block[1].trim();
+      if (addedKw.has(kw.toLowerCase()) || lines.length >= 6) break;
+      // Find top post — first numbered item
+      const topPost = block[2].match(/1\.\s+\*\*@([^*]+)\*\*\s*\(([^)]+)\)\s*[—–-]+\s*([^\n]+)/);
+      if (topPost) {
+        const handle = topPost[1].trim();
+        const context = topPost[3].replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*+/g, '').trim().split('.')[0];
+        if (context.length > 15) {
+          lines.push(`  ↳ Top ${kw} signal: @${handle} — ${context.slice(0, 120)}`);
+          addedKw.add(kw.toLowerCase());
+        }
+      }
+    }
   }
 
   return lines;
@@ -355,14 +399,17 @@ function buildOvernightSection(deps) {
   return lines;
 }
 
-function buildFyiSection(deps) {
+function buildFyiSection(deps, { isSunday = false, weekLabel = '' } = {}) {
   const { inputs } = deps;
   const lines = [];
-  // Pull "Trending in the ecosystem" headline from Ajsa
-  if (inputs.ajsaBrief) {
-    const trend = inputs.ajsaBrief.match(/##\s*(?:2\.\s*)?Trending in the ecosystem\s*\n+\*?\*?\[?([^\]\n*]{10,100})/);
-    if (trend) lines.push(`• Ecosystem signal: ${trend[1].replace(/\*+/g, '').trim()}`);
+
+  // Sunday: digest reminder
+  if (isSunday && weekLabel) {
+    lines.push(`📅 *${weekLabel} digest auto-generates tonight at 19:00 UTC (21:00 Budapest).*`);
+    lines.push(`   Upload cover before then: commit to /public/weekly/${weekLabel}_cover.png`);
+    lines.push(`   Then approve the "Post ${weekLabel} weekly digest" action above.`);
   }
+
   // Competitor moves
   if (inputs.competitor) {
     const headline = inputs.competitor.match(/##\s+([^\n]+)/);
@@ -372,6 +419,19 @@ function buildFyiSection(deps) {
   if (inputs.staleAudit) {
     const sevHi = (inputs.staleAudit.match(/severity[:\s]+high/gi) || []).length;
     if (sevHi > 0) lines.push(`• ⚠️ Stale content: ${sevHi} high-severity items`);
+  }
+  // Cadence status from brief
+  if (inputs.ajsaBrief) {
+    const cadence = inputs.ajsaBrief.match(/Cadence status:\s*([^\n.]+)/i);
+    if (cadence) lines.push(`• Cadence: ${cadence[1].trim().slice(0, 120)}`);
+  }
+  // Likes queue — just count
+  if (inputs.ajsaBrief) {
+    const likeSection = inputs.ajsaBrief.match(/##\s*(?:\d+\.\s*)?Engagement queue\s*[—–-]\s*likes([\s\S]*?)(?:\n##|\Z)/mi);
+    if (likeSection) {
+      const likeItems = (likeSection[1].match(/^(?:\d+\.|[-*])\s/gm) || []).length;
+      if (likeItems > 0) lines.push(`• Like queue: ${likeItems} posts ready (auto-lane — no decision needed)`);
+    }
   }
   return lines;
 }
@@ -449,13 +509,44 @@ async function main() {
     pendingFromQueue(),
   ]);
 
+  // Day-of-week awareness (0=Sun, 1=Mon, ... 6=Sat)
+  const dow = new Date(`${RUN_DATE}T12:00:00Z`).getUTCDay();
+  const isSunday = dow === 0;
+
   // Decide actions: fresh actions from inputs + any deferred from prior queue
   const fresh = [
     ...extractAjsaActions(inputs.ajsaBrief),
+    ...extractRepostActions(inputs.ajsaBrief),
     ...extractBuildSuggestionActions(inputs.buildSugg),
   ];
-  // Mark carried items as such
-  const carriedFlagged = carried.map(a => ({ ...a, label: `${a.label} (deferred)`, deferred: true }));
+
+  // On Sundays: inject weekly digest post action at the TOP of decide list
+  if (isSunday) {
+    // Derive ISO week number for this Sunday (it's the last day of the ISO week)
+    const dt = new Date(`${RUN_DATE}T12:00:00Z`);
+    const isoYear = dt.getUTCFullYear();
+    // ISO week: Jan 4 is always in W1
+    const jan4 = new Date(Date.UTC(isoYear, 0, 4));
+    const startOfW1 = new Date(jan4.getTime() - ((jan4.getUTCDay() || 7) - 1) * 86400000);
+    const weekNum = Math.floor((dt.getTime() - startOfW1.getTime()) / (7 * 86400000)) + 1;
+    const weekLabel = `W${weekNum}`;
+    fresh.unshift({
+      action_id: uuid(),
+      type: 'post-x',
+      label: `Post ${weekLabel} weekly digest`,
+      preview: `"${weekLabel} agent ecosystem digest is live at agentcrush.xyz/weekly/${isoYear}-${weekLabel}. Top signals this week: ERC-8004 trust tooling surge (Boon/Argus/AgentAudit), x402 routing real volume, MCP adoption +35%. Read the full breakdown."`,
+      payload: {
+        text: `${weekLabel} agent ecosystem digest is live → agentcrush.xyz/weekly/${isoYear}-${weekLabel}\n\nTop signals this week:\n• ERC-8004 trust tooling surge — Boon, Argus, AgentAudit all shipped in the same 72h window\n• x402 routing real volume (Travala, Agent Realm, Base Account)\n• MCP adoption +35% — Base MCP ships, third major blockchain integration this year\n\nWhat this means for builders → [link]`,
+        surface: 'x',
+        note: 'Post after 19:00 UTC when digest auto-generates. Upload cover first: /public/weekly/W' + weekNum + '_cover.png',
+      },
+    });
+  }
+  // Mark carried items with the date they were issued, so Kris knows they're old
+  const carriedFlagged = carried.map(a => {
+    const issuedDate = a.issued_at ? a.issued_at.slice(5, 10) : 'prev'; // MM-DD
+    return { ...a, label: `${a.label} [carried ${issuedDate}]`, deferred: true };
+  });
   // Dedup by label
   const seenLabels = new Set();
   const decideActions = [];
@@ -465,6 +556,14 @@ async function main() {
     seenLabels.add(key);
     decideActions.push(a);
   }
+
+  // Compute week label for FYI/Sunday logic
+  const dt = new Date(`${RUN_DATE}T12:00:00Z`);
+  const isoYear2 = dt.getUTCFullYear();
+  const jan4b = new Date(Date.UTC(isoYear2, 0, 4));
+  const startOfW1b = new Date(jan4b.getTime() - ((jan4b.getUTCDay() || 7) - 1) * 86400000);
+  const weekNumNow = Math.floor((dt.getTime() - startOfW1b.getTime()) / (7 * 86400000)) + 1;
+  const weekLabelNow = `W${weekNumNow}`;
 
   const deps = { db, site, cost, inputs };
   const card = {
@@ -477,7 +576,7 @@ async function main() {
       overnight: buildOvernightSection(deps),
       pulse: extractEcosystemPulse(inputs.ajsaBrief),
       decide: buildDecideSection(decideActions),
-      fyi: buildFyiSection(deps),
+      fyi: buildFyiSection(deps, { isSunday, weekLabel: weekLabelNow }),
     },
     raw_actions: decideActions, // full payload for dispatcher
   };
