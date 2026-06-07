@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentCrush Agent of the Week — Sunday ghost agent X post
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/ghost-index
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/briefing/.env
+EnvironmentFile=-/opt/agentcrush/copydesk/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/ghost-index/agent-of-week-worker.mjs
+StandardOutput=append:/var/log/agentcrush/agent-of-week.log
+StandardError=append:/var/log/agentcrush/agent-of-week.log
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

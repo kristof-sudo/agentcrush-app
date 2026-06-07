@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush Agent of the Week timer — Sunday 10:00 UTC
+Documentation=Ghost Agent of the Week — weekly X post, no LLM cost
+
+[Timer]
+OnCalendar=Sun *-*-* 10:00:00 UTC
+Persistent=true
+Unit=agentcrush-agent-of-week.service
+
+[Install]
+WantedBy=timers.target

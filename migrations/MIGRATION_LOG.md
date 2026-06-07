@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-06-07 (continued)
+- `migrations/20260607_1400_ghost_index.sql` — G-1 Ghost Index. Creates `ghost_index_daily` table (snapshot_date PK, liveness_score, total/alive/ghost agents, category_breakdown JSONB, tier counts). Creates `ghost_index_live` view for real-time computation (alive = activity_status=active OR last_event_at<30d). Seeds today's first snapshot. RLS: anon read, service_role write. Worker runs nightly 23:50 UTC.
+  **STATUS: PENDING APPLY by Kris.**
+
 ### 2026-06-07
 - `migrations/20260607_0900_mcp_server_category.sql` — R-4.3 MCP Server Index (v3 — extends check constraint). **Step 0:** `DROP CONSTRAINT agents_primary_category_check` + `ADD CONSTRAINT` with 5 values (adds `mcp_server` to model_family/tokenized/service/developer). Creates `mcp_server_metadata` table (tool_count, resource_count, transport_types, registry_listings, mcp_spec_version, server_url, npm_package, pypi_package, npx_install). Seeds 15 top MCP servers using correct column names (display_name/bio/primary_category/website_url). Creates `agent_score_mcp_server_v1` view: stars 30% + tool_count 25% + registry_count 20% + forks 15% + followers 10%. Fully idempotent.
   **STATUS: APPLIED 2026-06-07 by Kris (v3).** v1 failed on wrong column names; v2 failed on check constraint; v3 succeeded.

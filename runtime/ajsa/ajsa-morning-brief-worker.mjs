@@ -154,6 +154,10 @@ async function gatherInputs() {
     }
   }
 
+  // Ghost Index — best-effort read from latest daily snapshot file (no DB call)
+  const ghostIndexPath = path.join(BRAIN_PATH, 'Agents', 'ajsa', 'ghost-index-latest.json');
+  const ghostIndex = await readJsonIfExists(ghostIndexPath);
+
   return {
     neynarData,
     neynarSourceDate,
@@ -164,6 +168,7 @@ async function gatherInputs() {
     playbookFormat,
     ajsaPlaybook: ajsaPlaybook || '(empty — no prior learnings yet)',
     postedLog: postedLog || '(empty — no post history yet)',
+    ghostIndex,   // may be null if ghost-index worker hasn't run yet
   };
 }
 
@@ -294,7 +299,11 @@ function buildUserPrompt(inputs) {
   const stalenessNote = inputs.neynarStaleness ? `\n\n⚠️ DATA NOTE: ${inputs.neynarStaleness}\n` : '';
   const xNote = inputs.xData ? '' : '\n\n📝 NOTE: No X data today. X Bearer Token may not be live yet — proceed with Farcaster only.\n';
 
-  return `Today is ${RUN_WEEKDAY}, ${RUN_DATE}. Use this weekday exactly — do not infer or recompute it.${stalenessNote}${xNote}
+  const ghostNote = inputs.ghostIndex
+    ? `\n\n📊 GHOST INDEX: ${inputs.ghostIndex.liveness_score}% of ${inputs.ghostIndex.total_agents} indexed agents show signs of life (${inputs.ghostIndex.alive_agents} alive, ${inputs.ghostIndex.ghost_agents} ghosts). This is today's AgentCrush Ghost Index — you may reference this data point in section 8's original post if it's relevant to the day's ecosystem narrative. Always link to agentcrush.xyz/ghost-index when citing it.\n`
+    : '';
+
+  return `Today is ${RUN_WEEKDAY}, ${RUN_DATE}. Use this weekday exactly — do not infer or recompute it.${stalenessNote}${xNote}${ghostNote}
 
 ═══════════════════════════════════════════════════════════════════════════════
 CURRENT PRODUCT STATE (STATE.md — what shipped this week, what's queued)
