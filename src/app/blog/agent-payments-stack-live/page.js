@@ -11,7 +11,7 @@ export const metadata = {
     description: 'Keyrock mapped 6 layers of agent payments infrastructure. We indexed all 38 projects and track it live. Coinbase spans 5/6 layers. Governance is the hardest layer to clone.',
     url: 'https://agentcrush.xyz/blog/agent-payments-stack-live',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/api/og?title=Agent%20Payments%20Stack%2C%20Live&kicker=BLOG&subtitle=38%20projects%2C%206%20layers%2C%20tracked%20live', width: 1200, height: 630, alt: 'The Agent Payments Stack, Live — AgentCrush' }],
+    images: [{ url: 'https://agentcrush.xyz/og-agent-payments-stack.png', width: 1731, height: 909, alt: 'The Agent Payments Stack, Live — AgentCrush' }],
     type: 'article',
     publishedTime: '2026-05-26T00:00:00.000Z',
   },
@@ -19,7 +19,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'The Agent Payments Stack, Live — AgentCrush',
     description: '38 projects, 6 layers, tracked live. What Keyrock mapped and what we added.',
-    images: ['https://agentcrush.xyz/api/og?title=Agent%20Payments%20Stack%2C%20Live&kicker=BLOG&subtitle=38%20projects%2C%206%20layers%2C%20tracked%20live'],
+    images: ['https://agentcrush.xyz/og-agent-payments-stack.png'],
   },
 }
 
@@ -31,7 +31,7 @@ export default function AgentPaymentsStackLive() {
         title="The Agent Payments Stack, Live"
         summary="Keyrock mapped 6 layers of agent payments infrastructure in May 2026. We indexed all 38 projects, scored them by stack depth, and now track it live."
         date="2026-05-26"
-        imageUrl="/api/og?title=Agent%20Payments%20Stack%2C%20Live&kicker=BLOG&subtitle=38%20projects%2C%206%20layers%2C%20tracked%20live"
+        imageUrl="/og-agent-payments-stack.png"
       />
       <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
 
@@ -55,6 +55,15 @@ export default function AgentPaymentsStackLive() {
           <span>Kris</span>
           <span className="text-white/15">·</span>
           <span>Phase 3.5 W2</span>
+        </div>
+
+        {/* Hero image */}
+        <div className="mt-8 rounded-xl overflow-hidden">
+          <img
+            src="/og-agent-payments-stack.png"
+            alt="The Agent Payments Stack, Live — 38 projects, 6 layers, tracked live"
+            className="w-full h-auto"
+          />
         </div>
 
         <hr className="my-8 border-white/[0.06]" />
