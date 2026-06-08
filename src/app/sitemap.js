@@ -20,6 +20,7 @@ const STATIC_PAGES = [
   { path: '/labs/findings/methodology-v1-launch', priority: 0.8, changeFrequency: 'monthly'},
   { path: '/methodology',  priority: 0.9, changeFrequency: 'weekly' },
   { path: '/methodology/views', priority: 0.85, changeFrequency: 'monthly' },
+  { path: '/cite',              priority: 0.85, changeFrequency: 'monthly' },
   { path: '/developers',   priority: 0.8, changeFrequency: 'monthly'},
   // LLM Gateway canonical answer pages — high priority for retrieval
   { path: '/agent-economy',         priority: 0.95, changeFrequency: 'weekly' },
