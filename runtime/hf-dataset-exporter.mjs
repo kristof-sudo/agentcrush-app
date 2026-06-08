@@ -75,13 +75,12 @@ async function fetchAllAgents() {
     const { data, error } = await supabase
       .from('agents')
       .select(`
-        handle, name, description, category, tier, score, rank,
-        github_stars, github_forks, follower_count, weekly_delta,
-        identity_type, claim_status, visibility,
-        erc8004_verified, x402_enabled, homepage_url,
-        created_at, updated_at
+        id, handle, display_name, bio, primary_category, tier,
+        weekly_delta, identity_type, claim_status, visibility_score,
+        verified, website_url, github_url, x_handle, hf_author,
+        last_event_at, activity_status, created_at
       `)
-      .order('rank', { ascending: true, nullsFirst: false })
+      .order('visibility_score', { ascending: false, nullsFirst: false })
       .range(from, from + PAGE - 1);
     if (error) throw new Error(`Supabase agents: ${error.message}`);
     if (!data || data.length === 0) break;
@@ -94,22 +93,23 @@ async function fetchAllAgents() {
 }
 
 async function fetchLatestSnapshots() {
-  // Most recent snapshot per agent — use a subquery via RPC or manual approach
+  // Most recent snapshot per agent. agent_snapshots is keyed on agent_id (UUID),
+  // not handle — pass a handle->id map from the caller to remap.
   const PAGE = 1000;
   const rows = [];
   let from = 0;
   while (true) {
     const { data, error } = await supabase
       .from('agent_snapshots')
-      .select('handle, snapshot_date, score, rank, weekly_delta, follower_count, github_stars')
+      .select('agent_id, snapshot_date, score, rank, follower_count, github_stars')
       .order('snapshot_date', { ascending: false })
-      .order('handle', { ascending: true })
+      .order('agent_id', { ascending: true })
       .range(from, from + PAGE - 1);
     if (error) throw new Error(`Supabase snapshots: ${error.message}`);
     if (!data || data.length === 0) break;
-    // Keep only the most recent per handle
+    // Keep only the most recent per agent_id
     for (const row of data) {
-      if (!rows.find(r => r.handle === row.handle)) rows.push(row);
+      if (!rows.find(r => r.agent_id === row.agent_id)) rows.push(row);
     }
     if (data.length < PAGE) break;
     if (rows.length >= 5000) break; // safety cap
@@ -120,30 +120,32 @@ async function fetchLatestSnapshots() {
 
 // ── Serialisers ───────────────────────────────────────────────────────────────
 
-function agentToRecord(agent) {
+function agentToRecord(agent, snapshot) {
   return {
-    handle: agent.handle,
-    name: agent.name || null,
-    description: agent.description ? agent.description.slice(0, 500) : null,
-    category: agent.category || null,
-    tier: agent.tier || null,
-    score: agent.score != null ? Number(agent.score) : null,
-    rank: agent.rank != null ? Number(agent.rank) : null,
-    github_stars: agent.github_stars != null ? Number(agent.github_stars) : null,
-    github_forks: agent.github_forks != null ? Number(agent.github_forks) : null,
-    follower_count: agent.follower_count != null ? Number(agent.follower_count) : null,
-    weekly_delta: agent.weekly_delta != null ? Number(agent.weekly_delta) : null,
-    identity_type: agent.identity_type || null,
-    claim_status: agent.claim_status || null,
-    visibility: agent.visibility || null,
-    erc8004_verified: agent.erc8004_verified ?? false,
-    x402_enabled: agent.x402_enabled ?? false,
-    homepage_url: agent.homepage_url || null,
-    profile_url: `https://agentcrush.xyz/rankings/${agent.category || 'developer'}/${agent.handle}`,
-    updated_at: agent.updated_at || null,
-    // Attribution
-    _source: 'agentcrush.xyz',
-    _license: 'CC-BY-4.0',
+    handle:           agent.handle,
+    display_name:     agent.display_name || null,
+    bio:              agent.bio ? agent.bio.slice(0, 500) : null,
+    primary_category: agent.primary_category || null,
+    tier:             agent.tier || null,
+    visibility_score: agent.visibility_score != null ? Number(agent.visibility_score) : null,
+    score:            snapshot?.score != null ? Number(snapshot.score) : null,
+    rank:             snapshot?.rank  != null ? Number(snapshot.rank)  : null,
+    github_stars:     snapshot?.github_stars   != null ? Number(snapshot.github_stars)   : null,
+    follower_count:   snapshot?.follower_count != null ? Number(snapshot.follower_count) : null,
+    weekly_delta:     agent.weekly_delta != null ? Number(agent.weekly_delta) : null,
+    identity_type:    agent.identity_type || null,
+    claim_status:     agent.claim_status || null,
+    verified:         agent.verified ?? false,
+    activity_status:  agent.activity_status || null,
+    last_event_at:    agent.last_event_at || null,
+    website_url:      agent.website_url || null,
+    github_url:       agent.github_url || null,
+    x_handle:         agent.x_handle || null,
+    hf_author:        agent.hf_author || null,
+    profile_url:      `https://agentcrush.xyz/agent/${agent.handle}`,
+    snapshot_date:    snapshot?.snapshot_date || null,
+    _source:   'agentcrush.xyz',
+    _license:  'CC-BY-4.0',
     _export_date: TODAY,
   };
 }
@@ -280,24 +282,46 @@ Attribution: AgentCrush (agentcrush.xyz)
 `;
 }
 
-// ── HuggingFace upload ────────────────────────────────────────────────────────
+// ── HuggingFace upload (via commit API; single multi-file commit) ────────────
 
-async function hfUpload(repoId, filePath, content, contentType = 'application/octet-stream') {
-  const url = `https://huggingface.co/api/datasets/${repoId}/raw/main/${filePath}`;
-  const body = typeof content === 'string' ? Buffer.from(content) : content;
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${HF_TOKEN}`,
-      'Content-Type': contentType,
-    },
-    body,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`HF upload ${res.status} for ${filePath}: ${text.slice(0, 300)}`);
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname } from 'node:path';
+
+function runGit(cwd, args) {
+  const res = spawnSync('git', args, { cwd, stdio: 'pipe', encoding: 'utf8' });
+  if (res.status !== 0) {
+    throw new Error(`git ${args.join(' ')} failed: ${res.stderr || res.stdout}`);
   }
-  return res.json();
+  return res.stdout;
+}
+
+async function hfCommitFiles(repoId, files /* [{path, content}] */) {
+  const work = mkdtempSync(join(tmpdir(), 'hf-ds-'));
+  try {
+    const cloneUrl = `https://user:${HF_TOKEN}@huggingface.co/datasets/${repoId}`;
+    runGit(work, ['clone', '--depth', '1', cloneUrl, 'repo']);
+    const repoDir = join(work, 'repo');
+    runGit(repoDir, ['config', 'user.email', 'ops@agentcrush.xyz']);
+    runGit(repoDir, ['config', 'user.name', 'AgentCrush Exporter']);
+
+    for (const f of files) {
+      const abs = join(repoDir, f.path);
+      mkdirSync(dirname(abs), { recursive: true });
+      const buf = typeof f.content === 'string' ? Buffer.from(f.content) : f.content;
+      writeFileSync(abs, buf);
+    }
+
+    runGit(repoDir, ['add', '-A']);
+    const status = runGit(repoDir, ['status', '--porcelain']);
+    if (!status.trim()) return { unchanged: true };
+    runGit(repoDir, ['commit', '-m', `data: AgentCrush daily export ${TODAY}`]);
+    runGit(repoDir, ['push', 'origin', 'HEAD:main']);
+    return { unchanged: false };
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -309,10 +333,6 @@ async function main() {
   const agents = await fetchAllAgents();
   console.log(`[hf-exporter] ${agents.length} agents loaded`);
 
-  const allRecords = agents.map(agentToRecord);
-  const evidenceRanked = allRecords.filter(a => a.tier === 'evidence_ranked');
-  console.log(`[hf-exporter] ${evidenceRanked.length} evidence-ranked`);
-
   let snapshots = [];
   try {
     snapshots = await fetchLatestSnapshots();
@@ -320,6 +340,25 @@ async function main() {
   } catch (e) {
     console.warn(`[hf-exporter] Snapshots fetch failed (non-fatal): ${e.message}`);
   }
+
+  // Build agent_id → latest-snapshot map and join into records.
+  const snapByAgentId = new Map(snapshots.map(s => [s.agent_id, s]));
+  const allRecords = agents.map(a => agentToRecord(a, snapByAgentId.get(a.id)));
+  const evidenceRanked = allRecords.filter(a => a.tier === 'evidence_ranked');
+  console.log(`[hf-exporter] ${evidenceRanked.length} evidence-ranked`);
+
+  // Remap snapshots from agent_id to handle for the snapshots-latest file
+  const handleById = new Map(agents.map(a => [a.id, a.handle]));
+  const snapshotsWithHandle = snapshots
+    .filter(s => handleById.has(s.agent_id))
+    .map(s => ({
+      handle: handleById.get(s.agent_id),
+      snapshot_date: s.snapshot_date,
+      score: s.score,
+      rank: s.rank,
+      follower_count: s.follower_count,
+      github_stars: s.github_stars,
+    }));
 
   const datasetCard = buildDatasetCard(allRecords.length, evidenceRanked.length);
 
@@ -330,28 +369,31 @@ async function main() {
     console.log('[hf-exporter] Files:');
     console.log(`  data/agents.jsonl         ${allRecords.length} rows`);
     console.log(`  data/evidence-ranked.jsonl ${evidenceRanked.length} rows`);
-    console.log(`  data/snapshots-latest.jsonl ${snapshots.length} rows`);
+    console.log(`  data/snapshots-latest.jsonl ${snapshotsWithHandle.length} rows`);
     console.log(`  README.md`);
     return;
   }
 
-  console.log('[hf-exporter] Uploading to HuggingFace…');
+  console.log('[hf-exporter] Uploading to HuggingFace via git push…');
 
-  await hfUpload(HF_REPO, 'data/agents.jsonl', toJsonl(allRecords));
-  console.log(`[hf-exporter] ✓ data/agents.jsonl`);
-
-  await hfUpload(HF_REPO, 'data/evidence-ranked.jsonl', toJsonl(evidenceRanked));
-  console.log(`[hf-exporter] ✓ data/evidence-ranked.jsonl`);
-
-  if (snapshots.length > 0) {
-    await hfUpload(HF_REPO, 'data/snapshots-latest.jsonl', toJsonl(
-      snapshots.map(s => ({ ...s, _source: 'agentcrush.xyz', _export_date: TODAY }))
-    ));
-    console.log(`[hf-exporter] ✓ data/snapshots-latest.jsonl`);
+  const files = [
+    { path: 'data/agents.jsonl',           content: toJsonl(allRecords) },
+    { path: 'data/evidence-ranked.jsonl',  content: toJsonl(evidenceRanked) },
+    { path: 'README.md',                   content: datasetCard },
+  ];
+  if (snapshotsWithHandle.length > 0) {
+    files.push({
+      path: 'data/snapshots-latest.jsonl',
+      content: toJsonl(snapshotsWithHandle.map(s => ({ ...s, _source: 'agentcrush.xyz', _export_date: TODAY }))),
+    });
   }
 
-  await hfUpload(HF_REPO, 'README.md', datasetCard, 'text/markdown');
-  console.log(`[hf-exporter] ✓ README.md (dataset card)`);
+  const result = await hfCommitFiles(HF_REPO, files);
+  if (result.unchanged) {
+    console.log('[hf-exporter] No changes to commit (data identical to last export).');
+  } else {
+    files.forEach(f => console.log(`[hf-exporter] ✓ ${f.path}`));
+  }
 
   console.log(`[hf-exporter] Done. https://huggingface.co/datasets/${HF_REPO}`);
 }
