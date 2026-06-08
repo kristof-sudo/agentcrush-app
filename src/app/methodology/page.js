@@ -310,6 +310,21 @@ export default async function MethodologyHubPage() {
         </p>
       </section>
 
+      {/* Open-source views callout */}
+      <section className="mb-10">
+        <Link href="/methodology/views"
+              className="block rounded-xl border border-[#00d4ff]/25 bg-[#00d4ff]/[0.04] px-5 py-4 hover:bg-[#00d4ff]/[0.08] transition-colors">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#00d4ff]/80 mb-1">Open source</p>
+              <p className="text-sm font-bold text-white mb-1">Scoring views — read the SQL</p>
+              <p className="text-xs text-white/55">Every ranking comes from a Postgres view. Each one is published verbatim with weights, evidence-ready rules, and a GitHub link.</p>
+            </div>
+            <span className="text-[#00d4ff]/70 font-mono text-sm shrink-0">→</span>
+          </div>
+        </Link>
+      </section>
+
       {/* Ghost Index ingestion coverage */}
       <section id="ingestion-coverage" className="mb-10 scroll-mt-24">
         <h2 className="text-lg font-bold text-white mb-3">Ghost Index ingestion coverage</h2>
