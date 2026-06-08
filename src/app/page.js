@@ -809,14 +809,14 @@ export default async function Home() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#e91e80]">◆ WEEKLY DIGEST</span>
-                    <span className="font-mono text-[9px] text-white/30">W21 · 2026-05-18</span>
+                    <span className="font-mono text-[9px] text-white/30">W23 · 2026-06-07</span>
                   </div>
                   <div className="font-mono text-sm font-bold text-white/90 mb-2">Promotions · Top movers · New to index · Protocol activity · Editorial</div>
                   <div className="font-mono text-[10px] text-white/40 leading-relaxed">
                     Weekly intelligence roundup. Evidence-ranked moves, new entries, protocol signals, and editorial context — every Friday.
                   </div>
                 </div>
-                <Link href="/weekly/2026-W21"
+                <Link href="/weekly/2026-W23"
                   className="shrink-0 rounded border border-[rgba(233,30,128,0.35)] bg-[rgba(233,30,128,0.08)] px-3 py-1.5 font-mono text-[11px] font-bold text-[#e91e80] hover:bg-[rgba(233,30,128,0.15)] transition-colors">
                   Read →
                 </Link>
