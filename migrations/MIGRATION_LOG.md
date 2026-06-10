@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-06-10
+- `migrations/20260610_1300_api_keys.sql` — Pro API keys for the $29/mo AgentCrush Pro subscription. Creates `api_keys` table (key_hash unique, key_prefix, key_once one-time plaintext, email, plan, status active/past_due/revoked, Stripe customer/subscription/checkout-session ids, timestamps) + indexes on session and subscription ids. RLS enabled with no policies — service-role only. Keys are issued by the Stripe webhook on `checkout.session.completed` (metadata.product=pro_api), retrieved once via `/api/keys/by-session`, validated in `src/proxy.js` (skips x402 gate) and `/api/agents/bulk` (500-handle cap). Until applied, Pro checkout works but key issuance fails (webhook 500s and Stripe retries — apply before first sale).
+  **STATUS: PENDING APPLY by Kris.**
+
 ### 2026-06-08
 - `migrations/20260608_1000_restore_model_family_v14.sql` — **URGENT RESTORATION.** Restores `agent_score_model_family_v1` to v1.4-with-deployment (HF 30% + derivatives 20% + LMArena 25% + citations 15% + deployment 10%) plus the dependent wrapper view `agent_score_model_family_v1_with_confidence`. Both were dropped by today's earlier `20260608_0920` which mistakenly assumed model_family had no scoring view and replaced it with a simpler v1.0 lacking columns the rankings page depends on. `/rankings/model-families` was broken in prod between apply of 0920 and apply of this migration. `/api/model-families/v1` route also rewritten to consume v1.4 columns + confidence_tier.
   **STATUS: PENDING APPLY by Kris (URGENT).**

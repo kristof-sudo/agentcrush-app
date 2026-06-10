@@ -2,14 +2,16 @@
  * GET /api/agents/bulk?handles=a,b,c,...
  *
  * Bulk lookup for AI-agent clients that need many agent details at once.
- * Up to 50 handles per call. Returns compact details — for the FULL per-agent
- * breakdown, use /api/agent/{handle}/llm-summary or MCP get_agent_details.
+ * Up to 50 handles per call (500 with a Pro API key via X-API-Key header).
+ * Returns compact details — for the FULL per-agent breakdown, use
+ * /api/agent/{handle}/llm-summary or MCP get_agent_details.
  *
  * Designed for comparison-shopping agents that would otherwise make 50
- * round-trips. No auth, no payment. Cached 2 min.
+ * round-trips. Free tier needs no auth or payment. Cached 2 min.
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { extractApiKey, validateApiKey } from '@/lib/apiKeys'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -24,7 +26,7 @@ function db() {
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
   'Cache-Control': 'public, max-age=120, s-maxage=120, stale-while-revalidate=60',
 }
 
@@ -51,11 +53,17 @@ export async function GET(req) {
     }, { status: 400, headers: HEADERS })
   }
   if (unique.length > 50) {
-    return Response.json({
-      error: 'too_many_handles',
-      message: `Max 50 handles per call. You requested ${unique.length}.`,
-      hint: 'Split into multiple calls, or use /api/rankings/{category}/llm-summary for full category lists.',
-    }, { status: 400, headers: HEADERS })
+    const { valid } = await validateApiKey(extractApiKey(req))
+    const cap = valid ? 500 : 50
+    if (unique.length > cap) {
+      return Response.json({
+        error: 'too_many_handles',
+        message: `Max ${cap} handles per call. You requested ${unique.length}.`,
+        hint: valid
+          ? 'Split into multiple calls.'
+          : 'Split into multiple calls, use /api/rankings/{category}/llm-summary for full category lists, or get a Pro API key (500 handles/call) at https://agentcrush.xyz/pricing.',
+      }, { status: 400, headers: HEADERS })
+    }
   }
 
   try {

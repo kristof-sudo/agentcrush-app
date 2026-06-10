@@ -4,6 +4,7 @@ import { ExactEvmScheme } from '@x402/evm/exact/server'
 import { facilitator } from '@coinbase/x402'
 import { declareDiscoveryExtension } from '@x402/extensions/bazaar'
 import { NextResponse } from 'next/server'
+import { extractApiKey, validateApiKey } from './lib/apiKeys'
 
 // ── Mission Control basic auth ────────────────────────────────────────────────
 // Migrated from deprecated src/middleware.js — logic unchanged.
@@ -144,6 +145,61 @@ const x402Handler = paymentProxy(
       },
     },
 
+    '/api/trust/evaluate/full': {
+      accepts: [
+        {
+          scheme: 'exact',
+          price: '$0.10',
+          network: 'eip155:8453',
+          payTo: PAY_TO,
+        },
+      ],
+      description:
+        'Full-depth trust evaluation for an AI agent on AgentCrush: verdict, confidence tier, risk flags, liveness, plus raw signal breakdown (GitHub stars/forks, follower count, visibility and reputation scores, weekly delta). Standard-depth evaluation is free at /api/trust/evaluate.',
+      mimeType: 'application/json',
+      extensions: {
+        bazaar: {
+          discoverable: true,
+          category: 'reputation',
+          tags: ['ai-agents', 'trust', 'verification', 'analytics', 'risk', 'kya'],
+          ...declareDiscoveryExtension({
+            method: 'GET',
+            queryParams: { handle: 'autogpt' },
+            queryParamsSchema: {
+              properties: { handle: { type: 'string', description: 'Agent handle slug (e.g. "autogpt", "devin", "cursor")' } },
+              required: ['handle'],
+            },
+            output: {
+              example: {
+                handle: 'crewai',
+                display_name: 'CrewAI',
+                indexed: true,
+                verdict: 'trusted',
+                confidence_tier: 'high',
+                liveness: 'alive',
+                risk_flags: [],
+                claim_status: 'claimed',
+                tier: 'evidence_ranked',
+                payment_rails: ['x402'],
+                score: 142,
+                rank: 1,
+                raw_signals: {
+                  github_stars: 38000,
+                  github_forks: 4900,
+                  follower_count: 12000,
+                  visibility_score: 80,
+                  reputation_score: 62,
+                  weekly_delta: 3,
+                  last_snapshot: '2026-06-09',
+                },
+                methodology_url: 'https://agentcrush.xyz/methodology',
+              },
+            },
+          }).bazaar,
+        },
+      },
+    },
+
     '/api/agent/:handle/verification-status': {
       accepts: [
         {
@@ -199,6 +255,13 @@ export async function proxy(request) {
     return NextResponse.next()
   }
 
+  // Pro API keys skip the x402 gate on premium endpoints
+  const apiKey = extractApiKey(request)
+  if (apiKey) {
+    const { valid } = await validateApiKey(apiKey)
+    if (valid) return NextResponse.next()
+  }
+
   return x402Handler(request)
 }
 
@@ -208,5 +271,6 @@ export const config = {
     '/api/agent/:path*/trust-summary',
     '/api/agent/:path*/history',
     '/api/agent/:path*/verification-status',
+    '/api/trust/evaluate/full',
   ],
 }

@@ -22,6 +22,7 @@ export default function Footer() {
           <Link href="/methodology" className="text-xs text-white/35 hover:text-white/70 transition-colors">Methodology</Link>
           <Link href="/use-cases" className="text-xs text-white/35 hover:text-white/70 transition-colors">Use Cases</Link>
           <Link href="/developers" className="text-xs text-white/35 hover:text-white/70 transition-colors">Developers</Link>
+          <Link href="/pricing" className="text-xs text-white/35 hover:text-white/70 transition-colors">Pricing</Link>
           <Link href="/developers#api" className="text-xs text-white/35 hover:text-white/70 transition-colors">API</Link>
           <Link href="/developers#mcp" className="text-xs text-white/35 hover:text-white/70 transition-colors">MCP</Link>
           <Link href="/submit" className="text-xs text-white/35 hover:text-white/70 transition-colors">Submit Agent</Link>
