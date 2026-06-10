@@ -56,6 +56,21 @@ const DISCOVERY = {
         },
       ],
     },
+    {
+      url: 'https://agentcrush.xyz/api/trust/evaluate/full',
+      method: 'GET',
+      description:
+        'Full-depth trust evaluation for an AI agent: verdict, confidence tier, risk flags, liveness, plus raw signal breakdown. Standard-depth evaluation is free at /api/trust/evaluate. Also included with a Pro API key (https://agentcrush.xyz/pricing).',
+      mimeType: 'application/json',
+      accepts: [
+        {
+          scheme: 'exact',
+          price: '$0.10',
+          network: 'eip155:8453',
+          payTo: '0x58e632Fa698383820FFC22156352C9836790E2c0',
+        },
+      ],
+    },
   ],
 }
 
