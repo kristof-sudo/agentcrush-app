@@ -397,6 +397,7 @@ export default async function GhostIndexPage() {
         {/* ── Footer ── */}
         <div className="border-t border-white/[0.06] pt-6 flex flex-wrap gap-4 text-xs text-white/35">
           <Link href="/rankings" className="hover:text-white/70 transition-colors">Rankings →</Link>
+          <Link href="/agent-economy-index" className="hover:text-white/70 transition-colors">Agent Economy Index →</Link>
           <Link href="/methodology" className="hover:text-white/70 transition-colors">Methodology →</Link>
           <Link href="/trends" className="hover:text-white/70 transition-colors">Trends →</Link>
           <a href="/api/ghost-index/v1" className="hover:text-white/70 transition-colors text-[#00d4ff]/40">API →</a>
