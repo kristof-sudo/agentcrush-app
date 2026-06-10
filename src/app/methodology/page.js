@@ -204,8 +204,23 @@ function AccentDot({ accent }) {
   return <span className={`inline-block h-2.5 w-2.5 rounded-full ${map[accent] || 'bg-white/50'}`} />
 }
 
+async function fetchLatestProof() {
+  try {
+    const { data } = await supabaseAnon()
+      .from('proof_of_index')
+      .select('snapshot_date, digest_sha256, record_count, tx_hash, status')
+      .order('snapshot_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    return data ?? null
+  } catch {
+    return null
+  }
+}
+
 export default async function MethodologyHubPage() {
   const counts = await fetchCounts()
+  const proof = await fetchLatestProof()
   const totalEvidenceRanked = Object.values(counts).reduce((s, c) => s + c.evidence_ranked, 0)
 
   const jsonLd = {
@@ -323,6 +338,44 @@ export default async function MethodologyHubPage() {
             <span className="text-[#00d4ff]/70 font-mono text-sm shrink-0">→</span>
           </div>
         </Link>
+      </section>
+
+      {/* Proof of Index */}
+      <section id="proof-of-index" className="mb-10 scroll-mt-24">
+        <h2 className="text-lg font-bold text-white mb-3">Proof of Index — on-chain data integrity</h2>
+        <p className="text-sm text-white/55 leading-relaxed mb-4">
+          Every night, AgentCrush computes a SHA-256 digest over that day&apos;s full snapshot export
+          and notarizes it on Base. Once a digest is on-chain, the historical archive behind every
+          ranking and every Ghost Index reading is tamper-evident — you don&apos;t have to trust that
+          we didn&apos;t rewrite history, you can check. Oracle attestations from{' '}
+          <code className="font-mono text-white/65 text-xs">/api/oracle/attest</code> reference the
+          latest digest.
+        </p>
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 mb-3">
+          {proof ? (
+            <div className="space-y-1.5 text-xs">
+              <p><span className="font-mono text-white/35">latest digest</span>{' '}
+                <code className="font-mono text-white/70 break-all">{proof.digest_sha256}</code></p>
+              <p><span className="font-mono text-white/35">covers</span>{' '}
+                <span className="text-white/60">{proof.record_count.toLocaleString()} snapshot rows · {proof.snapshot_date}</span></p>
+              {proof.tx_hash ? (
+                <p><span className="font-mono text-white/35">notarized</span>{' '}
+                  <a href={`https://basescan.org/tx/${proof.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                     className="text-[#39ff14]/80 hover:text-[#39ff14] font-mono break-all underline underline-offset-2">{proof.tx_hash}</a></p>
+              ) : (
+                <p><span className="font-mono text-white/35">notarized</span>{' '}
+                  <span className="text-amber-300/70">queued — digest computed, on-chain posting pending</span></p>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-white/40">Initializing — the first daily digest posts after the next snapshot run.</p>
+          )}
+        </div>
+        <p className="text-xs text-white/40 leading-relaxed">
+          Verify: recompute the SHA-256 over the canonical JSON of the day&apos;s snapshot rows
+          (recursively key-sorted, rows ordered by id) and compare with the tx calldata. Full history:{' '}
+          <Link href="/api/proof-of-index/v1?history=30" className="text-[#39ff14]/70 hover:text-[#39ff14] font-mono">/api/proof-of-index/v1</Link>
+        </p>
       </section>
 
       {/* Ghost Index ingestion coverage */}

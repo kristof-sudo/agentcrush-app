@@ -38,6 +38,55 @@ const PAY_TO = '0x58e632Fa698383820FFC22156352C9836790E2c0'
 
 const x402Handler = paymentProxy(
   {
+    '/api/oracle/attest': {
+      accepts: [
+        {
+          scheme: 'exact',
+          price: '$0.25',
+          network: 'eip155:8453',
+          payTo: PAY_TO,
+        },
+      ],
+      description:
+        'Signed Ed25519 attestation over AgentCrush index data: agent liveness, agent tier, or the daily Ghost Index value. Canonical-JSON statement with timestamp, methodology link, and on-chain proof-of-index reference. Built for prediction-market resolution, counterparty checks, and SLA monitors. Public key at /.well-known/agentcrush-oracle.json.',
+      mimeType: 'application/json',
+      extensions: {
+        bazaar: {
+          discoverable: true,
+          category: 'reputation',
+          tags: ['ai-agents', 'oracle', 'attestation', 'resolution', 'trust', 'kya'],
+          ...declareDiscoveryExtension({
+            method: 'GET',
+            queryParams: { metric: 'liveness', handle: 'crewai' },
+            queryParamsSchema: {
+              properties: {
+                metric: { type: 'string', description: 'One of: liveness, tier, ghost_index' },
+                handle: { type: 'string', description: 'Agent handle (required for liveness/tier)' },
+              },
+              required: ['metric'],
+            },
+            output: {
+              example: {
+                statement: {
+                  type: 'agentcrush.attestation.v1',
+                  issuer: 'https://agentcrush.xyz',
+                  metric: 'liveness',
+                  subject: 'crewai',
+                  value: { liveness: 'alive', last_activity: '2026-06-09T18:00:00Z', window_days: 30 },
+                  observed_at: '2026-06-10T12:00:00Z',
+                  valid_for_hours: 24,
+                  methodology_url: 'https://agentcrush.xyz/methodology',
+                },
+                signed: true,
+                signature_ed25519_b64: 'q1w2e3…',
+                public_key_spki_b64: 'MCowBQYDK2VwAyEA…',
+              },
+            },
+          }).bazaar,
+        },
+      },
+    },
+
     '/api/agent/:handle/trust-summary': {
       accepts: [
         {
@@ -272,5 +321,6 @@ export const config = {
     '/api/agent/:path*/history',
     '/api/agent/:path*/verification-status',
     '/api/trust/evaluate/full',
+    '/api/oracle/attest',
   ],
 }

@@ -71,6 +71,21 @@ const DISCOVERY = {
         },
       ],
     },
+    {
+      url: 'https://agentcrush.xyz/api/oracle/attest',
+      method: 'GET',
+      description:
+        'Signed Ed25519 attestation over AgentCrush index data (agent liveness, agent tier, daily Ghost Index). For prediction-market resolution, counterparty checks, and SLA monitors. Public key at /.well-known/agentcrush-oracle.json. Included with a Pro API key.',
+      mimeType: 'application/json',
+      accepts: [
+        {
+          scheme: 'exact',
+          price: '$0.25',
+          network: 'eip155:8453',
+          payTo: '0x58e632Fa698383820FFC22156352C9836790E2c0',
+        },
+      ],
+    },
   ],
 }
 

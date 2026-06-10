@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAnon } from '@/lib/supabase'
+import IndexFamilyStrip from '@/components/IndexFamilyStrip'
 
 export const dynamic = 'force-dynamic'
 
@@ -145,6 +146,8 @@ export default async function AgentEconomyIndexPage() {
           and labels evidence by source and collection status.
         </p>
       </div>
+
+      <IndexFamilyStrip current="economy" />
 
       {/* Metrics grid */}
       <section className="mb-12">

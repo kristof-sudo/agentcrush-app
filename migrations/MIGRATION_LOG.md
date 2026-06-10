@@ -9,6 +9,8 @@ Older historical DB changes existed before this process was formalized and may n
 ## Entries
 
 ### 2026-06-10
+- `migrations/20260610_2200_proof_of_index.sql` — B15 Proof-of-Index. Creates `proof_of_index` table (snapshot_date PK, digest_sha256, record_count, chain, tx_hash, posted_at, status pending/posted/failed). RLS: public read (digests are meant to be verified by anyone), service-role write. Written by `runtime/proof-of-index/proof-of-index-worker.mjs` (daily 00:15 UTC timer), read by `/api/proof-of-index/v1`, `/methodology#proof-of-index`, and oracle attestations. Code degrades gracefully until applied.
+  **STATUS: PENDING APPLY by Kris.**
 - `migrations/20260610_1300_api_keys.sql` — Pro API keys for the $29/mo AgentCrush Pro subscription. Creates `api_keys` table (key_hash unique, key_prefix, key_once one-time plaintext, email, plan, status active/past_due/revoked, Stripe customer/subscription/checkout-session ids, timestamps) + indexes on session and subscription ids. RLS enabled with no policies — service-role only. Keys are issued by the Stripe webhook on `checkout.session.completed` (metadata.product=pro_api), retrieved once via `/api/keys/by-session`, validated in `src/proxy.js` (skips x402 gate) and `/api/agents/bulk` (500-handle cap). Until applied, Pro checkout works but key issuance fails (webhook 500s and Stripe retries — apply before first sale).
   **STATUS: PENDING APPLY by Kris.**
 

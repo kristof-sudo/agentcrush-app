@@ -1,0 +1,16 @@
+[Unit]
+Description=AgentCrush Proof-of-Index — daily snapshot digest notarized on Base
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/proof-of-index
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/proof-of-index/proof-of-index-worker.mjs
+StandardOutput=append:/var/log/agentcrush/proof-of-index.log
+StandardError=append:/var/log/agentcrush/proof-of-index.log
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
