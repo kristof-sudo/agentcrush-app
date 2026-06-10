@@ -125,6 +125,11 @@ export default async function GhostIndexPage() {
   const sentiment = score != null ? sentimentLabel(score) : null
   const categories = current?.category_breakdown ?? {}
 
+  // 7-day delta from history (needs 8+ daily snapshots)
+  const delta7d = (score != null && history.length >= 8)
+    ? Number((score - Number(history[history.length - 8].liveness_score)).toFixed(1))
+    : null
+
   // Sparkline: normalize to 0-100 for SVG height
   const maxScore = history.length ? Math.max(...history.map(h => Number(h.liveness_score)), 30) : 30
   const sparkPoints = history.map((h, i) => {
@@ -173,6 +178,15 @@ export default async function GhostIndexPage() {
               </div>
               <p className="text-lg font-semibold mb-1" style={{ color: sentiment?.color }}>
                 {sentiment?.label}
+                {delta7d != null && delta7d !== 0 && (
+                  <span className={`ml-3 align-middle text-xs font-mono font-bold rounded px-2 py-0.5 border ${
+                    delta7d > 0
+                      ? 'text-emerald-300 border-emerald-400/30 bg-emerald-400/10'
+                      : 'text-red-300 border-red-400/30 bg-red-400/10'
+                  }`}>
+                    {delta7d > 0 ? '▲' : '▼'} {delta7d > 0 ? '+' : ''}{delta7d} pp vs 7d ago
+                  </span>
+                )}
               </p>
               <p className="text-sm text-white/45">
                 {aliveAgents.toLocaleString()} of {totalAgents.toLocaleString()} indexed agents show signs of life
@@ -204,6 +218,31 @@ export default async function GhostIndexPage() {
             </div>
           )}
         </div>
+
+        {/* ── How to read this number ── */}
+        <section className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-5 py-4 mb-6">
+          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-3">Why so low?</h2>
+          <div className="space-y-3 text-sm text-white/50 leading-relaxed">
+            <p>
+              <span className="text-white/80 font-semibold">A low number is the finding, not a flaw.</span>{' '}
+              The agent economy is young: projects announce far faster than they ship and keep running.
+              Most indexed agents are announcements, hackathon prototypes, or repos that went quiet.
+              The Ghost Index measures that gap — every day, against the same bar.
+            </p>
+            <p>
+              <span className="text-white/80 font-semibold">It&apos;s the macro gauge of agent-economy maturity.</span>{' '}
+              As agents start earning revenue and running continuously, liveness rises. The day this
+              number crosses 50%, the agent economy will have actually arrived. Until then, it tells
+              you exactly how early you are.
+            </p>
+            <p>
+              <span className="text-white/80 font-semibold">Ghosts are why the index matters.</span>{' '}
+              Indexing everything — including the dead — is what makes the {aliveAgents.toLocaleString()} alive
+              agents meaningful, and what lets us show deaths and resurrections over time instead of
+              a flattering snapshot.
+            </p>
+          </div>
+        </section>
 
         {/* ── Stats row ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
