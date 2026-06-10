@@ -32,6 +32,7 @@ export default function Header() {
             {[
               { href: '/rankings', label: 'Rankings' },
               { href: '/ghost-index', label: 'Ghost Index' },
+              { href: '/agent-economy-index', label: 'Economy' },
               { href: '/new', label: 'New' },
               { href: '/developers', label: 'Developers' },
               { href: '/pricing', label: 'Pricing' },

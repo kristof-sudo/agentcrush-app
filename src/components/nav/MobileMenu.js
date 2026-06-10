@@ -7,6 +7,7 @@ import SearchBox from '@/components/nav/SearchBox'
 const NAV_LINKS = [
   { href: '/rankings', label: 'Rankings' },
   { href: '/ghost-index', label: 'Ghost Index' },
+  { href: '/agent-economy-index', label: 'Economy' },
   { href: '/new', label: 'New Agents' },
   { href: '/developers', label: 'Developers' },
   { href: '/pricing', label: 'Pricing' },
