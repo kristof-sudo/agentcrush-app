@@ -7,7 +7,7 @@ const POSTS = [
   {
     slug: 'agent-payments-stack-live',
     category: 'Findings',
-    image: '/api/og?title=Agent%20Payments%20Stack%2C%20Live&kicker=BLOG&subtitle=38%20projects%2C%206%20layers%2C%20tracked%20live',
+    image: '/og-agent-payments-stack.png',
     imageAlt: 'The Agent Payments Stack, Live — AgentCrush',
     title: 'The Agent Payments Stack, Live',
     date: 'May 26, 2026',
@@ -73,21 +73,30 @@ export default function BlogIndexPage() {
         </p>
       </div>
 
-      {/* Weekly Digest window */}
+      {/* Weekly Digest — featured */}
       <Link
         href="/weekly"
-        className="group block rounded-lg border border-[#00d4ff]/20 bg-[#00d4ff]/[0.04] px-5 py-4 mb-8 hover:border-[#00d4ff]/40 hover:bg-[#00d4ff]/[0.07] transition-colors"
+        className="group relative block rounded-lg border border-[#00d4ff]/30 bg-[#00d4ff]/[0.05] px-5 py-6 mb-8 hover:border-[#00d4ff]/50 hover:bg-[#00d4ff]/[0.08] transition-colors overflow-hidden"
       >
+        <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[#00d4ff]/50" />
+        <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[#00d4ff]/50" />
+        <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[#00d4ff]/50" />
+        <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[#00d4ff]/50" />
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#00d4ff]/80 mb-1">
-              Weekly Digest
+          <div className="min-w-0">
+            <p className="text-xs font-mono font-bold uppercase tracking-widest text-[#00d4ff] mb-2">
+              ◆ Weekly Digest
             </p>
-            <p className="text-sm text-white/60 leading-relaxed">
-              The live index distilled every week — ranking standings, what shipped, protocol signals.
+            <p className="text-lg font-bold text-white leading-snug mb-1.5">
+              The week in the agent economy
+            </p>
+            <p className="text-sm text-white/55 leading-relaxed">
+              Ranking standings, what shipped, protocol signals — the live index distilled every Sunday. The fastest way to stay current.
             </p>
           </div>
-          <span className="text-[#00d4ff]/70 group-hover:text-[#00d4ff] transition-colors text-lg shrink-0">→</span>
+          <span className="shrink-0 rounded border border-[#00d4ff]/40 bg-[#00d4ff]/10 px-3 py-1.5 font-mono text-xs font-bold text-[#00d4ff] group-hover:bg-[#00d4ff]/20 transition-colors">
+            Latest issue →
+          </span>
         </div>
       </Link>
 
