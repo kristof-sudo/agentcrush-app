@@ -28,6 +28,7 @@ const X402_ENDPOINTS = [
   { path: '/api/agent/{handle}/trust-summary', price: '$0.02', what: 'Trust state, rank, multi-signal score' },
   { path: '/api/agent/{handle}/history', price: '$0.02', what: 'Daily rank + score history' },
   { path: '/api/trust/evaluate/full', price: '$0.10', what: 'Full-depth eval with raw signal breakdown' },
+  { path: '/api/oracle/attest', price: '$0.25', what: 'Signed attestation — liveness, tier, Ghost Index' },
 ]
 
 const FREE_FEATURES = [
