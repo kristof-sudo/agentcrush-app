@@ -1,0 +1,18 @@
+[Unit]
+Description=Ajsa auto-like worker — fires likes from daily brief section 7
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStartPre=/bin/bash -lc "cd /opt/agentcrush-brain && git pull --rebase --quiet origin main 2>/dev/null || true"
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/ajsa/auto-like-worker.mjs
+StandardOutput=append:/var/log/agentcrush/auto-like.log
+StandardError=append:/var/log/agentcrush/auto-like.log
+SuccessExitStatus=0 1
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

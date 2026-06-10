@@ -1,0 +1,10 @@
+[Unit]
+Description=Ajsa auto-like — daily 03:35 UTC (5 min after morning brief)
+
+[Timer]
+OnCalendar=*-*-* 03:35:00 UTC
+Persistent=true
+Unit=agentcrush-auto-like.service
+
+[Install]
+WantedBy=timers.target
