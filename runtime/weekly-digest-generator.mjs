@@ -30,6 +30,7 @@ import { execSync } from 'node:child_process'
 
 const args = process.argv.slice(2)
 const isDryRun = args.includes('--dry-run')
+const isForced = args.includes('--force')
 const explicitWeek = (() => {
   const i = args.indexOf('--week')
   return i !== -1 ? args[i + 1] : null
@@ -286,6 +287,19 @@ async function main() {
   const weekId = formatWeekId(parsed.year, parsed.week)
 
   console.log(`[weekly-digest] Week: ${weekId}  Mode: ${isDryRun ? 'DRY' : 'WRITE'}`)
+
+  // Publish gate: a digest goes live only once its week is over (Sunday has
+  // started, UTC). Mid-week debug runs upsert nothing unless --force is given.
+  // Added after the 2026-06-10 incident: a service debug run published W24 on
+  // its Wednesday. Use --dry-run for testing, --force for a deliberate early publish.
+  const weekDates = isoWeekDates(parsed.year, parsed.week)
+  const sundayUTC = weekDates[6]
+  const todayUTC = new Date().toISOString().slice(0, 10)
+  if (!isDryRun && !isForced && todayUTC < sundayUTC) {
+    console.log(`[weekly-digest] SKIP: week ${weekId} ends ${sundayUTC}; today is ${todayUTC}. ` +
+      `Refusing to publish mid-week. Use --dry-run to preview or --force to override.`)
+    process.exit(0)
+  }
 
   const briefs = await gatherBriefs(parsed.year, parsed.week)
   console.log(`[weekly-digest] Found ${briefs.length} briefs.`)
