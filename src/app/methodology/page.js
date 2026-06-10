@@ -6,21 +6,21 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: 'Methodology · AgentCrush',
   description:
-    'How AgentCrush ranks AI agents across 4 category rankings: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, and limitations.',
+    'How AgentCrush ranks AI agents across 4 category rankings: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, formulas, and scope notes.',
   alternates: { canonical: 'https://agentcrush.xyz/methodology' },
   openGraph: {
     title: 'AgentCrush Methodology',
     description: 'Per-category scoring methodologies for the agent economy. Transparent signals, weights, and evidence-ready rules.',
     url: 'https://agentcrush.xyz/methodology',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/api/og?title=AgentCrush%20Methodology&kicker=METHODOLOGY&subtitle=Per-category%20scoring%20for%20the%20agent%20economy.%20Signals%2C%20weights%2C%20limitations.', width: 1200, height: 630, alt: 'AgentCrush Methodology' }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=AgentCrush%20Methodology&kicker=METHODOLOGY&subtitle=Per-category%20scoring%20for%20the%20agent%20economy.%20Signals%2C%20weights%2C%20formulas.', width: 1200, height: 630, alt: 'AgentCrush Methodology' }],
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AgentCrush Methodology',
     description: 'Per-category scoring methodologies for the agent economy.',
-    images: ['https://agentcrush.xyz/api/og?title=AgentCrush%20Methodology&kicker=METHODOLOGY&subtitle=Per-category%20scoring%20for%20the%20agent%20economy.%20Signals%2C%20weights%2C%20limitations.'],
+    images: ['https://agentcrush.xyz/api/og?title=AgentCrush%20Methodology&kicker=METHODOLOGY&subtitle=Per-category%20scoring%20for%20the%20agent%20economy.%20Signals%2C%20weights%2C%20formulas.'],
   },
 }
 
@@ -44,9 +44,9 @@ const METHODOLOGY = [
     ],
     rule: '3 of 5 signals AND ≥1 capability signal (derivatives, LMArena, citations, or deployment).',
     limitations: [
-      'Currently 5 seeded model families (Qwen, Gemini, DeepSeek, Llama, Hermes). View covers all model_family agents; seed set is curated.',
-      'Citation backfill depends on Semantic Scholar API; some papers may have 0 cites due to S2 indexing delay.',
-      'Deployment signal is volume-based — high counts can indicate broad model adoption rather than specific deployment of one variant.',
+      'Covers the big-10 model families (OpenAI, Claude, Gemini, Llama, Qwen, DeepSeek, Mistral, Grok, Cohere, Hermes). New families enter the view as soon as they leave public signals.',
+      'Paper citations follow Semantic Scholar indexing — recently published papers can take weeks to register.',
+      'Deployment counts measure family-level adoption breadth, not deployment of one specific variant. Read them as reach, not precision.',
     ],
     changelog: [
       { version: 'v1.4-with-deployment', date: 'May 2026', summary: 'Added deployment signal (10%) sourcing 6 agent-economy tables. HuggingFace 35% → 30%, LMArena 30% → 25%.' },
@@ -74,9 +74,9 @@ const METHODOLOGY = [
     ],
     rule: '3 of 6 signals AND ≥1 economic signal (mc, liquidity, holders, or TVL > 0).',
     limitations: [
-      'Cross-protocol presence signal tracked but currently unweighted — agent economy hasn\'t penetrated cross-protocol descriptions enough yet.',
-      'Social signal in v1.1 is binary; aixbt is the only socially-flagged agent.',
-      'Currently covers Virtuals Protocol agents only (16 promoted). Other tokenized ecosystems not yet integrated.',
+      'Coverage today: Virtuals Protocol (16 evidence-ranked). Additional tokenized ecosystems are on the integration roadmap.',
+      'Social signal is a curated flag in v1.1; v1.2 integrates X follower volume + Farcaster engagement.',
+      'Cross-protocol presence is tracked but unweighted until the signal has enough ecosystem coverage to be meaningful.',
     ],
     changelog: [
       { version: 'v1.1-tokenized-tvl', date: 'May 2026', summary: 'Added TVL signal (15%). Liquidity + Volume weight 25% → 20%. Agents with capital locked beyond market cap gained.' },
@@ -101,9 +101,9 @@ const METHODOLOGY = [
     ],
     rule: '3 of 6 signals AND ≥1 adoption signal (stars > 0, interactions > 0, or forks > 0).',
     limitations: [
-      'Currently sources from A2A (28 agents) + Agentverse (0 active in current scrape).',
-      'v1.2 will add ERC-8004 registry (29K agents) and Bazaar x402 endpoints (46K) as additional service surfaces.',
-      'Cross-protocol presence tracked in cross_protocol_presence but unweighted in v1.1 composite.',
+      'Sources today: A2A protocol crawl (28 agents). Agentverse ingestion is wired and awaiting fresh crawl data.',
+      'Roadmap v1.2: ERC-8004 registry (29K agents) and Bazaar x402 endpoints (46K) join as additional service surfaces.',
+      'Cross-protocol presence is tracked but unweighted in the v1.1 composite.',
     ],
     changelog: [
       { version: 'v1.1-service-forks', date: 'May 2026', summary: 'Added Forks signal (15%). Measures active engagement vs passive starring. Adoption signal recalibrated.' },
@@ -129,8 +129,8 @@ const METHODOLOGY = [
     ],
     rule: 'Multi-signal coverage threshold OR top-100 ranked OR single signal ≥ 90 with ≥ 2 corroborating signals > 50.',
     limitations: [
-      'Methodology weights are computed dynamically per agent (active_weight_total) rather than fixed.',
-      'Universal ranking includes the full indexed set; evidence_ranked subset is the public-rank list.',
+      'Weights are computed per agent from available signal coverage (active_weight_total) rather than fixed percentages — agents are scored on what can actually be measured about them.',
+      'The public ranking lists the evidence-ranked subset; the universal ranking scores the full index behind it.',
     ],
     changelog: [
       { version: 'v2.c-public', date: 'May 2026', summary: 'Public-rank normalization via active_weight_total. evidence_ready_for_public_rank gate at 0.40 weight coverage.' },
@@ -156,10 +156,10 @@ const METHODOLOGY = [
     ],
     rule: 'All tracked projects are displayed. No evidence-ready gate — layer coverage is the qualification.',
     limitations: [
-      'This is a project taxonomy, not an agent ranking. Projects are companies, protocols, and standards.',
-      'Layer coverage is determined by documented public evidence as of the source date; self-reporting is not accepted.',
-      'Scores within this category are not comparable to scores in model_family, tokenized, service, or developer categories.',
-      'Source: Keyrock "Who Pays the Agent?" May 2026, extended by AgentCrush. Maximum score is 21 (all 6 layers).',
+      'This is a project taxonomy, not an agent ranking — entries are companies, protocols, and standards.',
+      'Layer coverage is determined by documented public evidence only; self-reporting is not accepted.',
+      'Scores here are not comparable across categories — the maximum is 21 (all 6 layers covered).',
+      'Source: Keyrock "Who Pays the Agent?" (May 2026), extended and kept live by AgentCrush.',
     ],
     changelog: [
       { version: 'v1.0-aps', date: 'May 2026', summary: 'Initial Agent Payments Stack methodology. 6-layer map, 38 projects. Layer weights: L4 Governance highest (5) as hardest to replicate.' },
@@ -213,7 +213,7 @@ export default async function MethodologyHubPage() {
     '@type': 'Dataset',
     '@id': 'https://agentcrush.xyz/methodology',
     name: 'AgentCrush Evidence-Ranked Index',
-    description: 'Multi-signal agent reputation methodologies across 4 categories: model families (v1.4), tokenized agents (v1.1), service agents (v1.1), developer agents (v2.c). Every weight, formula, evidence-ready rule, and known limitation is published.',
+    description: 'Multi-signal agent reputation methodologies across 4 categories: model families (v1.4), tokenized agents (v1.1), service agents (v1.1), developer agents (v2.c). Every weight, formula, evidence-ready rule, and scope note is published.',
     url: 'https://agentcrush.xyz/methodology',
     keywords: ['AI agents', 'agent ranking', 'agent economy', 'multi-signal scoring', 'evidence-ranked', 'methodology', 'model families', 'tokenized agents', 'service agents'],
     creator: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
@@ -271,7 +271,7 @@ export default async function MethodologyHubPage() {
             <span className="text-white/90 font-semibold">Per-category methodology.</span> A model family leaves HuggingFace downloads and LMArena scores; a tokenized agent leaves on-chain liquidity and holder distribution; a service agent leaves GitHub forks and Agentverse interactions. Running one universal scoring function across all of them would average away the truth.
           </p>
           <p>
-            <span className="text-white/90 font-semibold">Methodology travels with data.</span> Every category page publishes its full signal set, weights, formulas, evidence-ready rule, and known limitations. The same methodology is exposed via our <Link href="/api/mcp/v1" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">MCP server</Link> so LLMs querying AgentCrush can correctly explain HOW a ranking was computed — not just what it is.
+            <span className="text-white/90 font-semibold">Methodology travels with data.</span> Every category page publishes its full signal set, weights, formulas, evidence-ready rule, and scope notes. The same methodology is exposed via our <Link href="/api/mcp/v1" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">MCP server</Link> so LLMs querying AgentCrush can correctly explain HOW a ranking was computed — not just what it is.
           </p>
           <p>
             <span className="text-white/90 font-semibold">Honest gaps.</span> Where a signal isn&apos;t yet populated for an agent (no LMArena coverage, no citations indexed, etc.), the methodology returns NULL — not 0. That distinction matters: NULL means &quot;unmeasured,&quot; 0 means &quot;measured at zero.&quot; The composite weights unmeasured signals as missing rather than failing.
@@ -394,8 +394,8 @@ export default async function MethodologyHubPage() {
             <p className="text-xs text-white/55 leading-relaxed">{m.rule}</p>
           </div>
 
-          <div className="mb-3 rounded-lg border border-amber-400/15 bg-amber-400/[0.025] px-4 py-3">
-            <p className="text-xs font-semibold text-amber-300/80 mb-2">Known limitations</p>
+          <div className="mb-3 rounded-lg border border-white/[0.07] bg-white/[0.015] px-4 py-3">
+            <p className="text-xs font-semibold text-white/50 mb-2">Scope &amp; coverage <span className="font-normal text-white/30">— what this version measures, and what&apos;s next</span></p>
             <ul className="space-y-1.5 text-xs text-white/55 leading-relaxed list-disc list-inside">
               {m.limitations.map((l, i) => <li key={i}>{l}</li>)}
             </ul>
