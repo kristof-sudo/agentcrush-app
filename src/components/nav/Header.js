@@ -34,6 +34,7 @@ export default function Header() {
               { href: '/ghost-index', label: 'Ghost Index' },
               { href: '/new', label: 'New' },
               { href: '/developers', label: 'Developers' },
+              { href: '/pricing', label: 'Pricing' },
               { href: '/submit', label: 'Submit' },
               { href: '/blog', label: 'Blog' },
             ].map(({ href, label }) => (
