@@ -50,12 +50,12 @@ export async function POST(req) {
         break
       }
       case 'invoice.payment_failed': {
-        const subId = event.data.object.subscription
+        const subId = invoiceSubscriptionId(event.data.object)
         if (subId) await setKeyStatus(subId, 'past_due')
         break
       }
       case 'invoice.paid': {
-        const subId = event.data.object.subscription
+        const subId = invoiceSubscriptionId(event.data.object)
         if (subId) await setKeyStatus(subId, 'active')
         break
       }
@@ -68,6 +68,13 @@ export async function POST(req) {
   }
 
   return NextResponse.json({ received: true })
+}
+
+// API versions ≥ 2025-03-31.basil moved invoice.subscription to
+// invoice.parent.subscription_details.subscription — support both shapes.
+function invoiceSubscriptionId(invoice) {
+  const sub = invoice.subscription ?? invoice.parent?.subscription_details?.subscription
+  return typeof sub === 'string' ? sub : sub?.id ?? null
 }
 
 async function issueProKey(session) {
