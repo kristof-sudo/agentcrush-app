@@ -1,0 +1,10 @@
+[Unit]
+Description=AgentCrush Proof-of-Index timer — daily 00:15 UTC (after 23:50 snapshot run)
+
+[Timer]
+OnCalendar=*-*-* 00:15:00 UTC
+Persistent=true
+Unit=agentcrush-proof-of-index.service
+
+[Install]
+WantedBy=timers.target

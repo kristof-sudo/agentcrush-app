@@ -9,6 +9,7 @@
 
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
+import IndexFamilyStrip from '@/components/IndexFamilyStrip'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -166,6 +167,8 @@ export default async function GhostIndexPage() {
         <p className="text-sm text-white/45 mb-8">
           What % of indexed AI agents are actually alive?
         </p>
+
+        <IndexFamilyStrip current="ghost" />
 
         {/* ── Main score card ── */}
         <div className={`rounded-2xl border ${sentiment?.border ?? 'border-white/[0.07]'} ${sentiment?.bg ?? 'bg-white/[0.02]'} px-6 py-8 mb-6 text-center`}>
