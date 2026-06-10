@@ -230,8 +230,9 @@ function socialRelTime(iso) {
 // ── MCP tools list ─────────────────────────────────────────────────────────
 
 const MCP_TOOLS = [
-  'search_agents', 'get_agent_details', 'get_agent_history',
-  'compare_agents', 'list_categories', 'get_category_ranking', 'get_methodology',
+  'search_agents', 'get_agent_details', 'get_agent_trust', 'get_agent_history',
+  'get_agent_changes', 'compare_agents', 'list_categories', 'get_category_ranking',
+  'get_top_movers', 'get_protocol_adoption', 'get_ecosystem_summary', 'get_methodology',
 ]
 
 // ── Metadata (updated in Phase 1) ─────────────────────────────────────────
@@ -397,6 +398,18 @@ export default async function Home() {
     supabase.from('agent_daily_snapshots').select('id', { count: 'exact', head: true }),
   ])
 
+  // Ghost Index headline (latest daily snapshot; null-safe if table absent)
+  let ghost = null
+  try {
+    const { data } = await supabase
+      .from('ghost_index_daily')
+      .select('liveness_score, alive_agents, total_agents')
+      .order('snapshot_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    ghost = data
+  } catch { /* table not present — chip simply hides */ }
+
   const [erModelFamilies, erTokenized, erService] = await Promise.all([
     supabase.from('agent_score_model_family_v1').select('agent_id', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true).then(({ count, error }) => error ? 0 : (count || 0)),
     supabase.from('agent_score_tokenized_v1').select('agent_id', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true).then(({ count, error }) => error ? 0 : (count || 0)),
@@ -479,13 +492,34 @@ export default async function Home() {
                 <span style={{ color: '#e91e80' }}>AgentCrush</span> is the public record of AI agents.
               </h1>
 
-              <p className="font-mono text-sm text-white/50 mb-6 max-w-2xl leading-relaxed">
-                Independent. Cross-protocol. Open methodology. Machine-callable from your code or your agent.{' '}
-                <span className="text-white/35">Six things we do — in full, in public:</span>
+              <p className="font-mono text-sm text-white/50 mb-5 max-w-2xl leading-relaxed">
+                Independent. Cross-protocol. Open methodology. Machine-callable from your code or your agent.
               </p>
 
-              {/* (a) Pipeline strip */}
-              <div className="mb-5 overflow-x-auto pb-1">
+              {/* (a) Live stats strip — the index at a glance */}
+              <div className="mb-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="rounded border border-white/[0.08] bg-white/[0.02] px-3 py-2.5">
+                  <div className="font-mono text-lg font-bold text-white tabular-nums">{(agentCount ?? 0).toLocaleString()}</div>
+                  <div className="font-mono text-[9px] uppercase tracking-wider text-white/30">agents indexed</div>
+                </div>
+                <div className="rounded border border-[rgba(57,255,20,0.2)] bg-[rgba(57,255,20,0.03)] px-3 py-2.5">
+                  <div className="font-mono text-lg font-bold text-[#39ff14] tabular-nums">{evidenceRankedCount}</div>
+                  <div className="font-mono text-[9px] uppercase tracking-wider text-white/30">evidence-ranked</div>
+                </div>
+                {ghost?.liveness_score != null && (
+                  <Link href="/ghost-index" className="rounded border border-[rgba(249,115,22,0.25)] bg-[rgba(249,115,22,0.04)] px-3 py-2.5 hover:brightness-125 transition-all">
+                    <div className="font-mono text-lg font-bold text-[#f97316] tabular-nums">{Number(ghost.liveness_score)}% <span className="text-[10px] font-normal text-white/35">alive</span></div>
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-white/30">Ghost Index →</div>
+                  </Link>
+                )}
+                <div className="rounded border border-white/[0.08] bg-white/[0.02] px-3 py-2.5">
+                  <div className="font-mono text-lg font-bold text-white tabular-nums">{snapshotCount ? snapshotCount.toLocaleString() : '—'}</div>
+                  <div className="font-mono text-[9px] uppercase tracking-wider text-white/30">daily snapshots</div>
+                </div>
+              </div>
+
+              {/* (b) Pipeline strip */}
+              <div className="overflow-x-auto pb-1">
                 <div className="flex items-stretch gap-0 min-w-max">
                   {VERBS.map((v, i) => (
                     <div key={v.n} className="flex items-stretch">
@@ -503,28 +537,34 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* (b) Six full-width capability rows */}
-              <div className="space-y-0 divide-y divide-white/[0.04] rounded-lg border border-white/[0.07] overflow-hidden">
-                {VERBS.map((v) => (
-                  <div key={v.n} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-0 hover:bg-white/[0.015] transition-colors">
-                    {/* Left: number + verb */}
-                    <div className="px-3 py-3 flex flex-col justify-center" style={{ borderRight: `1px solid ${v.color}22`, background: `${v.color}05` }}>
-                      <div className="font-mono text-[9px] text-white/20 mb-0.5">{v.n}</div>
-                      <div className="font-mono text-base sm:text-lg font-bold tracking-wider leading-none" style={{ color: v.color }}>{v.verb}</div>
-                    </div>
-                    {/* Right: tagline, chips, note */}
-                    <div className="px-3 py-3 sm:py-2.5">
-                      <div className="font-mono text-xs font-semibold text-white/80 mb-1.5">{v.tagline}</div>
-                      <div className="flex flex-wrap gap-1 mb-1.5">
-                        {v.chips.map(c => (
-                          <span key={c} className="font-mono text-[9px] text-white/45 rounded px-1.5 py-0.5 border border-white/[0.08] bg-white/[0.025]">{c}</span>
-                        ))}
+              {/* (c) Six full-width capability rows — collapsed by default */}
+              <details className="group mt-3">
+                <summary className="cursor-pointer list-none select-none font-mono text-[11px] text-white/40 hover:text-white/70 transition-colors">
+                  <span className="group-open:hidden">▸ What each step means — the full pipeline, in public</span>
+                  <span className="hidden group-open:inline">▾ Collapse the pipeline detail</span>
+                </summary>
+                <div className="mt-3 space-y-0 divide-y divide-white/[0.04] rounded-lg border border-white/[0.07] overflow-hidden">
+                  {VERBS.map((v) => (
+                    <div key={v.n} className="grid grid-cols-[90px_1fr] sm:grid-cols-[120px_1fr] gap-0 hover:bg-white/[0.015] transition-colors">
+                      {/* Left: number + verb */}
+                      <div className="px-3 py-3 flex flex-col justify-center" style={{ borderRight: `1px solid ${v.color}22`, background: `${v.color}05` }}>
+                        <div className="font-mono text-[9px] text-white/20 mb-0.5">{v.n}</div>
+                        <div className="font-mono text-base sm:text-lg font-bold tracking-wider leading-none" style={{ color: v.color }}>{v.verb}</div>
                       </div>
-                      <div className="font-mono text-[10px] text-white/30 italic">{v.note}</div>
+                      {/* Right: tagline, chips, note */}
+                      <div className="px-3 py-3 sm:py-2.5">
+                        <div className="font-mono text-xs font-semibold text-white/80 mb-1.5">{v.tagline}</div>
+                        <div className="flex flex-wrap gap-1 mb-1.5">
+                          {v.chips.map(c => (
+                            <span key={c} className="font-mono text-[9px] text-white/45 rounded px-1.5 py-0.5 border border-white/[0.08] bg-white/[0.025]">{c}</span>
+                          ))}
+                        </div>
+                        <div className="font-mono text-[10px] text-white/30 italic">{v.note}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </details>
             </div>
           </Container>
         </section>
@@ -740,12 +780,10 @@ export default async function Home() {
               {/* Free MCP */}
               <div className="rounded-lg border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.03)] p-4">
                 <div className="font-mono text-xs font-bold text-[#00d4ff] mb-0.5">Free MCP server</div>
-                <div className="font-mono text-[10px] text-white/35 mb-2">7 tools · POST /api/mcp/v1 · no auth · 60 req/min</div>
-                <div className="space-y-1">
+                <div className="font-mono text-[10px] text-white/35 mb-2">12 tools · POST /api/mcp/v1 · no auth · 60 req/min</div>
+                <div className="flex flex-wrap gap-1">
                   {MCP_TOOLS.map(t => (
-                    <div key={t} className="font-mono text-[10px] text-white/50 flex items-center gap-1.5">
-                      <span className="text-[#00d4ff]/60">·</span> {t}
-                    </div>
+                    <span key={t} className="font-mono text-[9px] text-white/50 rounded px-1.5 py-0.5 border border-[rgba(0,212,255,0.15)] bg-[rgba(0,212,255,0.04)]">{t}</span>
                   ))}
                 </div>
               </div>
@@ -759,6 +797,7 @@ export default async function Home() {
                     { path: '/api/agent/:handle/trust-summary', price: '$0.02' },
                     { path: '/api/agent/:handle/history',        price: '$0.02' },
                     { path: '/api/agent/:handle/verification-status', price: '$0.005' },
+                    { path: '/api/trust/evaluate/full',          price: '$0.10' },
                   ].map(ep => (
                     <div key={ep.path} className="flex items-start gap-2">
                       <span className="font-mono text-[9px] font-bold shrink-0 rounded px-1.5 py-0.5 border border-[rgba(240,165,0,0.3)] bg-[rgba(240,165,0,0.1)]" style={{ color: '#f0a500' }}>{ep.price}</span>
@@ -766,6 +805,9 @@ export default async function Home() {
                     </div>
                   ))}
                 </div>
+                <Link href="/pricing" className="mt-3 block font-mono text-[10px] text-white/40 hover:text-white/70 transition-colors">
+                  Or skip per-call payments: <span className="font-bold text-[#f0a500]">Pro API $29/mo →</span>
+                </Link>
               </div>
 
               {/* Embed badge */}
