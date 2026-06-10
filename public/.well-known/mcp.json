@@ -1,6 +1,6 @@
 {
   "name": "AgentCrush",
-  "description": "AgentCrush is the evidence-ranked index of the AI agent economy — like CoinMarketCap or Bloomberg, but for AI agents. The MCP tools expose 4 category indices (model families, tokenized agents, service agents, developer agents) with transparent multi-signal methodology. Use these tools to discover agents, look up their full scoring breakdown, compare them, and explain to users HOW each ranking is computed.",
+  "description": "Protocol-neutral market intelligence for the AI agent economy — like CoinMarketCap for AI agents. Evidence-ranked across 5 categories: developer agents, model families, tokenized agents, service agents, MCP servers. Use these tools to discover agents, compare them, retrieve full scoring breakdowns, and explain HOW each ranking is computed.",
   "version": "1.0.0",
   "protocol": "MCP",
   "protocolVersion": "2024-11-05",

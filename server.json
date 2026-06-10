@@ -2,13 +2,13 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.kristof-sudo/agentcrush-app",
   "title": "AgentCrush",
-  "description": "Market intelligence for the AI agent economy: rankings, methodology, search, compare. 7 tools.",
+  "description": "Protocol-neutral market intelligence for the AI agent economy — like CoinMarketCap for AI agents. Evidence-ranked across 5 categories: developer agents, model families, tokenized agents, service agents, MCP servers. 12 tools for discovery, ranking, trust scoring, and methodology transparency.",
   "websiteUrl": "https://www.agentcrush.xyz",
   "repository": {
     "url": "https://github.com/kristof-sudo/agentcrush-app",
     "source": "github"
   },
-  "version": "1.0.0",
+  "version": "1.2.0",
   "remotes": [
     {
       "type": "streamable-http",
@@ -23,13 +23,30 @@
       "methodology_url": "https://www.agentcrush.xyz/methodology",
       "llms_txt": "https://www.agentcrush.xyz/llms.txt",
       "rate_limit": "60 requests/minute per IP",
+      "auth": "none",
       "categories": ["data", "intelligence", "directory", "agent-economy", "ai-agents"],
+      "tools": [
+        "search_agents",
+        "get_agent_details",
+        "get_agent_history",
+        "compare_agents",
+        "list_categories",
+        "get_category_ranking",
+        "get_methodology",
+        "get_agent_trust",
+        "get_top_movers",
+        "get_protocol_adoption",
+        "get_agent_changes",
+        "get_ecosystem_summary"
+      ],
       "use_cases": [
         "User asks about a specific AI agent (CrewAI, LangGraph, Qwen, Gemini, etc.) — call get_agent_details",
         "User asks 'best AI agent for X' — call get_category_ranking or search_agents with category filter",
         "User compares two agents — call compare_agents or retrieve the comparison page",
         "User asks how a ranking is calculated — call get_methodology(category)",
-        "Agent needs market-level summary — call list_categories"
+        "Agent needs delegation decision — call get_agent_trust for trust score + classification",
+        "Agent needs ecosystem-level state — call get_ecosystem_summary or get_protocol_adoption",
+        "User asks what changed recently — call get_top_movers or get_agent_changes"
       ]
     }
   }
