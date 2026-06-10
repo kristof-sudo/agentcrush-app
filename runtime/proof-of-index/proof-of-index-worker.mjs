@@ -2,7 +2,8 @@
  * Proof-of-Index worker (B15)
  *
  * Nightly, after the snapshot run:
- *   1. Pull the latest day's rows from agent_daily_snapshots
+ *   1. Pull the latest day's rows from agent_snapshots (the live daily table;
+ *      agent_daily_snapshots went stale 2026-05-15)
  *   2. Canonicalize (sorted keys, sorted rows) → SHA-256 digest
  *   3. Upsert proof_of_index row (status pending)
  *   4. Post a 0-value self-transaction on Base with the digest as calldata
@@ -49,7 +50,7 @@ function canonicalize(value) {
 
 async function latestSnapshotDate() {
   const { data, error } = await sb
-    .from('agent_daily_snapshots')
+    .from('agent_snapshots')
     .select('snapshot_date')
     .order('snapshot_date', { ascending: false })
     .limit(1)
@@ -64,10 +65,10 @@ async function fetchDayRows(date) {
   const PAGE = 1000
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await sb
-      .from('agent_daily_snapshots')
+      .from('agent_snapshots')
       .select('*')
       .eq('snapshot_date', date)
-      .order('id', { ascending: true })
+      .order('agent_id', { ascending: true })
       .range(from, from + PAGE - 1)
     if (error) throw new Error(`snapshot rows query failed: ${error.message}`)
     rows.push(...(data || []))
