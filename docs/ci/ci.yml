@@ -1,3 +1,6 @@
+# NOTE: lives at docs/ci/ci.yml because the local GitHub token lacks the
+# workflow scope. Activate by moving to .github/workflows/ci.yml (GitHub web
+# UI "Add file", or after: gh auth refresh -h github.com -s workflow).
 name: CI
 
 on:
