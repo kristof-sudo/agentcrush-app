@@ -14,6 +14,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { trackHit } from '@/lib/telemetry'
 
 export const runtime = 'nodejs'
 
@@ -37,6 +38,7 @@ export async function OPTIONS() {
 }
 
 export async function GET(req) {
+  trackHit('/api/changes/v1', req, 'free_200')
   const { searchParams } = new URL(req.url)
   const days = Math.min(Math.max(parseInt(searchParams.get('days') || '1', 10) || 1, 1), 7)
   const since = new Date(Date.now() - days * 86400000).toISOString()

@@ -21,6 +21,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { findAgents } from '@/lib/agent-find'
+import { trackHit } from '@/lib/telemetry'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -533,9 +535,79 @@ const TOOLS = [
       },
     },
   },
+  {
+    name: 'find_agents',
+    title: 'Find Payable Counterparty Agents',
+    description:
+      'Counterparty discovery: "which agents can do X and are safe to pay?" Returns the top 3 ranked candidates with liveness (30-day Ghost Index rule), trust tier, verified payment rails (x402/MCP/ERC-8004), scores, and endpoints, plus the total match count. The full ranked list (up to 50) is at https://agentcrush.xyz/api/agents/find/full — $0.05 via x402 on Base, or free with an AgentCrush Pro key.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        q: { type: 'string', description: 'Capability keyword (required), e.g. "trading", "wallet risk", "code review".' },
+        category: { type: 'string', enum: VALID_CATEGORIES, description: 'Restrict to one AgentCrush category.' },
+        rails: { type: 'string', description: 'Payment rail filter, e.g. "x402".' },
+        alive: { type: 'boolean', description: 'true = only agents alive per the 30-day liveness rule.' },
+        min_tier: { type: 'string', enum: ['evidence_ranked'], description: 'Exclude indexed-only agents.' },
+      },
+      required: ['q'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string' },
+        filters: { type: 'object' },
+        total_matches: { type: 'integer' },
+        candidates: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              rank: { type: 'integer' },
+              handle: { type: 'string' },
+              name: { type: 'string' },
+              primary_category: { type: 'string' },
+              tier: { type: 'string' },
+              verified: { type: 'boolean' },
+              liveness: { type: 'string', enum: ['alive', 'ghost'] },
+              payment_rails: { type: 'array', items: { type: 'object' } },
+              scores: { type: 'object' },
+              profile_url: { type: 'string', format: 'uri' },
+              trust_eval_url: { type: 'string', format: 'uri' },
+            },
+          },
+        },
+        full_results: { type: 'object', description: 'Pointer to the paid full-list endpoint when more matches exist.' },
+      },
+    },
+  },
 ]
 
 // ── Tool implementations ──────────────────────────────────────────────────────
+
+async function tool_find_agents(args) {
+  const result = await findAgents({
+    q: args?.q,
+    category: args?.category && isValidCategory(args.category) ? args.category : undefined,
+    rails: typeof args?.rails === 'string' ? args.rails.slice(0, 40) : undefined,
+    alive: args?.alive === true,
+    minTier: args?.min_tier === 'evidence_ranked' ? 'evidence_ranked' : undefined,
+    limit: 3,
+  })
+  if (result.error) return result
+  return {
+    ...result,
+    full_results:
+      result.total_matches > result.candidates.length
+        ? {
+            url: 'https://agentcrush.xyz/api/agents/find/full',
+            price: '$0.05 via x402 (Base USDC), or free with an AgentCrush Pro key (X-API-Key header)',
+            returns: `up to 50 ranked candidates of ${result.total_matches} total matches`,
+            pro: 'https://agentcrush.xyz/pricing',
+          }
+        : null,
+  }
+}
 
 async function tool_search_agents(args) {
   const query = sanitizeSearch(args?.query)
@@ -1000,6 +1072,7 @@ async function dispatchTool(id, params, rl) {
       case 'get_protocol_adoption': result = await tool_get_protocol_adoption(); break
       case 'get_agent_changes':     result = await tool_get_agent_changes(args); break
       case 'get_ecosystem_summary': result = await tool_get_ecosystem_summary(); break
+      case 'find_agents':           result = await tool_find_agents(args); break
       default:                      return jsonError(id, -32601, `Unknown tool: ${name}`, rl)
     }
   } catch (e) {
@@ -1064,6 +1137,7 @@ export async function POST(request) {
     case 'tools/list':
       return jsonResult(id, { tools: TOOLS }, rl, CACHE_TTL['tools/list'])
     case 'tools/call':
+      trackHit(`/api/mcp/v1#${params?.name || 'unknown'}`, request, 'free_200')
       return dispatchTool(id, params, rl)
     // Standard MCP optional methods. We expose no resources / prompts —
     // returning empty arrays is the correct response (rather than "method

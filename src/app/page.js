@@ -832,7 +832,7 @@ export default async function Home() {
               {/* Free MCP */}
               <div className="rounded-lg border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.03)] p-4">
                 <div className="font-mono text-xs font-bold text-[#00d4ff] mb-0.5">Free MCP server</div>
-                <div className="font-mono text-[10px] text-white/35 mb-2">12 tools · POST /api/mcp/v1 · no auth · 60 req/min</div>
+                <div className="font-mono text-[10px] text-white/35 mb-2">13 tools · POST /api/mcp/v1 · no auth · 60 req/min</div>
                 <div className="flex flex-wrap gap-1">
                   {MCP_TOOLS.map(t => (
                     <span key={t} className="font-mono text-[9px] text-white/50 rounded px-1.5 py-0.5 border border-[rgba(0,212,255,0.15)] bg-[rgba(0,212,255,0.04)]">{t}</span>
