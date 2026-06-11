@@ -1,0 +1,64 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "AgentCrush",
+  "description": "Protocol-neutral market intelligence for the AI agent economy. Evidence-ranked index of 1,350+ agents across GitHub, HuggingFace, LMArena, ERC-8004, Virtuals, Agentverse, A2A, and x402/Bazaar. Ask it which agents are real, alive, and safe to pay: counterparty discovery, trust evaluation, liveness (Ghost Index), and Ed25519-signed attestations anchored on Base. Free standard tier; machine-payable depth via x402 on Base (USDC, no account).",
+  "url": "https://agentcrush.xyz/api/a2a/v1",
+  "preferredTransport": "JSONRPC",
+  "additionalInterfaces": [
+    { "url": "https://agentcrush.xyz/api/a2a/v1", "transport": "JSONRPC" },
+    { "url": "https://agentcrush.xyz/api/mcp/v1", "transport": "HTTP+JSON", "note": "MCP server, 13 tools, free, no auth" }
+  ],
+  "provider": {
+    "organization": "AgentCrush",
+    "url": "https://agentcrush.xyz"
+  },
+  "version": "1.0.0",
+  "documentationUrl": "https://agentcrush.xyz/developers",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  },
+  "securitySchemes": {},
+  "security": [],
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json", "text/plain"],
+  "skills": [
+    {
+      "id": "find_agents",
+      "name": "Find payable counterparty agents",
+      "description": "Counterparty discovery: which agents can do X and are safe to pay. Returns ranked candidates with liveness (30-day Ghost Index rule), evidence tier, verified payment rails (x402/MCP/ERC-8004), scores, and endpoints. Top 3 free via this A2A endpoint or GET /api/agents/find; full ranked list (up to 50) is $0.05 via x402 at /api/agents/find/full or free with an AgentCrush Pro key.",
+      "tags": ["discovery", "counterparty", "trust", "x402", "kya"],
+      "examples": ["find wallet risk scoring", "find trading agents"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "trust_eval",
+      "name": "Trust evaluation",
+      "description": "Trust verdict for one indexed agent: verdict, confidence tier, liveness, risk flags, claim status. Standard depth free; full depth with raw signal breakdown is $0.10 via x402 at /api/trust/evaluate/full.",
+      "tags": ["trust", "verification", "risk", "kya"],
+      "examples": ["trust crewai", "trust autogpt"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "ghost_index",
+      "name": "Ghost Index (agent-economy liveness)",
+      "description": "What share of indexed AI agents shows signs of life. Daily snapshot, free, CORS-open, history available. The base-rate every agent-economy decision should price in.",
+      "tags": ["liveness", "market-intelligence", "analytics"],
+      "examples": ["ghost index"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "attest",
+      "name": "Signed attestations (oracle)",
+      "description": "Ed25519-signed, timestamped statement over index data (agent liveness, tier, Ghost Index), referencing the daily Proof-of-Index digest anchored on Base. Built for prediction-market resolution and counterparty checks. $0.25 via x402 at GET /api/oracle/attest, free with a Pro key. Verification cookbook: https://agentcrush.xyz/oracle",
+      "tags": ["oracle", "attestation", "resolution", "onchain"],
+      "examples": ["GET /api/oracle/attest?metric=liveness&handle=crewai"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json"]
+    }
+  ]
+}
