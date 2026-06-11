@@ -29,6 +29,7 @@ export async function OPTIONS() {
 }
 
 export async function GET(req) {
+  trackHit('/api/trust/evaluate', req, 'free_200')
   const { searchParams } = new URL(req.url)
   const handle = searchParams.get('handle')
   if (!handle) {

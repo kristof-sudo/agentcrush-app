@@ -22,6 +22,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { findAgents } from '@/lib/agent-find'
+import { trackHit } from '@/lib/telemetry'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -1136,6 +1137,7 @@ export async function POST(request) {
     case 'tools/list':
       return jsonResult(id, { tools: TOOLS }, rl, CACHE_TTL['tools/list'])
     case 'tools/call':
+      trackHit(`/api/mcp/v1#${params?.name || 'unknown'}`, request, 'free_200')
       return dispatchTool(id, params, rl)
     // Standard MCP optional methods. We expose no resources / prompts —
     // returning empty arrays is the correct response (rather than "method

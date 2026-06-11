@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush telemetry export timer — 03:25 UTC daily (before the 03:30 morning brief)
+Documentation=B13 machine-traffic telemetry export
+
+[Timer]
+OnCalendar=*-*-* 03:25:00 UTC
+Persistent=true
+Unit=agentcrush-telemetry-export.service
+
+[Install]
+WantedBy=timers.target
