@@ -5,6 +5,7 @@ import { facilitator } from '@coinbase/x402'
 import { declareDiscoveryExtension } from '@x402/extensions/bazaar'
 import { NextResponse } from 'next/server'
 import { extractApiKey, validateApiKey } from './lib/apiKeys'
+import { trackHit } from './lib/telemetry'
 
 // ── Mission Control basic auth ────────────────────────────────────────────────
 // Migrated from deprecated src/middleware.js — logic unchanged.
@@ -368,10 +369,19 @@ export async function proxy(request) {
   const apiKey = extractApiKey(request)
   if (apiKey) {
     const { valid } = await validateApiKey(apiKey)
-    if (valid) return NextResponse.next()
+    if (valid) {
+      trackHit(pathname, request, 'pro_pass')
+      return NextResponse.next()
+    }
   }
 
-  return x402Handler(request)
+  const res = await x402Handler(request)
+  if (res?.status === 402) {
+    trackHit(pathname, request, 'gated_402')
+  } else if (request.headers.get('x-payment')) {
+    trackHit(pathname, request, 'paid_pass')
+  }
+  return res
 }
 
 export const config = {

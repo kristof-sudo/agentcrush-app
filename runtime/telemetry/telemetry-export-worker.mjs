@@ -1,0 +1,98 @@
+/**
+ * telemetry-export-worker.mjs — B13 daily machine-traffic export.
+ *
+ * Runs at 03:25 UTC daily (before the 03:30 morning brief, so the brief can
+ * include yesterday's machine-traffic line).
+ *
+ * 1. Reads yesterday's api_telemetry_daily rows from Supabase
+ * 2. Writes a daily JSON to the VPS brain clone:
+ *      /opt/agentcrush-brain/Fetchers/telemetry/output/telemetry-YYYY-MM-DD.json
+ *    (auto-sync picks it up like the other Fetchers outputs)
+ * 3. Sends a one-line Telegram summary to Kris
+ *
+ * The headline numbers — THE distribution KPI per the 2026-06-10 decision:
+ *   - total machine (agent-UA) calls
+ *   - 402s quoted vs paid passes vs pro passes  (the conversion funnel)
+ *
+ * Cost: 0 LLM calls. Pure DB read + file write.
+ */
+
+import { createClient } from '@supabase/supabase-js';
+import { writeFileSync, mkdirSync } from 'fs';
+import path from 'path';
+
+const SB_URL  = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SB_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+const TOKEN   = process.env.TELEGRAM_BOT_TOKEN;
+const CHAT_ID = String(process.env.TELEGRAM_CHAT_ID || '');
+const BRAIN_DIR = process.env.BRAIN_DIR || '/opt/agentcrush-brain';
+
+async function tg(text) {
+  if (!TOKEN || !CHAT_ID) return;
+  await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ chat_id: CHAT_ID, text, disable_web_page_preview: true }),
+  }).catch(() => {});
+}
+
+const day = process.argv[2] || new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+console.log(`[telemetry-export] exporting ${day}...`);
+
+const sb = createClient(SB_URL, SB_KEY);
+const { data, error } = await sb
+  .from('api_telemetry_daily')
+  .select('endpoint, ua_class, outcome, count')
+  .eq('day', day);
+
+if (error) {
+  console.error('[telemetry-export] query failed:', error.message);
+  await tg(`⚠️ telemetry export failed for ${day}: ${error.message}`);
+  process.exit(1);
+}
+
+const rows = data || [];
+const sum = (pred) => rows.filter(pred).reduce((n, r) => n + r.count, 0);
+
+const totals = {
+  all_calls: sum(() => true),
+  machine_calls: sum((r) => r.ua_class === 'agent'),
+  browser_calls: sum((r) => r.ua_class === 'browser'),
+  gated_402: sum((r) => r.outcome === 'gated_402'),
+  paid_pass: sum((r) => r.outcome === 'paid_pass'),
+  pro_pass: sum((r) => r.outcome === 'pro_pass'),
+};
+totals.paid_conversion_pct = totals.gated_402 > 0
+  ? Math.round((totals.paid_pass / totals.gated_402) * 1000) / 10
+  : null;
+
+const byEndpoint = {};
+for (const r of rows) {
+  byEndpoint[r.endpoint] = byEndpoint[r.endpoint] || { total: 0, agent: 0, outcomes: {} };
+  byEndpoint[r.endpoint].total += r.count;
+  if (r.ua_class === 'agent') byEndpoint[r.endpoint].agent += r.count;
+  byEndpoint[r.endpoint].outcomes[r.outcome] = (byEndpoint[r.endpoint].outcomes[r.outcome] || 0) + r.count;
+}
+
+const payload = {
+  date: day,
+  generated_at: new Date().toISOString(),
+  kpi_note: 'Distribution KPI = machine_calls + paid funnel (gated_402 -> paid_pass/pro_pass). Zeros are valid numbers; print them honestly.',
+  totals,
+  by_endpoint: byEndpoint,
+};
+
+const outDir = path.join(BRAIN_DIR, 'Fetchers', 'telemetry', 'output');
+mkdirSync(outDir, { recursive: true });
+const outPath = path.join(outDir, `telemetry-${day}.json`);
+writeFileSync(outPath, JSON.stringify(payload, null, 2));
+console.log(`[telemetry-export] wrote ${outPath} (${rows.length} rows)`);
+
+await tg(
+  `📡 Machine traffic ${day}: ${totals.machine_calls} agent calls / ${totals.all_calls} total · ` +
+  `402s quoted: ${totals.gated_402} · paid: ${totals.paid_pass} · pro: ${totals.pro_pass}` +
+  (totals.paid_conversion_pct != null ? ` · conv ${totals.paid_conversion_pct}%` : '')
+);
+
+console.log('[telemetry-export] done.');

@@ -17,6 +17,7 @@
  */
 
 import { findAgents } from '@/lib/agent-find'
+import { trackHit } from '@/lib/telemetry'
 
 export const runtime = 'nodejs'
 
@@ -42,11 +43,14 @@ export async function GET(req) {
   })
 
   if (result.error) {
+    trackHit('/api/agents/find', req, result.error.startsWith('q ') ? 'free_4xx' : 'error_5xx')
     return Response.json(
       { error: result.error, usage: '/api/agents/find?q=<capability>&category=&rails=x402&alive=true&min_tier=evidence_ranked' },
       { status: result.error.startsWith('q ') ? 400 : 503, headers: CORS }
     )
   }
+
+  trackHit('/api/agents/find', req, 'free_200')
 
   return Response.json(
     {

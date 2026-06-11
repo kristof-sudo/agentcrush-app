@@ -1,0 +1,17 @@
+[Unit]
+Description=AgentCrush telemetry export — daily machine-traffic JSON to brain + Telegram line
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/telemetry
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/briefing/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/telemetry/telemetry-export-worker.mjs
+StandardOutput=append:/var/log/agentcrush/telemetry-export.log
+StandardError=append:/var/log/agentcrush/telemetry-export.log
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

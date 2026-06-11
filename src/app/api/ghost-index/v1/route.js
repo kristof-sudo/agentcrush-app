@@ -17,6 +17,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { trackHit } from '@/lib/telemetry'
 
 export const runtime = 'nodejs'
 
@@ -38,6 +39,7 @@ export async function OPTIONS() {
 }
 
 export async function GET(req) {
+  trackHit('/api/ghost-index/v1', req, 'free_200')
   const { searchParams } = new URL(req.url)
   const historyDays = Math.min(parseInt(searchParams.get('history') || '30', 10), 365)
   const live = searchParams.get('live') === 'true'
