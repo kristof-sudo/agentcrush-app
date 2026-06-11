@@ -26,7 +26,7 @@ const MCP_TOOLS = [
   {
     name: 'get_agent_details',
     args: '{ "handle": "qwen" }',
-    desc: 'Full details across all 4 scoring categories. Raw signals, sub-scores, evidence-ready status.',
+    desc: 'Full details across all 5 scoring categories. Raw signals, sub-scores, evidence-ready status.',
   },
   {
     name: 'get_agent_history',
@@ -41,7 +41,7 @@ const MCP_TOOLS = [
   {
     name: 'list_categories',
     args: '{}',
-    desc: 'The 4 AgentCrush rankings: tracked count, evidence-ranked count, methodology version.',
+    desc: 'The 5 AgentCrush rankings: tracked count, evidence-ranked count, methodology version.',
   },
   {
     name: 'get_category_ranking',
@@ -174,6 +174,11 @@ export default function DevelopersPage() {
             </div>
           ))}
         </div>
+
+        <p className="mt-3 text-xs text-white/35 leading-relaxed">
+          Plus 6 more: <span className="font-mono text-white/50">get_agent_trust · get_top_movers · get_protocol_adoption · get_agent_changes · get_ecosystem_summary · find_agents</span> — 13 tools total, full manifest at{' '}
+          <a href="/.well-known/mcp.json" className="font-mono text-violet-400/70 hover:text-violet-300 transition-colors">/.well-known/mcp.json</a>.
+        </p>
 
         <div className="mt-6 rounded-lg border border-white/[0.05] bg-white/[0.01] px-4 py-3">
           <p className="text-xs text-white/30 mb-1">Discovery</p>
