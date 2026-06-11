@@ -24,6 +24,7 @@
  */
 
 import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
@@ -433,12 +434,32 @@ function buildFyiSection(deps, { isSunday = false, weekLabel = '' } = {}) {
     const cadence = inputs.ajsaBrief.match(/Cadence status:\s*([^\n.]+)/i);
     if (cadence) lines.push(`• Cadence: ${cadence[1].trim().slice(0, 120)}`);
   }
-  // Likes queue — just count
+  // Likes — report RESULTS when the auto-like worker already ran (03:35, before
+  // this card), only fall back to "ready" when it hasn't. 2026-06-11 lesson:
+  // the card said "9 ready" while the worker had already liked 8 — Kris
+  // re-liked everything by hand. Verification trail over trust.
   if (inputs.ajsaBrief) {
-    const likeSection = inputs.ajsaBrief.match(/##\s*(?:\d+\.\s*)?Engagement queue\s*[—–-]\s*likes([\s\S]*?)(?:\n##|\Z)/mi);
-    if (likeSection) {
-      const likeItems = (likeSection[1].match(/^(?:\d+\.|[-*])\s/gm) || []).length;
-      if (likeItems > 0) lines.push(`• Like queue: ${likeItems} posts ready (auto-lane — no decision needed)`);
+    let reported = false;
+    try {
+      const log = readFileSync('/var/log/agentcrush/auto-like.log', 'utf8');
+      const today = new Date().toISOString().slice(0, 10);
+      const runs = log.split(`[auto-like] ${today}`);
+      if (runs.length > 1) {
+        const todayRun = runs[runs.length - 1];
+        const summary = todayRun.match(/Auto-liked (\d+) X(?: · (\d+) failed)?/);
+        if (summary) {
+          const failed = summary[2] ? ` · ${summary[2]} failed (see /var/log/agentcrush/auto-like.log)` : '';
+          lines.push(`• Likes: ✅ auto-liked ${summary[1]} X posts at 03:35${failed}`);
+          reported = true;
+        }
+      }
+    } catch { /* log unreadable — fall back to queue count */ }
+    if (!reported) {
+      const likeSection = inputs.ajsaBrief.match(/##\s*(?:\d+\.\s*)?Engagement queue\s*[—–-]\s*likes([\s\S]*?)(?:\n##|\Z)/mi);
+      if (likeSection) {
+        const likeItems = (likeSection[1].match(/^(?:\d+\.|[-*])\s/gm) || []).length;
+        if (likeItems > 0) lines.push(`• Like queue: ${likeItems} posts queued (auto-like runs 03:35 UTC)`);
+      }
     }
   }
   return lines;
