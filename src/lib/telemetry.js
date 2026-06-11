@@ -71,3 +71,36 @@ export function trackHit(endpoint, req, outcome) {
     /* telemetry must never break the request */
   }
 }
+
+function sendKeyUsage(prefix, endpoint) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return Promise.resolve()
+  return fetch(`${url}/rest/v1/rpc/bump_key_usage`, {
+    method: 'POST',
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_prefix: prefix, p_endpoint: endpoint }),
+  }).catch(() => {})
+}
+
+/**
+ * B6 — per-key Pro usage. Pass the key PREFIX only (raw.slice(0, 15)).
+ * Same fire-and-forget guarantees as trackHit.
+ */
+export function trackKeyUsage(keyPrefix, endpoint) {
+  try {
+    if (!keyPrefix?.startsWith('ac_live_')) return
+    const task = sendKeyUsage(keyPrefix, endpoint)
+    try {
+      after(task)
+    } catch {
+      void task
+    }
+  } catch {
+    /* never break the request */
+  }
+}
