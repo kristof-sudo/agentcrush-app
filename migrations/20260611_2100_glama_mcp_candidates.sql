@@ -27,6 +27,10 @@ CREATE TABLE IF NOT EXISTS glama_mcp_candidates (
   attributes       JSONB NOT NULL DEFAULT '[]',
   glama_namespace  TEXT,
   glama_slug       TEXT,
+  github_stars     INTEGER,                     -- filled by the promoter's evidence join
+  github_pushed_at TIMESTAMPTZ,
+  github_archived  BOOLEAN,
+  github_checked_at TIMESTAMPTZ,
   first_seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_seen_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   promoted_at      TIMESTAMPTZ,                 -- set by the promoter when moved into agents
