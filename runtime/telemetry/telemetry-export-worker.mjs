@@ -75,12 +75,29 @@ for (const r of rows) {
   byEndpoint[r.endpoint].outcomes[r.outcome] = (byEndpoint[r.endpoint].outcomes[r.outcome] || 0) + r.count;
 }
 
+// B6 — per-key Pro usage (key prefixes only; table may not exist yet)
+let keyUsage = [];
+try {
+  const { data: ku } = await sb
+    .from('api_key_usage_daily')
+    .select('key_prefix, endpoint, count')
+    .eq('day', day);
+  const byKey = {};
+  for (const r of ku || []) {
+    byKey[r.key_prefix] = byKey[r.key_prefix] || { key_prefix: r.key_prefix, total: 0, endpoints: {} };
+    byKey[r.key_prefix].total += r.count;
+    byKey[r.key_prefix].endpoints[r.endpoint] = (byKey[r.key_prefix].endpoints[r.endpoint] || 0) + r.count;
+  }
+  keyUsage = Object.values(byKey).sort((a, b) => b.total - a.total);
+} catch { /* migration not applied yet */ }
+
 const payload = {
   date: day,
   generated_at: new Date().toISOString(),
   kpi_note: 'Distribution KPI = machine_calls + paid funnel (gated_402 -> paid_pass/pro_pass). Zeros are valid numbers; print them honestly.',
   totals,
   by_endpoint: byEndpoint,
+  pro_key_usage: keyUsage,
 };
 
 const outDir = path.join(BRAIN_DIR, 'Fetchers', 'telemetry', 'output');
@@ -89,10 +106,14 @@ const outPath = path.join(outDir, `telemetry-${day}.json`);
 writeFileSync(outPath, JSON.stringify(payload, null, 2));
 console.log(`[telemetry-export] wrote ${outPath} (${rows.length} rows)`);
 
+const keyLine = keyUsage.length
+  ? ` · keys: ${keyUsage.slice(0, 3).map((k) => `${k.key_prefix}…×${k.total}`).join(', ')}${keyUsage.length > 3 ? ` +${keyUsage.length - 3} more` : ''}`
+  : '';
 await tg(
   `📡 Machine traffic ${day}: ${totals.machine_calls} agent calls / ${totals.all_calls} total · ` +
   `402s quoted: ${totals.gated_402} · paid: ${totals.paid_pass} · pro: ${totals.pro_pass}` +
-  (totals.paid_conversion_pct != null ? ` · conv ${totals.paid_conversion_pct}%` : '')
+  (totals.paid_conversion_pct != null ? ` · conv ${totals.paid_conversion_pct}%` : '') +
+  keyLine
 );
 
 console.log('[telemetry-export] done.');
