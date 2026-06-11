@@ -27,6 +27,7 @@ const X402_ENDPOINTS = [
   { path: '/api/agent/{handle}/verification-status', price: '$0.005', what: 'Tier, verified flag, claim status' },
   { path: '/api/agent/{handle}/trust-summary', price: '$0.02', what: 'Trust state, rank, multi-signal score' },
   { path: '/api/agent/{handle}/history', price: '$0.02', what: 'Daily rank + score history' },
+  { path: '/api/agents/find/full', price: '$0.05', what: 'Counterparty discovery — ranked payable agents (top 3 free)' },
   { path: '/api/trust/evaluate/full', price: '$0.10', what: 'Full-depth eval with raw signal breakdown' },
   { path: '/api/oracle/attest', price: '$0.25', what: 'Signed attestation — liveness, tier, Ghost Index' },
 ]
@@ -37,7 +38,7 @@ const FREE_FEATURES = [
   'Ghost Index API (daily liveness)',
   'Trust Eval — standard depth',
   'Bulk lookups up to 50 handles',
-  'MCP server — 12 tools',
+  'MCP server — 13 tools',
   'HuggingFace dataset (daily export)',
 ]
 

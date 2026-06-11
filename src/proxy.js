@@ -249,6 +249,66 @@ const x402Handler = paymentProxy(
       },
     },
 
+    '/api/agents/find/full': {
+      accepts: [
+        {
+          scheme: 'exact',
+          price: '$0.05',
+          network: 'eip155:8453',
+          payTo: PAY_TO,
+        },
+      ],
+      description:
+        'Agent Discovery: ranked shortlist of AI agents that can do X and are safe to pay. Filters by capability keyword, category, payment rails (x402/MCP/ERC-8004), liveness (30-day Ghost Index rule), and evidence tier. Each candidate includes trust tier, liveness verdict, verified payment rails, scores, and endpoints. Top-3 preview free at /api/agents/find.',
+      mimeType: 'application/json',
+      extensions: {
+        bazaar: {
+          discoverable: true,
+          category: 'reputation',
+          tags: ['ai-agents', 'discovery', 'counterparty', 'trust', 'x402', 'kya'],
+          ...declareDiscoveryExtension({
+            method: 'GET',
+            queryParams: { q: 'wallet risk scoring', rails: 'x402', alive: 'true' },
+            queryParamsSchema: {
+              properties: {
+                q: { type: 'string', description: 'Capability keyword (required), e.g. "trading", "risk scoring", "code review"' },
+                category: { type: 'string', description: 'developer | tokenized | service | model_family | mcp_server' },
+                rails: { type: 'string', description: 'Payment rail filter, e.g. "x402"' },
+                alive: { type: 'string', description: '"true" = only agents alive per the 30-day liveness rule' },
+                min_tier: { type: 'string', description: '"evidence_ranked" = exclude indexed-only agents' },
+                limit: { type: 'string', description: 'Max candidates, 1-50 (default 25)' },
+              },
+              required: ['q'],
+            },
+            output: {
+              example: {
+                query: 'wallet risk scoring',
+                filters: { category: null, rails: 'x402', alive: true, min_tier: null },
+                total_matches: 7,
+                tier: 'full',
+                candidates: [
+                  {
+                    rank: 1,
+                    handle: 'example_agent',
+                    name: 'Example Agent',
+                    primary_category: 'service',
+                    tier: 'evidence_ranked',
+                    verified: true,
+                    liveness: 'alive',
+                    payment_rails: [{ rail: 'x402', status: 'verified', evidence_tier: 'verified_api' }],
+                    scores: { visibility: 80, reputation: 62, weekly_delta: 3 },
+                    profile_url: 'https://agentcrush.xyz/agent/example_agent',
+                    trust_eval_url: 'https://agentcrush.xyz/api/trust/evaluate?handle=example_agent',
+                  },
+                ],
+                methodology_url: 'https://agentcrush.xyz/methodology',
+              },
+            },
+          }).bazaar,
+        },
+      },
+    },
+
     '/api/agent/:handle/verification-status': {
       accepts: [
         {
@@ -322,5 +382,6 @@ export const config = {
     '/api/agent/:path*/verification-status',
     '/api/trust/evaluate/full',
     '/api/oracle/attest',
+    '/api/agents/find/full',
   ],
 }
