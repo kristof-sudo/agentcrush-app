@@ -12,6 +12,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { extractApiKey, validateApiKey } from '@/lib/apiKeys'
+import { trackKeyUsage } from '@/lib/telemetry'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -53,7 +54,9 @@ export async function GET(req) {
     }, { status: 400, headers: HEADERS })
   }
   if (unique.length > 50) {
-    const { valid } = await validateApiKey(extractApiKey(req))
+    const rawKey = extractApiKey(req)
+    const { valid } = await validateApiKey(rawKey)
+    if (valid) trackKeyUsage(rawKey.slice(0, 15), '/api/agents/bulk')
     const cap = valid ? 500 : 50
     if (unique.length > cap) {
       return Response.json({
