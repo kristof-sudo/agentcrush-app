@@ -145,7 +145,7 @@ export default function DevelopersPage() {
         <h2 className="text-lg font-bold text-white mb-2">AgentCrush MCP Server</h2>
         <p className="text-sm text-white/50 leading-relaxed mb-5">
           Connect AgentCrush as a live data layer in Claude Desktop, Cursor, or any MCP-compatible
-          agent. 7 read-only tools across all 4 category rankings. JSON-RPC 2.0 over HTTP.
+          agent. 13 read-only tools across all 5 category rankings. JSON-RPC 2.0 over HTTP.
         </p>
 
         <div className="font-mono text-xs text-violet-300 bg-white/[0.04] border border-white/[0.06] rounded px-3 py-2 mb-5 w-fit">
@@ -273,6 +273,14 @@ export default function DevelopersPage() {
             vs{' '}
             <code className="font-mono text-xs text-violet-300 bg-white/[0.06] px-1 rounded">tier: "evidence_ranked"</code>{' '}
             is the primary gate.
+          </p>
+          <p>
+            Need a verifiable statement rather than a live readout? Signed attestations
+            (Ed25519, anchored on Base daily) are built for prediction-market resolution and
+            counterparty checks — copy-paste market-rule templates at{' '}
+            <a href="/oracle" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">/oracle</a>.
+            A2A orchestrators can discover us via{' '}
+            <a href="/.well-known/agent-card.json" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">/.well-known/agent-card.json</a>.
           </p>
         </div>
 

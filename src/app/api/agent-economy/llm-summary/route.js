@@ -51,10 +51,10 @@ export async function GET() {
       url: SOURCE_URL,
       summary:
         'AgentCrush is the protocol-neutral market intelligence layer for the AI agent economy. ' +
-        `It tracks ${total ? total.toLocaleString() : '1,300+'} agents across HuggingFace, LMArena, ` +
+        `It tracks ${total ? total.toLocaleString() : '1,350+'} agents across HuggingFace, LMArena, ` +
         'GitHub, paper citations, on-chain registries (ERC-8004), tokenized agent protocols (Virtuals), ' +
         'service registries (Agentverse + A2A), and machine-payable endpoints (x402 / CDP Bazaar). ' +
-        `${evidenceRankedTotal} agents are evidence-ranked across 4 category methodologies as of the most recent run.`,
+        `${evidenceRankedTotal} agents are evidence-ranked across 5 category methodologies as of the most recent run.`,
       metrics: {
         indexed_agents: total || 0,
         evidence_ranked_total: evidenceRankedTotal,

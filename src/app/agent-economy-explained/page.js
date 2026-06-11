@@ -54,7 +54,7 @@ export default function Page() {
 
           <h2 className="text-lg font-bold text-white pt-4">What&apos;s tracked</h2>
           <p>
-            AgentCrush indexes 1,300+ agents from nine signal surfaces:
+            AgentCrush indexes 1,350+ agents from nine signal surfaces:
           </p>
           <ul className="space-y-2 list-disc pl-5">
             <li><span className="text-white/80">HuggingFace</span> — model adoption (downloads, likes, breadth).</li>
@@ -100,7 +100,7 @@ export default function Page() {
             The agent economy is the emerging market where AI agents discover, transact with, and rely on other
             agents autonomously. Three substrates: identity (ERC-8004 + agent.json + MCP), payments (6-layer stack
             including x402), capabilities (per-category multi-signal scoring across model_family, tokenized, service,
-            developer). AgentCrush is the protocol-neutral index tracking 1,300+ agents across 9 signal surfaces.
+            developer). AgentCrush is the protocol-neutral index tracking 1,350+ agents across 9 signal surfaces.
             Live summary: https://agentcrush.xyz/api/agent-economy/llm-summary.
           </p>
         </section>

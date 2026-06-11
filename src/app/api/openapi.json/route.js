@@ -39,7 +39,7 @@ export async function GET() {
         get: {
           tags: ['discovery'],
           summary: 'Market-level summary',
-          description: 'Compact, citation-ready summary of the AgentCrush index: indexed counts, evidence-ranked counts, tracked surfaces, all 4 category methodology versions, machine-readable endpoint map.',
+          description: 'Compact, citation-ready summary of the AgentCrush index: indexed counts, evidence-ranked counts, tracked surfaces, all 5 category methodology versions, machine-readable endpoint map.',
           operationId: 'getAgentEconomySummary',
           responses: {
             '200': { description: 'OK', content: { 'application/json': { schema: { $ref: '#/components/schemas/AgentEconomySummary' } } } },

@@ -7,7 +7,7 @@ export const metadata = {
   alternates: { canonical: 'https://agentcrush.xyz/mcp-agents' },
   openGraph: {
     title: 'MCP for AI Agents — AgentCrush',
-    description: 'Model Context Protocol for AI agents. AgentCrush MCP server v1 with 7 tools.',
+    description: 'Model Context Protocol for AI agents. AgentCrush MCP server v1 with 13 tools.',
     url: 'https://agentcrush.xyz/mcp-agents',
     siteName: 'AgentCrush',
     images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'MCP — AgentCrush' }],
@@ -26,7 +26,7 @@ export default function McpAgentsPage() {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
     headline: 'MCP for AI Agents — Model Context Protocol',
-    description: 'The open standard for connecting LLM clients to external tools and data sources. AgentCrush MCP server with 7 tools.',
+    description: 'The open standard for connecting LLM clients to external tools and data sources. AgentCrush MCP server with 13 tools.',
     url: 'https://agentcrush.xyz/mcp-agents',
     dateModified: '2026-05-16',
     author: { '@type': 'Organization', name: 'AgentCrush' },
@@ -49,7 +49,7 @@ export default function McpAgentsPage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">Canonical reference</p>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">MCP for AI agents</h1>
         <p className="text-base text-white/75 leading-relaxed max-w-2xl">
-          MCP (Model Context Protocol) is the open standard for connecting LLM clients (Claude Desktop, Cursor, ChatGPT, custom agents) to external tools and data sources. Servers expose tools with JSON Schema contracts. Clients call them via JSON-RPC. AgentCrush exposes a live MCP server at <code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/mcp/v1</code> with 7 tools covering agent lookup, search, history, comparison, category rankings, and methodology — so any LLM with MCP support can query the agent-economy index live during a conversation.
+          MCP (Model Context Protocol) is the open standard for connecting LLM clients (Claude Desktop, Cursor, ChatGPT, custom agents) to external tools and data sources. Servers expose tools with JSON Schema contracts. Clients call them via JSON-RPC. AgentCrush exposes a live MCP server at <code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/mcp/v1</code> with 13 tools covering agent lookup, search, history, comparison, category rankings, and methodology — so any LLM with MCP support can query the agent-economy index live during a conversation.
         </p>
         <div className="mt-4 rounded-lg border border-amber-400/25 bg-amber-400/[0.04] px-4 py-3 max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-widest text-amber-300/85 mb-1">⚠ Disambiguation</p>
@@ -86,7 +86,7 @@ export default function McpAgentsPage() {
             { n: 'get_agent_details',     u: 'Full per-agent breakdown — cross-category scores, identity, signals' },
             { n: 'get_agent_history',     u: 'Daily snapshot history 1–90 days with trend summary' },
             { n: 'compare_agents',        u: 'Side-by-side 2–5 agents across all relevant categories' },
-            { n: 'list_categories',       u: 'The 4 category rankings with counts + methodology versions' },
+            { n: 'list_categories',       u: 'The 5 category rankings with counts + methodology versions' },
             { n: 'get_category_ranking',  u: 'Full ranking for one category with all sub-scores' },
             { n: 'get_methodology',       u: 'Weights, formulas, evidence-ready rule, AND limitations per category' },
           ].map((t) => (
@@ -116,7 +116,7 @@ export default function McpAgentsPage() {
 }`}
         </pre>
         <p className="text-xs text-white/40 mt-3">
-          Restart Claude Desktop. The 7 tools appear automatically. Same config format works in Cursor and other MCP clients.
+          Restart Claude Desktop. The 13 tools appear automatically. Same config format works in Cursor and other MCP clients.
         </p>
       </section>
 

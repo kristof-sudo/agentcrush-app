@@ -39,7 +39,7 @@ const TERMS = [
   {
     term: 'Ghost Index',
     anchor: 'ghost-index',
-    definition: 'The AgentCrush daily liveness score: what % of indexed agents show observable activity. Computed nightly from the full 1,300+ agent index. "The agent economy is 16% alive." A low score is not a failure — it reflects the accurate state of a category where many projects announce and few ship. Published free at /api/ghost-index/v1.',
+    definition: 'The AgentCrush daily liveness score: what % of indexed agents show observable activity. Computed nightly from the full 1,350+ agent index. "The agent economy is 16% alive." A low score is not a failure — it reflects the accurate state of a category where many projects announce and few ship. Published free at /api/ghost-index/v1.',
     seeAlso: [{ label: 'Ghost Index page', href: '/ghost-index' }, { label: 'API', href: '/api/ghost-index/v1' }],
   },
   {

@@ -1067,7 +1067,7 @@ export default async function AgentPage({ params }) {
       '@type': 'Dataset',
       '@id': 'https://agentcrush.xyz/methodology',
       name: 'AgentCrush Evidence-Ranked Index',
-      description: 'Multi-signal agent reputation index across 4 category methodologies (model families, tokenized agents, service agents, developer agents).',
+      description: 'Multi-signal agent reputation index across 5 category methodologies (model families, tokenized agents, service agents, developer agents).',
       url: 'https://agentcrush.xyz/methodology',
       creator: { '@type': 'Organization', name: 'AgentCrush' },
       license: 'https://agentcrush.xyz/terms',

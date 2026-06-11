@@ -29,7 +29,7 @@ const X402_ENDPOINTS = [
   { path: '/api/agent/{handle}/history', price: '$0.02', what: 'Daily rank + score history' },
   { path: '/api/agents/find/full', price: '$0.05', what: 'Counterparty discovery — ranked payable agents (top 3 free)' },
   { path: '/api/trust/evaluate/full', price: '$0.10', what: 'Full-depth eval with raw signal breakdown' },
-  { path: '/api/oracle/attest', price: '$0.25', what: 'Signed attestation — liveness, tier, Ghost Index' },
+  { path: '/api/oracle/attest', price: '$0.25', what: 'Signed attestation — liveness, tier, Ghost Index. Market-rule templates: /oracle' },
 ]
 
 const FREE_FEATURES = [
