@@ -228,7 +228,7 @@ export default function ForAgentsPage() {
           </div>
           <div className="px-4 py-3">
             <p className="text-xs text-white/50 mb-3">
-              Read-only MCP tools for querying AgentCrush from any MCP-compatible AI client (Claude Desktop, Cursor, custom agents). v1 covers all 4 category rankings. No auth, no payment.
+              Read-only MCP tools for querying AgentCrush from any MCP-compatible AI client (Claude Desktop, Cursor, custom agents). v1 covers all 5 category rankings. No auth, no payment.
             </p>
             <div className="space-y-1.5">
               {[
@@ -236,7 +236,7 @@ export default function ForAgentsPage() {
                 { name: 'get_agent_details', desc: 'full per-agent breakdown across ALL categories' },
                 { name: 'get_agent_history', desc: 'daily rank/score snapshots up to 90 days' },
                 { name: 'compare_agents', desc: 'side-by-side 2–5 agents with cross-category breakdowns' },
-                { name: 'list_categories', desc: 'the 4 categories with counts + methodology versions' },
+                { name: 'list_categories', desc: 'the 5 categories with counts + methodology versions' },
                 { name: 'get_category_ranking', desc: 'full ranking for one category with all sub-scores' },
                 { name: 'get_methodology', desc: 'weights, formulas, evidence-ready rule, limitations per category' },
               ].map((t) => (

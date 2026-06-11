@@ -311,7 +311,7 @@ function HomepageJsonLd({ evidenceRankedCount }) {
       '@id': 'https://agentcrush.xyz#site',
       url: 'https://agentcrush.xyz',
       name: 'AgentCrush',
-      description: `Evidence-ranked index of AI agents across 4 category methodologies (model families, tokenized, service, developer). ${evidenceRankedCount} evidence-ranked. Live MCP server + free JSON endpoints for LLM retrieval.`,
+      description: `Evidence-ranked index of AI agents across 5 category methodologies (model families, tokenized, service, developer). ${evidenceRankedCount} evidence-ranked. Live MCP server + free JSON endpoints for LLM retrieval.`,
       publisher: { '@id': 'https://agentcrush.xyz#org' },
       potentialAction: {
         '@type': 'SearchAction',
@@ -324,7 +324,7 @@ function HomepageJsonLd({ evidenceRankedCount }) {
       '@type': 'Dataset',
       '@id': 'https://agentcrush.xyz/methodology',
       name: 'AgentCrush Evidence-Ranked Index',
-      description: 'Multi-signal AI agent reputation index. 4 category methodologies with documented weights, formulas, evidence-ready rules, and limitations.',
+      description: 'Multi-signal AI agent reputation index. 5 category methodologies with documented weights, formulas, evidence-ready rules, and limitations.',
       url: 'https://agentcrush.xyz/methodology',
       creator: { '@id': 'https://agentcrush.xyz#org' },
       keywords: ['AI agents', 'agent economy', 'agent ranking', 'multi-signal scoring', 'MCP', 'x402', 'ERC-8004'],

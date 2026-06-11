@@ -26,7 +26,7 @@ const MCP_TOOLS = [
   {
     name: 'get_agent_details',
     args: '{ "handle": "qwen" }',
-    desc: 'Full details across all 4 scoring categories. Raw signals, sub-scores, evidence-ready status.',
+    desc: 'Full details across all 5 scoring categories. Raw signals, sub-scores, evidence-ready status.',
   },
   {
     name: 'get_agent_history',
@@ -41,7 +41,7 @@ const MCP_TOOLS = [
   {
     name: 'list_categories',
     args: '{}',
-    desc: 'The 4 AgentCrush rankings: tracked count, evidence-ranked count, methodology version.',
+    desc: 'The 5 AgentCrush rankings: tracked count, evidence-ranked count, methodology version.',
   },
   {
     name: 'get_category_ranking',
@@ -145,7 +145,7 @@ export default function DevelopersPage() {
         <h2 className="text-lg font-bold text-white mb-2">AgentCrush MCP Server</h2>
         <p className="text-sm text-white/50 leading-relaxed mb-5">
           Connect AgentCrush as a live data layer in Claude Desktop, Cursor, or any MCP-compatible
-          agent. 7 read-only tools across all 4 category rankings. JSON-RPC 2.0 over HTTP.
+          agent. 13 read-only tools across all 5 category rankings. JSON-RPC 2.0 over HTTP.
         </p>
 
         <div className="font-mono text-xs text-violet-300 bg-white/[0.04] border border-white/[0.06] rounded px-3 py-2 mb-5 w-fit">
@@ -174,6 +174,11 @@ export default function DevelopersPage() {
             </div>
           ))}
         </div>
+
+        <p className="mt-3 text-xs text-white/35 leading-relaxed">
+          Plus 6 more: <span className="font-mono text-white/50">get_agent_trust · get_top_movers · get_protocol_adoption · get_agent_changes · get_ecosystem_summary · find_agents</span> — 13 tools total, full manifest at{' '}
+          <a href="/.well-known/mcp.json" className="font-mono text-violet-400/70 hover:text-violet-300 transition-colors">/.well-known/mcp.json</a>.
+        </p>
 
         <div className="mt-6 rounded-lg border border-white/[0.05] bg-white/[0.01] px-4 py-3">
           <p className="text-xs text-white/30 mb-1">Discovery</p>
@@ -273,6 +278,14 @@ export default function DevelopersPage() {
             vs{' '}
             <code className="font-mono text-xs text-violet-300 bg-white/[0.06] px-1 rounded">tier: "evidence_ranked"</code>{' '}
             is the primary gate.
+          </p>
+          <p>
+            Need a verifiable statement rather than a live readout? Signed attestations
+            (Ed25519, anchored on Base daily) are built for prediction-market resolution and
+            counterparty checks — copy-paste market-rule templates at{' '}
+            <a href="/oracle" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">/oracle</a>.
+            A2A orchestrators can discover us via{' '}
+            <a href="/.well-known/agent-card.json" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">/.well-known/agent-card.json</a>.
           </p>
         </div>
 

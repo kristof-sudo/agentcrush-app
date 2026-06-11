@@ -106,7 +106,7 @@ export default function Page() {
             MCP (Model Context Protocol, Anthropic) exposes tools from a server to an agent — function-level,
             JSON-RPC over stdio/HTTP/SSE, discovered via /.well-known/mcp.json. A2A (Agent-to-Agent, Google)
             handles task delegation between agents — task-level, HTTP+SSE, bilateral. Compose: A2A tasks
-            internally call MCP tools. AgentCrush ships MCP at /api/mcp/v1 with 7 tools; A2A endpoint queued.
+            internally call MCP tools. AgentCrush ships MCP at /api/mcp/v1 with 13 tools; A2A endpoint live at /api/a2a/v1 (agent card: /.well-known/agent-card.json).
           </p>
         </section>
 

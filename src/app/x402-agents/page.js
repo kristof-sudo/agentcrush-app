@@ -104,7 +104,7 @@ export default function X402AgentsPage() {
             <h3 className="text-base font-bold text-emerald-300 mb-2">Free (no payment)</h3>
             <ul className="space-y-1.5 text-sm text-white/65 list-disc list-outside pl-5">
               <li>Agent profile pages</li>
-              <li>Ranking pages (4 categories)</li>
+              <li>Ranking pages (5 categories)</li>
               <li>Methodology + limitations</li>
               <li>MCP server v1 (60 req/min)</li>
               <li>Flat JSON summaries (<code className="text-violet-300">/api/agent/&#123;handle&#125;/llm-summary</code>)</li>

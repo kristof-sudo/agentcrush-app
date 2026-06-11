@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: 'Methodology · AgentCrush',
   description:
-    'How AgentCrush ranks AI agents across 4 category rankings: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, formulas, and scope notes.',
+    'How AgentCrush ranks AI agents across 5 category rankings: model families, tokenized agents, service agents, developer agents. Per-category methodologies with full signal disclosure, weights, formulas, and scope notes.',
   alternates: { canonical: 'https://agentcrush.xyz/methodology' },
   openGraph: {
     title: 'AgentCrush Methodology',
@@ -228,7 +228,7 @@ export default async function MethodologyHubPage() {
     '@type': 'Dataset',
     '@id': 'https://agentcrush.xyz/methodology',
     name: 'AgentCrush Evidence-Ranked Index',
-    description: 'Multi-signal agent reputation methodologies across 4 categories: model families (v1.4), tokenized agents (v1.1), service agents (v1.1), developer agents (v2.c). Every weight, formula, evidence-ready rule, and scope note is published.',
+    description: 'Multi-signal agent reputation methodologies across 5 categories: model families (v1.4), tokenized agents (v1.1), service agents (v1.1), developer agents (v2.c). Every weight, formula, evidence-ready rule, and scope note is published.',
     url: 'https://agentcrush.xyz/methodology',
     keywords: ['AI agents', 'agent ranking', 'agent economy', 'multi-signal scoring', 'evidence-ranked', 'methodology', 'model families', 'tokenized agents', 'service agents'],
     creator: { '@type': 'Organization', name: 'AgentCrush', url: 'https://agentcrush.xyz' },
@@ -237,7 +237,7 @@ export default async function MethodologyHubPage() {
     license: 'https://agentcrush.xyz/terms',
     isAccessibleForFree: true,
     distribution: [
-      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://agentcrush.xyz/api/agent-economy/llm-summary', description: 'Market-level summary across all 4 categories' },
+      { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://agentcrush.xyz/api/agent-economy/llm-summary', description: 'Market-level summary across all 5 categories' },
       { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://agentcrush.xyz/api/methodology/model_family/llm-summary', description: 'Model-family methodology breakdown' },
       { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: 'https://agentcrush.xyz/.well-known/mcp.json', description: 'MCP server discovery manifest' },
     ],
@@ -321,7 +321,7 @@ export default async function MethodologyHubPage() {
           ))}
         </div>
         <p className="text-xs text-white/40 mt-3">
-          <span className="font-mono text-emerald-400">{totalEvidenceRanked}</span> total evidence-ranked agents across 4 categories.
+          <span className="font-mono text-emerald-400">{totalEvidenceRanked}</span> total evidence-ranked agents across 5 categories.
         </p>
       </section>
 

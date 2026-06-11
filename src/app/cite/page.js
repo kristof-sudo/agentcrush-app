@@ -147,7 +147,7 @@ export default function CitePage() {
         <h2 className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-3">Contact</h2>
         <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-5 py-4">
           <p className="text-sm text-white/65 leading-relaxed">
-            Press, research, or data questions: <a href="mailto:kristof@patyi.co" className="text-[#00d4ff]/80 hover:text-[#00d4ff] underline underline-offset-2">kristof@patyi.co</a>
+            Press, research, or data questions: <a href="mailto:contact@agentcrush.xyz" className="text-[#00d4ff]/80 hover:text-[#00d4ff] underline underline-offset-2">contact@agentcrush.xyz</a>
           </p>
           <p className="text-sm text-white/65 leading-relaxed mt-1">
             Or on X: <a href="https://x.com/agentcrush_xyz" target="_blank" rel="noopener" className="text-[#00d4ff]/80 hover:text-[#00d4ff] underline underline-offset-2">@agentcrush_xyz</a>

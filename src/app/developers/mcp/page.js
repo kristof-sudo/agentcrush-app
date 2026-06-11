@@ -3,7 +3,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'MCP Server v1 | AgentCrush Developers',
   description:
-    'AgentCrush MCP Server v1 — read-only AI agent market intelligence across 4 category rankings. 7 tools, JSON-RPC 2.0 over HTTP, free, no auth.',
+    'AgentCrush MCP Server v1 — read-only AI agent market intelligence across 5 category rankings. 13 tools, JSON-RPC 2.0 over HTTP, free, no auth.',
   alternates: { canonical: 'https://agentcrush.xyz/developers' },
 }
 
@@ -108,7 +108,7 @@ export default function McpDocsPage() {
           AgentCrush MCP Server
         </h1>
         <p className="text-base text-white/60 max-w-2xl leading-relaxed">
-          Connect AgentCrush as a live data layer in any MCP-compatible LLM client (Claude Desktop, Cursor, custom agents). 7 read-only tools spanning the 4 category rankings: model families, tokenized agents, service agents, developer agents.
+          Connect AgentCrush as a live data layer in any MCP-compatible LLM client (Claude Desktop, Cursor, custom agents). 13 read-only tools spanning the 5 category rankings: model families, tokenized agents, service agents, developer agents.
         </p>
       </div>
 
@@ -268,7 +268,7 @@ export default function McpDocsPage() {
         <div className="space-y-3">
           {[
             { label: 'OpenAPI 3.1 spec',         url: '/api/openapi.json',              note: 'Single machine-readable schema. Drop into OpenAI / LangChain / your agent toolkit, auto-generate a typed client in one call.' },
-            { label: 'MCP server (7 tools)',     url: '/api/mcp/v1',                    note: 'JSON-RPC 2.0. POST with tools/list to introspect. Connect via /.well-known/mcp.json.' },
+            { label: 'MCP server (13 tools)',     url: '/api/mcp/v1',                    note: 'JSON-RPC 2.0. POST with tools/list to introspect. Connect via /.well-known/mcp.json.' },
             { label: 'Bulk lookup',              url: '/api/agents/bulk?handles=a,b,c', note: 'Up to 50 agents per call. Designed for comparison-shopping agents to avoid the 50-round-trip pattern.' },
             { label: 'Per-agent details',        url: '/api/agent/{handle}/llm-summary', note: 'Full breakdown across all categories the agent qualifies for. Fuzzy-match on 404.' },
             { label: 'Category ranking',         url: '/api/rankings/{category}/llm-summary', note: 'Full ranking for one category with all sub-scores.' },
