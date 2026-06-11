@@ -21,7 +21,7 @@ export async function GET() {
         'AgentCrush is the protocol-neutral market intelligence layer for the AI agent economy. ' +
         'This OpenAPI spec covers the free flat JSON endpoints designed for LLM/agent retrieval. ' +
         'For JSON-RPC MCP access, see /api/mcp/v1 (manifest at /.well-known/mcp.json). ' +
-        'For paid x402 endpoints (history, trust-summary, verification-status), see /api-docs.',
+        'Paid endpoints are tagged paid: $0.005-$0.25/call via x402 on Base, or free with a Pro key (X-API-Key header). Pricing: https://agentcrush.xyz/pricing',
       contact: { name: 'AgentCrush', email: 'contact@agentcrush.xyz', url: 'https://agentcrush.xyz' },
       license: { name: 'AgentCrush Terms', url: 'https://agentcrush.xyz/terms' },
     },
@@ -33,6 +33,9 @@ export async function GET() {
       { name: 'methodology', description: 'Scoring methodology, weights, formulas, limitations per category' },
       { name: 'compare',     description: 'Multi-agent comparison' },
       { name: 'feedback',    description: 'Agent-to-AgentCrush feedback channel' },
+      { name: 'trust',       description: 'Trust evaluation and liveness (Ghost Index)' },
+      { name: 'paid',        description: 'x402-gated endpoints ($0.005-$0.25 per call, USDC on Base) - all free with an AgentCrush Pro key (X-API-Key)' },
+      { name: 'oracle',      description: 'Signed attestations + on-chain proof-of-index' },
     ],
     paths: {
       '/api/agent-economy/llm-summary': {
@@ -121,6 +124,100 @@ export async function GET() {
           },
         },
       },
+      '/api/agents/find': {
+        get: {
+          tags: ['discovery', 'trust'],
+          summary: 'Counterparty discovery (free tier: top 3)',
+          description: 'Which agents can do X and are safe to pay. Ranked candidates with liveness (30-day Ghost Index rule), evidence tier, verified payment rails, scores, endpoints. Top 3 free + total match count; full list at /api/agents/find/full.',
+          operationId: 'findAgents',
+          parameters: [
+            { name: 'q', in: 'query', required: true, schema: { type: 'string' }, description: 'Capability keyword, e.g. trading, wallet risk' },
+            { name: 'category', in: 'query', schema: { type: 'string', enum: ['model_family', 'tokenized', 'service', 'developer', 'mcp_server'] } },
+            { name: 'rails', in: 'query', schema: { type: 'string' }, description: 'Payment rail filter, e.g. x402' },
+            { name: 'alive', in: 'query', schema: { type: 'boolean' }, description: 'Only agents alive per the 30-day liveness rule' },
+            { name: 'min_tier', in: 'query', schema: { type: 'string', enum: ['evidence_ranked'] } },
+          ],
+          responses: { '200': { description: 'Top 3 candidates + total_matches + full_results pointer' }, '400': { description: 'Missing q' } },
+        },
+      },
+      '/api/agents/find/full': {
+        get: {
+          tags: ['discovery', 'paid'],
+          summary: 'Counterparty discovery (full: up to 50) - $0.05 x402 or Pro key',
+          description: 'Same query surface as /api/agents/find plus limit (1-50). Returns the full ranked candidate list. Payment: $0.05 per call via x402 on Base (the 402 response carries a machine-payable quote), or free with an AgentCrush Pro key.',
+          operationId: 'findAgentsFull',
+          security: [{ ApiKeyAuth: [] }, {}],
+          parameters: [
+            { name: 'q', in: 'query', required: true, schema: { type: 'string' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50, default: 25 } },
+          ],
+          responses: { '200': { description: 'Full ranked list' }, '402': { description: 'x402 payment required (quote in body)' } },
+        },
+      },
+      '/api/trust/evaluate': {
+        get: {
+          tags: ['trust'],
+          summary: 'Trust evaluation (standard depth, free)',
+          description: 'Verdict, confidence tier, liveness, risk flags, claim status for one indexed agent. Full depth with raw signal breakdown at /api/trust/evaluate/full ($0.10 x402 or Pro key).',
+          operationId: 'trustEvaluate',
+          parameters: [{ name: 'handle', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Trust verdict' }, '400': { description: 'Missing handle' } },
+        },
+      },
+      '/api/trust/evaluate/full': {
+        get: {
+          tags: ['trust', 'paid'],
+          summary: 'Trust evaluation (full depth) - $0.10 x402 or Pro key',
+          operationId: 'trustEvaluateFull',
+          security: [{ ApiKeyAuth: [] }, {}],
+          parameters: [{ name: 'handle', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Full verdict + raw signals' }, '402': { description: 'x402 payment required' } },
+        },
+      },
+      '/api/ghost-index/v1': {
+        get: {
+          tags: ['trust', 'discovery'],
+          summary: 'Ghost Index - agent-economy liveness (free)',
+          operationId: 'getGhostIndex',
+          parameters: [
+            { name: 'history', in: 'query', schema: { type: 'integer', maximum: 365, default: 30 } },
+            { name: 'live', in: 'query', schema: { type: 'boolean' }, description: 'Compute real-time instead of last stored snapshot' },
+          ],
+          responses: { '200': { description: 'Liveness score + breakdowns + optional history' } },
+        },
+      },
+      '/api/changes/v1': {
+        get: {
+          tags: ['discovery'],
+          summary: 'What changed today - daily index diff (free)',
+          description: 'Rank movers, new agents, tier promotions, deaths, resurrections. RSS at /changes.xml.',
+          operationId: 'getChanges',
+          parameters: [{ name: 'days', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 7, default: 1 } }],
+          responses: { '200': { description: 'Grouped changes + counts' } },
+        },
+      },
+      '/api/oracle/attest': {
+        get: {
+          tags: ['oracle', 'paid'],
+          summary: 'Signed attestation - $0.25 x402 or Pro key',
+          description: 'Ed25519-signed, timestamped statement over index data (liveness, tier, ghost_index), referencing the daily proof-of-index digest anchored on Base. Public key: /.well-known/agentcrush-oracle.json. Market-rule templates: /oracle.',
+          operationId: 'oracleAttest',
+          security: [{ ApiKeyAuth: [] }, {}],
+          parameters: [
+            { name: 'metric', in: 'query', required: true, schema: { type: 'string', enum: ['liveness', 'tier', 'ghost_index'] } },
+            { name: 'handle', in: 'query', schema: { type: 'string' }, description: 'Required for liveness/tier' },
+          ],
+          responses: { '200': { description: 'Signed attestation' }, '402': { description: 'x402 payment required' } },
+        },
+      },
+      '/api/proof-of-index/v1': {
+        get: {
+          tags: ['oracle'],
+          summary: 'Proof-of-index - daily on-chain digests (free)',
+          operationId: 'getProofOfIndex',
+          responses: { '200': { description: 'Daily SHA-256 digests + Base tx hashes' } },
+        },
+      },
       '/api/agent-feedback': {
         post: {
           tags: ['feedback'],
@@ -140,6 +237,14 @@ export async function GET() {
       },
     },
     components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'X-API-Key',
+          description: 'AgentCrush Pro key ($29/mo, https://agentcrush.xyz/pricing). Skips all x402 payment gates. Alternative: pay per call via x402 (USDC on Base) - a 402 response carries the machine-payable quote.',
+        },
+      },
       schemas: {
         Category: { type: 'string', enum: ['model_family', 'tokenized', 'service', 'developer'] },
         Error: {
