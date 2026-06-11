@@ -8,6 +8,10 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-06-11
+- `migrations/20260611_1200_changes_today.sql` — B14 "What changed today". Creates `changes_today_v1` view: 7-day UNION feed of rank moves (day-over-day from `agent_snapshots`, gated |delta| ≥ 5 and score > 0), new agents (`agents.created_at`), tier promotions (`tier_promoted_at`), deaths (30-day liveness window expired, Ghost Index rule) and resurrections (first `events` row after 30+ days of silence). Adds `events_agent_created_idx` on `events(agent_id, created_at DESC)`. View is security-definer (Postgres default) over the service-role-only `agent_snapshots`; anon gets SELECT on the view only. Consumed by `/changes`, `/api/changes/v1`, `/changes.xml`, homepage strip — all degrade gracefully until applied.
+  **STATUS: PENDING APPLY by Kris.**
+
 ### 2026-06-10
 - `migrations/20260610_2200_proof_of_index.sql` — B15 Proof-of-Index. Creates `proof_of_index` table (snapshot_date PK, digest_sha256, record_count, chain, tx_hash, posted_at, status pending/posted/failed). RLS: public read (digests are meant to be verified by anyone), service-role write. Written by `runtime/proof-of-index/proof-of-index-worker.mjs` (daily 00:15 UTC timer), read by `/api/proof-of-index/v1`, `/methodology#proof-of-index`, and oracle attestations. Code degrades gracefully until applied.
   **STATUS: PENDING APPLY by Kris.**

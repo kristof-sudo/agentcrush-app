@@ -410,6 +410,28 @@ export default async function Home() {
     ghost = data
   } catch { /* table not present — chip simply hides */ }
 
+  // What changed today (last 24h; null-safe if view absent)
+  let changesToday = null
+  try {
+    const { data } = await supabase
+      .from('changes_today_v1')
+      .select('change_type, handle, display_name, detail')
+      .gte('happened_at', new Date(Date.now() - 86400000).toISOString())
+      .limit(300)
+    if (data?.length) {
+      const ups = data.filter(r => r.change_type === 'rank_up').sort((a, b) => (b.detail?.delta ?? 0) - (a.detail?.delta ?? 0))
+      const downs = data.filter(r => r.change_type === 'rank_down').sort((a, b) => (a.detail?.delta ?? 0) - (b.detail?.delta ?? 0))
+      changesToday = {
+        topUp: ups[0] || null,
+        topDown: downs[0] || null,
+        promotions: data.filter(r => r.change_type === 'tier_promotion').length,
+        resurrected: data.filter(r => r.change_type === 'resurrected').length,
+        died: data.filter(r => r.change_type === 'died').length,
+        newAgents: data.filter(r => r.change_type === 'new_agent').length,
+      }
+    }
+  } catch { /* view not applied yet — strip simply hides */ }
+
   const [erModelFamilies, erTokenized, erService] = await Promise.all([
     supabase.from('agent_score_model_family_v1').select('agent_id', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true).then(({ count, error }) => error ? 0 : (count || 0)),
     supabase.from('agent_score_tokenized_v1').select('agent_id', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true).then(({ count, error }) => error ? 0 : (count || 0)),
@@ -517,6 +539,36 @@ export default async function Home() {
                   <div className="font-mono text-[9px] uppercase tracking-wider text-white/30">daily snapshots</div>
                 </div>
               </div>
+
+              {/* (a.2) What changed today — daily diff ticker */}
+              {changesToday && (
+                <Link href="/changes" className="mb-5 flex items-center gap-x-3 gap-y-1 flex-wrap rounded border border-white/[0.08] bg-white/[0.02] px-3 py-2 hover:border-white/[0.18] transition-colors group">
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-white/30 shrink-0">Today</span>
+                  {changesToday.topUp && (
+                    <span className="font-mono text-[11px] text-white/60">
+                      <span className="text-[#39ff14] font-bold">▲{changesToday.topUp.detail?.delta}</span> {changesToday.topUp.display_name || changesToday.topUp.handle}
+                    </span>
+                  )}
+                  {changesToday.topDown && (
+                    <span className="font-mono text-[11px] text-white/60">
+                      <span className="text-[#f97316] font-bold">▼{Math.abs(changesToday.topDown.detail?.delta ?? 0)}</span> {changesToday.topDown.display_name || changesToday.topDown.handle}
+                    </span>
+                  )}
+                  {changesToday.promotions > 0 && (
+                    <span className="font-mono text-[11px] text-white/60"><span className="text-[#e91e80] font-bold">★</span> {changesToday.promotions} promoted</span>
+                  )}
+                  {changesToday.resurrected > 0 && (
+                    <span className="font-mono text-[11px] text-white/60"><span className="text-[#00d4ff] font-bold">↻</span> {changesToday.resurrected} resurrected</span>
+                  )}
+                  {changesToday.died > 0 && (
+                    <span className="font-mono text-[11px] text-white/60"><span className="text-white/40 font-bold">✝</span> {changesToday.died} went ghost</span>
+                  )}
+                  {changesToday.newAgents > 0 && (
+                    <span className="font-mono text-[11px] text-white/60"><span className="text-[#a78bfa] font-bold">+</span> {changesToday.newAgents} new</span>
+                  )}
+                  <span className="font-mono text-[10px] text-white/30 group-hover:text-white/60 transition-colors ml-auto shrink-0">all changes →</span>
+                </Link>
+              )}
 
               {/* (b) Pipeline strip */}
               <div className="overflow-x-auto pb-1">
