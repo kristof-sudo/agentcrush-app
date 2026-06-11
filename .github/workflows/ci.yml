@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Nightly view-contract check at 05:00 UTC — catches migrations applied
+    # directly in Supabase that break page consumers, even with no code change.
+    - cron: '0 5 * * *'
+
+env:
+  # Publishable by design: the anon key ships in every browser bundle.
+  NEXT_PUBLIC_SUPABASE_URL: https://hwkvkfjnffxrfirhkitj.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
+
+jobs:
+  view-contracts:
+    name: Scoring-view contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: View contracts (read-only, anon key)
+        run: node tests/view-contracts.mjs
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
