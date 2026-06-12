@@ -354,7 +354,7 @@ export default async function WeeklyDynamicPage({ params }) {
           <Link href="/rankings" className="hover:text-white/70 transition-colors">All Rankings →</Link>
           <Link href="/methodology" className="hover:text-white/70 transition-colors">Methodology →</Link>
           <Link href="/blog" className="hover:text-white/70 transition-colors">Blog →</Link>
-          <Link href="/trends" className="hover:text-white/70 transition-colors">Live trends →</Link>
+          <Link href="/agent-economy-index" className="hover:text-white/70 transition-colors">Economy index →</Link>
           <a href="/weekly.xml" className="hover:text-white/70 transition-colors">RSS →</a>
         </div>
 
