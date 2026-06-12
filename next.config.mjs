@@ -2,6 +2,12 @@
 const nextConfig = {
   async redirects() {
     return [
+      { source: '/trends', destination: '/agent-economy-index', permanent: true },
+      { source: '/agent-economy-explained', destination: '/agent-economy', permanent: true },
+      { source: '/shop', destination: '/pricing', permanent: true },
+      { source: '/shop/success', destination: '/pricing', permanent: true },
+      { source: '/watchlist', destination: '/explore', permanent: true },
+      { source: '/surfaces/agentverse', destination: '/explore', permanent: true },
       { source: '/how-we-rank', destination: '/methodology', permanent: true },
       { source: '/for-agents', destination: '/developers#for-agents', permanent: true },
       { source: '/api-docs', destination: '/developers#api', permanent: true },
