@@ -124,11 +124,33 @@ function isOk(res) {
   return res && res.status >= 200 && res.status < 300;
 }
 
+// Soft-404 guard (2026-06-12): many sites (SPAs, GitHub Pages) return 200 HTML
+// for ANY path, so a 2xx on /.well-known/* proves nothing. A surface only
+// counts if the body parses as JSON AND carries at least one key the spec
+// actually requires. This bug inflated the PCS-3 cohort with awesome-list
+// repos "supporting" x402/A2A/MCP.
+async function probeJsonShape(url, timeoutMs, requiredAnyKeys) {
+  const res = await probe(url, timeoutMs);
+  if (!isOk(res)) return false;
+  let text;
+  try { text = await res.text(); } catch { return false; }
+  const t = text.trim();
+  if (!t || t[0] === '<') return false; // HTML soft-404
+  let parsed;
+  try { parsed = JSON.parse(t); } catch { return false; }
+  if (typeof parsed !== 'object' || parsed === null) return false;
+  const keys = Object.keys(Array.isArray(parsed) ? (parsed[0] || {}) : parsed);
+  return requiredAnyKeys.some((k) => keys.includes(k));
+}
+
 async function checkOpenApi(base, timeoutMs) {
-  const a = await probe(`${base}/openapi.json`, timeoutMs);
-  if (isOk(a)) return true;
+  if (await probeJsonShape(`${base}/openapi.json`, timeoutMs, ['openapi', 'swagger'])) return true;
   const b = await probe(`${base}/openapi.yaml`, timeoutMs);
-  return isOk(b);
+  if (!isOk(b)) return false;
+  try {
+    const text = (await b.text()).trim();
+    return text[0] !== '<' && /(^|\n)\s*(openapi|swagger)\s*:/.test(text.slice(0, 2000));
+  } catch { return false; }
 }
 
 async function checkRobotsAllow(base, timeoutMs) {
@@ -137,6 +159,7 @@ async function checkRobotsAllow(base, timeoutMs) {
   let text;
   try { text = await res.text(); } catch { return false; }
   if (!text || text.length === 0) return false;
+  if (text.trim().startsWith('<')) return false; // HTML soft-404, not a robots.txt
 
   // Heuristic: not "entirely Disallow: /". Any Allow: line, or any
   // Disallow with no path/comment-only, counts as permissive.
@@ -162,9 +185,9 @@ async function scanAgent(agent, timeoutMs) {
   }
 
   const [x402, agentCard, mcp, openapi, robotsAllow] = await Promise.all([
-    probe(`${base}/.well-known/x402`, timeoutMs).then(isOk),
-    probe(`${base}/.well-known/agent-card.json`, timeoutMs).then(isOk),
-    probe(`${base}/.well-known/mcp.json`, timeoutMs).then(isOk),
+    probeJsonShape(`${base}/.well-known/x402`, timeoutMs, ['x402Version', 'accepts', 'resources']),
+    probeJsonShape(`${base}/.well-known/agent-card.json`, timeoutMs, ['skills', 'capabilities', 'protocolVersion', 'url']),
+    probeJsonShape(`${base}/.well-known/mcp.json`, timeoutMs, ['tools', 'endpoint', 'mcpServers', 'protocol', 'transports']),
     checkOpenApi(base, timeoutMs),
     checkRobotsAllow(base, timeoutMs),
   ]);
