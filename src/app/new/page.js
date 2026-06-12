@@ -231,7 +231,7 @@ export default async function NewAgentsPage() {
       <div className="border-t border-white/[0.06] pt-6 flex flex-wrap gap-4 text-xs text-white/35">
         <Link href="/rankings" className="hover:text-white/70 transition-colors">Rankings →</Link>
         <Link href="/ghost-index" className="hover:text-white/70 transition-colors">Ghost Index →</Link>
-        <Link href="/trends" className="hover:text-white/70 transition-colors">Trends →</Link>
+        <Link href="/agent-economy-index" className="hover:text-white/70 transition-colors">Economy →</Link>
       </div>
 
     </main>

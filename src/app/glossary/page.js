@@ -150,6 +150,29 @@ export default function GlossaryPage() {
           ))}
         </div>
 
+        {/* Concepts & explainers — de-orphans the standalone explainer pages (B22 follow-up) */}
+        <div className="mt-12 rounded-lg border border-white/[0.07] bg-white/[0.015] px-5 py-4">
+          <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-white/60 mb-3">Deeper explainers</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+            {[
+              { href: '/x402-explained', label: 'x402, explained' },
+              { href: '/erc-8004-explained', label: 'ERC-8004, explained' },
+              { href: '/mcp-vs-a2a', label: 'MCP vs. A2A' },
+              { href: '/how-agents-pay', label: 'How agents pay' },
+              { href: '/how-agents-prove-identity', label: 'How agents prove identity' },
+              { href: '/agent-trust-explained', label: 'Agent trust, explained' },
+              { href: '/agent-economy', label: 'The agent economy' },
+              { href: '/ai-agent-frameworks', label: 'AI agent frameworks' },
+              { href: '/agents-with-agent-json', label: 'agent.json adoption' },
+              { href: '/agent-payments-stack', label: 'The agent payments stack' },
+            ].map(({ href, label }) => (
+              <Link key={href} href={href} className="font-mono text-xs text-white/45 hover:text-white/80 transition-colors">
+                {label} →
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* Footer */}
         <div className="border-t border-white/[0.06] mt-12 pt-6 flex flex-wrap gap-4 text-xs text-white/35">
           <Link href="/methodology" className="hover:text-white/70 transition-colors">Methodology →</Link>
