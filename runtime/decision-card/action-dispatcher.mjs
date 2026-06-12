@@ -88,16 +88,13 @@ function xOauthHeader({ method, url }) {
 }
 
 async function xPost(body) {
-  const url = 'https://api.twitter.com/2/tweets';
-  const auth = xOauthHeader({ method: 'POST', url });
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { Authorization: auth, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`X API ${res.status}: ${JSON.stringify(json).slice(0, 300)}`);
-  return json;
+  // HARD RULE (Kris, 2026-06-12): no autonomous posting, ever — his account was
+  // suspended for automation. This function is intentionally disabled so no
+  // code path (handlers, executors, future workers) can post programmatically.
+  // Drafts go to Telegram via trustFallPost; Kris posts manually.
+  throw new Error(
+    `AUTONOMOUS POSTING DISABLED by hard rule 2026-06-12 — deliver a draft to Kris instead. Attempted payload: ${JSON.stringify(body).slice(0, 120)}`
+  );
 }
 
 // ── Quality gate — basic safety checks before any public post ────────────────
@@ -253,29 +250,31 @@ async function handleBuildSuggestion(action) {
 // Trust-fall: auto-posts without card approval for tightly-scoped events.
 // Called by trust-fall-checker.mjs, not via the approval queue.
 export async function trustFallPost({ text, platform = 'x', reason }) {
+  // ── HARD RULE (Kris, 2026-06-12): NO AUTONOMOUS POSTING, EVER. ──────────────
+  // Kris's X account was suspended months ago because of automated posting.
+  // He personally copies and pushes every post. This function therefore
+  // delivers a DRAFT to his Telegram instead of posting — same signature,
+  // same quality gate, so every caller (ghost-index, tier-promotion,
+  // agent-of-week, claim-outreach) keeps working without modification.
   const gate = qualityGate(text);
   if (!gate.ok) throw new Error(`trust-fall quality gate: ${gate.reason}`);
-  if (platform === 'x') {
-    const json = await xPost({ text });
-    const id = json?.data?.id;
-    await logAction({ type: 'trust-fall-post-x', status: 'posted', reason, tweet_id: id, text });
-    return { ok: true, tweet_id: id, url: id ? `https://x.com/agentcrush_xyz/status/${id}` : null };
-  }
-  if (platform === 'fc') {
-    const NEYNAR = process.env.NEYNAR_API_KEY;
-    const SIGNER = process.env.NEYNAR_SIGNER_UUID;
-    if (!NEYNAR || !SIGNER) throw new Error('Farcaster signer not configured');
-    const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
+
+  const label = platform === 'fc' ? 'Farcaster' : 'X';
+  const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  const CHAT  = process.env.TELEGRAM_CHAT_ID;
+  if (TOKEN && CHAT) {
+    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
       method: 'POST',
-      headers: { 'api_key': NEYNAR, 'content-type': 'application/json' },
-      body: JSON.stringify({ signer_uuid: SIGNER, text }),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(`Neynar ${res.status}: ${JSON.stringify(json).slice(0, 200)}`);
-    await logAction({ type: 'trust-fall-post-fc', status: 'posted', reason, cast_hash: json?.cast?.hash, text });
-    return { ok: true, cast_hash: json?.cast?.hash };
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: CHAT,
+        text: `📝 DRAFT ${label} post (${reason || 'scheduled worker'}) — copy & post manually:\n\n${text}`,
+        disable_web_page_preview: true,
+      }),
+    }).catch(() => {});
   }
-  throw new Error(`unknown platform: ${platform}`);
+  await logAction({ type: `trust-fall-DRAFT-${platform}`, status: 'drafted_to_telegram', reason, text });
+  return { ok: true, drafted: true, tweet_id: null, cast_hash: null, url: null };
 }
 
 // ── Registry ─────────────────────────────────────────────────────────────────
