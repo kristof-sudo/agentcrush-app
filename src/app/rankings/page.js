@@ -419,6 +419,25 @@ export default async function RankingsHub() {
         </p>
       </Link>
 
+      {/* ── x402 Merchant Directory callout (Phase 3.5 Week 4) ──────────── */}
+      <Link
+        href="/rankings/x402-merchants"
+        className="group block mb-4 rounded-lg border border-[#39ff14]/20 bg-gradient-to-br from-[#39ff14]/[0.04] to-transparent hover:border-[#39ff14]/40 transition-colors px-5 py-4"
+      >
+        <div className="flex items-baseline gap-2 mb-2">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-[#39ff14]">NEW · x402</span>
+          <span className="font-mono text-[9px] text-white/30">marketplace-reported</span>
+          <span className="ml-auto font-mono text-[10px] text-white/40 group-hover:text-white/70 transition-colors">open →</span>
+        </div>
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <span className="font-bold text-white text-base">x402 Merchant Directory</span>
+          <span className="text-xs text-white/45">ranked by paid calls, not listings</span>
+        </div>
+        <p className="mt-2 text-xs text-white/55 leading-relaxed max-w-3xl">
+          Which machine-payable endpoints do agents actually pay? 30-day paid calls and unique paying wallets per merchant — the demand-ranked view that listing counts can&apos;t fake.
+        </p>
+      </Link>
+
       {/* ── Agent Payments Stack callout (Phase 3.5 Week 1) ─────────────── */}
       <Link
         href="/rankings/agent-payments-stack"
