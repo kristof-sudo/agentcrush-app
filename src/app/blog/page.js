@@ -5,6 +5,16 @@ import { useState } from 'react'
 
 const POSTS = [
   {
+    slug: 'crawlers-vs-wallets',
+    category: 'Findings',
+    image: '/og-crawlers-vs-wallets.png',
+    imageAlt: 'Crawlers vs. wallets — AgentCrush',
+    title: "Crawlers vs. wallets: our first day of measuring the agent economy's till",
+    date: 'June 12, 2026',
+    summary:
+      'We turned on payment telemetry: 1,376 price quotes served to machines in half a day, zero payments. A taxonomy of the machines that window-shop, where the real wallets spend, and the stat we almost published wrong.',
+  },
+  {
     slug: 'agent-payments-stack-live',
     category: 'Findings',
     image: '/og-agent-payments-stack.png',
