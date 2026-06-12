@@ -157,8 +157,31 @@ async function gather(weekId, parsed) {
     .gte('snapshot_date', start)
     .lte('snapshot_date', end)
 
+  // Revenue stats — service-role required; degrade gracefully to 0 if unavailable
+  let x402Calls = 0
+  let proSubscribers = 0
+  try {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (serviceKey) {
+      const sdb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceKey)
+      const { data: paid } = await sdb
+        .from('api_telemetry_daily')
+        .select('count')
+        .eq('outcome', 'paid_pass')
+        .gte('day', start)
+        .lte('day', end)
+      if (paid) x402Calls = paid.reduce((s, r) => s + (r.count || 0), 0)
+      const { count: proCount } = await sdb
+        .from('api_keys')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .eq('plan', 'pro')
+      proSubscribers = proCount || 0
+    }
+  } catch { /* tables not yet applied or service key absent — show 0 */ }
+
   const ecosystem = await readEcosystemSummary(weekId)
-  return { top, total: total || 0, evidenceRanked: erTotal || 0, topUp: topUp || [], topDown: topDown || [], snapshotsWeek: snapshotsWeek || 0, ecosystem }
+  return { top, total: total || 0, evidenceRanked: erTotal || 0, topUp: topUp || [], topDown: topDown || [], snapshotsWeek: snapshotsWeek || 0, ecosystem, x402Calls, proSubscribers }
 }
 
 export default async function WeeklyDynamicPage({ params }) {
@@ -299,7 +322,7 @@ export default async function WeeklyDynamicPage({ params }) {
         {/* Data box */}
         <div className="rounded-lg border border-white/[0.06] bg-white/[0.01] px-5 py-4 mb-8">
           <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">This week in data</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="rounded border border-white/[0.06] px-3 py-2.5">
               <p className="text-base font-bold font-mono text-white">{data.total.toLocaleString()}</p>
               <p className="text-[10px] text-white/30 mt-0.5">Agents indexed</p>
@@ -315,6 +338,14 @@ export default async function WeeklyDynamicPage({ params }) {
             <div className="rounded border border-white/[0.06] px-3 py-2.5">
               <p className="text-base font-bold font-mono text-white">{data.topUp.length + data.topDown.length}</p>
               <p className="text-[10px] text-white/30 mt-0.5">Notable moves</p>
+            </div>
+            <div className="rounded border border-white/[0.06] px-3 py-2.5">
+              <p className="text-base font-bold font-mono text-white">{data.x402Calls.toLocaleString()}</p>
+              <p className="text-[10px] text-white/30 mt-0.5">x402 paid calls</p>
+            </div>
+            <div className="rounded border border-white/[0.06] px-3 py-2.5">
+              <p className="text-base font-bold font-mono text-white">{data.proSubscribers.toLocaleString()}</p>
+              <p className="text-[10px] text-white/30 mt-0.5">Pro subscribers</p>
             </div>
           </div>
         </div>
