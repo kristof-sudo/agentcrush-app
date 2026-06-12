@@ -8,6 +8,9 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+### 2026-06-12
+- `migrations/20260526_1200_create_a2a_interactions.sql` — (ported from the May Seeker-lab branch with the a2a-verify endpoint, PR pending) `a2a_interactions` log table for the $0.001 A2A pre-transaction verification endpoint. Service-role write, used by /api/agent/{handle}/a2a-verify. **STATUS: PENDING APPLY by Kris (needed before the Seeker A2A demo run).**
+
 ### 2026-06-11
 - `migrations/20260611_2100_glama_mcp_candidates.sql` — B8 MCP v2 ingestion staging. Creates `glama_mcp_candidates` (handle unique, repo/description/tool_count/attributes, promoted_at + promoted_agent_id). Populated weekly by `runtime/glama-mcp-fetcher.mjs` (dry-run default). Staging — NOT agents — because Glama's list API has no quality discriminator and bulk agent inserts would move the Ghost Index denominator; promotion is a separate Kris-gated step joining GitHub evidence (Virtuals-pipeline precedent). Service-role only.
 - `migrations/20260611_2000_pcs_view.sql` — B7 Protocol Compatibility Score. Creates `agent_protocol_compatibility_v1` view: 0-4 integer per agent (ERC-8004 confidence-gated >= 0.75 / x402 / A2A agent card / MCP), all from already-collected signals (scanner JSONB, erc8004 registrations, payment_rails entries, mcp_server category). Anon SELECT granted (free open data). Consumed by `/api/pcs/v1` (distribution + leaderboard + per-handle). Degrades gracefully until applied.
