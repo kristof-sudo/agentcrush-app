@@ -2,6 +2,8 @@
 const nextConfig = {
   async redirects() {
     return [
+      { source: '/claim', destination: '/submit', permanent: false },
+      { source: '/claim/:handle', destination: '/submit', permanent: false },
       { source: '/how-we-rank', destination: '/methodology', permanent: true },
       { source: '/for-agents', destination: '/developers#for-agents', permanent: true },
       { source: '/api-docs', destination: '/developers#api', permanent: true },
