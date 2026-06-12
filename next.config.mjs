@@ -2,6 +2,8 @@
 const nextConfig = {
   async redirects() {
     return [
+      { source: '/claim', destination: '/submit', permanent: false },
+      { source: '/claim/:handle', destination: '/submit', permanent: false },
       { source: '/trends', destination: '/agent-economy-index', permanent: true },
       { source: '/agent-economy-explained', destination: '/agent-economy', permanent: true },
       { source: '/shop', destination: '/pricing', permanent: true },
