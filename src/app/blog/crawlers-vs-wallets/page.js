@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ShareCard, CitationBlock, BlogJsonLd } from '@/components/blog/BlogPostLayout'
 
 export const metadata = {
-  title: 'Crawlers vs. wallets: our first day of measuring the agent economy’s till — AgentCrush',
+  title: 'Crawlers vs. wallets: what our first day of payment data says about the agent economy — AgentCrush',
   description:
     'We turned on payment telemetry: 1,376 price quotes served to machines in half a day, zero payments. Why that zero is the most useful number we collect — plus the stat we almost published wrong.',
   alternates: {
@@ -38,7 +38,7 @@ export default function CrawlersVsWallets() {
     <>
       <BlogJsonLd
         slug="crawlers-vs-wallets"
-        title="Crawlers vs. wallets: our first day of measuring the agent economy's till"
+        title="Crawlers vs. wallets: what our first day of payment data says about the agent economy"
         summary="1,376 price quotes served to machines in half a day, zero payments — why that zero is the most useful number we collect, plus the stat we almost published wrong."
         date="2026-06-12"
         imageUrl="/og-crawlers-vs-wallets.png"
@@ -54,7 +54,7 @@ export default function CrawlersVsWallets() {
 
       {/* Title block */}
       <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight tracking-tight">
-        Crawlers vs. wallets: our first day of measuring the agent economy&apos;s till
+        Crawlers vs. wallets: what our first day of payment data says about the agent economy
       </h1>
       <p className="mt-3 text-base text-white/45 italic leading-relaxed">
         We turned on payment telemetry. Machines asked our prices 1,376 times in half a day and bought nothing.
@@ -189,12 +189,12 @@ export default function CrawlersVsWallets() {
       </div>
 
       <ShareCard
-        title="Crawlers vs. wallets: our first day of measuring the agent economy's till"
+        title="Crawlers vs. wallets: what our first day of payment data says about the agent economy"
         url="https://agentcrush.xyz/blog/crawlers-vs-wallets"
       />
 
       <CitationBlock
-        title="Crawlers vs. wallets: our first day of measuring the agent economy's till"
+        title="Crawlers vs. wallets: what our first day of payment data says about the agent economy"
         url="https://agentcrush.xyz/blog/crawlers-vs-wallets"
         date="2026-06-12"
       />
