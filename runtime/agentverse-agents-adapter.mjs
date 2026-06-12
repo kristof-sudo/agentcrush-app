@@ -220,6 +220,29 @@ async function fetchAllAgents() {
       body: JSON.stringify(body),
     });
     if (!res.ok) {
+      // Partial-failure tolerance (2026-06-12): one transient 5xx mid-pagination
+      // used to kill the whole run and discard every page already fetched
+      // (Agentverse 503'd at page 7 of 200, twice in one day). Retry once after
+      // a backoff; if still failing, keep what we have and proceed to upsert.
+      if (res.status >= 500) {
+        console.warn(`[agentverse-adapter] HTTP ${res.status} on page ${pageNum} — backing off 30s and retrying once`);
+        await sleep(30000);
+        const retry = await fetch(ENDPOINT, { method: 'POST', headers, body: JSON.stringify(body) });
+        if (retry.ok) {
+          const rjson = await retry.json();
+          if (Array.isArray(rjson.agents)) {
+            if (reportedTotal == null && typeof rjson.total === 'number') reportedTotal = rjson.total;
+            all.push(...rjson.agents);
+            console.log(`[agentverse-adapter] page ${pageNum} (retry): fetched ${rjson.agents.length} (running total ${all.length})`);
+            if (rjson.agents.length === 0 || rjson.agents.length < PAGE_LIMIT) break;
+            offset += rjson.agents.length;
+            await sleep(PAGE_DELAY_MS);
+            continue;
+          }
+        }
+        console.warn(`[agentverse-adapter] page ${pageNum} still failing (${retry.status}) — proceeding with ${all.length} agents fetched so far (PARTIAL RUN)`);
+        break;
+      }
       throw new Error(`[agentverse-adapter] HTTP ${res.status} from ${ENDPOINT} (page ${pageNum}, offset ${offset})`);
     }
     const json = await res.json();
