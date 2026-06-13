@@ -1,6 +1,11 @@
-# NOTE: lives at docs/ci/ci.yml because the local GitHub token lacks the
-# workflow scope. Activate by moving to .github/workflows/ci.yml (GitHub web
-# UI "Add file", or after: gh auth refresh -h github.com -s workflow).
+# NOTE: lives at docs/ci/ci.yml because the GitHub token lacks the workflow scope.
+# To activate: copy this file to .github/workflows/ci.yml via the GitHub web UI
+# (kristof-sudo/agentcrush-app → Add file → Create new file → path .github/workflows/ci.yml)
+# or after: gh auth refresh -h github.com -s workflow
+#
+# Also required: add SUPABASE_ANON_KEY as a GitHub Actions secret:
+# Settings → Secrets and variables → Actions → New repository secret
+# Value: NEXT_PUBLIC_SUPABASE_ANON_KEY from .env.local (public anon key, safe)
 name: CI
 
 on:
@@ -13,9 +18,7 @@ on:
     - cron: '0 5 * * *'
 
 env:
-  # Publishable by design: the anon key ships in every browser bundle.
   NEXT_PUBLIC_SUPABASE_URL: https://hwkvkfjnffxrfirhkitj.supabase.co
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
 
 jobs:
   view-contracts:
@@ -27,7 +30,29 @@ jobs:
         with:
           node-version: 22
       - name: View contracts (read-only, anon key)
-        run: node tests/view-contracts.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "::warning::SUPABASE_ANON_KEY Actions secret not set — view-contract check skipped."
+            echo "Add it at: Settings → Secrets and variables → Actions → New repository secret"
+            echo "Value: the NEXT_PUBLIC_SUPABASE_ANON_KEY from your .env.local (it is a public anon key, safe to store as a secret)"
+            exit 0
+          fi
+          node tests/view-contracts.mjs
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
 
   build:
     name: Production build
@@ -40,4 +65,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://hwkvkfjnffxrfirhkitj.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npm run build

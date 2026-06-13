@@ -29,12 +29,43 @@ until an urgent restoration migration. That incident class is now guarded.
    change to scoring inputs/weights is an explicit operator (Kris) decision —
    a migration that alters them needs that decision referenced in its header.
 
+## View → consumer map
+
+| View | Page / API route |
+|---|---|
+| `agent_score_v2_top50_public_candidate` | `/rankings`, `/rankings/developer-agents` |
+| `agent_score_model_family_v1` | `/rankings/model-families` |
+| `agent_score_tokenized_v1` | `/rankings/tokenized-agents` |
+| `agent_score_service_v1` | `/rankings/service-agents` |
+| `agent_score_mcp_server_v1` | `/rankings/mcp-servers` |
+| `ghost_index_daily`, `ghost_index_live` | `/ghost-index`, `/api/ghost-index/v1` |
+| `changes_today_v1` | `/changes`, `/api/changes/v1`, `/changes.xml` |
+| `agent_protocol_compatibility_v1` | `/api/pcs/v1` |
+
+When adding a new view consumed by a page, add it to `tests/view-contracts.mjs` in
+the same PR as the page. Mark it `optional: true` until the migration is confirmed
+applied, then remove the flag in a follow-up.
+
 ## CI
 
-`.github/workflows/ci.yml`:
-- every PR + push to main: production build + view contracts
+`docs/ci/ci.yml` → move to `.github/workflows/ci.yml` to activate (Kris action — see PR #[B21]):
+- every PR + push to main: lint + production build + view contracts
 - nightly 05:00 UTC: view contracts against live prod (catches SQL-editor
   applies with no accompanying commit)
 
-The anon key used is publishable by design (it ships in every browser
-bundle); CI prefers the `SUPABASE_ANON_KEY` repo variable/secret if set.
+**Required secret:** add `SUPABASE_ANON_KEY` at
+`Settings → Secrets and variables → Actions → New repository secret`.
+Value: the `NEXT_PUBLIC_SUPABASE_ANON_KEY` from `.env.local`. It is the
+public anon key — publishable by design, safe to store as a repo secret.
+Until configured, CI warns and skips the view-contract step rather than
+blocking PRs.
+
+## When a contract fails
+
+1. Read the failure: it names the view and the missing columns.
+2. Check `migrations/MIGRATION_LOG.md` for recent migrations touching that view.
+3. If a migration broke it: revert or issue a restore migration, then update the
+   consumer page and the contract in one PR.
+4. Never mark a failing contract `optional: true` to silence CI — that defeats
+   the guard. `optional` is only valid for views whose migration is genuinely
+   pending apply.

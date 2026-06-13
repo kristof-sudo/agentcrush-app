@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node tests/view-contracts.mjs",
     "create-wallet": "node scripts/cdp-create-server-wallet.mjs",
     "create-buyer-wallet": "node scripts/cdp-create-buyer-wallet.mjs",
     "check-wallet": "node scripts/cdp-check-wallet-balance.mjs",
