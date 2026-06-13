@@ -56,12 +56,32 @@ const TODAY = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
 
 console.log(`[snapshot] date=${TODAY}`)
 
+// Paginated fetch — PostgREST caps at 1000 rows/request, so an unpaginated
+// select silently dropped agents beyond 1000 (1359 indexed -> 359 never
+// snapshotted, leaving gaps in the snapshot moat, weekly_delta, and reliability).
+async function fetchAllRows(table, columns, orderCol, ascending = true, filterFn = null) {
+  const PAGE = 1000
+  let from = 0
+  const all = []
+  for (;;) {
+    let q = db.from(table).select(columns).order(orderCol, { ascending }).range(from, from + PAGE - 1)
+    if (filterFn) q = filterFn(q)
+    const { data, error } = await q
+    if (error) return { data: null, error }
+    all.push(...(data || []))
+    if (!data || data.length < PAGE) break
+    from += PAGE
+  }
+  return { data: all, error: null }
+}
+
 // ── 1. Load all agents ─────────────────────────────────────────────────────
 
-const { data: agents, error: agentsErr } = await db
-  .from('agents')
-  .select('id, visibility_score, reputation_score, weekly_delta, claim_status, identity_type, activity_status, last_event_at')
-  .order('id', { ascending: true })
+const { data: agents, error: agentsErr } = await fetchAllRows(
+  'agents',
+  'id, visibility_score, reputation_score, weekly_delta, claim_status, identity_type, activity_status, last_event_at',
+  'id'
+)
 
 if (agentsErr) {
   console.error('[snapshot] Failed to load agents:', agentsErr.message)
@@ -74,10 +94,11 @@ console.log(`[snapshot] agents loaded: ${agents.length}`)
 
 // Pull all rankings and keep the highest-ranked (lowest global_rank) per agent.
 // This avoids a per-agent query loop.
-const { data: rankings, error: rankingsErr } = await db
-  .from('rankings')
-  .select('agent_id, global_rank, score_total, score_visibility, score_reputation')
-  .order('global_rank', { ascending: true })
+const { data: rankings, error: rankingsErr } = await fetchAllRows(
+  'rankings',
+  'agent_id, global_rank, score_total, score_visibility, score_reputation',
+  'global_rank'
+)
 
 if (rankingsErr) {
   console.error('[snapshot] Failed to load rankings:', rankingsErr.message)
@@ -94,10 +115,9 @@ console.log(`[snapshot] rankings loaded: ${rankings.length} rows, ${Object.keys(
 
 // ── 3. Check which agents already have a snapshot today ───────────────────
 
-const { data: existing, error: existingErr } = await db
-  .from('agent_snapshots')
-  .select('agent_id')
-  .eq('snapshot_date', TODAY)
+const { data: existing, error: existingErr } = await fetchAllRows(
+  'agent_snapshots', 'agent_id', 'agent_id', true, (q) => q.eq('snapshot_date', TODAY)
+)
 
 if (existingErr) {
   console.error('[snapshot] Failed to check existing snapshots:', existingErr.message)
@@ -199,10 +219,9 @@ console.log(`[snapshot] done. ${written} snapshots written for ${TODAY}`)
 const SEVEN_DAYS_AGO = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 console.log(`[snapshot] computing weekly_delta vs ${SEVEN_DAYS_AGO}`)
 
-const { data: oldSnaps, error: oldErr } = await db
-  .from('agent_snapshots')
-  .select('agent_id, rank')
-  .eq('snapshot_date', SEVEN_DAYS_AGO)
+const { data: oldSnaps, error: oldErr } = await fetchAllRows(
+  'agent_snapshots', 'agent_id, rank', 'agent_id', true, (q) => q.eq('snapshot_date', SEVEN_DAYS_AGO)
+)
 
 if (oldErr) {
   console.warn('[snapshot] Could not load 7-day-old snapshots — weekly_delta skipped:', oldErr.message)
@@ -214,10 +233,9 @@ if (oldErr) {
 
   console.log(`[snapshot] 7d reference: ${Object.keys(rankMap7d).length} agents with rank on ${SEVEN_DAYS_AGO}`)
 
-  const { data: todaySnaps, error: todayErr } = await db
-    .from('agent_snapshots')
-    .select('agent_id, rank')
-    .eq('snapshot_date', TODAY)
+  const { data: todaySnaps, error: todayErr } = await fetchAllRows(
+    'agent_snapshots', 'agent_id, rank', 'agent_id', true, (q) => q.eq('snapshot_date', TODAY)
+  )
 
   if (todayErr) {
     console.warn('[snapshot] Could not load today snapshots — weekly_delta skipped:', todayErr.message)
