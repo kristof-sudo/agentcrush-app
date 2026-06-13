@@ -14,6 +14,7 @@
  */
 
 import { evaluateTrust, TRUST_EVAL_CORS as CORS } from '@/lib/trustEval'
+import { trackHit } from '@/lib/telemetry'
 
 export const runtime = 'nodejs'
 
