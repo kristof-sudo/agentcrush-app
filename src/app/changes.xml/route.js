@@ -42,21 +42,22 @@ function describe(row) {
 }
 
 export async function GET() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
+  const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   let rows = []
-  try {
-    const { data } = await supabase
-      .from('changes_today_v1')
-      .select('change_type, handle, display_name, detail, primary_category, happened_at')
-      .order('happened_at', { ascending: false })
-      .limit(100)
-    rows = data || []
-  } catch {
-    /* feed renders empty if the view is absent */
+  if (sbUrl && sbKey) {
+    try {
+      const supabase = createClient(sbUrl, sbKey)
+      const { data } = await supabase
+        .from('changes_today_v1')
+        .select('change_type, handle, display_name, detail, primary_category, happened_at')
+        .order('happened_at', { ascending: false })
+        .limit(100)
+      rows = data || []
+    } catch {
+      /* feed renders empty if the view is absent */
+    }
   }
 
   const items = rows
