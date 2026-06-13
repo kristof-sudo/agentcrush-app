@@ -1,5 +1,6 @@
 # AgentCrush Migration Log
 
+
 ## Status
 
 This log records the intended canonical history of production database changes from the Operating Model Reset onward.
@@ -7,6 +8,10 @@ This log records the intended canonical history of production database changes f
 Older historical DB changes existed before this process was formalized and may not yet be fully reconstructed here.
 
 ## Entries
+
+## 2026-06-13 — agent reliability score (foundation)
+- `20260613_1100_agent_reliability.sql` — adds `is_alive` to `agent_snapshots` (forward-collected daily liveness, Ghost Index rule) + `agent_reliability_v1` view (rolling 30d/90d uptime with honest `coverage` states + immediately-accurate currently_alive/days_since_active). Seeds today's rows honestly. Idempotent. Powers `/api/reliability/v1`. **Apply before deploying the updated snapshot worker** (worker probes for the column and degrades safely, but applying first avoids a day of skipped liveness capture).
+
 
 ### 2026-06-12
 - `migrations/20260526_1200_create_a2a_interactions.sql` — (ported from the May Seeker-lab branch with the a2a-verify endpoint, PR pending) `a2a_interactions` log table for the $0.001 A2A pre-transaction verification endpoint. Service-role write, used by /api/agent/{handle}/a2a-verify. **STATUS: PENDING APPLY by Kris (needed before the Seeker A2A demo run).**
