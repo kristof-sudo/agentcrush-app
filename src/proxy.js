@@ -310,6 +310,48 @@ const x402Handler = paymentProxy(
       },
     },
 
+    '/api/agent/:handle/a2a-verify': {
+      accepts: [
+        {
+          scheme: 'exact',
+          price: '$0.001',
+          network: 'eip155:8453',
+          payTo: PAY_TO,
+        },
+      ],
+      description:
+        'A2A pre-transaction verification for an AI agent on AgentCrush. Returns a clear proceed/caution/reject decision with trust context. Designed for agent-to-agent use before initiating a transaction. Each call is logged as evidence.',
+      mimeType: 'application/json',
+      extensions: {
+        bazaar: {
+          discoverable: true,
+          category: 'reputation',
+          tags: ['ai-agents', 'trust', 'a2a', 'verification', 'commerce', 'kya', 'mobile-agents'],
+          ...declareDiscoveryExtension({
+            method: 'GET',
+            pathParams: { handle: 'seekerclaw' },
+            pathParamsSchema: {
+              properties: {
+                handle: { type: 'string', description: 'Agent handle slug to verify (e.g. "autogpt", "crewai")' },
+              },
+              required: ['handle'],
+            },
+            output: {
+              example: {
+                handle: 'crewai',
+                name: 'CrewAI',
+                decision: 'proceed',
+                reason: 'Agent is evidence-ranked, verified, and has a strong AgentCrush score.',
+                trust: { score: 142, tier: 'evidence_ranked', verified: true, rank: 1 },
+                queried_at: '2026-05-26T12:00:00Z',
+                source: 'https://agentcrush.xyz/agent/crewai',
+              },
+            },
+          }).bazaar,
+        },
+      },
+    },
+
     '/api/agent/:handle/verification-status': {
       accepts: [
         {
@@ -394,5 +436,6 @@ export const config = {
     '/api/trust/evaluate/full',
     '/api/oracle/attest',
     '/api/agents/find/full',
+    '/api/agent/:path*/a2a-verify',
   ],
 }
