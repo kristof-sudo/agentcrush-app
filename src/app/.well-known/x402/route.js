@@ -72,6 +72,21 @@ const DISCOVERY = {
       ],
     },
     {
+      url: 'https://agentcrush.xyz/api/agents/find/full',
+      method: 'GET',
+      description:
+        'Agent Discovery: ranked shortlist of AI agents that can do X and are safe to pay. Requires ?q=<capability> (e.g. "trading", "risk scoring"); optional filters category, rails, alive, min_tier, limit. Each candidate includes trust tier, liveness verdict, verified payment rails, scores, and endpoints. Top-3 preview free at /api/agents/find.',
+      mimeType: 'application/json',
+      accepts: [
+        {
+          scheme: 'exact',
+          price: '$0.05',
+          network: 'eip155:8453',
+          payTo: '0x58e632Fa698383820FFC22156352C9836790E2c0',
+        },
+      ],
+    },
+    {
       url: 'https://agentcrush.xyz/api/oracle/attest',
       method: 'GET',
       description:
