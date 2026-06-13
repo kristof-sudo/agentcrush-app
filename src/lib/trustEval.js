@@ -100,6 +100,7 @@ export async function evaluateTrust({ handle, depth = 'standard' }) {
     signals_total:       signalsTotal,
     score:               snap?.score ?? null,
     rank:                snap?.rank ?? null,
+    created_at:          agent.created_at ?? null,
     evaluated_at:        new Date().toISOString(),
     methodology_version: 'v1.0',
     methodology_url:     'https://agentcrush.xyz/methodology',
