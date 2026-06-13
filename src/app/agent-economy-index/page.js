@@ -97,7 +97,7 @@ export default async function AgentEconomyIndexPage() {
   ] = await Promise.all([
     safeCount(supabase, 'agents', (q) => q.neq('tier', 'archived')),
     safeCount(supabase, 'agents', (q) => q.eq('tier', 'evidence_ranked')),
-    safeCount(supabase, 'agent_daily_snapshots', (q) => q),
+    safeCount(supabase, 'agent_snapshots', (q) => q), // live table; agent_daily_snapshots is legacy/frozen (2026-05-15)
     supabase
       .from('agents')
       .select('handle, display_name, weekly_delta, tier')
