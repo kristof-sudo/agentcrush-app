@@ -42,6 +42,7 @@ const MAX_ITEMS = maxIdx !== -1 ? (parseInt(args[maxIdx + 1], 10) || Infinity) :
 const limitPagesIdx = args.indexOf('--limit-pages');
 const LIMIT_PAGES = limitPagesIdx !== -1 ? (parseInt(args[limitPagesIdx + 1], 10) || Infinity) : Infinity;
 const PAGE_SIZE = 100;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const PAGE_DELAY_MS = 1000; // 1s between page fetches
 const ENDPOINT = 'https://api.virtuals.io/api/virtuals';
 
@@ -251,7 +252,19 @@ async function fetchAllAgents() {
 
   while (true) {
     const url = `${ENDPOINT}?pagination%5Bpage%5D=${page}&pagination%5BpageSize%5D=${PAGE_SIZE}`;
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    let res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok && res.status >= 500) {
+      // Partial-failure tolerance (2026-06-12): transient 5xx mid-pagination
+      // killed full runs twice today. One retry after backoff; if still down,
+      // keep what we have (PARTIAL RUN) instead of discarding fetched pages.
+      console.warn(`[virtuals-adapter] HTTP ${res.status} on page ${page} — backing off 30s and retrying once`);
+      await sleep(30000);
+      res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) {
+        console.warn(`[virtuals-adapter] page ${page} still failing (${res.status}) — proceeding with ${all.length} agents fetched so far (PARTIAL RUN)`);
+        break;
+      }
+    }
     if (!res.ok) {
       throw new Error(`[virtuals-adapter] HTTP ${res.status} from ${url}`);
     }
