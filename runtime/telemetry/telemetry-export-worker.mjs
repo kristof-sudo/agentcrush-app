@@ -67,6 +67,41 @@ totals.paid_conversion_pct = totals.gated_402 > 0
   ? Math.round((totals.paid_pass / totals.gated_402) * 1000) / 10
   : null;
 
+// ── Honest funnel segmentation ────────────────────────────────────────────
+// The headline gated_402 is dominated by automated probing of a few per-handle
+// endpoints (/api/agent/<handle>/trust-summary|history|verification-status for
+// a handful of famous names). That inflates "quotes/day" ~500x over real
+// purchase intent. Split the funnel so the conversion denominator reflects the
+// flagship paid products we actually sell, not crawler noise.
+// See brain Notes/2026-06-13-funnel-reality-decomposition.md.
+const PER_HANDLE_RE = /^\/api\/agent\/[^/]+\//; // /api/agent/<handle>/... (NOT /api/agents/)
+const isPerHandle = (ep) => PER_HANDLE_RE.test(ep);
+const sumGated = (pred) => rows.filter((r) => r.outcome === 'gated_402' && pred(r.endpoint)).reduce((n, r) => n + r.count, 0);
+const sumPaid  = (pred) => rows.filter((r) => (r.outcome === 'paid_pass' || r.outcome === 'pro_pass') && pred(r.endpoint)).reduce((n, r) => n + r.count, 0);
+
+const gatedFlagship  = sumGated((ep) => !isPerHandle(ep));
+const gatedPerHandle = sumGated((ep) => isPerHandle(ep));
+const paidFlagship   = sumPaid((ep) => !isPerHandle(ep));
+
+// Concentration: how much of all gated_402 is the single busiest endpoint —
+// a high share is the bot-probe signature.
+const gatedByEndpoint = {};
+for (const r of rows) {
+  if (r.outcome !== 'gated_402') continue;
+  gatedByEndpoint[r.endpoint] = (gatedByEndpoint[r.endpoint] || 0) + r.count;
+}
+const topGated = Object.entries(gatedByEndpoint).sort((a, b) => b[1] - a[1])[0] || [null, 0];
+
+totals.gated_402_flagship   = gatedFlagship;
+totals.gated_402_per_handle = gatedPerHandle;
+totals.flagship_conversion_pct = gatedFlagship > 0
+  ? Math.round((paidFlagship / gatedFlagship) * 1000) / 10
+  : null;
+totals.top_gated_endpoint  = topGated[0];
+totals.top_gated_share_pct = totals.gated_402 > 0
+  ? Math.round((topGated[1] / totals.gated_402) * 1000) / 10
+  : null;
+
 const byEndpoint = {};
 for (const r of rows) {
   byEndpoint[r.endpoint] = byEndpoint[r.endpoint] || { total: 0, agent: 0, outcomes: {} };
@@ -94,7 +129,7 @@ try {
 const payload = {
   date: day,
   generated_at: new Date().toISOString(),
-  kpi_note: 'Distribution KPI = machine_calls + paid funnel (gated_402 -> paid_pass/pro_pass). Zeros are valid numbers; print them honestly.',
+  kpi_note: 'Distribution KPI = machine_calls + paid funnel (gated_402 -> paid_pass/pro_pass). Zeros are valid numbers; print them honestly. HEADLINE gated_402 is inflated by per-handle bot probing (see top_gated_share_pct / gated_402_per_handle); flagship_conversion_pct over gated_402_flagship is the real purchase-intent funnel.',
   totals,
   by_endpoint: byEndpoint,
   pro_key_usage: keyUsage,
@@ -110,9 +145,11 @@ const keyLine = keyUsage.length
   ? ` · keys: ${keyUsage.slice(0, 3).map((k) => `${k.key_prefix}…×${k.total}`).join(', ')}${keyUsage.length > 3 ? ` +${keyUsage.length - 3} more` : ''}`
   : '';
 await tg(
-  `📡 Machine traffic ${day}: ${totals.machine_calls} agent calls / ${totals.all_calls} total · ` +
-  `402s quoted: ${totals.gated_402} · paid: ${totals.paid_pass} · pro: ${totals.pro_pass}` +
-  (totals.paid_conversion_pct != null ? ` · conv ${totals.paid_conversion_pct}%` : '') +
+  `📡 Machine traffic ${day}: ${totals.machine_calls} agent calls / ${totals.all_calls} total\n` +
+  `402s quoted: ${totals.gated_402} (flagship ${totals.gated_402_flagship} · per-handle probe ${totals.gated_402_per_handle})\n` +
+  `paid: ${totals.paid_pass} · pro: ${totals.pro_pass}` +
+  (totals.flagship_conversion_pct != null ? ` · flagship conv ${totals.flagship_conversion_pct}%` : '') +
+  (totals.top_gated_share_pct != null ? `\ntop endpoint ${totals.top_gated_endpoint} = ${totals.top_gated_share_pct}% of all 402s` : '') +
   keyLine
 );
 
