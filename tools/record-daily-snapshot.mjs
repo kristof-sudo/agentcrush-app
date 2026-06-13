@@ -18,9 +18,37 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { readFileSync } from 'node:fs'
 
-const SUPABASE_URL = 'https://hwkvkfjnffxrfirhkitj.supabase.co'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3a3ZrZmpuZmZ4cmZpcmhraXRqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjQzNDYyNywiZXhwIjoyMDg4MDEwNjI3fQ.G2TrTNZcYltQyln8U03_TKF4_Cs072nKit-20zqj2Ck'
+// This script runs under plain cron (no EnvironmentFile), so load the worker
+// env file into process.env if the keys aren't already present. Mirrors the
+// runtime-worker convention. Never logs secrets.
+function loadEnv() {
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SUPABASE_URL) return
+  const candidates = [
+    process.env.AGENTCRUSH_ENV_FILE,
+    '/opt/agentcrush/fetchers/.env',
+    new URL('../.env.local', import.meta.url).pathname,
+    new URL('../.env', import.meta.url).pathname,
+  ].filter(Boolean)
+  for (const path of candidates) {
+    try {
+      for (const line of readFileSync(path, 'utf8').split('\n')) {
+        const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/)
+        if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
+      }
+    } catch { /* try next candidate */ }
+  }
+}
+loadEnv()
+
+const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error('[snapshot] FATAL: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set (checked env + /opt/agentcrush/fetchers/.env)')
+  process.exit(1)
+}
 
 const db = createClient(SUPABASE_URL, SUPABASE_KEY)
 
