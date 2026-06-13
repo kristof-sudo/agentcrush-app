@@ -49,12 +49,21 @@ export async function POST(req) {
 }
 
 async function respond(handle, depth) {
-  const { status, body } = await evaluateTrust({ handle, depth: 'standard' })
-  if (status === 200 && depth === 'full') {
-    body.full_depth = FULL_DEPTH_POINTER
+  try {
+    const { status, body } = await evaluateTrust({ handle, depth: 'standard' })
+    if (status === 200 && depth === 'full') {
+      body.full_depth = FULL_DEPTH_POINTER
+    }
+    return Response.json(body, {
+      status,
+      headers: { ...CORS, 'Cache-Control': 'no-store' },
+    })
+  } catch (e) {
+    // Never return an empty 500: surface a structured error so callers (and we)
+    // can see what failed instead of an opaque crash.
+    return Response.json(
+      { error: 'trust_eval_failed', detail: String(e?.message || e) },
+      { status: 500, headers: { ...CORS, 'Cache-Control': 'no-store' } }
+    )
   }
-  return Response.json(body, {
-    status,
-    headers: { ...CORS, 'Cache-Control': 'no-store' },
-  })
 }
