@@ -32,7 +32,7 @@ console.log(`[snapshot] date=${TODAY}`)
 
 const { data: agents, error: agentsErr } = await db
   .from('agents')
-  .select('id, visibility_score, reputation_score, weekly_delta, claim_status, identity_type')
+  .select('id, visibility_score, reputation_score, weekly_delta, claim_status, identity_type, activity_status, last_event_at')
   .order('id', { ascending: true })
 
 if (agentsErr) {
@@ -79,6 +79,19 @@ if (existingErr) {
 const alreadySnapshotted = new Set((existing || []).map((r) => r.agent_id))
 console.log(`[snapshot] already snapshotted today: ${alreadySnapshotted.size}`)
 
+// Capability probe: only write is_alive if the column exists. Keeps the daily
+// snapshot (the strategic moat) safe regardless of migration/deploy ordering —
+// if the reliability migration hasn't been applied yet, we simply skip the
+// field instead of failing the whole insert.
+let hasIsAlive = true
+{
+  const { error: probeErr } = await db.from('agent_snapshots').select('is_alive').limit(1)
+  if (probeErr) {
+    hasIsAlive = false
+    console.warn('[snapshot] is_alive column absent — skipping liveness capture (apply 20260613_1100_agent_reliability.sql to enable)')
+  }
+}
+
 // ── 4. Build snapshot rows ─────────────────────────────────────────────────
 
 const rows = []
@@ -88,7 +101,7 @@ for (const agent of agents) {
 
   const ranking = rankByAgent[agent.id] || null
 
-  rows.push({
+  const row = {
     agent_id:      agent.id,
     snapshot_date: TODAY,
 
@@ -104,7 +117,18 @@ for (const agent of agents) {
 
     claim_status:  agent.claim_status        ?? null,
     identity_type: agent.identity_type       ?? null,
-  })
+  }
+
+  // Per-day liveness (Ghost Index rule) — the forward-collected signal that
+  // powers agent_reliability_v1. Only written if the column exists (see probe).
+  if (hasIsAlive) {
+    row.is_alive =
+      agent.activity_status === 'active' ||
+      (agent.last_event_at != null &&
+        new Date(agent.last_event_at).getTime() > Date.now() - 30 * 86400000)
+  }
+
+  rows.push(row)
 }
 
 if (rows.length === 0) {
