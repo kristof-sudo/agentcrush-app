@@ -1,0 +1,17 @@
+[Unit]
+Description=AgentCrush x402 funnel report — daily revenue conversion status to Telegram
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush/runtime/telemetry
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/briefing/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/telemetry/x402-funnel-report-worker.mjs
+StandardOutput=append:/var/log/agentcrush/x402-funnel-report.log
+StandardError=append:/var/log/agentcrush/x402-funnel-report.log
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target
