@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: '2026-W24',
+    label: 'W24 · June 8–14, 2026',
+    summary: 'The agents making real money are invisible: the x402 Demand Leaderboard finds the top earners unindexed, the "agent demand" number turns out ~99.8% bots, and trust scoring becomes an IETF draft.',
+    href: '/weekly/2026-W24',
+  },
+  {
     week: '2026-W23',
     label: 'W23 · June 2–8, 2026',
     summary: 'MCP Server Index launches as the 5th category ranking. ERC-8004 trust layer tooling arrives in a cluster (Boon, Argus, avisradar). Autonomous pipeline — 8 timers — goes live.',
