@@ -348,6 +348,14 @@ export default async function Home() {
     { global: { fetch: (url, opts = {}) => fetch(url, { ...opts, cache: 'no-store' }) } }
   )
 
+  // Service-role client (server-only) for RLS-protected reads like agent_snapshots,
+  // which the publishable/anon role cannot count (was rendering "—" on the homepage).
+  const supabaseService = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { global: { fetch: (url, opts = {}) => fetch(url, { ...opts, cache: 'no-store' }) } }
+  )
+
   // ── Data fetching ──────────────────────────────────────────────────────
 
   const [
@@ -396,8 +404,9 @@ export default async function Home() {
       .limit(24),
 
     // agent_snapshots is the live table the daily worker writes; agent_daily_snapshots
-    // is the legacy table frozen at 2026-05-15 (was showing a stale, non-growing count).
-    supabase.from('agent_snapshots').select('id', { count: 'exact', head: true }),
+    // is the legacy table frozen at 2026-05-15. Count via the service-role client —
+    // agent_snapshots has RLS that blocks the publishable/anon role (rendered "—").
+    supabaseService.from('agent_snapshots').select('id', { count: 'exact', head: true }),
   ])
 
   // Ghost Index headline (latest daily snapshot; null-safe if table absent)

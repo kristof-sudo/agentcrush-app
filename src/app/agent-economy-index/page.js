@@ -86,6 +86,8 @@ export default async function AgentEconomyIndexPage() {
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
   const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Service-role client for RLS-protected reads (agent_snapshots, ERC-8004) the anon role can't count.
+  const svc = (SUPABASE_URL && SERVICE_KEY) ? createClient(SUPABASE_URL, SERVICE_KEY) : supabase
 
   // Parallel data fetches — all safe (nulls on error)
   const [
@@ -97,7 +99,7 @@ export default async function AgentEconomyIndexPage() {
   ] = await Promise.all([
     safeCount(supabase, 'agents', (q) => q.neq('tier', 'archived')),
     safeCount(supabase, 'agents', (q) => q.eq('tier', 'evidence_ranked')),
-    safeCount(supabase, 'agent_snapshots', (q) => q), // live table; agent_daily_snapshots is legacy/frozen (2026-05-15)
+    safeCount(svc, 'agent_snapshots', (q) => q), // live table; counted via service role (RLS blocks anon)
     supabase
       .from('agents')
       .select('handle, display_name, weekly_delta, tier')
@@ -116,7 +118,6 @@ export default async function AgentEconomyIndexPage() {
   let erc8004Count = null
   if (SUPABASE_URL && SERVICE_KEY) {
     try {
-      const svc = createClient(SUPABASE_URL, SERVICE_KEY)
       const { count } = await svc
         .from('agent_erc8004_registrations')
         .select('id', { count: 'exact', head: true })
