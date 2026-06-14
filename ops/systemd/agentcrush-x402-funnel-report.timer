@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush x402 funnel report timer — 06:10 UTC daily (08:10 Budapest)
+Documentation=DAILY x402 funnel report — revenue conversion morning check for Kris
+
+[Timer]
+OnCalendar=*-*-* 06:10:00 UTC
+Persistent=true
+Unit=agentcrush-x402-funnel-report.service
+
+[Install]
+WantedBy=timers.target
