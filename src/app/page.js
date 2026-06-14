@@ -395,7 +395,9 @@ export default async function Home() {
       .order('created_at', { ascending: false })
       .limit(24),
 
-    supabase.from('agent_daily_snapshots').select('id', { count: 'exact', head: true }),
+    // agent_snapshots is the live table the daily worker writes; agent_daily_snapshots
+    // is the legacy table frozen at 2026-05-15 (was showing a stale, non-growing count).
+    supabase.from('agent_snapshots').select('id', { count: 'exact', head: true }),
   ])
 
   // Ghost Index headline (latest daily snapshot; null-safe if table absent)
