@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush agent promoter timer — 06:30 UTC daily (after the 05:03/05:33 mirror syncs)
+Documentation=Automated index growth — promotes Virtuals/Agentverse/A2A mirror agents per migration 20260514_1819
+
+[Timer]
+OnCalendar=*-*-* 06:30:00 UTC
+Persistent=true
+Unit=agentcrush-agent-promoter.service
+
+[Install]
+WantedBy=timers.target
