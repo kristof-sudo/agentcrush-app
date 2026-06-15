@@ -1,0 +1,17 @@
+[Unit]
+Description=AgentCrush agent promoter — promote high-signal mirror agents into the curated index
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/selector/.env
+EnvironmentFile=-/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/agent-promoter-worker.mjs
+StandardOutput=append:/var/log/agentcrush/agent-promoter.log
+StandardError=append:/var/log/agentcrush/agent-promoter.log
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target
