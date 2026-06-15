@@ -186,6 +186,50 @@ export async function GET() {
           responses: { '200': { description: 'Liveness score + breakdowns + optional history' } },
         },
       },
+      '/api/reliability/v1': {
+        get: {
+          tags: ['trust', 'discovery'],
+          summary: 'Agent Reliability Score - rolling uptime (free)',
+          description: 'Per-agent rolling liveness (reliability_30d/90d) forward-collected from the daily Ghost-Index signal, plus currently_alive and days_since_active. Every row carries a coverage flag. Omit handle for the leaderboard.',
+          operationId: 'getReliability',
+          parameters: [{ name: 'handle', in: 'query', schema: { type: 'string' } }],
+          responses: { '200': { description: 'Reliability detail or leaderboard' } },
+        },
+      },
+      '/api/x402/demand/v1': {
+        get: {
+          tags: ['discovery', 'x402'],
+          summary: 'x402 Demand Leaderboard - who actually gets paid (free)',
+          description: 'Operators already taking x402 payments, ranked by unique paying wallets, live from the Coinbase CDP Bazaar. Multi-chain (Base, Solana, Polygon, ...). The demand-side map of the agent economy.',
+          operationId: 'getX402Demand',
+          parameters: [
+            { name: 'days', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 30, default: 14 } },
+            { name: 'top', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 25 } },
+            { name: 'chain', in: 'query', schema: { type: 'string' }, description: 'Filter to a chain, e.g. Solana' },
+          ],
+          responses: { '200': { description: 'Ranked funded operators + per-chain breakdown' } },
+        },
+      },
+      '/api/public/trust/{agentId}': {
+        get: {
+          tags: ['trust'],
+          summary: 'Public trust query - IETF-compatible external signal (free)',
+          description: 'Trust record schema-compatible with draft-sharif-agent-payment-trust-00 (trust.score, level, recommendation, spendLimits). AgentCrush external market-intelligence signal - advisory, not a Trust-Authority authorization. Batch: POST /api/public/trust/batch.',
+          operationId: 'getPublicTrust',
+          parameters: [{ name: 'agentId', in: 'path', required: true, schema: { type: 'string' }, description: 'AgentCrush handle' }],
+          responses: { '200': { description: 'IETF-shaped trust record' }, '404': { description: 'Not indexed' } },
+        },
+      },
+      '/api/reputation/multiplier/{agentId}': {
+        get: {
+          tags: ['trust'],
+          summary: 'Counterparty price multiplier (free)',
+          description: 'Advisory multiplier (1.00 trusted -> 0.50 avoid) plus risk_premium_pct to apply when pricing/routing a transaction with a counterparty, derived from the AgentCrush trust signal. Not financial advice.',
+          operationId: 'getReputationMultiplier',
+          parameters: [{ name: 'agentId', in: 'path', required: true, schema: { type: 'string' }, description: 'AgentCrush handle' }],
+          responses: { '200': { description: 'price_multiplier + risk_premium_pct + recommendation' }, '404': { description: 'Not indexed' } },
+        },
+      },
       '/api/changes/v1': {
         get: {
           tags: ['discovery'],
