@@ -62,7 +62,7 @@ export default async function X402DemandPage() {
         <p className="text-white/60 leading-relaxed mb-8">
           The demand side of the agent economy — operators already taking x402 payments, ranked by
           unique paying wallets. Most rankings show who&apos;s loud; this shows who actually gets paid.
-          Live from Coinbase&apos;s CDP Bazaar, updated hourly.
+          Multi-chain (Base, Solana, Polygon and more), live from Coinbase&apos;s CDP Bazaar, updated hourly.
         </p>
 
         {operators.length === 0 ? (
@@ -72,11 +72,26 @@ export default async function X402DemandPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
               <Stat label="Active operators" value={nf(operators.length)} />
               <Stat label="Resources scanned" value={nf(data.resources_scanned)} />
+              <Stat label="Chains" value={nf((data.chain_breakdown || []).length)} />
               <Stat label="Window" value={`${data.window_days}d`} />
             </div>
+
+            {data.chain_breakdown?.length > 0 && (
+              <div className="mb-8">
+                <div className="text-[11px] uppercase tracking-wider text-white/40 mb-2">Demand by chain (active resources)</div>
+                <div className="flex flex-wrap gap-2">
+                  {data.chain_breakdown.slice(0, 10).map((c) => (
+                    <span key={c.chain} className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 text-xs">
+                      <span className="text-white/80">{c.chain}</span>
+                      <span className="text-white/40"> · {nf(c.resources)}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
               <div className="hidden sm:grid grid-cols-[2.2rem_1fr_5rem_5rem_4rem] gap-2 px-4 py-3 text-[11px] uppercase tracking-wider text-white/40 border-b border-white/[0.07]">
@@ -90,7 +105,10 @@ export default async function X402DemandPage() {
                   <div className="text-white/30 text-sm tabular-nums">{i + 1}</div>
                   <div className="min-w-0">
                     <div className="font-medium truncate">{o.name || o.host}</div>
-                    <div className="text-xs text-white/40 truncate">{o.host} · active {o.last_active}</div>
+                    <div className="text-xs text-white/40 truncate">
+                      {o.host} · active {o.last_active}
+                      {o.chains?.length > 0 && <span className="text-white/30"> · {o.chains.slice(0, 3).join(', ')}</span>}
+                    </div>
                   </div>
                   <div className="text-right sm:hidden">
                     <div className="font-semibold tabular-nums">{nf(o.unique_payers)}</div>

@@ -37,9 +37,10 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url)
   const days = Math.min(Math.max(parseInt(searchParams.get('days') || '14', 10) || 14, 1), 30)
   const top = Math.min(Math.max(parseInt(searchParams.get('top') || '25', 10) || 25, 1), 100)
+  const chain = searchParams.get('chain') || null // e.g. ?chain=Solana — filter operators to that chain
 
   try {
-    const data = await demandLeaderboard({ days, top })
+    const data = await demandLeaderboard({ days, top, chain })
     return Response.json(
       {
         ...data,
