@@ -9,6 +9,9 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+## 2026-06-16 — x402 payer scan results (B23)
+- `20260616_0900_x402_payers.sql` — `x402_payers` table: on-chain verified USDC Transfer records for x402 settlement on Base. One row per tx (UNIQUE on tx_hash). Columns: payer_wallet, payee_address, resource_url (from Bazaar), tx_hash, block_number, amount_usdc (NUMERIC 6dp), network, tx_timestamp, matched_agent_id (nullable FK, Phase 2 identity match). Anon read; service-role write. Populated by `runtime/x402-payer-scan-worker.mjs` (01:30 UTC daily timer). Run topology checker (`runtime/x402-topology-checker.mjs --discover`) first to confirm direct-settlement assumption. **STATUS: PENDING APPLY by Kris.**
+
 ## 2026-06-13 — agent reliability score (foundation)
 - `20260613_1100_agent_reliability.sql` — adds `is_alive` to `agent_snapshots` (forward-collected daily liveness, Ghost Index rule) + `agent_reliability_v1` view (rolling 30d/90d uptime with honest `coverage` states + immediately-accurate currently_alive/days_since_active). Seeds today's rows honestly. Idempotent. Powers `/api/reliability/v1`. **Apply before deploying the updated snapshot worker** (worker probes for the column and degrades safely, but applying first avoids a day of skipped liveness capture).
 

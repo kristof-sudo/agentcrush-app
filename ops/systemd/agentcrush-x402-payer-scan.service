@@ -1,0 +1,19 @@
+[Unit]
+Description=AgentCrush x402 payer scan — daily Base USDC transfer scan for x402 payer wallets
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/selector/.env
+EnvironmentFile=-/opt/agentcrush/fetchers/.env
+Environment=X402_STATE_FILE=/opt/agentcrush/x402-scan-state.json
+Environment=BRAIN_PATH=/opt/agentcrush-brain
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/x402-payer-scan-worker.mjs --write
+StandardOutput=append:/var/log/agentcrush/x402-payer-scan.log
+StandardError=append:/var/log/agentcrush/x402-payer-scan.log
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

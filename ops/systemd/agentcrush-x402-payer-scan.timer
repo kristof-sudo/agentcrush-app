@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush x402 payer scan timer — 01:30 UTC daily (after snapshot + proof-of-index)
+Documentation=Incremental Base USDC transfer scan — run after 00:15 UTC proof-of-index worker
+
+[Timer]
+OnCalendar=*-*-* 01:30:00 UTC
+Persistent=true
+Unit=agentcrush-x402-payer-scan.service
+
+[Install]
+WantedBy=timers.target
