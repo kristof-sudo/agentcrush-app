@@ -1,6 +1,7 @@
 import Container from '@/components/ui/Container'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import GhostCheck from '@/components/GhostCheck'
 import { formatRelativeTime } from '@/lib/why-moving'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -549,6 +550,14 @@ export default async function Home() {
                   <div className="font-mono text-lg font-bold text-white tabular-nums">{snapshotCount ? snapshotCount.toLocaleString() : '—'}</div>
                   <div className="font-mono text-[9px] uppercase tracking-wider text-white/30">daily snapshots</div>
                 </div>
+              </div>
+
+              {/* Ghost Check — the gotcha: paste any agent, get an instant verdict */}
+              <div className="mb-5">
+                <GhostCheck
+                  alivePct={ghost?.liveness_score != null ? Number(ghost.liveness_score) : null}
+                  totalAgents={agentCount ?? null}
+                />
               </div>
 
               {/* (a.2) What changed today — daily diff ticker */}
