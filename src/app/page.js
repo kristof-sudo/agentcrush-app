@@ -2,6 +2,7 @@ import Container from '@/components/ui/Container'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { formatRelativeTime } from '@/lib/why-moving'
+import GhostCheck from '@/components/GhostCheck'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -551,10 +552,13 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Ghost Check (gotcha) — HIDDEN pending the v2 rebuild: real GitHub
-                  liveness + the refresh worker. The v1 card shipped misleading data
-                  (stale "last signal", meaningless signals N/6, pays-via bug). Do not
-                  re-enable until the credible version is deployed and validated live. */}
+              {/* Ghost Check — the gotcha: paste any agent → real GitHub liveness verdict */}
+              <div className="mb-5">
+                <GhostCheck
+                  alivePct={ghost?.liveness_score != null ? Number(ghost.liveness_score) : null}
+                  totalAgents={agentCount ?? null}
+                />
+              </div>
 
               {/* (a.2) What changed today — daily diff ticker */}
               {changesToday && (
