@@ -43,46 +43,56 @@ function parseInput(raw) {
 export async function resolveAgent(db, raw) {
   const p = parseInput(raw)
   if (!p) return null
-  const SEL = 'handle, display_name'
+  const SEL = 'handle, github_pushed_at, github_stars_live'
 
-  const first = async (q) => {
-    const { data } = await q.limit(1)
+  // Pick the MOST PROMINENT match — most GitHub stars (the real, popular project).
+  // This is what makes "hermes" resolve to the 196k-star Nous repo instead of an
+  // empty stub entry that merely matched first.
+  // q must already have .select(SEL) applied; we add ranking + limit.
+  const best = async (q) => {
+    const { data } = await q.order('github_stars_live', { ascending: false, nullsFirst: false }).limit(1)
     return data && data[0] ? data[0].handle : null
   }
 
   if (p.type === 'github') {
-    const h = await first(db.from('agents').select(SEL).ilike('github_url', `%${esc(p.value)}%`))
+    const h = await best(db.from('agents').select(SEL).ilike('github_url', `%${esc(p.value)}%`))
     if (h) return { handle: h, matched_on: 'github' }
-    // fall back to the repo name alone
     const repo = p.value.split('/')[1]
     if (repo) {
-      const h2 = await first(db.from('agents').select(SEL).or(`handle.ilike.%${esc(repo)}%,display_name.ilike.%${esc(repo)}%`))
+      const h2 = await best(db.from('agents').select(SEL).or(`handle.ilike.%${esc(repo)}%,display_name.ilike.%${esc(repo)}%`))
       if (h2) return { handle: h2, matched_on: 'github-name' }
     }
     return null
   }
 
   if (p.type === 'domain') {
-    const h = await first(db.from('agents').select(SEL).ilike('website_url', `%${esc(p.value)}%`))
+    const h = await best(db.from('agents').select(SEL).ilike('website_url', `%${esc(p.value)}%`))
     if (h) return { handle: h, matched_on: 'website' }
-    // fall back to the domain label as a handle/name
-    const h2 = await first(db.from('agents').select(SEL).or(`handle.ilike.%${esc(p.label)}%,display_name.ilike.%${esc(p.label)}%`))
+    const h2 = await best(db.from('agents').select(SEL).or(`handle.ilike.%${esc(p.label)}%,display_name.ilike.%${esc(p.label)}%`))
     if (h2) return { handle: h2, matched_on: 'domain-label' }
     return null
   }
 
   if (p.type === 'x') {
     const v = esc(p.value)
-    const h = await first(db.from('agents').select(SEL).or(`handle.eq.${v},x_handle.ilike.%${v}%`))
+    const h = await best(db.from('agents').select(SEL).or(`handle.eq.${v},x_handle.ilike.%${v}%`))
     if (h) return { handle: h, matched_on: 'x' }
-    const h2 = await first(db.from('agents').select(SEL).or(`handle.ilike.%${v}%,display_name.ilike.%${v}%`))
+    const h2 = await best(db.from('agents').select(SEL).or(`handle.ilike.%${v}%,display_name.ilike.%${v}%`))
     return h2 ? { handle: h2, matched_on: 'x-name' } : null
   }
 
-  // bare: exact handle first, then fuzzy handle/name
+  // bare: an exact handle that HAS live data wins (precise); otherwise fall back to
+  // the most-prominent fuzzy match by stars (so empty brand stubs don't win).
+  // Also match a de-punctuated form so "gpt-engineer" finds handle "gptengineer".
   const v = esc(p.value)
-  const exact = await first(db.from('agents').select(SEL).eq('handle', v))
-  if (exact) return { handle: exact, matched_on: 'handle' }
-  const fuzzy = await first(db.from('agents').select(SEL).or(`handle.ilike.%${v}%,display_name.ilike.%${v}%`))
-  return fuzzy ? { handle: fuzzy, matched_on: 'fuzzy' } : null
+  const compact = p.value.toLowerCase().replace(/[^a-z0-9]/g, '')
+  let ex0 = null
+  for (const cand of [v, compact].filter((c, i, a) => c && a.indexOf(c) === i)) {
+    const { data: ex } = await db.from('agents').select(SEL).eq('handle', cand).limit(1)
+    if (ex && ex[0]) { ex0 = ex0 || ex[0]; if (ex[0].github_pushed_at) return { handle: ex[0].handle, matched_on: 'handle' } }
+  }
+  let fuzzy = await best(db.from('agents').select(SEL).or(`handle.ilike.%${v}%,display_name.ilike.%${v}%`))
+  if (!fuzzy && compact && compact !== v) fuzzy = await best(db.from('agents').select(SEL).ilike('handle', `%${compact}%`))
+  if (fuzzy) return { handle: fuzzy, matched_on: 'fuzzy' }
+  return ex0 ? { handle: ex0.handle, matched_on: 'handle' } : null
 }
