@@ -45,6 +45,12 @@ export async function resolveAgent(db, raw) {
   if (!p) return null
   const SEL = 'handle, github_pushed_at, github_stars_live'
 
+  // Base query: never resolve to an archived stub. Archived rows are de-duped
+  // leftovers (e.g. the Nous Hermes dup cleanup) kept only for reversibility;
+  // they have no live data and should never surface in Ghost Check. Until now
+  // this was safe only by accident (star-ranking buried their zero stars).
+  const sel = () => db.from('agents').select(SEL).neq('tier', 'archived')
+
   // Pick the MOST PROMINENT match — most GitHub stars (the real, popular project).
   // This is what makes "hermes" resolve to the 196k-star Nous repo instead of an
   // empty stub entry that merely matched first.
@@ -55,29 +61,29 @@ export async function resolveAgent(db, raw) {
   }
 
   if (p.type === 'github') {
-    const h = await best(db.from('agents').select(SEL).ilike('github_url', `%${esc(p.value)}%`))
+    const h = await best(sel().ilike('github_url', `%${esc(p.value)}%`))
     if (h) return { handle: h, matched_on: 'github' }
     const repo = p.value.split('/')[1]
     if (repo) {
-      const h2 = await best(db.from('agents').select(SEL).or(`handle.ilike.%${esc(repo)}%,display_name.ilike.%${esc(repo)}%`))
+      const h2 = await best(sel().or(`handle.ilike.%${esc(repo)}%,display_name.ilike.%${esc(repo)}%`))
       if (h2) return { handle: h2, matched_on: 'github-name' }
     }
     return null
   }
 
   if (p.type === 'domain') {
-    const h = await best(db.from('agents').select(SEL).ilike('website_url', `%${esc(p.value)}%`))
+    const h = await best(sel().ilike('website_url', `%${esc(p.value)}%`))
     if (h) return { handle: h, matched_on: 'website' }
-    const h2 = await best(db.from('agents').select(SEL).or(`handle.ilike.%${esc(p.label)}%,display_name.ilike.%${esc(p.label)}%`))
+    const h2 = await best(sel().or(`handle.ilike.%${esc(p.label)}%,display_name.ilike.%${esc(p.label)}%`))
     if (h2) return { handle: h2, matched_on: 'domain-label' }
     return null
   }
 
   if (p.type === 'x') {
     const v = esc(p.value)
-    const h = await best(db.from('agents').select(SEL).or(`handle.eq.${v},x_handle.ilike.%${v}%`))
+    const h = await best(sel().or(`handle.eq.${v},x_handle.ilike.%${v}%`))
     if (h) return { handle: h, matched_on: 'x' }
-    const h2 = await best(db.from('agents').select(SEL).or(`handle.ilike.%${v}%,display_name.ilike.%${v}%`))
+    const h2 = await best(sel().or(`handle.ilike.%${v}%,display_name.ilike.%${v}%`))
     return h2 ? { handle: h2, matched_on: 'x-name' } : null
   }
 
@@ -88,11 +94,11 @@ export async function resolveAgent(db, raw) {
   const compact = p.value.toLowerCase().replace(/[^a-z0-9]/g, '')
   let ex0 = null
   for (const cand of [v, compact].filter((c, i, a) => c && a.indexOf(c) === i)) {
-    const { data: ex } = await db.from('agents').select(SEL).eq('handle', cand).limit(1)
+    const { data: ex } = await sel().eq('handle', cand).limit(1)
     if (ex && ex[0]) { ex0 = ex0 || ex[0]; if (ex[0].github_pushed_at) return { handle: ex[0].handle, matched_on: 'handle' } }
   }
-  let fuzzy = await best(db.from('agents').select(SEL).or(`handle.ilike.%${v}%,display_name.ilike.%${v}%`))
-  if (!fuzzy && compact && compact !== v) fuzzy = await best(db.from('agents').select(SEL).ilike('handle', `%${compact}%`))
+  let fuzzy = await best(sel().or(`handle.ilike.%${v}%,display_name.ilike.%${v}%`))
+  if (!fuzzy && compact && compact !== v) fuzzy = await best(sel().ilike('handle', `%${compact}%`))
   if (fuzzy) return { handle: fuzzy, matched_on: 'fuzzy' }
   return ex0 ? { handle: ex0.handle, matched_on: 'handle' } : null
 }
