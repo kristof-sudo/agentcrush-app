@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush rankings blend recompute timer — 03:30 UTC daily (after github-liveness-refresh @ 03:00)
+Documentation=Keeps global_rank credible: blends real GitHub signals with curated vis/rep so prominent alive agents rank logically and ghosts sink. Without this the rank reverts to legacy vis/rep (0 for ~90% of agents).
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+Persistent=true
+Unit=agentcrush-rankings-blend.service
+
+[Install]
+WantedBy=timers.target
