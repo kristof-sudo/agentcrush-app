@@ -106,10 +106,10 @@ const CATEGORY_COLORS = {
   mcp_server:   '#f97316',
 }
 
-// Categories where v1.0 activity ingestion is not yet wired. The "0% alive" we
-// would otherwise show for these is a measurement artifact, not ecosystem
-// signal. Surface as "ingestion pending" until the workers land (tracked).
-const INGESTION_PENDING_CATEGORIES = new Set(['service', 'tokenized'])
+// Categories with no liveness signal yet (no GitHub repo / activity feed) — showing
+// '0% alive' would be a measurement artifact, not real signal, so we mark them pending.
+// Service now has GitHub liveness from the refresh worker; only tokenized remains.
+const INGESTION_PENDING_CATEGORIES = new Set(['tokenized'])
 
 export default async function GhostIndexPage() {
   let ghostData
@@ -224,7 +224,7 @@ export default async function GhostIndexPage() {
 
         {/* ── How to read this number ── */}
         <section className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-5 py-4 mb-6">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-3">Why so low?</h2>
+          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-3">What this number means</h2>
           <div className="space-y-3 text-sm text-white/50 leading-relaxed">
             <p>
               <span className="text-white/80 font-semibold">A low number is the finding, not a flaw.</span>{' '}
