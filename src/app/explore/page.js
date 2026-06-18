@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Explore AI Agents · AgentCrush',
-  description: 'Browse all 1,350+ AI agents indexed by AgentCrush across 5 category methodologies (model families, tokenized, service, developer). Evidence-ranked agents with verified signals appear first.',
+  description: 'Browse all 1,350+ AI agents indexed by AgentCrush across 5 category methodologies (developer, model families, tokenized, service, MCP servers). Evidence-ranked agents with verified signals appear first.',
   openGraph: {
     title: 'Explore AI Agents · AgentCrush',
     description: 'Browse all 1,350+ AI agents indexed by AgentCrush. Evidence-ranked agents with verified signals appear first.',

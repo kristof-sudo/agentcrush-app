@@ -5,22 +5,22 @@ import { getMovementReason, formatRelativeTime } from '@/lib/why-moving'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'AI Agent Rankings — 4 Category Rankings · AgentCrush',
-  description: 'Developer, Model Families, Tokenized, and Service agent rankings — all four evidence-based rankings in one place. AgentCrush is the public record of AI agents.',
+  title: 'AI Agent Rankings — 5 Category Rankings · AgentCrush',
+  description: 'Developer, Model Families, Tokenized, Service, and MCP Server rankings — five evidence-based rankings in one place. AgentCrush is the public record of AI agents.',
   alternates: { canonical: 'https://agentcrush.xyz/rankings' },
   openGraph: {
     title: 'AI Agent Rankings · AgentCrush',
-    description: '5 category rankings: Developer · Model Families · Tokenized · Service. Evidence-ranked, open methodology.',
+    description: '5 category rankings: Developer · Model Families · Tokenized · Service · MCP Servers. Evidence-ranked, open methodology.',
     url: 'https://agentcrush.xyz/rankings',
     siteName: 'AgentCrush',
-    images: [{ url: 'https://agentcrush.xyz/api/og?title=AI%20Agent%20Rankings&kicker=4%20CATEGORY%20RANKINGS&subtitle=Developer%20-%20Model%20Families%20-%20Tokenized%20-%20Service%20-%20Payments%20Stack', width: 1200, height: 630 }],
+    images: [{ url: 'https://agentcrush.xyz/api/og?title=AI%20Agent%20Rankings&kicker=5%20CATEGORY%20RANKINGS&subtitle=Developer%20-%20Model%20Families%20-%20Tokenized%20-%20Service%20-%20MCP%20Servers', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AI Agent Rankings · AgentCrush',
-    description: '5 category rankings: Developer · Model Families · Tokenized · Service.',
-    images: ['https://agentcrush.xyz/api/og?title=AI%20Agent%20Rankings&kicker=4%20CATEGORY%20RANKINGS&subtitle=Developer%20-%20Model%20Families%20-%20Tokenized%20-%20Service%20-%20Payments%20Stack'],
+    description: '5 category rankings: Developer · Model Families · Tokenized · Service · MCP Servers.',
+    images: ['https://agentcrush.xyz/api/og?title=AI%20Agent%20Rankings&kicker=5%20CATEGORY%20RANKINGS&subtitle=Developer%20-%20Model%20Families%20-%20Tokenized%20-%20Service%20-%20MCP%20Servers'],
   },
 }
 
