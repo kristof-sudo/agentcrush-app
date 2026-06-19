@@ -1,0 +1,17 @@
+[Unit]
+Description=AgentCrush rankings blend recompute — credible global_rank from stars + liveness + tier + curated vis/rep
+After=network-online.target agentcrush-github-liveness-refresh.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/scanner/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/rankings-blend-recompute.mjs --write --refresh-today-snapshot
+StandardOutput=append:/var/log/agentcrush/rankings-blend.log
+StandardError=append:/var/log/agentcrush/rankings-blend.log
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=multi-user.target
