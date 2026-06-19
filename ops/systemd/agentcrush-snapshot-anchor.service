@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentCrush snapshot anchor — verifiable historic record (daily Merkle root + chain)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/scanner/.env
+# on-chain anchoring is OFF unless ANCHOR_ENABLED=1 is set (CDP wallet pending rotation)
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/snapshot-anchor-worker.mjs --write
+StandardOutput=append:/var/log/agentcrush/snapshot-anchor.log
+StandardError=append:/var/log/agentcrush/snapshot-anchor.log
+TimeoutStartSec=900
+
+[Install]
+WantedBy=multi-user.target
