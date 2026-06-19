@@ -5,6 +5,16 @@ import { useState } from 'react'
 
 const POSTS = [
   {
+    slug: 'zero-interop',
+    category: 'Findings',
+    image: '/og-zero-interop.png',
+    imageAlt: 'Nobody is multi-protocol yet — AgentCrush',
+    title: 'Nobody is multi-protocol yet: what 1,359 agents actually support',
+    date: 'June 19, 2026',
+    summary:
+      'We scanned 1,359 indexed agents for support across the four live protocol rails — ERC-8004, x402, A2A, and MCP. Zero support three or more. One supports two. The interoperability gap, measured.',
+  },
+  {
     slug: 'crawlers-vs-wallets',
     category: 'Findings',
     image: '/og-crawlers-vs-wallets.png',
