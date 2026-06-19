@@ -30,7 +30,12 @@ for (const p of ['/opt/agentcrush/scanner/.env', '.env.local', '.env']) {
   try { for (const l of readFileSync(p, 'utf8').split('\n')) { const m = l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '') } } catch {}
 }
 const db = createClient(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
-const DATE = dIdx !== -1 ? process.argv[dIdx + 1] : new Date().toISOString().slice(0, 10)
+// Default to YESTERDAY (UTC): today's snapshot rank/score is still mutated hourly by the
+// blended-rankings pg_cron (it refreshes current_date), so today is not yet final. We
+// anchor the last finalized day, which pg_cron no longer touches — so /api/verify stays
+// consistent. Override with --date for backfills.
+const yesterday = () => { const d = new Date(); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10) }
+const DATE = dIdx !== -1 ? process.argv[dIdx + 1] : yesterday()
 
 async function pageAll(table, columns, filterFn) {
   let out = [], from = 0
