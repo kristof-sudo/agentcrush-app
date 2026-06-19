@@ -1,0 +1,17 @@
+[Unit]
+Description=AgentCrush endpoint uptime — runtime liveness (3rd family: code/economic/runtime)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/scanner/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/endpoint-uptime-worker.mjs --write
+StandardOutput=append:/var/log/agentcrush/endpoint-uptime.log
+StandardError=append:/var/log/agentcrush/endpoint-uptime.log
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=multi-user.target

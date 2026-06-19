@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush endpoint uptime timer — runtime liveness checks (daily 03:15 UTC)
+Documentation=Populates agents.endpoint_* (runtime liveness) + endpoint_checks log. Requires migration 20260619_1200_endpoint_uptime.sql.
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+Persistent=true
+Unit=agentcrush-endpoint-uptime.service
+
+[Install]
+WantedBy=timers.target
