@@ -560,6 +560,30 @@ export default async function Home() {
                 />
               </div>
 
+              {/* (a.1) Signal families — how we measure whether an agent is real */}
+              <div className="mb-5">
+                <div className="font-mono text-[9px] uppercase tracking-wider text-white/30 mb-2">
+                  Three signals say an agent is real — we track all three
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="rounded border border-[rgba(57,255,20,0.2)] bg-[rgba(57,255,20,0.03)] px-3 py-2.5">
+                    <div className="font-mono text-xs font-bold text-[#39ff14] tracking-wide">CODE</div>
+                    <div className="font-mono text-[10px] text-white/45 leading-snug mt-0.5">Is the repo still shipping? Real GitHub commit activity.</div>
+                  </div>
+                  <div className="rounded border border-[rgba(249,115,22,0.22)] bg-[rgba(249,115,22,0.03)] px-3 py-2.5">
+                    <div className="font-mono text-xs font-bold text-[#f97316] tracking-wide">ECONOMIC</div>
+                    <div className="font-mono text-[10px] text-white/45 leading-snug mt-0.5">Is it getting paid? On-chain x402 payment activity.</div>
+                  </div>
+                  <div className="rounded border border-[rgba(56,189,248,0.22)] bg-[rgba(56,189,248,0.03)] px-3 py-2.5">
+                    <div className="font-mono text-xs font-bold text-[#38bdf8] tracking-wide">RUNTIME</div>
+                    <div className="font-mono text-[10px] text-white/45 leading-snug mt-0.5">Is the endpoint actually up? Live health checks.</div>
+                  </div>
+                </div>
+                <Link href="/methodology" className="inline-block font-mono text-[10px] text-white/35 hover:text-white/60 mt-2 transition-colors">
+                  + capability, interoperability &amp; social signals — full methodology →
+                </Link>
+              </div>
+
               {/* (a.2) What changed today — daily diff ticker */}
               {changesToday && (
                 <Link href="/changes" className="mb-5 flex items-center gap-x-3 gap-y-1 flex-wrap rounded border border-white/[0.08] bg-white/[0.02] px-3 py-2 hover:border-white/[0.18] transition-colors group">
