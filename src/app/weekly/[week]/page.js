@@ -286,69 +286,23 @@ export default async function WeeklyDynamicPage({ params }) {
           </div>
         </section>
 
-        {/* Top movers */}
-        {(data.topUp.length > 0 || data.topDown.length > 0) && (
+        {/* Top movers — Up only (Down hidden when there's no negative movement) */}
+        {data.topUp.length > 0 && (
           <section className="mb-10">
             <h2 className="text-lg font-bold text-white mb-4">Top movers</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-lg border border-white/[0.07] bg-white/[0.02]">
-                <p className="px-4 pt-3 text-[11px] uppercase tracking-wider font-mono text-[#39ff14]/70">Up</p>
-                <div className="divide-y divide-white/[0.04]">
-                  {data.topUp.length === 0 && <p className="px-4 py-3 text-sm text-white/40">No movement.</p>}
-                  {data.topUp.map(({ handle, display_name, weekly_delta }) => (
-                    <Link key={handle} href={`/agent/${encodeURIComponent(handle)}`} className="block px-4 py-2 flex items-center justify-between gap-3 text-sm hover:bg-white/[0.02] transition-colors">
-                      <span className="text-white/85">{display_name || handle}</span>
-                      <span className="font-mono font-semibold text-[#39ff14]">↑{weekly_delta}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-lg border border-white/[0.07] bg-white/[0.02]">
-                <p className="px-4 pt-3 text-[11px] uppercase tracking-wider font-mono text-[#ef4444]/70">Down</p>
-                <div className="divide-y divide-white/[0.04]">
-                  {data.topDown.length === 0 && <p className="px-4 py-3 text-sm text-white/40">No movement.</p>}
-                  {data.topDown.map(({ handle, display_name, weekly_delta }) => (
-                    <Link key={handle} href={`/agent/${encodeURIComponent(handle)}`} className="block px-4 py-2 flex items-center justify-between gap-3 text-sm hover:bg-white/[0.02] transition-colors">
-                      <span className="text-white/85">{display_name || handle}</span>
-                      <span className="font-mono font-semibold text-[#ef4444]">↓{Math.abs(weekly_delta)}</span>
-                    </Link>
-                  ))}
-                </div>
+            <div className="rounded-lg border border-white/[0.07] bg-white/[0.02]">
+              <p className="px-4 pt-3 text-[11px] uppercase tracking-wider font-mono text-[#39ff14]/70">Up</p>
+              <div className="divide-y divide-white/[0.04]">
+                {data.topUp.map(({ handle, display_name, weekly_delta }) => (
+                  <Link key={handle} href={`/agent/${encodeURIComponent(handle)}`} className="block px-4 py-2 flex items-center justify-between gap-3 text-sm hover:bg-white/[0.02] transition-colors">
+                    <span className="text-white/85">{display_name || handle}</span>
+                    <span className="font-mono font-semibold text-[#39ff14]">↑{weekly_delta}</span>
+                  </Link>
+                ))}
               </div>
             </div>
           </section>
         )}
-
-        {/* Data box */}
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.01] px-5 py-4 mb-8">
-          <p className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">This week in data</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="rounded border border-white/[0.06] px-3 py-2.5">
-              <p className="text-base font-bold font-mono text-white">{data.total.toLocaleString()}</p>
-              <p className="text-[10px] text-white/30 mt-0.5">Agents indexed</p>
-            </div>
-            <div className="rounded border border-white/[0.06] px-3 py-2.5">
-              <p className="text-base font-bold font-mono text-white">{data.evidenceRanked.toLocaleString()}</p>
-              <p className="text-[10px] text-white/30 mt-0.5">Evidence-ranked</p>
-            </div>
-            <div className="rounded border border-white/[0.06] px-3 py-2.5">
-              <p className="text-base font-bold font-mono text-white">{data.snapshotsWeek.toLocaleString()}</p>
-              <p className="text-[10px] text-white/30 mt-0.5">Snapshots this week</p>
-            </div>
-            <div className="rounded border border-white/[0.06] px-3 py-2.5">
-              <p className="text-base font-bold font-mono text-white">{data.topUp.length + data.topDown.length}</p>
-              <p className="text-[10px] text-white/30 mt-0.5">Notable moves</p>
-            </div>
-            <div className="rounded border border-white/[0.06] px-3 py-2.5">
-              <p className="text-base font-bold font-mono text-white">{data.x402Calls.toLocaleString()}</p>
-              <p className="text-[10px] text-white/30 mt-0.5">x402 paid calls</p>
-            </div>
-            <div className="rounded border border-white/[0.06] px-3 py-2.5">
-              <p className="text-base font-bold font-mono text-white">{data.proSubscribers.toLocaleString()}</p>
-              <p className="text-[10px] text-white/30 mt-0.5">Pro subscribers</p>
-            </div>
-          </div>
-        </div>
 
         <div className="border-t border-white/[0.06] pt-6 flex flex-wrap gap-4 text-xs text-white/35">
           <Link href="/rankings" className="hover:text-white/70 transition-colors">All Rankings →</Link>
