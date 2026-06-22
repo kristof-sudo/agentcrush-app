@@ -31,6 +31,18 @@ export async function generateMetadata({ params }) {
   const parsed = parseWeekId(week)
   if (!parsed) return { title: 'Weekly digest — not found · AgentCrush' }
   const period = formatWeekPeriod(parsed.year, parsed.week)
+
+  // Use the committed weekly cover if it exists; otherwise fall back to the generated
+  // /api/og card so the social preview is NEVER the generic site card (which X then
+  // caches against this URL). A late/missing cover degrades to an on-brand weekly card.
+  let ogImage = { url: `https://agentcrush.xyz/api/og?title=${encodeURIComponent('AgentCrush Weekly')}&kicker=${encodeURIComponent(`W${parsed.week} · ${period}`)}&subtitle=${encodeURIComponent('Where the rankings stand, what shipped, ecosystem signals.')}`, width: 1200, height: 630 }
+  try {
+    const fsMod = await import('node:fs/promises')
+    const pathMod = await import('node:path')
+    await fsMod.stat(pathMod.join(process.cwd(), 'public', 'weekly', `W${parsed.week}_cover.png`))
+    ogImage = { url: `https://agentcrush.xyz/weekly/W${parsed.week}_cover.png`, width: 1731, height: 909 }
+  } catch { /* no committed cover — keep the generated fallback */ }
+
   return {
     title: `W${parsed.week} · ${period} — AgentCrush Weekly`,
     description: `AgentCrush weekly signal digest for ${week}. Where the rankings stand, what shipped, ecosystem signals.`,
@@ -40,10 +52,11 @@ export async function generateMetadata({ params }) {
       description: `Weekly signal digest — ${period}.`,
       url: `https://agentcrush.xyz/weekly/${week}`,
       siteName: 'AgentCrush',
-      images: [{ url: `https://agentcrush.xyz/weekly/W${parsed.week}_cover.png`, width: 1731, height: 909, alt: `AgentCrush Weekly — W${parsed.week}, ${period}` }],
+      images: [{ ...ogImage, alt: `AgentCrush Weekly — W${parsed.week}, ${period}` }],
       type: 'article',
       publishedTime: isoWeekEnd(parsed.year, parsed.week).toISOString(),
     },
+    twitter: { card: 'summary_large_image', title: `AgentCrush Weekly · W${parsed.week}`, description: `Weekly signal digest — ${period}.`, images: [ogImage.url] },
   }
 }
 
