@@ -52,6 +52,16 @@ export default function ZeroInterop() {
         Nobody is multi-protocol yet
       </p>
 
+      {/* Cover */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/og-zero-interop.png"
+        alt="Nobody is multi-protocol yet — AgentCrush"
+        width={1731}
+        height={909}
+        className="w-full rounded-xl border border-white/[0.08] mb-8"
+      />
+
       {/* Title block */}
       <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight tracking-tight">
         Nobody is multi-protocol yet: what 1,359 agents actually support
@@ -74,7 +84,7 @@ export default function ZeroInterop() {
 
         <p>
           Last week we shipped the{' '}
-          <Link href="/api/pcs/v1" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
+          <Link href="/methodology" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
             Protocol Compatibility Score
           </Link>{' '}
           — a 0-to-4 integer we compute for every indexed agent. It counts how many of the four
@@ -90,9 +100,10 @@ export default function ZeroInterop() {
           As of June 12, 2026 — after correcting a content-validation bug that was counting
           soft-404 pages as protocol support — the distribution across 1,359 indexed agents is:
           <span className="text-white/85 font-medium"> zero agents support three or more rails.
-          Exactly one supports two.</span> The live current count is always at{' '}
-          <Link href="/api/pcs/v1" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
-            /api/pcs/v1
+          Exactly one supports two.</span> See the full breakdown and how each rail is
+          detected on the{' '}
+          <Link href="/methodology" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
+            methodology page
           </Link>.
         </p>
 
@@ -159,7 +170,7 @@ export default function ZeroInterop() {
           over 46,000 Bazaar resources and several hundred have real paid calls in the last
           30 days. Agents with MCP manifests exist — we index 15 MCP servers and the number
           grows weekly. Agents with A2A cards exist — including{' '}
-          <Link href="/agent/agentcrush_xyz" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
+          <Link href="/agent/agentcrush-mcp" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
             AgentCrush itself
           </Link>{' '}
           (we built ours as part of B4). A handful of agents have ERC-8004 registrations
@@ -263,11 +274,11 @@ export default function ZeroInterop() {
         </p>
 
         <p>
-          Live numbers:{' '}
-          <Link href="/api/pcs/v1" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
-            /api/pcs/v1
-          </Link>{' '}
-          — free, CORS-open, updated daily.
+          The numbers update daily as we re-scan the index. Developers can pull the live
+          counts from the{' '}
+          <Link href="/methodology" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
+            methodology page
+          </Link>, which links the machine-readable feed.
         </p>
 
       </div>
