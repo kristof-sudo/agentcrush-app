@@ -12,9 +12,10 @@
  *
  * Exposes: dispatch(action) → { ok, message, details? }
  *
- * Registry (v2 — X posting fully wired):
+ * Registry (v3 — Bluesky handler added):
  *   post-x          — post to X via API v2 with OAuth 1.0a signing
  *   post-fc         — post to Farcaster via Neynar (needs NEYNAR_SIGNER_UUID)
+ *   post-bsky       — post to Bluesky via AT Protocol REST (needs BLUESKY_HANDLE + BLUESKY_APP_PASSWORD)
  *   reply-x         — reply to an X post (executes via OAuth 1.0a)
  *   quote-x         — quote-tweet an X post
  *   build-suggestion — log a Kris-approved build-suggestion item to brain Queue
@@ -22,6 +23,11 @@
  *
  * Required env vars for X posting (all present on VPS in copydesk/.env):
  *   X_CONSUMER_KEY, X_CONSUMER_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET
+ *
+ * Required env vars for Bluesky posting:
+ *   BLUESKY_HANDLE         — e.g. agentcrush.bsky.social
+ *   BLUESKY_APP_PASSWORD   — generated in Bluesky Settings → App Passwords
+ *   BLUESKY_AUTOPOST       — set to "true" to enable auto-posting; otherwise drafts to Telegram
  */
 
 import crypto from 'node:crypto';
@@ -114,6 +120,16 @@ function qualityGate(text) {
     if (pat.test(text)) return { ok: false, reason: `blocked pattern: ${pat.source}` };
   }
   if (text.length > 280) return { ok: false, reason: `text too long (${text.length} chars, max 280)` };
+  if (text.trim().length < 10) return { ok: false, reason: 'text too short' };
+  return { ok: true };
+}
+
+// Bluesky allows 300 chars (vs X's 280).
+function qualityGateBsky(text) {
+  for (const pat of BLOCK_PATTERNS) {
+    if (pat.test(text)) return { ok: false, reason: `blocked pattern: ${pat.source}` };
+  }
+  if (text.length > 300) return { ok: false, reason: `text too long (${text.length} chars, max 300)` };
   if (text.trim().length < 10) return { ok: false, reason: 'text too short' };
   return { ok: true };
 }
@@ -233,6 +249,77 @@ async function handlePostFC(action) {
   return { ok: true, message: 'cast published', details: { hash: json?.cast?.hash } };
 }
 
+async function handlePostBsky(action) {
+  const text = action.payload?.text;
+  if (!text) return { ok: false, message: 'no text in payload' };
+
+  const gate = qualityGateBsky(text);
+  if (!gate.ok) {
+    await logAction({ action_id: action.action_id, type: 'post-bsky', status: 'blocked', reason: gate.reason, text });
+    return { ok: false, message: `quality gate blocked: ${gate.reason}` };
+  }
+
+  const handle   = process.env.BLUESKY_HANDLE;
+  const appPass  = process.env.BLUESKY_APP_PASSWORD;
+  const autopost = process.env.BLUESKY_AUTOPOST === 'true';
+
+  if (!handle || !appPass || !autopost) {
+    const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    const CHAT  = process.env.TELEGRAM_CHAT_ID;
+    if (TOKEN && CHAT) {
+      await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CHAT,
+          text: `📝 DRAFT Bluesky post — copy & post at bsky.app:\n\n${text}`,
+          disable_web_page_preview: true,
+        }),
+      }).catch(() => {});
+    }
+    await logAction({ action_id: action.action_id, type: 'post-bsky', status: 'drafted_to_telegram', text });
+    return { ok: true, drafted: true, message: 'drafted to Telegram (BLUESKY_AUTOPOST not enabled or credentials missing)' };
+  }
+
+  // Auth: createSession via AT Protocol REST
+  const sessionRes = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ identifier: handle, password: appPass }),
+  });
+  if (!sessionRes.ok) {
+    const errBody = await sessionRes.text().catch(() => '');
+    throw new Error(`Bluesky auth failed ${sessionRes.status}: ${errBody.slice(0, 120)}`);
+  }
+  const session = await sessionRes.json();
+
+  // Create post record
+  const postRes = await fetch('https://bsky.social/xrpc/com.atproto.repo.createRecord', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'Authorization': `Bearer ${session.accessJwt}`,
+    },
+    body: JSON.stringify({
+      repo: session.did,
+      collection: 'app.bsky.feed.post',
+      record: {
+        $type: 'app.bsky.feed.post',
+        text,
+        createdAt: new Date().toISOString(),
+        langs: ['en'],
+      },
+    }),
+  });
+  if (!postRes.ok) {
+    const errBody = await postRes.text().catch(() => '');
+    throw new Error(`Bluesky post failed ${postRes.status}: ${errBody.slice(0, 120)}`);
+  }
+  const posted = await postRes.json();
+  await logAction({ action_id: action.action_id, type: 'post-bsky', status: 'posted', uri: posted.uri, text });
+  return { ok: true, message: 'posted to Bluesky', details: { uri: posted.uri } };
+}
+
 async function handleBuildSuggestion(action) {
   const description = action.payload?.description || action.label;
   const queuePath = path.join(BRAIN_PATH, 'Queue/open.md');
@@ -277,12 +364,36 @@ export async function trustFallPost({ text, platform = 'x', reason }) {
   return { ok: true, drafted: true, tweet_id: null, cast_hash: null, url: null };
 }
 
+// Bluesky draft — convenience wrapper for workers (mirrors trustFallPost signature).
+// Sends "DRAFT Bluesky post" to Telegram; Kris copies + posts at bsky.app manually.
+export async function bskyDraft({ text, reason }) {
+  const gate = qualityGateBsky(text);
+  if (!gate.ok) throw new Error(`bsky quality gate: ${gate.reason}`);
+
+  const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  const CHAT  = process.env.TELEGRAM_CHAT_ID;
+  if (TOKEN && CHAT) {
+    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: CHAT,
+        text: `📝 DRAFT Bluesky post (${reason || 'scheduled worker'}) — copy & post at bsky.app:\n\n${text}`,
+        disable_web_page_preview: true,
+      }),
+    }).catch(() => {});
+  }
+  await logAction({ type: 'trust-fall-DRAFT-bsky', status: 'drafted_to_telegram', reason, text });
+  return { ok: true, drafted: true };
+}
+
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 const HANDLERS = {
   'noop':             handleNoop,
   'post-x':           handlePostX,
   'post-fc':          handlePostFC,
+  'post-bsky':        handlePostBsky,
   'reply-x':          handleReplyX,
   'quote-x':          handleQuoteX,
   'build-suggestion': handleBuildSuggestion,
