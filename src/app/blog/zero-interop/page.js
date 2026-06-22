@@ -100,11 +100,7 @@ export default function ZeroInterop() {
           As of June 12, 2026 — after correcting a content-validation bug that was counting
           soft-404 pages as protocol support — the distribution across 1,359 indexed agents is:
           <span className="text-white/85 font-medium"> zero agents support three or more rails.
-          Exactly one supports two.</span> See the full breakdown and how each rail is
-          detected on the{' '}
-          <Link href="/methodology" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
-            methodology page
-          </Link>.
+          Exactly one supports two.</span> How we detect each rail is in the next section.
         </p>
 
         <h2 className="text-lg font-semibold text-white pt-6 pb-1">The four rails, briefly</h2>
@@ -274,11 +270,7 @@ export default function ZeroInterop() {
         </p>
 
         <p>
-          The numbers update daily as we re-scan the index. Developers can pull the live
-          counts from the{' '}
-          <Link href="/methodology" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">
-            methodology page
-          </Link>, which links the machine-readable feed.
+          The numbers update daily as we re-scan the index.
         </p>
 
       </div>
