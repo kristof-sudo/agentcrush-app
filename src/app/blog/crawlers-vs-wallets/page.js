@@ -181,7 +181,7 @@ export default function CrawlersVsWallets() {
         <p>
           The numbers in this post are live and free:{' '}
           <Link href="/changes" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">the daily index diff</Link>,{' '}
-          <Link href="/api/pcs/v1" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">the interoperability readout</Link>,{' '}
+          <Link href="/methodology" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">the interoperability readout</Link>,{' '}
           <Link href="/ghost-index" className="text-violet-300 underline underline-offset-2 hover:text-violet-200 transition-colors">the Ghost Index</Link>.
           Check our math. That&apos;s the point.
         </p>
