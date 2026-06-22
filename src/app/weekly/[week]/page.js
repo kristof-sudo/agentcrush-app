@@ -1,5 +1,5 @@
 /**
- * Dynamic Weekly Digest page — handles auto-generated weeks (W23 onward).
+ * Dynamic Weekly Digest page — handles dynamically-rendered weeks (W23 onward).
  *
  * Static pages /weekly/2026-W21 + /weekly/2026-W22 take precedence per Next.js
  * routing — this handler only fires for week IDs that don't have a static page.
@@ -8,7 +8,7 @@
  *   • DB: agents (counts, tier), agent_snapshots (movers), agent_score_*_v1 (top per category)
  *   • Brain: Agents/weekly-digest/output/W{n}-{year}-ecosystem.md
  *            (2-3 paragraph ecosystem summary written by weekly-digest-generator
- *             Sundays — distilled from the week's Ajsa briefs)
+ *             Sundays — synthesized from the week's ecosystem signals)
  *
  * Cover image: /weekly/{week}_cover.png if uploaded; else generated gradient.
  *
@@ -242,10 +242,10 @@ export default async function WeeklyDynamicPage({ params }) {
             broken image. Once uploaded, page refreshes show the real cover. */}
         <CoverOrPlaceholder coverUrl={coverUrl} weekLabel={`W${parsed.week} · ${periodFull}`} />
 
-        <p className="text-xs font-semibold uppercase tracking-widest text-[#00d4ff]/70 mb-2">Weekly Digest · auto-generated</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-[#00d4ff]/70 mb-2">Weekly Signal Digest</p>
         <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight tracking-tight">W{parsed.week} · {periodFull}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-mono text-white/30">
-          <span>Generated {new Date().toISOString().slice(0, 10)}</span>
+          <span>Published {isoWeekEnd(parsed.year, parsed.week).toISOString().slice(0, 10)}</span>
           <span className="text-white/15">·</span>
           <a href="/weekly.xml" className="text-[#00d4ff]/50 hover:text-[#00d4ff] transition-colors">RSS</a>
           <span className="text-white/15">·</span>
@@ -262,7 +262,7 @@ export default async function WeeklyDynamicPage({ params }) {
               {data.ecosystem}
             </div>
             <p className="text-[11px] text-white/25 mt-4 leading-relaxed italic">
-              Distilled from {7} Ajsa daily briefs covering AI Twitter + Farcaster activity {periodShort}.
+              Synthesized from cross-protocol signals tracked across AI Twitter and Farcaster, {periodShort}.
             </p>
           </section>
         )}

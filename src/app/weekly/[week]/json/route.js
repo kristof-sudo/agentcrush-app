@@ -1,7 +1,7 @@
 /**
  * GET /weekly/[week]/json — JSON view of any weekly digest.
  *
- * Dynamic. Handles auto-generated weeks (W23+) by querying live data + the
+ * Dynamic. Handles dynamically-rendered weeks (W23+) by querying live data + the
  * brain-written ecosystem section. Special handling for legacy W21 keeps the
  * old structured payload for any consumers that linked to it.
  */
@@ -124,8 +124,7 @@ export async function GET(req, { params }) {
     },
     limitations: [
       'weekly_delta starts populating 2026-06-02; full-week data lands ~2026-06-09.',
-      'Ecosystem summary distilled from Ajsa daily briefs via Anthropic Haiku 4.5.',
-      'Auto-generated digests do not carry curated editorial; static weekly pages (W21, W22) have manual editorial.',
+      'Ecosystem summary synthesized from cross-protocol activity tracked across AI Twitter and Farcaster.',
     ],
   }, {
     sourceUrl: `https://agentcrush.xyz/weekly/${week}`,
