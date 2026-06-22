@@ -313,7 +313,7 @@ export default function X402DiscoveryPostmortem() {
         date="April 30, 2026"
         sources={[
           { label: 'AgentCrush x402 discovery endpoint', href: '/.well-known/x402' },
-          { label: 'AgentCrush agent index', href: '/api/agent/agentcrush/trust-summary' },
+          { label: 'AgentCrush agent profile', href: '/agent/agentcrush-mcp' },
           { label: 'Methodology', href: '/methodology' },
         ]}
       />
