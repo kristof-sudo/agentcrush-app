@@ -7,7 +7,7 @@
  *   gated_402  = quote requests (agent hit a paid endpoint, got the 402 challenge/price)
  *   paid_pass  = conversions (payment completed)
  *
- * Sends to Kris via tools/telegram-sender.mjs (same path the Ajsa brief uses).
+ * Sends to Kris via runtime/telegram-sender.mjs (same path the Ajsa brief uses).
  * Daily VPS timer ~06:30 UTC (08:30 Budapest). Reports the prior full day + 7-day trend.
  *
  *   node runtime/x402-funnel-report-worker.mjs            # send
@@ -16,6 +16,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'node:fs'
 import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+
+// telegram-sender lives alongside this worker in runtime/ — resolve relative to this
+// file so it works regardless of deploy path (it is NOT under tools/).
+const SENDER = join(dirname(fileURLToPath(import.meta.url)), 'telegram-sender.mjs')
 
 const DRY = process.argv.includes('--dry-run')
 for (const p of ['/opt/agentcrush/scanner/.env', '/opt/agentcrush/fetchers/.env', '.env.local', '.env']) {
@@ -62,7 +68,7 @@ const run = async () => {
   if (DRY) { console.log(header + '\n' + message); return }
 
   await new Promise((resolve, reject) => {
-    const child = spawn('node', ['/opt/agentcrush/tools/telegram-sender.mjs', '--message', message, '--header', header], { stdio: ['ignore', 'inherit', 'inherit'], env: process.env })
+    const child = spawn('node', [SENDER, '--message', message, '--header', header], { stdio: ['ignore', 'inherit', 'inherit'], env: process.env })
     child.on('exit', (c) => c === 0 ? resolve() : reject(new Error(`telegram-sender exit ${c}`)))
     child.on('error', reject)
   })
