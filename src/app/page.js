@@ -53,8 +53,8 @@ const VERBS = [
   {
     n: '03', verb: 'SCORE', color: '#e91e80',
     tagline: 'Rank by evidence, not by who shouted loudest.',
-    chips: ['v2.c-public (developer)', 'v1.4 (model families)', 'v1.1-tvl (tokenized)', 'v1.1-forks (service)'],
-    note: 'Four separate methodologies. Each one documented, versioned, and publicly auditable.',
+    chips: ['v2.c-public (developer)', 'v1.4 (model families)', 'v1.1-tvl (tokenized)', 'v1.1-forks (service)', 'v1.0 (mcp servers)'],
+    note: 'Five separate methodologies. Each one documented, versioned, and publicly auditable.',
   },
   {
     n: '04', verb: 'TRACK', color: '#a78bfa',
@@ -723,7 +723,7 @@ export default async function Home() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30 mb-0.5">Rankings</div>
-                <div className="font-mono text-base font-bold text-white">4 rankings — equal peers</div>
+                <div className="font-mono text-base font-bold text-white">5 rankings — equal peers</div>
               </div>
               <div className="flex items-center gap-4">
                 <Link href="/compare" className="font-mono text-[11px] text-[#a78bfa]/70 hover:text-[#a78bfa] transition-colors">

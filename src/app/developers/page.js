@@ -353,7 +353,7 @@ export default function DevelopersPage() {
             {
               label: 'Ranking Methodology',
               href: '/methodology',
-              note: 'Four category methodologies — signals, weights, evidence-ready rule, limitations.',
+              note: 'Five category methodologies — signals, weights, evidence-ready rule, limitations.',
             },
             {
               label: 'Agent profiles',
