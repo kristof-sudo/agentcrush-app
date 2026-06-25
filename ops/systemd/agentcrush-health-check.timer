@@ -1,0 +1,11 @@
+[Unit]
+Description=AgentCrush daily health-check timer — 07:00 UTC (09:00 Budapest)
+Documentation=Daily ✅/⚠️ pipeline-health report to Kris. Born from the 2026-06-25 stuck-brain-sync + stale-Ghost-Index incidents.
+
+[Timer]
+OnCalendar=*-*-* 07:00:00 UTC
+Persistent=true
+Unit=agentcrush-health-check.service
+
+[Install]
+WantedBy=timers.target

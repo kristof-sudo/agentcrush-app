@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentCrush daily health check — catches stuck brain-sync, failed workers, stale briefs, Ghost Index regressions (Telegram to Kris)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+EnvironmentFile=-/opt/agentcrush/scanner/.env
+Environment=BRAIN_PATH=/opt/agentcrush-brain
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/daily-health-check-worker.mjs
+StandardOutput=append:/var/log/agentcrush/health-check.log
+StandardError=append:/var/log/agentcrush/health-check.log
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
