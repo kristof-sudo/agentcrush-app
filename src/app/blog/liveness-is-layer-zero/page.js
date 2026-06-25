@@ -17,8 +17,8 @@ export const metadata = {
     images: [
       {
         url: 'https://agentcrush.xyz/og-liveness-is-layer-zero.png',
-        width: 1200,
-        height: 630,
+        width: 1731,
+        height: 909,
         alt: 'Liveness is layer zero of the agent trust stack — AgentCrush',
       },
     ],
