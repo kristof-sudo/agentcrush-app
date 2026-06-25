@@ -352,7 +352,7 @@ const TOOLS = [
   {
     name: 'list_categories',
     title: 'List AgentCrush Categories',
-    description: 'List the 4 AgentCrush agent categories with tracked + evidence-ranked counts and current methodology versions. Use this for market-level discovery — what kinds of agents does AgentCrush track and how many of each?',
+    description: 'List the 5 AgentCrush agent categories with tracked + evidence-ranked counts and current methodology versions. Use this for market-level discovery — what kinds of agents does AgentCrush track and how many of each?',
     annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
     inputSchema: { type: 'object', properties: {} },
     outputSchema: {
