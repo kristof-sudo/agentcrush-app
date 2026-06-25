@@ -5,16 +5,6 @@ import { useState } from 'react'
 
 const POSTS = [
   {
-    slug: 'ghost-index-first-month',
-    category: 'Findings',
-    image: '/og-ghost-index-first-month.png',
-    imageAlt: 'The Ghost Index: 84% of indexed AI agents are unreachable — AgentCrush',
-    title: 'The Ghost Index: 84% of indexed AI agents are unreachable',
-    date: 'June 26, 2026',
-    summary:
-      'We ran nightly liveness checks on 1,354 indexed agents for three weeks. Only 16.2% answered. Here is what the first Ghost Index snapshot reveals about agent durability — and what separates the live ones from the ghosts.',
-  },
-  {
     slug: 'zero-interop',
     category: 'Findings',
     image: '/og-zero-interop.png',

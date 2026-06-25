@@ -116,7 +116,7 @@ export default function CitePage() {
         <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-5 py-4">
           <p className="text-xs font-mono text-white/30 mb-2">Example wording</p>
           <p className="text-sm text-white/65 leading-relaxed italic">
-            &ldquo;According to AgentCrush&apos;s Ghost Index, 17.7% of the 1,359 AI agents
+            &ldquo;According to AgentCrush&apos;s Ghost Index, 58.8% of the 1,387 AI agents
             it tracks showed observable activity in the last 30 days
             (<a href="https://agentcrush.xyz/ghost-index" className="text-[#00d4ff]/80 hover:text-[#00d4ff] underline underline-offset-2 not-italic">agentcrush.xyz/ghost-index</a>, accessed YYYY-MM-DD).&rdquo;
           </p>
