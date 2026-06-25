@@ -33,7 +33,7 @@ const TEMPLATES = [
     color: '#39ff14',
     question: 'Will [AGENT] still be alive on [DATE]?',
     rule: `Resolves YES if the AgentCrush attestation for metric "liveness" on agent handle "[HANDLE]" (GET https://agentcrush.xyz/api/oracle/attest?metric=liveness&handle=[HANDLE]), requested between [DATE] 00:00 UTC and [DATE] 23:59 UTC, returns value.liveness = "alive". Resolves NO if it returns "ghost". The attestation is Ed25519-signed (public key: https://agentcrush.xyz/.well-known/agentcrush-oracle.json) and references the daily Proof-of-Index digest anchored on Base. Liveness methodology (30-day public-signal window): https://agentcrush.xyz/methodology`,
-    note: 'The sharpest agent-economy question: most indexed agents go dark. Current base rate ~17% alive.',
+    note: 'The sharpest agent-economy question: most indexed agents go dark. Current base rate ~59% alive.',
   },
   {
     id: 'ghost-index-threshold',
