@@ -13,6 +13,14 @@ const POSTS = [
     date: 'July 3, 2026',
     summary:
       'We initially published 16.2% of indexed agents alive. The corrected figure is 58.8%. The gap between those two numbers separates endpoint health from recent activity from evidence-ranked verification — and that distinction is the most useful data in the index.',
+    slug: 'liveness-is-layer-zero',
+    category: 'Findings',
+    image: '/og-liveness-is-layer-zero.png',
+    imageAlt: 'Liveness is layer zero of the agent trust stack — AgentCrush',
+    title: 'Everyone says "agent trust." Almost nobody measures the first signal.',
+    date: 'June 26, 2026',
+    summary:
+      'This week the ecosystem agreed trust is the frontier. But trust has a layer beneath reputation: is the agent even alive? Across 1,387 indexed agents, only 58.8% show signs of life — 4 in 10 are ghosts.',
   },
   {
     slug: 'zero-interop',
