@@ -5,6 +5,16 @@ import { useState } from 'react'
 
 const POSTS = [
   {
+    slug: 'agent-liveness',
+    category: 'Findings',
+    image: '/og-agent-liveness.png',
+    imageAlt: 'Three tiers of alive — AgentCrush',
+    title: 'Three tiers of alive: what the corrected Ghost Index reveals',
+    date: 'July 3, 2026',
+    summary:
+      'We initially published 16.2% of indexed agents alive. The corrected figure is 58.8%. The gap between those two numbers separates endpoint health from recent activity from evidence-ranked verification — and that distinction is the most useful data in the index.',
+  },
+  {
     slug: 'zero-interop',
     category: 'Findings',
     image: '/og-zero-interop.png',
