@@ -7,7 +7,7 @@ const POSTS = [
   {
     slug: 'agent-liveness',
     category: 'Findings',
-    image: '/og-agent-liveness.png',
+    image: '/api/og?title=Three+tiers+of+alive',
     imageAlt: 'Three tiers of alive — AgentCrush',
     title: 'Three tiers of alive: what the corrected Ghost Index reveals',
     date: 'July 3, 2026',
