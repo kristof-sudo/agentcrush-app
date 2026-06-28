@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: '2026-W26',
+    label: 'W26 · June 22–28, 2026',
+    summary: 'Forty thousand agents started trading real assets and the x402 conversation consolidated around trust — so we made our own numbers checkable: a verifiable historic record, a third (runtime) signal family, and the W24 service-liveness gap closed (0% → 97.9%).',
+    href: '/weekly/2026-W26',
+  },
+  {
     week: '2026-W24',
     label: 'W24 · June 8–14, 2026',
     summary: 'The agents making real money are invisible: the x402 Demand Leaderboard finds the top earners unindexed, the "agent demand" number turns out ~99.8% bots, and trust scoring becomes an IETF draft.',
