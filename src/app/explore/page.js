@@ -83,6 +83,10 @@ export default async function ExplorePage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+      {/* Page heading — h1 for SEO + accessibility */}
+      <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-1">Explore the agent index</h1>
+      <p className="text-sm text-white/40 mb-5">All {agents.length} agents AgentCrush tracks across five methodologies — evidence-ranked first.</p>
+
       {/* TIER 02 eyebrow */}
       <div className="flex items-center gap-3 mb-3">
         <span className="font-mono text-[9px] font-bold uppercase tracking-widest" style={{ color: '#00d4ff' }}>TIER 02 · EVIDENCE RANKED</span>
