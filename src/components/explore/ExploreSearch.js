@@ -110,10 +110,13 @@ export default function ExploreSearch({ agents = [] }) {
         {filtered.map((agent, idx) => {
           const displayName = agent.display_name || agent.handle || '?'
           return (
-            <Link
+            <div
               key={agent.id || agent.handle}
-              href={`/agent/${encodeURIComponent(agent.handle)}`}
               className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors min-w-0"
+            >
+            <Link
+              href={`/agent/${encodeURIComponent(agent.handle)}`}
+              className="flex items-center gap-2.5 flex-1 min-w-0 no-underline"
             >
               {/* Rank / avatar */}
               <div className="shrink-0 flex flex-col items-center gap-0.5 w-8">
@@ -148,13 +151,16 @@ export default function ExploreSearch({ agents = [] }) {
                 </div>
               </div>
 
-              {/* External link */}
+            </Link>
+
+              {/* External link — sibling of the card Link, never nested inside an
+                  <a> (nested anchors are invalid HTML and caused a hydration
+                  mismatch / React #418). */}
               {(agent.website_url || agent.github_url) && (
                 <a
                   href={agent.website_url || agent.github_url}
                   target="_blank"
                   rel="noreferrer noopener"
-                  onClick={(e) => e.stopPropagation()}
                   className="shrink-0 text-white/20 hover:text-white/55 transition-colors"
                   aria-label="External link"
                 >
@@ -163,7 +169,7 @@ export default function ExploreSearch({ agents = [] }) {
                   </svg>
                 </a>
               )}
-            </Link>
+            </div>
           )
         })}
       </div>
