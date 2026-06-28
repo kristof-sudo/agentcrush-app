@@ -16,7 +16,7 @@ export const metadata = {
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://agentcrush.xyz/og-agent-liveness.png',
+        url: 'https://agentcrush.xyz/api/og?title=Three+tiers+of+alive',
         width: 1200,
         height: 630,
         alt: 'Three tiers of alive — AgentCrush',
@@ -29,7 +29,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Three tiers of alive — AgentCrush',
     description: '16.2% vs 58.8%: the Ghost Index correction and what the gap reveals.',
-    images: ['https://agentcrush.xyz/og-agent-liveness.png'],
+    images: ['https://agentcrush.xyz/api/og?title=Three+tiers+of+alive'],
   },
 }
 
@@ -41,7 +41,7 @@ export default function AgentLiveness() {
         title="Three tiers of alive: what the corrected Ghost Index reveals"
         summary="We initially published 16.2% of indexed agents alive. The corrected figure is 58.8%. The gap between those two numbers is the most interesting data in the index."
         date="2026-07-03"
-        imageUrl="/og-agent-liveness.png"
+        imageUrl="/api/og?title=Three+tiers+of+alive"
       />
     <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
 
@@ -55,7 +55,7 @@ export default function AgentLiveness() {
       {/* Cover */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/og-agent-liveness.png"
+        src="/api/og?title=Three+tiers+of+alive"
         alt="Three tiers of alive — AgentCrush"
         width={1200}
         height={630}
