@@ -251,7 +251,11 @@ async function fetchAllAgents() {
   let reportedPageCount = null;
 
   while (true) {
-    const url = `${ENDPOINT}?pagination%5Bpage%5D=${page}&pagination%5BpageSize%5D=${PAGE_SIZE}`;
+    // 2026-06-28: the Virtuals API now 500s server-side ("Cannot set properties
+    // of undefined (setting 'chain')") when called with pagination but no
+    // filters[] param. filters[status]=AVAILABLE restores a 200 and returns the
+    // broadest set (52,118 vs 51,605 for chain=BASE), spanning all chains.
+    const url = `${ENDPOINT}?pagination%5Bpage%5D=${page}&pagination%5BpageSize%5D=${PAGE_SIZE}&filters%5Bstatus%5D=AVAILABLE`;
     let res = await fetch(url, { headers: { Accept: 'application/json' } });
     if (!res.ok && res.status >= 500) {
       // Partial-failure tolerance (2026-06-12): transient 5xx mid-pagination
