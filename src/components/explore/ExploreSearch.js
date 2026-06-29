@@ -125,7 +125,7 @@ export default function ExploreSearch({ agents = [] }) {
                 ) : (
                   <div className={`h-7 w-7 rounded border border-white/[0.07] flex items-center justify-center overflow-hidden ${agent.avatar_url ? 'bg-white/[0.04]' : avatarColor(agent.handle)}`}>
                     {agent.avatar_url ? (
-                      <img src={agent.avatar_url} alt={displayName} className="h-full w-full object-cover" />
+                      <img src={agent.avatar_url} alt={displayName} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     ) : (
                       <span className="font-mono text-[9px] font-bold">{displayName[0].toUpperCase()}</span>
                     )}
