@@ -47,7 +47,16 @@ async function checkRoute(browser, route) {
   const page = await context.newPage();
 
   const consoleErrors = [];
-  page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text().slice(0, 300)); });
+  page.on('console', (msg) => {
+    if (msg.type() !== 'error') return;
+    const text = msg.text();
+    // Ignore sub-resource load failures (images/fonts, esp. third-party GitHub
+    // avatars that intermittently 503 when ~1k load at once). These are network
+    // flakiness, not JS regressions — the checker's job is "no uncaught JS errors,"
+    // which still come through 'pageerror' and real console.error() calls below.
+    if (/Failed to load resource/i.test(text)) return;
+    consoleErrors.push(text.slice(0, 300));
+  });
   page.on('pageerror', (err) => consoleErrors.push(`pageerror: ${err.message.slice(0, 300)}`));
 
   const result = { route, url: `${BASE}${route}`, ok: true, failures: [] };
