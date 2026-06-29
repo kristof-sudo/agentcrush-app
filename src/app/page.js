@@ -526,8 +526,16 @@ export default async function Home() {
                 <span style={{ color: '#e91e80' }}>AgentCrush</span> is the public record of AI agents.
               </h1>
 
-              <p className="font-mono text-sm text-white/50 mb-5 max-w-2xl leading-relaxed">
+              <p className="font-mono text-sm text-white/50 mb-3 max-w-2xl leading-relaxed">
                 Independent. Cross-protocol. Open methodology. Machine-callable from your code or your agent.
+              </p>
+
+              {/* Trust line — verifiable, on-chain-anchored historical record */}
+              <p className="font-mono text-[11px] text-white/35 mb-5 max-w-2xl leading-relaxed">
+                <span className="text-[#39ff14]/80">●</span>{' '}
+                <span className="text-white/55">Tamper-evident by design.</span> Every daily snapshot is hashed to a Merkle root and{' '}
+                <Link href="/oracle" className="text-white/60 underline decoration-white/20 underline-offset-2 hover:text-white/90">anchored on Base</Link>{' '}
+                — a historical record we can&apos;t quietly rewrite, and you can recompute and verify yourself.
               </p>
 
               {/* (a) Live stats strip — the index at a glance */}
