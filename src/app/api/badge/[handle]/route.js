@@ -1,5 +1,6 @@
 /**
  * GET /api/badge/[handle]            — default rank badge SVG
+ * GET /api/badge/[handle]?style=alive    — liveness: alive / dormant / ghost
  * GET /api/badge/[handle]?style=mover    — highlights weekly_delta
  * GET /api/badge/[handle]?style=evidence — evidence-tier badge
  * GET /api/badge/[handle]?style=trust    — composite trust score
@@ -8,12 +9,15 @@
  *
  * Strategy: backlinks → SEO + agent discovery. Every embedded badge is one
  * inbound link to agentcrush.xyz; every embed in a popular project compounds
- * over time. Free embed, cached 1 hour.
+ * over time. Free embed, cached 1 hour. The `alive` style is the flagship
+ * "Verified Alive by AgentCrush" badge — green social proof projects want to
+ * show, every one of them an inbound link.
  *
  * Brand: AgentCrush violet (#a78bfa) for the label, score color varies by tier.
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { livenessFrom } from '@/lib/githubLiveness'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -116,7 +120,7 @@ export async function GET(req, { params }) {
     const supabase = db()
     const { data: agent } = await supabase
       .from('agents')
-      .select('handle, display_name, tier, primary_category, weekly_delta, identity_status')
+      .select('handle, display_name, tier, primary_category, weekly_delta, identity_status, github_pushed_at, last_event_at, activity_status')
       .ilike('handle', handle)
       .maybeSingle()
 
@@ -129,6 +133,25 @@ export async function GET(req, { params }) {
       const tierColor = COLORS[tier] || COLORS.indexed
       const tierLabel = tier.replace(/_/g, ' ')
       return svgResponse(buildBadge('agentcrush', tierLabel, tierColor), { source: `https://agentcrush.xyz/agent/${handle}` })
+    }
+
+    if (style === 'alive' || style === 'liveness') {
+      // Liveness from the freshest stored signal (no live GitHub call — badges are
+      // hit often and must be fast/cached). Mirrors the Ghost Index window.
+      const signals = [agent.github_pushed_at, agent.last_event_at]
+        .map(d => (d ? Date.parse(d) : null))
+        .filter(Boolean)
+      const mostRecent = signals.length ? Math.max(...signals) : null
+      let { state } = livenessFrom(mostRecent)
+      if (state !== 'alive' && agent.activity_status === 'active') state = 'alive'
+      const variants = {
+        alive:   { label: '● alive',   color: COLORS.evidence_ranked },   // green
+        dormant: { label: 'dormant',   color: COLORS.trust_provisional }, // amber
+        ghost:   { label: 'ghost',     color: COLORS.mover_down },        // red
+        unknown: { label: 'no signal', color: COLORS.indexed },           // grey
+      }
+      const v = variants[state] || variants.unknown
+      return svgResponse(buildBadge('agentcrush · liveness', v.label, v.color), { source: `https://agentcrush.xyz/agent/${handle}` })
     }
 
     if (style === 'mover') {

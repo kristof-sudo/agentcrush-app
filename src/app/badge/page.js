@@ -2,13 +2,14 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'Embed an AgentCrush badge · AgentCrush',
-  description: 'Add a live AgentCrush badge to your README or website. Free embeds, 1 hour cache, four styles: rank, mover, evidence-tier, trust.',
+  description: 'Add a live AgentCrush badge to your README or website. Free embeds, 1 hour cache, five styles: Verified Alive (liveness), rank, mover, evidence-tier, trust.',
   alternates: { canonical: 'https://agentcrush.xyz/badge' },
 }
 
 const SAMPLE_HANDLE = 'qwen'
 
 const STYLES = [
+  { style: 'alive',         label: 'Verified Alive (liveness)', url: `/api/badge/${SAMPLE_HANDLE}?style=alive` },
   { style: 'rank',          label: 'Rank badge',          url: `/api/badge/${SAMPLE_HANDLE}` },
   { style: 'mover',         label: 'Weekly mover',        url: `/api/badge/${SAMPLE_HANDLE}?style=mover` },
   { style: 'evidence-tier', label: 'Evidence tier',       url: `/api/badge/${SAMPLE_HANDLE}?style=evidence-tier` },
@@ -27,7 +28,7 @@ export default function BadgePage() {
       <hr className="my-10 border-white/[0.06]" />
 
       <section className="mb-10">
-        <h2 className="text-lg font-bold text-white mb-4">Four styles</h2>
+        <h2 className="text-lg font-bold text-white mb-4">Five styles</h2>
         <div className="space-y-6">
           {STYLES.map(({ style, label, url }) => (
             <div key={style} className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-5 py-4">
