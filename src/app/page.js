@@ -535,7 +535,7 @@ export default async function Home() {
                 <span className="text-[#39ff14]/80">●</span>{' '}
                 <span className="text-white/55">Anchored on the blockchain.</span> Every daily snapshot is hashed to a Merkle root and{' '}
                 <Link href="/oracle" className="text-white/60 underline decoration-white/20 underline-offset-2 hover:text-white/90">written to Base</Link>{' '}
-                — a historical record we can&apos;t quietly rewrite, and you can recompute and verify yourself.
+                — a permanent record no one can rewrite, that anyone can recompute and verify.
               </p>
 
               {/* (a) Live stats strip — the index at a glance */}
