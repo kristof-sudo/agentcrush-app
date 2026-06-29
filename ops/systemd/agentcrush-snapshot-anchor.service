@@ -8,8 +8,10 @@ Type=oneshot
 WorkingDirectory=/opt/agentcrush
 EnvironmentFile=/opt/agentcrush/fetchers/.env
 EnvironmentFile=-/opt/agentcrush/scanner/.env
-# on-chain anchoring is OFF unless ANCHOR_ENABLED=1 is set (CDP wallet pending rotation)
-ExecStart=/usr/bin/node /opt/agentcrush/runtime/snapshot-anchor-worker.mjs --write
+# --anchor-onchain enables the on-chain Base write; it is additionally gated by
+# ANCHOR_ENABLED=1 in the env, so the flag is safe to keep on by default.
+# (2026-06-29: CDP wallet rotated to v2 + funded; anchoring is LIVE.)
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/snapshot-anchor-worker.mjs --write --anchor-onchain
 StandardOutput=append:/var/log/agentcrush/snapshot-anchor.log
 StandardError=append:/var/log/agentcrush/snapshot-anchor.log
 TimeoutStartSec=900
