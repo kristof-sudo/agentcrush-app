@@ -5,6 +5,16 @@ import { useState } from 'react'
 
 const POSTS = [
   {
+    slug: 'anchored-on-chain',
+    category: 'Product',
+    image: '/api/og?title=Don%27t+trust+our+rankings.+Verify+them.&kicker=AgentCrush&subtitle=Every+daily+snapshot+is+anchored+on+Base.',
+    imageAlt: "Don't trust our rankings. Verify them. — AgentCrush",
+    title: "Don't trust our rankings. Verify them.",
+    date: 'June 29, 2026',
+    summary:
+      'Every agent ranking asks you to trust the database. Ours you can check: every daily snapshot is hashed into a Merkle root, chained day-to-day, and anchored on Base — a permanent record no one can rewrite, that anyone can recompute and verify.',
+  },
+  {
     slug: 'agent-liveness',
     category: 'Findings',
     image: '/api/og?title=Three+tiers+of+alive',
