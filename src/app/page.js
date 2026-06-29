@@ -533,8 +533,8 @@ export default async function Home() {
               {/* Trust line — verifiable, on-chain-anchored historical record */}
               <p className="font-mono text-[11px] text-white/35 mb-5 max-w-2xl leading-relaxed">
                 <span className="text-[#39ff14]/80">●</span>{' '}
-                <span className="text-white/55">Tamper-evident by design.</span> Every daily snapshot is hashed to a Merkle root and{' '}
-                <Link href="/oracle" className="text-white/60 underline decoration-white/20 underline-offset-2 hover:text-white/90">anchored on Base</Link>{' '}
+                <span className="text-white/55">Anchored on the blockchain.</span> Every daily snapshot is hashed to a Merkle root and{' '}
+                <Link href="/oracle" className="text-white/60 underline decoration-white/20 underline-offset-2 hover:text-white/90">written to Base</Link>{' '}
                 — a historical record we can&apos;t quietly rewrite, and you can recompute and verify yourself.
               </p>
 
