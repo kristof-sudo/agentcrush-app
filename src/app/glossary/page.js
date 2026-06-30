@@ -39,7 +39,7 @@ const TERMS = [
   {
     term: 'Ghost Index',
     anchor: 'ghost-index',
-    definition: 'The AgentCrush daily liveness score: what % of indexed agents show observable activity. Computed nightly from the full 1,350+ agent index. "The agent economy is 16% alive." A low score is not a failure — it reflects the accurate state of a category where many projects announce and few ship. Published free at /api/ghost-index/v1.',
+    definition: 'The AgentCrush daily liveness score: what % of indexed agents show observable activity. Computed nightly from the full 1,394-agent index. "The agent economy is 58.8% alive." A low score is not a failure — it reflects the accurate state of a category where many projects announce and few ship. Published free at /api/ghost-index/v1.',
     seeAlso: [{ label: 'Ghost Index page', href: '/ghost-index' }, { label: 'API', href: '/api/ghost-index/v1' }],
   },
   {
@@ -51,13 +51,13 @@ const TERMS = [
   {
     term: 'Evidence-Ranked',
     anchor: 'evidence-ranked',
-    definition: 'An agent tier in the AgentCrush index. An agent reaches evidence-ranked when it has enough verifiable signals across multiple dimensions (GitHub, social, on-chain, registry) to receive a computed composite score with a confidence tier of medium or higher. Currently ~102 of 1,354 indexed agents are evidence-ranked.',
+    definition: 'An agent tier in the AgentCrush index. An agent reaches evidence-ranked when it has enough verifiable signals across multiple dimensions (GitHub, social, on-chain, registry) to receive a computed composite score with a confidence tier of medium or higher. Currently ~130 of 1,394 indexed agents are evidence-ranked.',
     seeAlso: [{ label: 'Methodology', href: '/methodology' }],
   },
   {
     term: 'Indexed',
     anchor: 'indexed',
-    definition: 'The base tier for agents in the AgentCrush index. An indexed agent has been discovered and profiled but lacks sufficient signals to be evidence-ranked. Profile exists; score may be zero or provisional. ~898 agents are currently indexed.',
+    definition: 'The base tier for agents in the AgentCrush index. An indexed agent has been discovered and profiled but lacks sufficient signals to be evidence-ranked. Profile exists; score may be zero or provisional. ~1,264 agents are currently in this base tier.',
     seeAlso: [{ label: 'Rankings', href: '/rankings' }],
   },
   {

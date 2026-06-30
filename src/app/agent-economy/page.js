@@ -26,7 +26,7 @@ export const metadata = {
 
 async function fetchSnapshot() {
   const supabase = supabaseAnon()
-  const out = { indexed: '1,350+', evidenceRanked: '130+', snapshots: '32,000+' }
+  const out = { indexed: '1,394', evidenceRanked: '130+', snapshots: '32,000+' }
   try {
     const { count } = await supabase.from('agents').select('id', { count: 'exact', head: true })
     if (count) out.indexed = count.toLocaleString()

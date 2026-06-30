@@ -16,7 +16,7 @@ export const revalidate = 3600
 
 export const metadata = {
   title: 'Ghost Index · AgentCrush',
-  description: 'What % of indexed AI agents are actually alive? The AgentCrush Ghost Index measures liveness daily across 1,350+ indexed agents. Updated every 24h.',
+  description: 'What % of indexed AI agents are actually alive? The AgentCrush Ghost Index measures liveness daily across 1,394 indexed agents. Updated every 24h.',
   alternates: { canonical: 'https://agentcrush.xyz/ghost-index' },
   openGraph: {
     title: 'AgentCrush Ghost Index',

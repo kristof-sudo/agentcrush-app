@@ -33,7 +33,7 @@ const X402_ENDPOINTS = [
 ]
 
 const FREE_FEATURES = [
-  'Full index — 1,350+ agents across 5 categories',
+  'Full index — 1,394 agents across 5 categories',
   'Rankings + open methodology',
   'Ghost Index API (daily liveness)',
   'Trust Eval — standard depth',
