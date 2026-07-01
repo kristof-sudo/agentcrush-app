@@ -54,13 +54,33 @@ async function fetchAllAgents(supabase) {
 export default async function ExplorePage() {
   const supabase = db()
 
-  const [agents, { data: v2Rows }] = await Promise.all([
-    fetchAllAgents(supabase),
-    supabase
-      .from('agent_score_v2_top50_public_candidate')
-      .select('handle, rank_v2_c_public, score_v2_c_public_candidate')
-      .eq('evidence_ready_for_public_rank', true),
-  ])
+  // Degrade gracefully (same pattern as /glossary and /ghost-report): a
+  // build/revalidate must not hard-fail on a DB hiccup. With no data we
+  // render a refresh notice, never a wrong list.
+  let agents = []
+  let v2Rows = []
+  try {
+    const [allAgents, v2] = await Promise.all([
+      fetchAllAgents(supabase),
+      supabase
+        .from('agent_score_v2_top50_public_candidate')
+        .select('handle, rank_v2_c_public, score_v2_c_public_candidate')
+        .eq('evidence_ready_for_public_rank', true),
+    ])
+    agents = allAgents
+    v2Rows = v2.data || []
+  } catch (_) {
+    // fall through to the empty-state render
+  }
+
+  if (agents.length === 0) {
+    return (
+      <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+        <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-1">Explore the agent index</h1>
+        <p className="text-sm text-white/40 mb-5">The index is refreshing — check back in a minute.</p>
+      </main>
+    )
+  }
 
   const v2ByHandle = {}
   for (const row of v2Rows || []) {
