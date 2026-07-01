@@ -7,6 +7,9 @@
  */
 
 import Link from 'next/link'
+import { getIndexStats, fmt } from '@/lib/stats'
+
+export const revalidate = 3600
 
 export const metadata = {
   title: 'Glossary · AgentCrush',
@@ -29,7 +32,7 @@ const jsonLd = {
   url: 'https://agentcrush.xyz/glossary',
 }
 
-const TERMS = [
+const buildTerms = (s) => [
   {
     term: 'Ghost Agent',
     anchor: 'ghost-agent',
@@ -39,7 +42,7 @@ const TERMS = [
   {
     term: 'Ghost Index',
     anchor: 'ghost-index',
-    definition: 'The AgentCrush daily liveness score: what % of indexed agents show observable activity. Computed nightly from the full 1,350+ agent index. "The agent economy is 16% alive." A low score is not a failure — it reflects the accurate state of a category where many projects announce and few ship. Published free at /api/ghost-index/v1.',
+    definition: `The AgentCrush daily liveness score: what % of indexed agents show observable activity. Computed nightly from the full ${fmt(s.indexed)}-agent index. "The agent economy is ${s.ghostPct}% alive." The score is not a verdict — it reflects the accurate state of a category where many projects announce and few keep shipping. Published free at /api/ghost-index/v1.`,
     seeAlso: [{ label: 'Ghost Index page', href: '/ghost-index' }, { label: 'API', href: '/api/ghost-index/v1' }],
   },
   {
@@ -51,13 +54,13 @@ const TERMS = [
   {
     term: 'Evidence-Ranked',
     anchor: 'evidence-ranked',
-    definition: 'An agent tier in the AgentCrush index. An agent reaches evidence-ranked when it has enough verifiable signals across multiple dimensions (GitHub, social, on-chain, registry) to receive a computed composite score with a confidence tier of medium or higher. Currently ~102 of 1,354 indexed agents are evidence-ranked.',
+    definition: `An agent tier in the AgentCrush index. An agent reaches evidence-ranked when it has enough verifiable signals across multiple dimensions (GitHub, social, on-chain, registry) to receive a computed composite score with a confidence tier of medium or higher. Currently ${s.evidenceRanked} of ${fmt(s.indexed)} indexed agents are evidence-ranked.`,
     seeAlso: [{ label: 'Methodology', href: '/methodology' }],
   },
   {
     term: 'Indexed',
     anchor: 'indexed',
-    definition: 'The base tier for agents in the AgentCrush index. An indexed agent has been discovered and profiled but lacks sufficient signals to be evidence-ranked. Profile exists; score may be zero or provisional. ~898 agents are currently indexed.',
+    definition: `The base tier for agents in the AgentCrush index. An indexed agent has been discovered and profiled but lacks sufficient signals to be evidence-ranked. Profile exists; score may be zero or provisional. ~${fmt(s.baseTier)} agents are currently in this base tier.`,
     seeAlso: [{ label: 'Rankings', href: '/rankings' }],
   },
   {
@@ -75,7 +78,7 @@ const TERMS = [
   {
     term: 'Vaporware Ratio',
     anchor: 'vaporware-ratio',
-    definition: 'The fraction of indexed agents that are indexed-only (no evidence signals). Currently ~93% of the index. This is not a critique — it reflects the honest state of the ecosystem. Most agent projects announce before they ship; the index tracks them both.',
+    definition: `The fraction of indexed agents that are indexed-only (no evidence signals). Currently ~${Math.round((s.baseTier / s.indexed) * 100)}% of the index. This is not a critique — it reflects the honest state of the ecosystem. Most agent projects announce before they ship; the index tracks them both.`,
     seeAlso: [{ label: 'Ghost Index', href: '/ghost-index' }],
   },
   {
@@ -104,7 +107,8 @@ const TERMS = [
   },
 ]
 
-export default function GlossaryPage() {
+export default async function GlossaryPage() {
+  const TERMS = buildTerms(await getIndexStats())
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
