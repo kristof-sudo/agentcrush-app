@@ -22,9 +22,9 @@ export const FLOOR = {
 
 // Used when Supabase is unreachable (build without env, outage).
 const FALLBACK = {
-  indexed: 1394,
-  evidenceRanked: 130,
-  baseTier: 1264,
+  indexed: 1395,
+  evidenceRanked: 135,
+  baseTier: 1260,
   ghostPct: 58.7,
   aliveAgents: 819,
 }
@@ -36,26 +36,21 @@ function supabase() {
   return createClient(url, key)
 }
 
-const EVIDENCE_VIEWS = [
-  ['agent_score_model_family_v1', 'agent_id'],
-  ['agent_score_tokenized_v1', 'agent_id'],
-  ['agent_score_service_v1', 'agent_id'],
-  ['agent_score_v2_top50_public_candidate', 'handle'],
-]
-
 export const getIndexStats = cache(async function getIndexStats() {
   const s = { ...FALLBACK }
   const sb = supabase()
   if (!sb) return s
   try {
-    const [{ count: indexed }, ...erCounts] = await Promise.all([
+    // Evidence-ranked = agents.tier count, NOT the sum of the 4 per-category
+    // score views: an agent evidence-ready in two categories appears in two
+    // views, and that sum (179 vs the true 135 on 2026-07-01) is what put an
+    // inflated count on /agent-economy. The tier count matches the Ghost
+    // Index daily snapshot — one number everywhere.
+    const [{ count: indexed }, { count: er }] = await Promise.all([
       sb.from('agents').select('id', { count: 'exact', head: true }),
-      ...EVIDENCE_VIEWS.map(([table, col]) =>
-        sb.from(table).select(col, { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true)
-      ),
+      sb.from('agents').select('id', { count: 'exact', head: true }).eq('tier', 'evidence_ranked'),
     ])
     if (indexed) s.indexed = indexed
-    const er = erCounts.reduce((sum, r) => sum + (r.count || 0), 0)
     if (er) s.evidenceRanked = er
     s.baseTier = s.indexed - s.evidenceRanked
 
