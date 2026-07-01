@@ -262,6 +262,20 @@ export default async function GhostIndexPage() {
           ))}
         </div>
 
+        {/* ── Ghost Report teaser ── */}
+        <Link
+          href="/ghost-report"
+          className="group flex items-center justify-between gap-4 rounded-lg border border-[rgba(249,115,22,0.25)] bg-gradient-to-br from-[#f97316]/[0.06] to-transparent px-5 py-4 mb-8 hover:border-[rgba(249,115,22,0.45)] transition-colors"
+        >
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#f97316]/80 mb-1">The Ghost Report</p>
+            <p className="text-sm text-white/70 leading-snug">
+              Famous AI agents that went dark — the most-starred repos with no public signal in 90+ days.
+            </p>
+          </div>
+          <span className="shrink-0 font-mono text-xs font-bold text-[#f97316]/80 group-hover:text-[#f97316] transition-colors">Read →</span>
+        </Link>
+
         {/* ── Category breakdown ── */}
         {Object.keys(categories).length > 0 && (
           <section className="mb-8">
@@ -399,7 +413,7 @@ export default async function GhostIndexPage() {
           <Link href="/rankings" className="hover:text-white/70 transition-colors">Rankings →</Link>
           <Link href="/agent-economy-index" className="hover:text-white/70 transition-colors">Agent Economy Index →</Link>
           <Link href="/methodology" className="hover:text-white/70 transition-colors">Methodology →</Link>
-          <Link href="/agent-economy-index" className="hover:text-white/70 transition-colors">Economy →</Link>
+          <Link href="/ghost-report" className="hover:text-white/70 transition-colors">Ghost Report →</Link>
           <a href="/api/ghost-index/v1" className="hover:text-white/70 transition-colors text-[#00d4ff]/40">API →</a>
         </div>
 

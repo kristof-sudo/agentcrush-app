@@ -14,7 +14,6 @@
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 export const metadata = {
@@ -50,6 +49,24 @@ const MIN_STARS = 1000     // "famous" floor
 const DARK_DAYS = 90       // ghost window
 const LIMIT = 20
 
+// Non-agent repos clear the star floor via the "agent" keyword but aren't
+// agents — curated lists, courses, client libs, model-release repos. Naming
+// one of these as a "dark agent" is the falsifiable-claim failure mode, so
+// the list must be unimpeachable. Patterns catch list/course repos
+// generically; the handle set catches known one-offs.
+const NON_AGENT_PATTERNS = /awesome[-_ ]|[-_ ](resources|examples)\b|masterclass|handbook|cookbook|tutorial/i
+const NON_AGENT_HANDLES = new Set([
+  'creativetimofficial_ui',        // UI component library
+  'fake_useragent_fake_useragent', // browser User-Agent-string lib
+  'liyupi_mianshiya',              // interview-prep site
+  'llamachinese_llama_chinese',    // Llama community/tutorial repo
+  'zai_org_glm_4_5',               // model-weights release repo
+])
+
+function isNonAgent(a) {
+  return NON_AGENT_HANDLES.has(a.handle) || NON_AGENT_PATTERNS.test(`${a.handle} ${a.display_name || ''}`)
+}
+
 async function getGhosts() {
   const sb = db()
   // Pull the most-starred agents, then filter to those gone dark. Liveness is
@@ -68,6 +85,7 @@ async function getGhosts() {
   const ghosts = []
   for (const a of data) {
     if (a.activity_status === 'active') continue
+    if (isNonAgent(a)) continue
     const sig = [a.github_pushed_at, a.last_event_at].map(d => (d ? Date.parse(d) : null)).filter(Boolean)
     const recent = sig.length ? Math.max(...sig) : null
     const days = recent ? Math.floor((now - recent) / DAY) : null
