@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { supabaseAnon } from '@/lib/supabase'
+import { getIndexStats, fmt } from '@/lib/stats'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,18 +25,8 @@ export const metadata = {
 }
 
 async function fetchSnapshot() {
-  const supabase = supabaseAnon()
-  const out = { indexed: '1,350+', evidenceRanked: '130+', snapshots: '32,000+' }
-  try {
-    const { count } = await supabase.from('agents').select('id', { count: 'exact', head: true })
-    if (count) out.indexed = count.toLocaleString()
-    const { count: mfER } = await supabase.from('agent_score_model_family_v1').select('agent_id', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true)
-    const { count: tkER } = await supabase.from('agent_score_tokenized_v1').select('agent_id', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true)
-    const { count: svcER } = await supabase.from('agent_score_service_v1').select('agent_id', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true)
-    const { count: devER } = await supabase.from('agent_score_v2_top50_public_candidate').select('handle', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true)
-    out.evidenceRanked = String((mfER || 0) + (tkER || 0) + (svcER || 0) + (devER || 0))
-  } catch {}
-  return out
+  const live = await getIndexStats()
+  return { indexed: fmt(live.indexed), evidenceRanked: String(live.evidenceRanked), snapshots: '32,000+' }
 }
 
 export default async function AgentEconomyPage() {

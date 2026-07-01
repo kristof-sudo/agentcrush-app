@@ -13,6 +13,8 @@ const POSTS = [
     date: 'July 3, 2026',
     summary:
       'We initially published 16.2% of indexed agents alive. The corrected figure is 58.8%. The gap between those two numbers separates endpoint health from recent activity from evidence-ranked verification — and that distinction is the most useful data in the index.',
+  },
+  {
     slug: 'liveness-is-layer-zero',
     category: 'Findings',
     image: '/og-liveness-is-layer-zero.png',
