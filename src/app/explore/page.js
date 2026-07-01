@@ -17,11 +17,20 @@ export const metadata = {
   },
 }
 
-import { supabaseAnon } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import ExploreSearch from '@/components/explore/ExploreSearch'
 import Link from 'next/link'
 
-export const dynamic = 'force-dynamic'
+function db() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
+}
+
+// ISR: the index changes daily, not per-request. Re-fetching all ~1,400 agents
+// on every page view was the /explore perf bottleneck.
+export const revalidate = 3600
 
 async function fetchAllAgents(supabase) {
   const PAGE = 1000
@@ -43,15 +52,35 @@ async function fetchAllAgents(supabase) {
 }
 
 export default async function ExplorePage() {
-  const supabase = supabaseAnon()
+  // Degrade gracefully (same pattern as /glossary and /ghost-report): a
+  // build/revalidate must not hard-fail on a DB hiccup or missing env
+  // (createClient throws inside the try). With no data we render a refresh
+  // notice, never a wrong list.
+  let agents = []
+  let v2Rows = []
+  try {
+    const supabase = db()
+    const [allAgents, v2] = await Promise.all([
+      fetchAllAgents(supabase),
+      supabase
+        .from('agent_score_v2_top50_public_candidate')
+        .select('handle, rank_v2_c_public, score_v2_c_public_candidate')
+        .eq('evidence_ready_for_public_rank', true),
+    ])
+    agents = allAgents
+    v2Rows = v2.data || []
+  } catch (_) {
+    // fall through to the empty-state render
+  }
 
-  const [agents, { data: v2Rows }] = await Promise.all([
-    fetchAllAgents(supabase),
-    supabase
-      .from('agent_score_v2_top50_public_candidate')
-      .select('handle, rank_v2_c_public, score_v2_c_public_candidate')
-      .eq('evidence_ready_for_public_rank', true),
-  ])
+  if (agents.length === 0) {
+    return (
+      <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+        <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-1">Explore the agent index</h1>
+        <p className="text-sm text-white/40 mb-5">The index is refreshing — check back in a minute.</p>
+      </main>
+    )
+  }
 
   const v2ByHandle = {}
   for (const row of v2Rows || []) {
