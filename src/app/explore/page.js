@@ -52,14 +52,14 @@ async function fetchAllAgents(supabase) {
 }
 
 export default async function ExplorePage() {
-  const supabase = db()
-
   // Degrade gracefully (same pattern as /glossary and /ghost-report): a
-  // build/revalidate must not hard-fail on a DB hiccup. With no data we
-  // render a refresh notice, never a wrong list.
+  // build/revalidate must not hard-fail on a DB hiccup or missing env
+  // (createClient throws inside the try). With no data we render a refresh
+  // notice, never a wrong list.
   let agents = []
   let v2Rows = []
   try {
+    const supabase = db()
     const [allAgents, v2] = await Promise.all([
       fetchAllAgents(supabase),
       supabase
