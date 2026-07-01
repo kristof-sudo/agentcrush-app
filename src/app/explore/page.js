@@ -17,11 +17,20 @@ export const metadata = {
   },
 }
 
-import { supabaseAnon } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import ExploreSearch from '@/components/explore/ExploreSearch'
 import Link from 'next/link'
 
-export const dynamic = 'force-dynamic'
+function db() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
+}
+
+// ISR: the index changes daily, not per-request. Re-fetching all ~1,400 agents
+// on every page view was the /explore perf bottleneck.
+export const revalidate = 3600
 
 async function fetchAllAgents(supabase) {
   const PAGE = 1000
@@ -43,7 +52,7 @@ async function fetchAllAgents(supabase) {
 }
 
 export default async function ExplorePage() {
-  const supabase = supabaseAnon()
+  const supabase = db()
 
   const [agents, { data: v2Rows }] = await Promise.all([
     fetchAllAgents(supabase),

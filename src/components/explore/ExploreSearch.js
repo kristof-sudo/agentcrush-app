@@ -34,9 +34,14 @@ function TierBadge({ tier }) {
   )
 }
 
+const CHUNK = 60
+
 export default function ExploreSearch({ agents = [] }) {
   const [query, setQuery] = useState('')
-  const [showTier, setShowTier] = useState('all')
+  // Default to the evidence-ranked view: the verified list is the product;
+  // the full index is one tap away.
+  const [showTier, setShowTier] = useState('evidence')
+  const [visibleCount, setVisibleCount] = useState(CHUNK)
 
   const filtered = useMemo(() => {
     let result = agents
@@ -55,6 +60,12 @@ export default function ExploreSearch({ agents = [] }) {
     return result
   }, [agents, query, showTier])
 
+  const visible = filtered.slice(0, visibleCount)
+  const remaining = filtered.length - visible.length
+
+  const setTier = (key) => { setShowTier(key); setVisibleCount(CHUNK) }
+  const setSearch = (value) => { setQuery(value); setVisibleCount(CHUNK) }
+
   const evidenceCount = agents.filter((a) => a.tier === 'evidence_ranked').length
   const indexedCount = agents.filter((a) => a.tier === 'indexed').length
 
@@ -66,7 +77,7 @@ export default function ExploreSearch({ agents = [] }) {
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, handle, or category…"
             className="w-full rounded-lg border bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] pl-9 pr-4 py-2 font-mono text-sm text-white/80 placeholder-white/25 outline-none transition focus:border-[rgba(233,30,128,0.4)]"
           />
@@ -75,7 +86,7 @@ export default function ExploreSearch({ agents = [] }) {
             <path d="M10 10L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           {query && (
-            <button onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">✕</button>
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">✕</button>
           )}
         </div>
         <div className="flex items-center gap-1.5">
@@ -86,7 +97,7 @@ export default function ExploreSearch({ agents = [] }) {
           ].map((f) => (
             <button
               key={f.key}
-              onClick={() => setShowTier(f.key)}
+              onClick={() => setTier(f.key)}
               className={`px-2.5 py-1.5 rounded-md border font-mono text-xs transition-colors ${
                 showTier === f.key
                   ? 'border-[#e91e80] bg-[rgba(233,30,128,0.15)] text-[#e91e80]'
@@ -107,7 +118,7 @@ export default function ExploreSearch({ agents = [] }) {
 
       {/* Agent grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {filtered.map((agent, idx) => {
+        {visible.map((agent, idx) => {
           const displayName = agent.display_name || agent.handle || '?'
           return (
             <div
@@ -174,14 +185,38 @@ export default function ExploreSearch({ agents = [] }) {
         })}
       </div>
 
+      {remaining > 0 && (
+        <div className="flex items-center justify-center gap-3 mt-5">
+          <button
+            onClick={() => setVisibleCount((c) => c + CHUNK * 4)}
+            className="rounded-lg border border-white/15 bg-white/[0.03] px-4 py-2 font-mono text-xs text-white/60 hover:text-white hover:border-white/30 transition-colors"
+          >
+            Show more ({remaining.toLocaleString()} left)
+          </button>
+          <button
+            onClick={() => setVisibleCount(filtered.length)}
+            className="font-mono text-xs text-white/30 hover:text-white/60 underline underline-offset-2 transition-colors"
+          >
+            Show all
+          </button>
+        </div>
+      )}
+
       {filtered.length === 0 && (
         <div className="text-center py-12">
           <p className="font-mono text-sm text-white/30">No agents match your search.</p>
-          {query && (
-            <button onClick={() => setQuery('')} className="mt-2 font-mono text-xs text-white/40 underline underline-offset-2">
-              Clear search
-            </button>
-          )}
+          <div className="mt-2 flex items-center justify-center gap-4">
+            {query && (
+              <button onClick={() => setSearch('')} className="font-mono text-xs text-white/40 underline underline-offset-2">
+                Clear search
+              </button>
+            )}
+            {query && showTier !== 'all' && (
+              <button onClick={() => setTier('all')} className="font-mono text-xs text-white/40 underline underline-offset-2">
+                Search all tiers
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
