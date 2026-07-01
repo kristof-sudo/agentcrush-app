@@ -5,6 +5,14 @@ import { useState } from 'react'
 
 const POSTS = [
   {
+    slug: 'mcp-coverage',
+    category: 'Findings',
+    image: '/api/og?title=MCP+coverage+gap',
+    imageAlt: 'MCP servers are 100% alive — AgentCrush',
+    title: 'MCP servers are 100% alive. Why we only index 15.',
+    date: 'July 10, 2026',
+    summary:
+      'Every MCP server in the AgentCrush index responds to a live endpoint probe. The overall rate is 58.8%. The difference is selection, not infrastructure — and the gap between 15 indexed and hundreds in the wild is the real story.',
     slug: 'anchored-on-chain',
     category: 'Product',
     image: '/api/og?title=Don%27t+trust+our+rankings.+Verify+them.&kicker=AgentCrush&subtitle=Every+daily+snapshot+is+anchored+on+Base.',
