@@ -4,11 +4,20 @@ import { ExactEvmScheme } from '@x402/evm/exact/server'
 import { facilitator } from '@coinbase/x402'
 import { declareDiscoveryExtension } from '@x402/extensions/bazaar'
 import { NextResponse } from 'next/server'
+import { timingSafeEqual } from 'node:crypto'
 import { extractApiKey, validateApiKey } from './lib/apiKeys'
 import { trackHit, trackKeyUsage } from './lib/telemetry'
 
 // ── Mission Control basic auth ────────────────────────────────────────────────
 // Migrated from deprecated src/middleware.js — logic unchanged.
+
+function safeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false
+  const ba = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ba.length !== bb.length) return false
+  return timingSafeEqual(ba, bb)
+}
 
 function missionControlGuard(request) {
   const authHeader = request.headers.get('authorization')
@@ -17,15 +26,35 @@ function missionControlGuard(request) {
 
   if (authHeader) {
     const base64 = authHeader.split(' ')[1]
-    const decoded = Buffer.from(base64, 'base64').toString()
-    const [user, pass] = decoded.split(':')
-    if (user === username && pass === password) return null // authenticated
+    const decoded = Buffer.from(base64 || '', 'base64').toString()
+    const idx = decoded.indexOf(':')
+    const user = idx === -1 ? decoded : decoded.slice(0, idx)
+    const pass = idx === -1 ? '' : decoded.slice(idx + 1)
+    if (safeEqual(user, username) && safeEqual(pass, password)) return null // authenticated
   }
 
   return new NextResponse('Authentication required', {
     status: 401,
     headers: { 'WWW-Authenticate': 'Basic realm="Mission Control"' },
   })
+}
+
+// Internal/operator API surfaces that must never be reachable without the
+// Mission Control credential. The /mission-control PAGE already sits behind
+// missionControlGuard; its client-side fetches carry the basic-auth header
+// automatically for same-origin requests, so guarding these API paths does not
+// break the authenticated UI — it only closes anonymous access.
+const GUARDED_API_PREFIXES = [
+  '/api/mission-control',
+  '/api/claim-requests',
+  '/api/admin',
+  '/api/build-approvals',
+]
+
+function isGuardedApi(pathname) {
+  return GUARDED_API_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(p + '/'),
+  )
 }
 
 // ── x402 payment proxy ────────────────────────────────────────────────────────
@@ -401,7 +430,7 @@ const x402Handler = paymentProxy(
 export async function proxy(request) {
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/mission-control')) {
+  if (pathname.startsWith('/mission-control') || isGuardedApi(pathname)) {
     const denied = missionControlGuard(request)
     if (denied) return denied
     return NextResponse.next()
@@ -430,6 +459,10 @@ export async function proxy(request) {
 export const config = {
   matcher: [
     '/mission-control/:path*',
+    '/api/mission-control/:path*',
+    '/api/claim-requests/:path*',
+    '/api/admin/:path*',
+    '/api/build-approvals/:path*',
     '/api/agent/:path*/trust-summary',
     '/api/agent/:path*/history',
     '/api/agent/:path*/verification-status',
