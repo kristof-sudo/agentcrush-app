@@ -5,6 +5,16 @@ import { useState } from 'react'
 
 const POSTS = [
   {
+    slug: 'mcp-coverage',
+    category: 'Findings',
+    image: '/api/og?title=MCP+coverage+gap',
+    imageAlt: 'MCP servers are 100% alive — AgentCrush',
+    title: 'MCP servers are 100% alive. Why we only index 15.',
+    date: 'July 10, 2026',
+    summary:
+      'Every MCP server in the AgentCrush index responds to a live endpoint probe. The overall rate is 58.8%. The difference is selection, not infrastructure — and the gap between 15 indexed and hundreds in the wild is the real story.',
+  },
+  {
     slug: 'agent-liveness',
     category: 'Findings',
     image: '/api/og?title=Three+tiers+of+alive',
@@ -13,6 +23,8 @@ const POSTS = [
     date: 'July 3, 2026',
     summary:
       'We initially published 16.2% of indexed agents alive. The corrected figure is 58.8%. The gap between those two numbers separates endpoint health from recent activity from evidence-ranked verification — and that distinction is the most useful data in the index.',
+  },
+  {
     slug: 'liveness-is-layer-zero',
     category: 'Findings',
     image: '/og-liveness-is-layer-zero.png',
