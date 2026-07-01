@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { FLOOR } from '@/lib/stats'
 
 export const metadata = {
   title: 'Learn — What are AI agents? | AgentCrush',
@@ -93,7 +94,7 @@ export default function LearnPage() {
             </li>
           </ul>
           <p className="mt-3">
-            We track over 1,350 agents across these categories. Some are early experiments. Some are processing real money. The differences matter.
+            We track over {FLOOR.indexed} agents across these categories. Some are early experiments. Some are processing real money. The differences matter.
           </p>
         </section>
 

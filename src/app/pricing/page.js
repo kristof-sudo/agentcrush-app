@@ -9,6 +9,7 @@
 
 import Link from 'next/link'
 import ProCheckoutButton from './ProCheckoutButton'
+import { FLOOR } from '@/lib/stats'
 
 export const metadata = {
   title: 'Pricing · AgentCrush',
@@ -33,7 +34,7 @@ const X402_ENDPOINTS = [
 ]
 
 const FREE_FEATURES = [
-  'Full index — 1,350+ agents across 5 categories',
+  `Full index — ${FLOOR.indexed}+ agents across 5 categories`,
   'Rankings + open methodology',
   'Ghost Index API (daily liveness)',
   'Trust Eval — standard depth',
