@@ -58,7 +58,7 @@ export async function GET(req) {
     const [agentsRes, changesRes] = await Promise.all([
       client
         .from('agents')
-        .select('handle, display_name, global_rank, tier, primary_category, activity_status, last_event_at, github_pushed_at')
+        .select('handle, display_name, tier, primary_category, activity_status, last_event_at, github_pushed_at')
         .in('handle', handles),
       client
         .from('changes_today_v1')
