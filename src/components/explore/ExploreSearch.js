@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useWatchlist } from '@/components/agents/WatchlistButton'
 
 const AVATAR_COLORS = [
   'bg-violet-500/25 text-violet-300',
@@ -37,6 +38,7 @@ function TierBadge({ tier }) {
 const CHUNK = 60
 
 export default function ExploreSearch({ agents = [] }) {
+  const { isWatching, toggle: toggleWatch } = useWatchlist()
   const [query, setQuery] = useState('')
   // Default to the evidence-ranked view: the verified list is the product;
   // the full index is one tap away.
@@ -163,6 +165,15 @@ export default function ExploreSearch({ agents = [] }) {
               </div>
 
             </Link>
+
+              {/* Watch button — sibling of Link (not nested inside it) */}
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWatch(agent.handle) }}
+                title={isWatching(agent.handle) ? 'Remove from watchlist' : 'Add to watchlist'}
+                className={`shrink-0 transition-colors text-[13px] leading-none ${isWatching(agent.handle) ? 'text-amber-400' : 'text-white/20 hover:text-white/50'}`}
+              >
+                {isWatching(agent.handle) ? '★' : '☆'}
+              </button>
 
               {/* External link — sibling of the card Link, never nested inside an
                   <a> (nested anchors are invalid HTML and caused a hydration

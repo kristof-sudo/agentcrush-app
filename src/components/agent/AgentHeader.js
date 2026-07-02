@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import WatchlistButton from '@/components/agents/WatchlistButton'
 
 const CAT_COLORS = {
   ECOSYSTEM:  { bg: 'rgba(0,229,255,0.12)',    text: '#00e5ff', glow: '#00e5ff' },
@@ -47,7 +48,8 @@ function CategoryPill({ label }) {
 // props: displayName, handle, imageUrl, tagline, archetype, delta7d,
 //        trustState, claimHandle, externalUrl, tags
 export default function AgentHeader({ displayName, handle, imageUrl, tagline, archetype, delta7d, trustState, claimHandle, externalUrl, tags }) {
-  const [watched, setWatched] = useState(false)
+  // watched state kept for non-JS fallback rendering; real persistence via WatchlistButton
+  const [_watched, _setWatched] = useState(false)
   const catKey = archetype?.toUpperCase() || 'AGENT'
   const catColor = CAT_COLORS[catKey] || { bg: 'rgba(0,229,255,0.09)', text: '#67e8f9', glow: '#67e8f9' }
   const isUnclaimed = trustState === 'unclaimed'
@@ -113,12 +115,7 @@ export default function AgentHeader({ displayName, handle, imageUrl, tagline, ar
             </a>
           ) : null}
           <div style={{ display: 'flex', gap: 6 }}>
-            <button
-              onClick={() => setWatched((w) => !w)}
-              style={{ padding: '4px 10px', borderRadius: 4, fontSize: 11, fontWeight: 500, background: 'transparent', border: `1px solid rgba(255,255,255,${watched ? '0.4' : '0.15'})`, color: watched ? '#4ade80' : 'rgba(226,232,240,0.5)', cursor: 'pointer', fontFamily: 'monospace' }}
-            >
-              {watched ? 'Watching' : 'Watch'}
-            </button>
+            <WatchlistButton handle={handle} displayName={displayName} />
             <a
               href={`https://x.com/${handle}`}
               target="_blank"
