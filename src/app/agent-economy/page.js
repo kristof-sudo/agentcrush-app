@@ -163,7 +163,7 @@ export default async function AgentEconomyPage() {
       <section className="mb-10 rounded-xl border border-violet-400/20 bg-violet-400/[0.04] px-5 py-4">
         <h2 className="text-base font-bold mb-1">For LLM clients</h2>
         <p className="text-sm text-white/65 leading-relaxed">
-          AgentCrush exposes a live MCP server at <Link href="/api/mcp/v1" className="text-violet-300 hover:text-violet-200 underline underline-offset-2"><code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/mcp/v1</code></Link> with 13 tools for querying agents and methodology. Flat HTTP JSON summaries are available at <code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/agent/&#123;handle&#125;/llm-summary</code> and <code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/agent-economy/llm-summary</code>. See <Link href="/developers/mcp" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">/developers/mcp</Link>.
+          AgentCrush exposes a live MCP server at <Link href="/api/mcp/v1" className="text-violet-300 hover:text-violet-200 underline underline-offset-2"><code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/mcp/v1</code></Link> with 14 tools for querying agents and methodology. Flat HTTP JSON summaries are available at <code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/agent/&#123;handle&#125;/llm-summary</code> and <code className="bg-white/[0.05] px-1.5 py-0.5 rounded">/api/agent-economy/llm-summary</code>. See <Link href="/developers/mcp" className="text-violet-300 hover:text-violet-200 underline underline-offset-2">/developers/mcp</Link>.
         </p>
       </section>
 

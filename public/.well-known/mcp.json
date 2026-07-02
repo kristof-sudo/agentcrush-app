@@ -1,6 +1,6 @@
 {
   "name": "AgentCrush",
-  "description": "Protocol-neutral market intelligence for the AI agent economy \u2014 like CoinMarketCap for AI agents. Evidence-ranked across 5 categories: developer agents, model families, tokenized agents, service agents, MCP servers. Use these tools to discover agents, compare them, retrieve full scoring breakdowns, and explain HOW each ranking is computed.",
+  "description": "Protocol-neutral market intelligence for the AI agent economy — like CoinMarketCap for AI agents. Evidence-ranked across 5 categories: developer agents, model families, tokenized agents, service agents, MCP servers. Use these tools to discover agents, compare them, retrieve full scoring breakdowns, and explain HOW each ranking is computed.",
   "version": "1.1.0",
   "protocol": "MCP",
   "protocolVersion": "2024-11-05",
@@ -41,11 +41,15 @@
     },
     {
       "name": "get_methodology",
-      "description": "Scoring methodology for a category \u2014 weights, signals, evidence-ready rule, limitations."
+      "description": "Scoring methodology for a category — weights, signals, evidence-ready rule, limitations."
     },
     {
       "name": "get_agent_trust",
       "description": "Single-call composite trust score (0-100) + classification (verified/provisional/unverified/low_trust) for delegation decisions."
+    },
+    {
+      "name": "verify_counterparty",
+      "description": "Pre-transaction check: proceed / caution / reject verdict for dealing with an agent right now. Liveness-aware — no clean proceed for agents silent 30+ days. Free."
     },
     {
       "name": "get_top_movers",

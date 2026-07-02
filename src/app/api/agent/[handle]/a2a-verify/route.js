@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { trackHit } from '@/lib/telemetry'
+import { decide, decisionReason } from '@/lib/verifyCounterparty'
 
 export const runtime = 'nodejs'
 
@@ -22,22 +23,6 @@ function getSupabase() {
   return createClient(url, key)
 }
 
-function makeDecision(tier, score, verified) {
-  if (tier === 'evidence_ranked' && verified && score >= 50) return 'proceed'
-  if (score < 20 || tier === 'archived') return 'reject'
-  return 'caution'
-}
-
-function decisionReason(decision, tier, score, verified) {
-  if (decision === 'proceed') return 'Agent is evidence-ranked, verified, and has a strong AgentCrush score.'
-  if (decision === 'reject') return score < 20
-    ? 'Agent has an insufficient AgentCrush score for confident A2A transactions.'
-    : 'Agent tier (archived) indicates it is no longer active.'
-  return verified
-    ? 'Agent is indexed but lacks full evidence-ranking. Proceed with caution.'
-    : 'Agent is unverified on AgentCrush. Review manually before high-value transactions.'
-}
-
 export async function GET(req, context) {
   trackHit('/api/agent/[handle]/a2a-verify', req, 'free_200')
   const { handle } = await context.params
@@ -57,7 +42,7 @@ export async function GET(req, context) {
 
   const { data: agent, error: agentErr } = await supabase
     .from('agents')
-    .select('id, handle, display_name, tier, verified, visibility_score, reputation_score')
+    .select('id, handle, display_name, tier, verified, visibility_score, reputation_score, activity_status')
     .ilike('handle', handle.trim())
     .maybeSingle()
 
@@ -78,8 +63,10 @@ export async function GET(req, context) {
   const score    = ranking?.score_total ?? (agent.visibility_score ?? 0) + (agent.reputation_score ?? 0)
   const tier     = agent.tier ?? null
   const verified = agent.verified === true
-  const decision = makeDecision(tier, score, verified)
-  const reason   = decisionReason(decision, tier, score, verified)
+  const alive    = agent.activity_status === 'active'
+  // Shared liveness-aware decision core (also powers the verify_counterparty MCP tool)
+  const decision = decide({ tier, score, verified, alive })
+  const reason   = decisionReason({ decision, tier, score, verified, alive })
 
   // Log interaction — non-fatal if it fails
   try {
@@ -110,6 +97,7 @@ export async function GET(req, context) {
       rank: ranking?.global_rank ?? null,
       last_updated: ranking?.computed_at ?? null,
     },
+    liveness: { alive },
     queried_at: new Date().toISOString(),
     source: `https://agentcrush.xyz/agent/${agent.handle}`,
   })
