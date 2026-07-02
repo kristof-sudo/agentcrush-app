@@ -176,7 +176,7 @@ export default function DevelopersPage() {
         </div>
 
         <p className="mt-3 text-xs text-white/35 leading-relaxed">
-          Plus 6 more: <span className="font-mono text-white/50">get_agent_trust · get_top_movers · get_protocol_adoption · get_agent_changes · get_ecosystem_summary · find_agents</span> — 13 tools total, full manifest at{' '}
+          Plus 6 more: <span className="font-mono text-white/50">get_agent_trust · get_top_movers · get_protocol_adoption · get_agent_changes · get_ecosystem_summary · find_agents</span> — 14 tools total, full manifest at{' '}
           <a href="/.well-known/mcp.json" className="font-mono text-violet-400/70 hover:text-violet-300 transition-colors">/.well-known/mcp.json</a>.
         </p>
 

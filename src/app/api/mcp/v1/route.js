@@ -23,6 +23,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { findAgents } from '@/lib/agent-find'
 import { trackHit } from '@/lib/telemetry'
+import { verifyCounterparty } from '@/lib/verifyCounterparty'
 import { FLOOR } from '@/lib/stats'
 
 export const dynamic = 'force-dynamic'
@@ -446,6 +447,30 @@ const TOOLS = [
         factors:                   { type: 'object', description: 'confidence_by_category, tier, risk_flags, surfaces.' },
         score_breakdown:           { type: 'array', items: { type: 'object' } },
         delegation_hint:           { type: 'string' },
+      },
+    },
+  },
+  {
+    name: 'verify_counterparty',
+    title: 'Verify Counterparty (pre-transaction check)',
+    description: 'THE pre-transaction question in one free call: should my agent deal with this counterparty right now? Returns proceed / caution / reject with reasoning. Liveness-aware: an agent with no public activity signal in 30+ days never gets a clean proceed, even if well-ranked. Use before paying, delegating to, or integrating any agent. Deeper analysis (full risk decomposition, history, signed attestation) is x402/Pro priced — pointers included in the response.',
+    annotations: { readOnlyHint: true, openWorldHint: true, destructiveHint: false, idempotentHint: true },
+    inputSchema: {
+      type: 'object',
+      properties: { handle: { type: 'string', description: 'Counterparty agent handle slug (e.g. "crewai").' } },
+      required: ['handle'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        handle:    { type: 'string' },
+        name:      { type: 'string' },
+        decision:  { type: 'string', enum: ['proceed', 'caution', 'reject'] },
+        reason:    { type: 'string' },
+        trust:     { type: 'object', description: 'score, tier, verified, rank.' },
+        liveness:  { type: 'object', description: 'alive (30d activity window), last_code_or_event_signal_at.' },
+        checked_at:{ type: 'string' },
+        deeper:    { type: 'object', description: 'Paid x402/Pro endpoints for full evaluation, history, signed attestation.' },
       },
     },
   },
@@ -916,6 +941,18 @@ async function tool_get_agent_trust(args) {
   }
 }
 
+async function tool_verify_counterparty(args) {
+  const handle = sanitizeHandle(args?.handle)
+  if (!handle) return { error: 'handle is required' }
+  try {
+    const v = await verifyCounterparty(db(), handle)
+    if (v.error) return { error: v.error }
+    return v
+  } catch (e) {
+    return { error: `verify_counterparty failed: ${e.message}` }
+  }
+}
+
 async function tool_get_top_movers(args) {
   const direction = ['up', 'down', 'both'].includes(args?.direction) ? args.direction : 'both'
   const limit = Math.max(1, Math.min(25, parseInt(args?.limit ?? 10, 10) || 10))
@@ -1069,6 +1106,7 @@ async function dispatchTool(id, params, rl) {
       case 'get_category_ranking':  result = await tool_get_category_ranking(args); break
       case 'get_methodology':       result = await tool_get_methodology(args); break
       case 'get_agent_trust':       result = await tool_get_agent_trust(args); break
+      case 'verify_counterparty':  result = await tool_verify_counterparty(args); break
       case 'get_top_movers':        result = await tool_get_top_movers(args); break
       case 'get_protocol_adoption': result = await tool_get_protocol_adoption(); break
       case 'get_agent_changes':     result = await tool_get_agent_changes(args); break

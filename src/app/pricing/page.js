@@ -39,7 +39,7 @@ const FREE_FEATURES = [
   'Ghost Index API (daily liveness)',
   'Trust Eval — standard depth',
   'Bulk lookups up to 50 handles',
-  'MCP server — 13 tools',
+  'MCP server — 14 tools',
   'HuggingFace dataset (daily export)',
 ]
 

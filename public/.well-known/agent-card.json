@@ -6,7 +6,7 @@
   "preferredTransport": "JSONRPC",
   "additionalInterfaces": [
     { "url": "https://agentcrush.xyz/api/a2a/v1", "transport": "JSONRPC" },
-    { "url": "https://agentcrush.xyz/api/mcp/v1", "transport": "HTTP+JSON", "note": "MCP server, 13 tools, free, no auth" }
+    { "url": "https://agentcrush.xyz/api/mcp/v1", "transport": "HTTP+JSON", "note": "MCP server, 14 tools, free, no auth" }
   ],
   "provider": {
     "organization": "AgentCrush",
