@@ -79,9 +79,11 @@ try {
 try {
   const res = await fetch('https://agentcrush.xyz/api/agent/crewai/trust-summary', { redirect: 'manual' })
   if (res.status === 402) {
+    // x402 v2 carries the quote base64-encoded in the payment-required header; the body is {}.
+    const quote = res.headers.get('payment-required') || ''
     const body = await res.text()
-    if (body.includes('x402') || body.includes('accepts') || body.includes('payTo')) ok.push('x402 paywall quoting (402)')
-    else issues.push('x402 endpoint returns 402 but body has no payment quote.')
+    if (quote.length > 100 || body.includes('accepts') || body.includes('payTo')) ok.push('x402 paywall quoting (402)')
+    else issues.push('x402 endpoint returns 402 but carries no payment quote (header or body).')
   } else {
     issues.push(`x402 paywall broken: flagship gated endpoint returned ${res.status} (expected 402). If 500: check CDP facilitator credentials on Vercel. If 200: the payment gate is off.`)
   }
