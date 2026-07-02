@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import WatchButton from '@/components/watchlist/WatchButton'
 
 const CAT_COLORS = {
   ECOSYSTEM:  { bg: 'rgba(0,229,255,0.12)',    text: '#00e5ff', glow: '#00e5ff' },
@@ -95,6 +96,7 @@ export default function AgentHeader({ displayName, handle, imageUrl, tagline, ar
 
         {/* Right action buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+          <WatchButton handle={handle} size={18} />
           {isUnclaimed ? (
             <a
               href={`/claim/${encodeURIComponent(claimHandle)}`}

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import WatchButton from '@/components/watchlist/WatchButton'
 
 const AVATAR_COLORS = [
   'bg-violet-500/25 text-violet-300',
@@ -163,6 +164,8 @@ export default function ExploreSearch({ agents = [] }) {
               </div>
 
             </Link>
+
+              <WatchButton handle={agent.handle} size={14} />
 
               {/* External link — sibling of the card Link, never nested inside an
                   <a> (nested anchors are invalid HTML and caused a hydration

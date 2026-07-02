@@ -51,8 +51,18 @@ export default function Header() {
             <SearchBox />
           </nav>
 
-          {/* Right side: hamburger (mobile) */}
+          {/* Right side: watchlist star + hamburger (mobile) */}
           <div className="flex items-center gap-3">
+            <Link
+              href="/watchlist"
+              aria-label="Watchlist"
+              title="Your watchlist"
+              className="text-white/35 transition hover:text-[#facc15]"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M12 2.5l2.95 5.98 6.6.96-4.78 4.66 1.13 6.58L12 17.58l-5.9 3.1 1.13-6.58L2.45 9.44l6.6-.96L12 2.5z" strokeLinejoin="round" />
+              </svg>
+            </Link>
             <MobileMenu />
           </div>
 

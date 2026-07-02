@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: '/ghost-index', label: 'Ghost Index' },
   { href: '/agent-economy-index', label: 'Economy' },
   { href: '/new', label: 'New Agents' },
+  { href: '/watchlist', label: 'Watchlist' },
   { href: '/developers', label: 'Developers' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/submit', label: 'Submit' },
