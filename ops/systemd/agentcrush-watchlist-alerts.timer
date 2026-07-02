@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly watchlist webhook alerts
+
+[Timer]
+OnCalendar=*-*-* *:20:00 UTC
+Persistent=true
+Unit=agentcrush-watchlist-alerts.service
+
+[Install]
+WantedBy=timers.target

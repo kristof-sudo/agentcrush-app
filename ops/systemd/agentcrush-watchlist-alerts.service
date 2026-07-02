@@ -1,0 +1,12 @@
+[Unit]
+Description=AgentCrush watchlist webhook alert worker (monitoring product v1)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/watchlist-alert-worker.mjs --write
+StandardOutput=append:/var/log/agentcrush/watchlist-alerts.log
+StandardError=append:/var/log/agentcrush/watchlist-alerts.log
+TimeoutStartSec=1800
