@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Container from '@/components/ui/Container'
 import SearchBox from '@/components/nav/SearchBox'
 import MobileMenu from '@/components/nav/MobileMenu'
+import WatchlistNavLink from '@/components/nav/WatchlistNavLink'
 
 export default function Header() {
   return (
@@ -48,6 +49,7 @@ export default function Header() {
                 <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-[#e91e80] transition-all group-hover:w-full" />
               </Link>
             ))}
+            <WatchlistNavLink />
             <SearchBox />
           </nav>
 

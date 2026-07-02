@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import SearchBox from '@/components/nav/SearchBox'
+import { useWatchlist } from '@/components/agents/WatchlistButton'
 
 const NAV_LINKS = [
   { href: '/rankings', label: 'Rankings' },
@@ -17,6 +18,7 @@ const NAV_LINKS = [
 
 export default function MobileMenu() {
   const [open, setOpen] = useState(false)
+  const { list: watchlist } = useWatchlist()
 
   return (
     <>
@@ -52,6 +54,12 @@ export default function MobileMenu() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/watchlist"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-amber-400/80 hover:bg-white/[0.06] hover:text-amber-300"
+            >
+              {watchlist.length > 0 ? `★ Watchlist (${watchlist.length})` : '☆ Watchlist'}
+            </Link>
           </nav>
           <div onClick={(e) => e.stopPropagation()}>
             <SearchBox mobile />
