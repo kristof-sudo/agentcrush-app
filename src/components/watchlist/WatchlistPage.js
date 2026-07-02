@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useWatchlist } from '@/components/agents/WatchlistButton'
+import AlertSubscribe from '@/components/watchlist/AlertSubscribe'
 
 const TIER_LABEL = {
   evidence_ranked: 'Evidence-ranked',
@@ -256,6 +257,8 @@ export default function WatchlistPage() {
             )}
           </section>
         )}
+
+        {watchedHandles.length > 0 && <AlertSubscribe handles={watchedHandles} />}
 
         {/* Personalized feeds */}
         {watchedHandles.length > 0 && (

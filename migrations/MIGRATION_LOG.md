@@ -9,6 +9,9 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+## 2026-07-02 — watchlist webhook subscriptions (monitoring product v1, K10)
+- `20260702_1500_watch_subscriptions.sql` — `watch_subscriptions` table: one row per webhook alert subscription (handles[], target_url, plaintext signing secret — service-role-only via RLS-no-policies, api_keys pattern; status active/paused/revoked; consecutive_failures; last_alerted_at watermark). Consumed by `POST /api/watchlist/subscribe` and `runtime/watchlist-alert-worker.mjs` (hourly timer). Code degrades gracefully until applied (subscribe returns 503 "not enabled", worker exits clean). **STATUS: PENDING APPLY by Kris.**
+
 ## 2026-06-16 — x402 payer scan results (B23)
 - `20260616_0900_x402_payers.sql` — `x402_payers` table: on-chain verified USDC Transfer records for x402 settlement on Base. One row per tx (UNIQUE on tx_hash). Columns: payer_wallet, payee_address, resource_url (from Bazaar), tx_hash, block_number, amount_usdc (NUMERIC 6dp), network, tx_timestamp, matched_agent_id (nullable FK, Phase 2 identity match). Anon read; service-role write. Populated by `runtime/x402-payer-scan-worker.mjs` (01:30 UTC daily timer). Run topology checker (`runtime/x402-topology-checker.mjs --discover`) first to confirm direct-settlement assumption. **STATUS: PENDING APPLY by Kris.**
 
