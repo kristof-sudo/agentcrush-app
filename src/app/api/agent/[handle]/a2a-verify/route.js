@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { trackHit } from '@/lib/telemetry'
-import { decide, decisionReason } from '@/lib/verifyCounterparty'
+import { decide, decisionReason, reasonCodes } from '@/lib/verifyCounterparty'
 
 export const runtime = 'nodejs'
 
@@ -65,8 +65,8 @@ export async function GET(req, context) {
   const verified = agent.verified === true
   const alive    = agent.activity_status === 'active'
   // Shared liveness-aware decision core (also powers the verify_counterparty MCP tool)
-  const decision = decide({ tier, score, verified, alive })
-  const reason   = decisionReason({ decision, tier, score, verified, alive })
+  const decision = decide({ tier, verified, alive })
+  const reason   = decisionReason({ decision, tier, verified, alive })
 
   // Log interaction — non-fatal if it fails
   try {
@@ -90,6 +90,7 @@ export async function GET(req, context) {
     name:     agent.display_name,
     decision,
     reason,
+    reason_codes: reasonCodes({ tier, verified, alive }),
     trust: {
       score,
       tier,

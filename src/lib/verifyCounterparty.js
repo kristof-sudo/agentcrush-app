@@ -16,28 +16,47 @@ const DEPTH_UPSELL = {
   history: { url: 'https://agentcrush.xyz/api/agent/{handle}/history', price: '$0.02 x402 or Pro key' },
 }
 
-export function decide({ tier, score, verified, alive }) {
-  if (tier === 'archived' || score < 20) return 'reject'
-  if (!alive) return 'caution'
-  if (tier === 'evidence_ranked' && verified && score >= 50) return 'proceed'
+/**
+ * Verdicts are tier + liveness — raw scores and identity claims do NOT gate.
+ * Rationale (Notes/2026-07-02-verify-verdict-thresholds.md in the brain):
+ * 91% of indexed agents score 0 on a 0–9,420 scale, so the old `score < 20
+ * → reject` branded the entire awaiting-evidence tier as REJECT. Absence of
+ * evidence is caution, never reject; reject is reserved for explicit
+ * negative state (archived; future risk flags). Identity verification is an
+ * ADVISORY (reason_codes + prose) not a gate: zero agents have claimed
+ * profiles today, so gating on it made 'proceed' unreachable for everyone
+ * including the #1-ranked alive agent.
+ */
+export function decide({ tier, alive }) {
+  if (tier === 'archived') return 'reject'
+  if (tier === 'evidence_ranked' && alive) return 'proceed'
   return 'caution'
 }
 
-export function decisionReason({ decision, tier, score, verified, alive }) {
+// Machine-readable codes so agent callers can branch without parsing prose.
+export function reasonCodes({ tier, verified, alive }) {
+  const codes = []
+  if (tier === 'archived') codes.push('archived')
+  if (!alive) codes.push('not_alive')
+  if (!verified) codes.push('unverified')
+  if (tier !== 'evidence_ranked' && tier !== 'archived') codes.push('awaiting_evidence')
+  return codes
+}
+
+export function decisionReason({ decision, tier, verified, alive }) {
   if (decision === 'proceed') {
-    return 'Agent is evidence-ranked, verified, currently alive, and has a strong AgentCrush score.'
+    return verified
+      ? 'Agent is evidence-ranked, currently alive, and identity-verified.'
+      : 'Agent is evidence-ranked and currently alive. Identity not yet claimed on AgentCrush — for high-value transfers, confirm payment addresses via the agent’s official channels.'
   }
   if (decision === 'reject') {
-    return tier === 'archived'
-      ? 'Agent tier (archived) indicates it is no longer active.'
-      : 'Agent has an insufficient AgentCrush score for confident A2A transactions.'
+    return 'Agent tier (archived) indicates it is no longer active or was removed from the public index.'
   }
-  if (!alive) {
-    return 'No public activity signal in 30+ days — the agent may be dormant. Verify the endpoint responds before sending funds.'
-  }
-  return verified
-    ? 'Agent is indexed but lacks full evidence-ranking. Proceed with caution.'
-    : 'Agent is unverified on AgentCrush. Review manually before high-value transactions.'
+  const parts = []
+  if (!alive) parts.push('no public activity signal in 30+ days — verify the endpoint responds before sending funds')
+  if (tier !== 'evidence_ranked') parts.push('not yet evidence-ranked (awaiting sufficient verifiable signals)')
+  if (!verified) parts.push('identity unverified on AgentCrush')
+  return `Proceed with caution: ${parts.join('; ')}.`
 }
 
 /**
@@ -71,13 +90,14 @@ export async function verifyCounterparty(supabase, rawHandle) {
   const alive = agent.activity_status === 'active'
   const sig = [agent.last_event_at, agent.github_pushed_at].filter(Boolean).sort()
 
-  const decision = decide({ tier, score, verified, alive })
+  const decision = decide({ tier, verified, alive })
 
   return {
     handle: agent.handle,
     name: agent.display_name || agent.handle,
     decision,
-    reason: decisionReason({ decision, tier, score, verified, alive }),
+    reason: decisionReason({ decision, tier, verified, alive }),
+    reason_codes: reasonCodes({ tier, verified, alive }),
     trust: { score, tier, verified, rank: ranking?.global_rank ?? null },
     liveness: { alive, last_code_or_event_signal_at: sig[sig.length - 1] || null },
     checked_at: new Date().toISOString(),
