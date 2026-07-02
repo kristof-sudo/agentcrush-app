@@ -58,7 +58,7 @@ export async function GET(req) {
     const [agentsRes, changesRes] = await Promise.all([
       client
         .from('agents')
-        .select('handle, display_name, global_rank, tier, primary_category')
+        .select('handle, display_name, global_rank, tier, primary_category, activity_status, last_event_at, github_pushed_at')
         .in('handle', handles),
       client
         .from('changes_today_v1')
@@ -76,7 +76,19 @@ export async function GET(req) {
     const agents = handles
       .map((h) => agentMap[h])
       .filter(Boolean)
-      .map((a) => ({ ...a, profile_url: `https://agentcrush.xyz/agent/${a.handle}` }))
+      .map((a) => {
+        // freshest public code/event signal (same convention as /ghost-report);
+        // `alive` is the multi-family liveness status the Ghost Index uses
+        const sig = [a.last_event_at, a.github_pushed_at].filter(Boolean).sort()
+        const { activity_status, last_event_at, github_pushed_at, ...rest } = a
+        return {
+          ...rest,
+          alive: activity_status === 'active',
+          last_code_or_event_signal_at: sig[sig.length - 1] || null,
+          profile_url: `https://agentcrush.xyz/agent/${a.handle}`,
+        }
+      })
+    const unknown_handles = handles.filter((h) => !agentMap[h])
 
     const changes = Object.fromEntries(CHANGE_TYPES.map((t) => [t, []]))
     for (const row of changesRes.data || []) {
@@ -89,6 +101,7 @@ export async function GET(req) {
         window_days: days,
         as_of: new Date().toISOString(),
         agents,
+        unknown_handles,
         changes,
         feed_url: `https://agentcrush.xyz/api/watchlist/feed.xml?handles=${handles.join(',')}`,
         watchlist_url: 'https://agentcrush.xyz/watchlist',

@@ -71,11 +71,20 @@ function WatchedAgent({ agent, onUnwatch }) {
         href={`/agent/${encodeURIComponent(agent.handle)}`}
         style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, textDecoration: 'none', flex: 1 }}
       >
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#f0f4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {agent.display_name || agent.handle}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#f0f4ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {agent.display_name || agent.handle}
+          </span>
+          {typeof agent.alive === 'boolean' && (
+            <span
+              title={agent.alive ? 'Alive — activity signal within 30 days' : 'No activity signal in 30+ days'}
+              style={{ flexShrink: 0, width: 7, height: 7, borderRadius: '50%', background: agent.alive ? '#22c55e' : '#ef4444', boxShadow: agent.alive ? '0 0 6px rgba(34,197,94,0.6)' : '0 0 6px rgba(239,68,68,0.6)' }}
+            />
+          )}
         </span>
         <span style={{ fontSize: 11, color: 'rgba(226,232,240,0.4)' }}>
           {tierLabel}
+          {agent.alive === false && <> · <span style={{ color: '#ef4444' }}>silent 30d+</span></>}
           {agent.global_rank != null && <> · #{agent.global_rank}</>}
           {agent.primary_category && (
             <> · <span style={{ color: catColor }}>{agent.primary_category.replace('_', ' ')}</span></>
