@@ -10,6 +10,9 @@
  *   2. Brain repo health — clean tree, not behind origin (the stuck-conflict signature)
  *   3. Ajsa brief freshness — today's/yesterday's brief committed to the brain
  *   4. Ghost Index sanity — liveness in a sane band + snapshot fresh (catches 16% regressions)
+ *   5. x402 paywall alive — flagship gated endpoint answers 402 with a quote (born 2026-07-02:
+ *      the CDP key rotation left Vercel without facilitator credentials and every paid
+ *      endpoint 500'd for 2+ days; telemetry showed it only as gated_402 dropping to 0)
  *
  * Daily VPS timer ~07:00 UTC. Sends only via runtime/telegram-sender.mjs (private to Kris).
  */
@@ -70,6 +73,19 @@ try {
     if (!stale && !insane) ok.push(`Ghost Index sane (${g.liveness_score}% alive, ${g.snapshot_date})`)
   }
 } catch (e) { issues.push(`Ghost Index check failed: ${e.message}`) }
+
+// 5. x402 paywall alive — an unauthenticated hit on a flagship paid endpoint must
+// return 402 + a payment quote. 500 = facilitator/credential breakage; 200 = gate off.
+try {
+  const res = await fetch('https://agentcrush.xyz/api/agent/crewai/trust-summary', { redirect: 'manual' })
+  if (res.status === 402) {
+    const body = await res.text()
+    if (body.includes('x402') || body.includes('accepts') || body.includes('payTo')) ok.push('x402 paywall quoting (402)')
+    else issues.push('x402 endpoint returns 402 but body has no payment quote.')
+  } else {
+    issues.push(`x402 paywall broken: flagship gated endpoint returned ${res.status} (expected 402). If 500: check CDP facilitator credentials on Vercel. If 200: the payment gate is off.`)
+  }
+} catch (e) { issues.push(`x402 paywall check failed: ${e.message}`) }
 
 const header = issues.length ? `⚠️ AgentCrush health — ${issues.length} issue(s)` : `✅ AgentCrush health — all clear`
 const message = (issues.length ? issues.join('\n\n') + '\n\n— — —\n' : '') + 'OK: ' + ok.join(' · ')
