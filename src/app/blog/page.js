@@ -107,9 +107,24 @@ const POSTS = [
 
 function published() {
   const now = Date.now()
+
+  const hiddenForCover = POSTS.filter((p) => {
+    const t = Date.parse(p.date)
+    const dateOk = Number.isNaN(t) ? true : t <= now
+    return dateOk && p.image.startsWith('/api/og')
+  })
+
+  if (hiddenForCover.length > 0) {
+    console.warn(
+      '[blog] hidden-for-cover (commit a real cover image to publish):',
+      hiddenForCover.map((p) => p.slug).join(', '),
+    )
+  }
+
   return POSTS.filter((p) => {
     const t = Date.parse(p.date)
-    return Number.isNaN(t) ? true : t <= now
+    const dateOk = Number.isNaN(t) ? true : t <= now
+    return dateOk && !p.image.startsWith('/api/og')
   })
 }
 
