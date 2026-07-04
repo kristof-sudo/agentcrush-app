@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly Bradley-Terry scoring — Sunday 09:30 UTC (after scoring run at ~09:00)
+
+[Timer]
+OnCalendar=Sun *-*-* 09:30:00 UTC
+Persistent=true
+Unit=agentcrush-bt-scoring.service
+
+[Install]
+WantedBy=timers.target
