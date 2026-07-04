@@ -8,6 +8,7 @@ import {
   isDemoAgent,
 } from '@/lib/agent-quality'
 import { getWhyMoving, getArchetypeStyle } from '@/lib/why-moving'
+import { latestAnchor, agentInSnapshot } from '@/lib/anchorProof'
 import AgentHeader from '@/components/agent/AgentHeader'
 import EvidenceBadge from '@/components/ui/EvidenceBadge'
 import IndexedBadge from '@/components/ui/IndexedBadge'
@@ -790,6 +791,19 @@ export default async function AgentPage({ params }) {
     // safe to ignore
   }
 
+  // K15: anchored badge — show only if the latest anchored day actually contains this agent
+  let isAnchored = false
+  try {
+    const svcForAnchor = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
+    const anchor = await latestAnchor(svcForAnchor)
+    isAnchored = Boolean(anchor) && (await agentInSnapshot(svcForAnchor, agent.id, anchor.snapshot_date))
+  } catch {
+    // snapshot anchor tables may not be migrated yet — badge is optional
+  }
+
   const displayName = getAgentDisplayName(agent)
   const archetype = getAgentArchetype(agent)
   const bioText = getAgentShortDescription(agent)
@@ -1114,6 +1128,24 @@ export default async function AgentPage({ params }) {
             ⬡ Machine-callable
           </Link>
         </div>
+
+        {/* ── ANCHORED RECORD (K15) ───────────────────────────────────── */}
+        {isAnchored && (
+          <div style={{ display: 'flex' }}>
+            <Link
+              href={`/api/verify/agent/${encodeURIComponent(agent.handle)}`}
+              title="This agent's daily rank/score/liveness row is committed to a Merkle root anchored on Base. Click for the inclusion proof."
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 9px',
+                borderRadius: 4, border: '1px solid rgba(96,165,250,0.25)', background: 'rgba(96,165,250,0.07)',
+                fontFamily: 'ui-monospace, monospace', fontSize: 9, fontWeight: 600,
+                color: 'rgba(147,197,253,0.85)', textDecoration: 'none',
+              }}
+            >
+              ⚓ Daily record anchored on Base
+            </Link>
+          </div>
+        )}
 
         {/* ── AI-READABLE SUMMARY (LLM Gateway block) ─────────────────── */}
         <div style={{
