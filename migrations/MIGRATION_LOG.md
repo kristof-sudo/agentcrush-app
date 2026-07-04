@@ -9,6 +9,9 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+## 2026-07-04 — snapshot archive refs for data availability (K13)
+- `20260704_1000_proof_archive_refs.sql` — adds nullable `arweave_tx` + `archive_sha256` to `snapshot_anchors`. Each night `runtime/snapshot-anchor-worker.mjs` now serializes the day's canonical rows (`agent_id|rank|score|is_alive`, sorted by agent_id) to a deterministic JSON file, records its sha256, writes a local fallback copy to `/var/log/agentcrush/snapshot-archive/<date>.json`, and — once `ARWEAVE_JWK` is set on the VPS — uploads it to Arweave so the Merkle anchor is independently checkable forever. Exposed by `/api/verify` when present. Worker probes for the columns and degrades gracefully until applied; the anchor path never depends on them. **STATUS: PENDING APPLY by Kris.**
+
 ## 2026-07-04 — Bradley-Terry shadow scoring infrastructure (B29)
 - `20260704_0430_agent_bt_scores.sql` — `agent_bt_scores` table (agent_id, category, bt_score, bt_rank, pair_count, fit_date; unique on agent_id+category+fit_date; RLS enabled, service-role only) + `agent_score_v3_bt_preview` shadow view (joins latest BT fit with v2.c rank for internal delta inspection). Populated by `runtime/bt-scoring-worker.mjs` (weekly Sunday 09:30 UTC). Zero public surface — internal shadow only. **STATUS: PENDING APPLY by Kris.**
 

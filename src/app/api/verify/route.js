@@ -41,7 +41,9 @@ export async function GET(req) {
 
   try {
     if (!date) {
-      const { data } = await supabase.from('snapshot_anchors').select('snapshot_date, merkle_root, chain_hash, row_count, tx_hash, chain, anchored_at').order('snapshot_date', { ascending: false }).limit(10)
+      let { data, error } = await supabase.from('snapshot_anchors').select('snapshot_date, merkle_root, chain_hash, row_count, tx_hash, chain, anchored_at, arweave_tx, archive_sha256').order('snapshot_date', { ascending: false }).limit(10)
+      // pre-migration fallback (archive columns from 20260704_1000 not applied yet)
+      if (error) ({ data } = await supabase.from('snapshot_anchors').select('snapshot_date, merkle_root, chain_hash, row_count, tx_hash, chain, anchored_at').order('snapshot_date', { ascending: false }).limit(10))
       return ok({
         what: 'AgentCrush publishes a daily Merkle root over every snapshot (agent_id|rank|score|is_alive), chained day-to-day and optionally anchored on Base. Recompute it yourself.',
         recipe: { fields: 'agent_id|rank|score|is_alive', sort: 'by agent_id asc', leaf: 'sha256(row)', root: 'binary merkle (duplicate last on odd)', chain: 'sha256(prev_chain_hash + merkle_root)', algo: ALGO },
@@ -72,6 +74,8 @@ export async function GET(req) {
       row_count: { stored: anchor.row_count, live: recomputed.row_count },
       chain_hash: anchor.chain_hash,
       on_chain: anchor.tx_hash ? { chain: anchor.chain, tx_hash: anchor.tx_hash, anchored_at: anchor.anchored_at } : null,
+      ...(anchor.arweave_tx ? { arweave_tx: anchor.arweave_tx } : {}),
+      ...(anchor.archive_sha256 ? { archive_sha256: anchor.archive_sha256 } : {}),
       algo: anchor.algo,
       example_leaf: rows[0] ? { row: canonicalRow([...rows].sort((a, b) => String(a.agent_id).localeCompare(String(b.agent_id)))[0]) } : null,
     })
