@@ -11,6 +11,10 @@
  */
 
 import Link from 'next/link'
+import { createClient } from '@supabase/supabase-js'
+import DayVerifier from '@/components/oracle/DayVerifier'
+
+export const revalidate = 3600
 
 export const metadata = {
   title: 'Oracle — Resolution Criteria Cookbook · AgentCrush',
@@ -65,7 +69,25 @@ const VERIFY_STEPS = [
   ['4. Retain', 'Store the full attestation response. In a dispute, the signed statement + the on-chain digest are the evidence chain.'],
 ]
 
-export default function OraclePage() {
+async function recentAnchoredDays() {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
+    const { data } = await supabase
+      .from('snapshot_anchors')
+      .select('snapshot_date, tx_hash')
+      .order('snapshot_date', { ascending: false })
+      .limit(14)
+    return data || []
+  } catch {
+    return []
+  }
+}
+
+export default async function OraclePage() {
+  const days = await recentAnchoredDays()
   return (
     <main className="mx-auto max-w-[840px] px-4 md:px-6 py-14">
       <header className="mb-10">
@@ -88,6 +110,22 @@ export default function OraclePage() {
           <Link href="/pricing" className="font-mono text-[10px] text-white/35 hover:text-white/70 underline underline-offset-2 transition-colors">pricing</Link>
         </div>
       </header>
+
+      {/* One-click day verifier (K14) */}
+      {days.length > 0 && (
+        <section className="mb-10 rounded-xl border border-[rgba(57,255,20,0.22)] bg-gradient-to-br from-[rgba(57,255,20,0.05)] to-transparent px-4 py-5 md:px-6">
+          <h2 className="font-mono text-[15px] md:text-base font-bold text-white mb-1">
+            Don&apos;t trust us — <span style={{ color: '#39ff14' }}>recompute us.</span>
+          </h2>
+          <p className="font-mono text-[11px] text-white/45 leading-relaxed mb-4 max-w-2xl">
+            Pick a day and your browser will fetch that day&apos;s ~1,400 raw snapshot rows, hash every
+            one with WebCrypto, fold the Merkle tree, and compare the root against the one we stored
+            and anchored on Base. You are recomputing our daily record right now — we can&apos;t fake
+            this result.
+          </p>
+          <DayVerifier days={days} />
+        </section>
+      )}
 
       {/* How verification works */}
       <section className="mb-10 rounded-lg border border-white/[0.07] bg-white/[0.015] px-4 py-4">
@@ -134,6 +172,12 @@ export default function OraclePage() {
           verbatim at <Link href="/methodology/views" className="underline underline-offset-2 hover:text-white/70 transition-colors">/methodology/views</Link>,
           every methodology change is logged, and every daily snapshot is digest-anchored on Base. If you
           dispute an attestation, you can re-derive it.
+        </p>
+        <p className="font-mono text-[11px] text-white/45 leading-relaxed">
+          <span className="text-white/70 font-bold">Verify independently:</span> a ~60-line, dependency-free{' '}
+          <a href="https://github.com/kristof-sudo/agentcrush-app/blob/main/scripts/verify-agentcrush-day.mjs" className="underline underline-offset-2 hover:text-white/70 transition-colors">node script</a>{' '}
+          recomputes any day&apos;s root from the public endpoints — no AgentCrush code required.{' '}
+          <a href="https://github.com/kristof-sudo/agentcrush-app/blob/main/docs/verify-independently.md" className="underline underline-offset-2 hover:text-white/70 transition-colors">How it works →</a>
         </p>
         <p className="font-mono text-[10px] text-white/25">
           Building a market or an agent that consumes attestations? The full API surface is at{' '}
