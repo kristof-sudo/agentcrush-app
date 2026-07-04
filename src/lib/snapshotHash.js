@@ -42,6 +42,53 @@ export function merkleRoot(leafHashes) {
 }
 
 /**
+ * Merkle inclusion proof for the leaf at `index`, following the exact same
+ * tree construction as merkleRoot (duplicate last on odd level).
+ * @param {string[]} leafHashes  all leaf hashes, in tree order
+ * @param {number} index         index of the leaf to prove
+ * @returns {Array<{hash: string, position: 'left'|'right'}>}  sibling path, leaf→root
+ */
+export function merkleProof(leafHashes, index) {
+  if (!Number.isInteger(index) || index < 0 || index >= leafHashes.length) {
+    throw new Error('merkleProof: index out of range')
+  }
+  const proof = []
+  let level = [...leafHashes]
+  let idx = index
+  while (level.length > 1) {
+    const isRightChild = idx % 2 === 1
+    const siblingIdx = isRightChild ? idx - 1 : idx + 1
+    // odd level: last node pairs with itself (duplicate last)
+    const sibling = siblingIdx < level.length ? level[siblingIdx] : level[idx]
+    proof.push({ hash: sibling, position: isRightChild ? 'left' : 'right' })
+    const next = []
+    for (let i = 0; i < level.length; i += 2) {
+      const a = level[i]
+      const b = i + 1 < level.length ? level[i + 1] : level[i] // duplicate last
+      next.push(sha256(a + b))
+    }
+    level = next
+    idx = Math.floor(idx / 2)
+  }
+  return proof
+}
+
+/**
+ * Verify a Merkle inclusion proof produced by merkleProof.
+ * @param {string} leafHash
+ * @param {Array<{hash: string, position: 'left'|'right'}>} proof
+ * @param {string} root  expected Merkle root
+ * @returns {boolean}
+ */
+export function verifyProof(leafHash, proof, root) {
+  let h = leafHash
+  for (const step of proof) {
+    h = step.position === 'left' ? sha256(step.hash + h) : sha256(h + step.hash)
+  }
+  return h === root
+}
+
+/**
  * Compute the day's Merkle root + chained hash.
  * @param {Array<{agent_id,rank,score,is_alive}>} rows  all snapshot rows for the date
  * @param {string|null} prevChainHash  prior day's chain_hash (null for the genesis day)
