@@ -9,6 +9,7 @@ import {
 } from '@/lib/agent-quality'
 import { getWhyMoving, getArchetypeStyle } from '@/lib/why-moving'
 import AgentHeader from '@/components/agent/AgentHeader'
+import HistoryChart from '@/components/agent/HistoryChart'
 import EvidenceBadge from '@/components/ui/EvidenceBadge'
 import IndexedBadge from '@/components/ui/IndexedBadge'
 import ScoreBreakdown from '@/components/ui/ScoreBreakdown'
@@ -624,6 +625,15 @@ export default async function AgentPage({ params }) {
     .order('computed_at', { ascending: false })
     .limit(7)
 
+  // Full recorded life for the history chart (K17) — daily snapshots since
+  // indexing began. Tiny payload (~1 row/day); raw JSON stays paid via /history.
+  const { data: snapshotSeries } = await supabase
+    .from('agent_snapshots')
+    .select('snapshot_date, rank, score, is_alive')
+    .eq('agent_id', agent.id)
+    .order('snapshot_date', { ascending: true })
+    .limit(1000)
+
   const { data: compareCandidatesRaw } = await supabase
     .from('rankings')
     .select(`
@@ -1114,6 +1124,12 @@ export default async function AgentPage({ params }) {
             ⬡ Machine-callable
           </Link>
         </div>
+
+        {/* ── HISTORY (K17): the time dimension — full recorded life ──── */}
+        <HistoryChart
+          handle={agent.handle}
+          series={(snapshotSeries || []).map((r) => ({ d: r.snapshot_date, rank: r.rank, score: r.score, alive: r.is_alive === true }))}
+        />
 
         {/* ── AI-READABLE SUMMARY (LLM Gateway block) ─────────────────── */}
         <div style={{
