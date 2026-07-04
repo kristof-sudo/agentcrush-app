@@ -627,12 +627,22 @@ export default async function AgentPage({ params }) {
 
   // Full recorded life for the history chart (K17) — daily snapshots since
   // indexing began. Tiny payload (~1 row/day); raw JSON stays paid via /history.
-  const { data: snapshotSeries } = await supabase
-    .from('agent_snapshots')
-    .select('snapshot_date, rank, score, is_alive')
-    .eq('agent_id', agent.id)
-    .order('snapshot_date', { ascending: true })
-    .limit(1000)
+  // agent_snapshots is not anon-readable (RLS) — use the service client like
+  // the claim_requests check below does.
+  let snapshotSeries = []
+  try {
+    const snapDb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
+    const { data } = await snapDb
+      .from('agent_snapshots')
+      .select('snapshot_date, rank, score, is_alive')
+      .eq('agent_id', agent.id)
+      .order('snapshot_date', { ascending: true })
+      .limit(1000)
+    snapshotSeries = data || []
+  } catch {}
 
   const { data: compareCandidatesRaw } = await supabase
     .from('rankings')
