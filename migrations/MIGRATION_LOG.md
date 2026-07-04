@@ -9,6 +9,9 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+## 2026-07-04 — Bradley-Terry shadow scoring infrastructure (B29)
+- `20260704_0430_agent_bt_scores.sql` — `agent_bt_scores` table (agent_id, category, bt_score, bt_rank, pair_count, fit_date; unique on agent_id+category+fit_date; RLS enabled, service-role only) + `agent_score_v3_bt_preview` shadow view (joins latest BT fit with v2.c rank for internal delta inspection). Populated by `runtime/bt-scoring-worker.mjs` (weekly Sunday 09:30 UTC). Zero public surface — internal shadow only. **STATUS: PENDING APPLY by Kris.**
+
 ## 2026-07-02 — watchlist webhook subscriptions (monitoring product v1, K10)
 - `20260702_1500_watch_subscriptions.sql` — `watch_subscriptions` table: one row per webhook alert subscription (handles[], target_url, plaintext signing secret — service-role-only via RLS-no-policies, api_keys pattern; status active/paused/revoked; consecutive_failures; last_alerted_at watermark). Consumed by `POST /api/watchlist/subscribe` and `runtime/watchlist-alert-worker.mjs` (hourly timer). Code degrades gracefully until applied (subscribe returns 503 "not enabled", worker exits clean). **STATUS: PENDING APPLY by Kris.**
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=AgentCrush Bradley-Terry scoring worker (B29 — shadow phase)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/agentcrush
+EnvironmentFile=/opt/agentcrush/fetchers/.env
+ExecStart=/usr/bin/node /opt/agentcrush/runtime/bt-scoring-worker.mjs --write
+StandardOutput=append:/var/log/agentcrush/bt-scoring.log
+StandardError=append:/var/log/agentcrush/bt-scoring.log
+TimeoutStartSec=1800
