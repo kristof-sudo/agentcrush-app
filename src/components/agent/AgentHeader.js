@@ -72,9 +72,9 @@ export default function AgentHeader({ displayName, handle, imageUrl, tagline, ar
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', color: '#f0f4ff', textShadow: `0 0 12px ${catColor.glow}66` }}>
+              <h1 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', color: '#f0f4ff', textShadow: `0 0 12px ${catColor.glow}66`, margin: 0 }}>
                 {displayName}
-              </span>
+              </h1>
               {delta !== 0 && (
                 <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 9999, background: delta > 0 ? 'rgba(74,222,128,0.13)' : 'rgba(248,113,113,0.13)', color: delta > 0 ? '#4ade80' : '#f87171', boxShadow: delta > 0 ? '0 0 8px rgba(74,222,128,0.4)' : '0 0 8px rgba(248,113,113,0.4)' }}>
                   {delta > 0 ? `+${delta}` : delta} this week
