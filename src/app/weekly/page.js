@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: '2026-W27',
+    label: 'W27 · June 29 – July 5, 2026',
+    summary: 'The ecosystem asked what happens when agents disagree; we shipped the evidence layer — one-click verification against Base, per-agent proofs, full history on every profile, the Ghost Report (43 famous names, 404k stars, silent), and dead-agent alerts. Plus an honest note on our own three-day paywall outage.',
+    href: '/weekly/2026-W27',
+  },
+  {
     week: '2026-W26',
     label: 'W26 · June 22–28, 2026',
     summary: 'Forty thousand agents started trading real assets and the x402 conversation consolidated around trust — so we made our own numbers checkable: a verifiable historic record, a third (runtime) signal family, and the W24 service-liveness gap closed (0% → 97.9%).',
