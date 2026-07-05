@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'W23 · June 2–8, 2026 — AgentCrush Weekly',
-  description: 'AgentCrush weekly signal digest for W23 2026. MCP Server Index launches as the 5th category ranking — plus ERC-8004 trust tooling consolidates and the autonomous pipeline goes live.',
+  description: 'AgentCrush weekly signal digest for W23 2026. MCP Server Index launches as the 5th category ranking — plus ERC-8004 trust tooling consolidates across the ecosystem.',
   alternates: {
     canonical: 'https://agentcrush.xyz/weekly/2026-W23',
     types: { 'application/rss+xml': 'https://agentcrush.xyz/weekly.xml' },
@@ -28,7 +28,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
   headline: 'AgentCrush Weekly W23 · June 2–8, 2026',
-  description: 'Weekly signal digest: MCP Server Index as a 5th category ranking, ERC-8004 trust layer tooling consolidation, autonomous pipeline deployment.',
+  description: 'Weekly signal digest: MCP Server Index as a 5th category ranking, ERC-8004 trust layer tooling consolidation.',
   url: 'https://agentcrush.xyz/weekly/2026-W23',
   image: 'https://agentcrush.xyz/weekly/W23_cover.png',
   datePublished: '2026-06-08T00:00:00.000Z',
@@ -117,10 +117,9 @@ export default function W23Page() {
             We&apos;ve been tracking this pattern — it&apos;s the same one Virtuals and Agentverse went through.
           </p>
           <p>
-            On the infrastructure side: the autonomous pipeline went live this week. Daily briefs,
-            decision card, approval queue, trust-fall posting, and engagement executor are all running
-            on timers. The index is now self-operating six days a week — briefs at 03:30 UTC, decisions
-            at 04:00, execution at 07:00, trust-fall at 07:30, engagement at 07:45, midday check at 11:00.
+            On the infrastructure side: data-collection automation expanded this week — signal
+            ingestion and index maintenance now run on daily schedules, so rankings and liveness stay
+            current without manual refreshes.
           </p>
         </div>
 
@@ -278,16 +277,8 @@ export default function W23Page() {
               — bulk dataset endpoint (JSON / JSONL / CSV) for all 5 categories, CORS-open
             </li>
             <li>
-              Autonomous pipeline — 8 systemd timers on VPS (brief, decision card ×2, executor ×2,
-              trust-fall, engagement, midday check)
-            </li>
-            <li>
-              Trust-fall lane — autonomous X posts for tightly-scoped events (rank movers ≥+5,
-              weekly digest, new evidence-ranked), deduped via event_key
-            </li>
-            <li>
-              Engagement executor — dispatches approved reply/quote/like actions from Telegram
-              approval queue
+              Scheduled data-collection automation — signal ingestion and index maintenance now run
+              daily without manual refreshes
             </li>
             <li>
               <span className="text-white/75">primary_category check constraint</span> extended to

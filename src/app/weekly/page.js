@@ -29,6 +29,12 @@ const CURATED = [
     href: '/weekly/2026-W26',
   },
   {
+    week: '2026-W25',
+    label: 'W25 · June 15–21, 2026',
+    summary: 'No standalone issue — W25 signals were consolidated into the W26 digest during the Ghost Index recount.',
+    href: '/weekly/2026-W26',
+  },
+  {
     week: '2026-W24',
     label: 'W24 · June 8–14, 2026',
     summary: 'The agents making real money are invisible: the x402 Demand Leaderboard finds the top earners unindexed, the "agent demand" number turns out ~99.8% bots, and trust scoring becomes an IETF draft.',

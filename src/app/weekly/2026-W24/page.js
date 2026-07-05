@@ -133,6 +133,19 @@ export default function W24Page() {
           <a href="/weekly.xml" className="text-[#00d4ff]/50 hover:text-[#00d4ff] transition-colors">RSS</a>
         </div>
 
+        {/* Erratum — added 2026-07-05, content below preserved as originally published */}
+        <div className="rounded-lg border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3 mb-8">
+          <p className="text-[13px] text-amber-200/90 leading-relaxed">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider mr-2">Erratum · July 5, 2026</span>
+            This issue describes overall liveness with the pre-correction methodology (&ldquo;better than
+            four in five silent&rdquo;). A W26 recount — deduplication plus fixing category signal gaps —
+            put the honest figure at ~58% alive, and that correction is documented in{' '}
+            <Link href="/blog/liveness-is-layer-zero" className="underline underline-offset-2 hover:text-amber-100">liveness is layer zero</Link>.
+            The per-category numbers below (developer long tail ~17%) were and remain accurate. We keep
+            the original text unedited — the correction being on the record is the point of this index.
+          </p>
+        </div>
+
         <hr className="my-8 border-white/[0.06]" />
 
         {/* Editorial */}
