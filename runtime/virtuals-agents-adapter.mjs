@@ -398,19 +398,55 @@ async function main() {
     last_seen_at: now,
   }));
 
-  const batchSize = 500;
-  for (let i = 0; i < upserts.length; i += batchSize) {
-    const batch = upserts.slice(i, i + batchSize);
-    const { error } = await supabase
-      .from('virtuals_agents')
-      .upsert(batch, { onConflict: 'virtuals_id' });
-    if (error) throw new Error(`[virtuals-adapter] Upsert batch ${i} failed: ${error.message}`);
+  // Upsert in small batches. The dataset grew from ~40K to 54K+ rows; larger
+  // batches exceed Postgres's default statement_timeout. On timeout we retry
+  // up to MAX_RETRIES times with backoff before failing the run.
+  const BATCH_SIZE = 250;
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 5000;
+
+  const isStatementTimeout = (err) =>
+    err && (
+      err.code === '57014' ||
+      (typeof err.message === 'string' && (
+        err.message.includes('statement timeout') ||
+        err.message.includes('canceling statement')
+      ))
+    );
+
+  let upserted = 0;
+  for (let i = 0; i < upserts.length; i += BATCH_SIZE) {
+    const batch = upserts.slice(i, i + BATCH_SIZE);
+    let lastError = null;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const { error } = await supabase
+        .from('virtuals_agents')
+        .upsert(batch, { onConflict: 'virtuals_id' });
+      if (!error) { lastError = null; break; }
+      lastError = error;
+      if (isStatementTimeout(error) && attempt < MAX_RETRIES - 1) {
+        console.warn(
+          `[virtuals-adapter] Statement timeout on batch offset ${i} ` +
+          `(attempt ${attempt + 1}/${MAX_RETRIES}) — retrying in ${RETRY_DELAY_MS / 1000}s`
+        );
+        await sleep(RETRY_DELAY_MS * (attempt + 1));
+      } else {
+        break;
+      }
+    }
+    if (lastError) {
+      throw new Error(`[virtuals-adapter] Upsert batch offset ${i} failed: ${lastError.message}`);
+    }
+    upserted += batch.length;
+    if (Math.floor(upserted / 10000) > Math.floor((upserted - batch.length) / 10000)) {
+      console.log(`[virtuals-adapter] Progress: ${upserted}/${upserts.length} upserted`);
+    }
   }
 
   console.log(`[virtuals-adapter] Summary:`);
   console.log(`  fetched (unique): ${unique.length}`);
   console.log(`  pages:            ${pagesFetched}`);
-  console.log(`  upserted:         ${upserts.length}`);
+  console.log(`  upserted:         ${upserted}`);
 }
 
 main().catch((err) => {
