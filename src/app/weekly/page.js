@@ -19,7 +19,7 @@ const CURATED = [
   {
     week: '2026-W28',
     label: 'W28 · July 6–12, 2026',
-    summary: 'A quiet week on the boards, spent on how to read our own numbers: why the MCP category shows 100% liveness (a selection effect, not a quality verdict) and the tokenized category shows 0% (an instrument gap, not dormancy) — two readings that are both artifacts, honestly flagged. Plus four boards that barely moved, and why that stability is its own signal.',
+    summary: 'Identity is table stakes; the contested layer is proof. The agent economy spent the week building it — ERC-8004 reputation leaderboards, github-signed execution receipts, on-chain tool registries, A2A spec-hardening — while we published a lesson in reading proof honestly (why our MCP category reads 100% and tokenized reads 0%, both instrument artifacts, not verdicts), hardened Virtuals coverage to 57,606 agents, and corrected our evidence-ranked count to 145.',
     href: '/weekly/2026-W28',
   },
   {

@@ -6,7 +6,7 @@ const ISSUES = [
     title: 'AgentCrush Weekly · W28 · July 6–12, 2026',
     link: 'https://agentcrush.xyz/weekly/2026-W28',
     pubDate: 'Sun, 12 Jul 2026 00:00:00 +0000',
-    description: 'A quiet week spent on how to read our own numbers: why the MCP category shows 100% liveness (a selection effect) and the tokenized category shows 0% (an instrument gap) — both artifacts, honestly flagged — plus four boards that barely moved.',
+    description: 'Identity is table stakes; the contested layer is proof. The agent economy spent the week building it — reputation leaderboards, execution receipts, on-chain tool registries, A2A spec-hardening — while we published how to read a trust number honestly, hardened Virtuals coverage to 57,606 agents, and corrected our evidence-ranked count to 145.',
   },
   {
     week: '2026-W27',
