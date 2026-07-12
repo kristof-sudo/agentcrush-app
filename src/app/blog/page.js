@@ -15,7 +15,7 @@ const POSTS = [
   {
     slug: 'mcp-coverage',
     category: 'Findings',
-    image: '/api/og?title=MCP+coverage+gap',
+    image: '/og-mcp-coverage.png',
     imageAlt: 'MCP servers are 100% alive — AgentCrush',
     title: 'MCP servers are 100% alive. Why we only index 15.',
     date: 'July 10, 2026',
