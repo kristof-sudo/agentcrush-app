@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: '2026-W28',
+    label: 'W28 · July 6–12, 2026',
+    summary: 'Identity is table stakes; the contested layer is proof. The agent economy spent the week building it — ERC-8004 reputation leaderboards, github-signed execution receipts, on-chain tool registries, A2A spec-hardening — while we published a lesson in reading proof honestly (why our MCP category reads 100% and tokenized reads 0%, both instrument artifacts, not verdicts), hardened Virtuals coverage to 57,606 agents, and corrected our evidence-ranked count to 145.',
+    href: '/weekly/2026-W28',
+  },
+  {
     week: '2026-W27',
     label: 'W27 · June 29 – July 5, 2026',
     summary: 'The ecosystem asked what happens when agents disagree; we shipped the evidence layer — one-click verification against Base, per-agent proofs, full history on every profile, the Ghost Report (43 famous names, 404k stars, silent), and dead-agent alerts. Plus an honest note on our own three-day paywall outage.',
