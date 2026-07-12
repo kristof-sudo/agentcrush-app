@@ -16,9 +16,9 @@ export const metadata = {
     siteName: 'AgentCrush',
     images: [
       {
-        url: 'https://agentcrush.xyz/api/og?title=MCP+coverage+gap',
-        width: 1200,
-        height: 630,
+        url: 'https://agentcrush.xyz/og-mcp-coverage.png',
+        width: 1731,
+        height: 909,
         alt: 'MCP servers are 100% alive — AgentCrush',
       },
     ],
@@ -30,7 +30,7 @@ export const metadata = {
     title: 'MCP servers are 100% alive. Why we only index 15. — AgentCrush',
     description:
       '100% liveness vs 58.8% overall. The selection effect, the scoring, and the 15-vs-hundreds coverage gap.',
-    images: ['https://agentcrush.xyz/api/og?title=MCP+coverage+gap'],
+    images: ['https://agentcrush.xyz/og-mcp-coverage.png'],
   },
 }
 
@@ -42,7 +42,7 @@ export default function McpCoverage() {
         title="MCP servers are 100% alive. Why we only index 15."
         summary="Every MCP server in the AgentCrush index responds to a live endpoint probe. The overall rate is 58.8%. The difference is selection, not infrastructure."
         date="2026-07-10"
-        imageUrl="/api/og?title=MCP+coverage+gap"
+        imageUrl="/og-mcp-coverage.png"
       />
     <main className="mx-auto max-w-[720px] px-4 md:px-6 py-14">
 
@@ -56,10 +56,10 @@ export default function McpCoverage() {
       {/* Cover */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/api/og?title=MCP+coverage+gap"
+        src="/og-mcp-coverage.png"
         alt="MCP servers are 100% alive — AgentCrush"
-        width={1200}
-        height={630}
+        width={1731}
+        height={909}
         className="w-full rounded-xl border border-white/[0.08] mb-8"
       />
 
