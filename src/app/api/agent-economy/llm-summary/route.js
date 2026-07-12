@@ -34,6 +34,9 @@ export async function GET() {
 
     const { count: total }      = await supabase.from('agents').select('id', { count: 'exact', head: true })
     const { count: snapshots }  = await supabase.from('agent_snapshots').select('agent_id', { count: 'exact', head: true })
+    // Direct tier count — avoids double-counting agents evidence-ranked in multiple categories
+    // (same approach as src/lib/stats.js; per-category sums inflate the total by ~30%)
+    const { count: erDirect }   = await supabase.from('agents').select('id', { count: 'exact', head: true }).eq('tier', 'evidence_ranked')
 
     const { count: mfTot } = await supabase.from('agent_score_model_family_v1').select('agent_id', { count: 'exact', head: true })
     const { count: mfER }  = await supabase.from('agent_score_model_family_v1').select('agent_id', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true)
@@ -44,14 +47,14 @@ export async function GET() {
     const { count: devTot } = await supabase.from('agents').select('id', { count: 'exact', head: true }).eq('primary_category', 'developer')
     const { count: devER }  = await supabase.from('agent_score_v2_top50_public_candidate').select('handle', { count: 'exact', head: true }).eq('evidence_ready_for_public_rank', true)
 
-    const evidenceRankedTotal = (mfER || 0) + (tkER || 0) + (svcER || 0) + (devER || 0)
+    const evidenceRankedTotal = erDirect || 0
 
     return apiOk({
       type: 'agent_economy_llm_summary',
       url: SOURCE_URL,
       summary:
         'AgentCrush is the protocol-neutral market intelligence layer for the AI agent economy. ' +
-        `It tracks ${total ? total.toLocaleString() : '1,350+'} agents across HuggingFace, LMArena, ` +
+        `It tracks ${total ? total.toLocaleString() : '1,390+'} agents across HuggingFace, LMArena, ` +
         'GitHub, paper citations, on-chain registries (ERC-8004), tokenized agent protocols (Virtuals), ' +
         'service registries (Agentverse + A2A), and machine-payable endpoints (x402 / CDP Bazaar). ' +
         `${evidenceRankedTotal} agents are evidence-ranked across 5 category methodologies as of the most recent run.`,
