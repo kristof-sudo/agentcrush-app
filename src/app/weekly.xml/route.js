@@ -2,6 +2,20 @@ export const dynamic = 'force-static'
 
 const ISSUES = [
   {
+    week: '2026-W28',
+    title: 'AgentCrush Weekly · W28 · July 6–12, 2026',
+    link: 'https://agentcrush.xyz/weekly/2026-W28',
+    pubDate: 'Sun, 12 Jul 2026 00:00:00 +0000',
+    description: 'A quiet week spent on how to read our own numbers: why the MCP category shows 100% liveness (a selection effect) and the tokenized category shows 0% (an instrument gap) — both artifacts, honestly flagged — plus four boards that barely moved.',
+  },
+  {
+    week: '2026-W27',
+    title: 'AgentCrush Weekly · W27 · June 29 – July 5, 2026',
+    link: 'https://agentcrush.xyz/weekly/2026-W27',
+    pubDate: 'Sun, 05 Jul 2026 00:00:00 +0000',
+    description: 'The ecosystem asked what happens when agents disagree; we shipped the evidence layer — one-click verification against Base, per-agent proofs, full history on every profile, the Ghost Report, and dead-agent alerts.',
+  },
+  {
     week: '2026-W22',
     title: 'AgentCrush Weekly · W22 · May 25–31, 2026',
     link: 'https://agentcrush.xyz/weekly/2026-W22',

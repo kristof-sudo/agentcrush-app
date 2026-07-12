@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: '2026-W28',
+    label: 'W28 · July 6–12, 2026',
+    summary: 'A quiet week on the boards, spent on how to read our own numbers: why the MCP category shows 100% liveness (a selection effect, not a quality verdict) and the tokenized category shows 0% (an instrument gap, not dormancy) — two readings that are both artifacts, honestly flagged. Plus four boards that barely moved, and why that stability is its own signal.',
+    href: '/weekly/2026-W28',
+  },
+  {
     week: '2026-W27',
     label: 'W27 · June 29 – July 5, 2026',
     summary: 'The ecosystem asked what happens when agents disagree; we shipped the evidence layer — one-click verification against Base, per-agent proofs, full history on every profile, the Ghost Report (43 famous names, 404k stars, silent), and dead-agent alerts. Plus an honest note on our own three-day paywall outage.',
