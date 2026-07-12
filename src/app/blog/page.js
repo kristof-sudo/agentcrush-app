@@ -13,6 +13,16 @@ export const revalidate = 3600
 
 const POSTS = [
   {
+    slug: 'tokenized-liveness',
+    category: 'Findings',
+    image: '/api/og?title=Tokenized+liveness+gap',
+    imageAlt: 'Tokenized agents score 0% on the Ghost Index — AgentCrush',
+    title: "Tokenized agents score 0% on the Ghost Index. Here's why that's our problem, not theirs.",
+    date: 'July 17, 2026',
+    summary:
+      'The Ghost Index shows every indexed tokenized agent at 0% liveness. Not because they\'re dead — tokenized agents move real capital. Endpoint uptime is the wrong instrument. Per-category breakdown, why the gap exists, and what the right measurement looks like.',
+  },
+  {
     slug: 'mcp-coverage',
     category: 'Findings',
     image: '/api/og?title=MCP+coverage+gap',
