@@ -16,17 +16,18 @@ import { cache } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 export const FLOOR = {
-  indexed: '1,390',
-  evidenceRanked: '130',
+  indexed: '1,400',
+  evidenceRanked: '145',
 }
 
 // Used when Supabase is unreachable (build without env, outage).
+// Updated 2026-07-15: live-verified 2026-07-14 — 1,403 indexed / 145 evidence-ranked / 58.0% Ghost Index.
 const FALLBACK = {
-  indexed: 1395,
-  evidenceRanked: 135,
-  baseTier: 1260,
-  ghostPct: 58.7,
-  aliveAgents: 819,
+  indexed: 1403,
+  evidenceRanked: 145,
+  baseTier: 1258,
+  ghostPct: 58.0,
+  aliveAgents: 813,
 }
 
 function supabase() {
