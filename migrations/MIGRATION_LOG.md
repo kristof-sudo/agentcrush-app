@@ -9,6 +9,9 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+## 2026-07-17 — HANKO ERC-8004 registry ingest (SR-G3)
+- `20260717_0800_ingest_hanko_erc8004_registry.sql` — inserts `hanko_registry` (HANKO) as a `service`-category, `evidence_ranked` agent. HANKO is the ERC-8004 agent trust registry on Solana mainnet: Ed25519-typed attestations, bonded registration, karma 0–1000. Launched July 2026. Evidence tier: `verified_onchain` (Solana mainnet live per @hanko_registry, 2026-07-10). Initial scores: visibility 52, reputation 48 (conservative baseline — new infrastructure, no historical data). Seeds `agent_snapshots` row for the Sunday scoring run. One follow-up: `github_url` is NULL in this migration — Kris should confirm from @hanko_registry X bio and `UPDATE agents SET github_url='...' WHERE handle='hanko_registry'` if found. **STATUS: PENDING APPLY by Kris.**
+
 ## 2026-07-04 — snapshot archive refs for data availability (K13)
 - `20260704_1000_proof_archive_refs.sql` — adds nullable `arweave_tx` + `archive_sha256` to `snapshot_anchors`. Each night `runtime/snapshot-anchor-worker.mjs` now serializes the day's canonical rows (`agent_id|rank|score|is_alive`, sorted by agent_id) to a deterministic JSON file, records its sha256, writes a local fallback copy to `/var/log/agentcrush/snapshot-archive/<date>.json`, and — once `ARWEAVE_JWK` is set on the VPS — uploads it to Arweave so the Merkle anchor is independently checkable forever. Exposed by `/api/verify` when present. Worker probes for the columns and degrades gracefully until applied; the anchor path never depends on them. **STATUS: PENDING APPLY by Kris.**
 
