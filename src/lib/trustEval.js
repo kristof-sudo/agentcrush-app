@@ -50,6 +50,24 @@ export async function evaluateTrust({ handle, depth = 'standard' }) {
     .limit(1)
     .maybeSingle()
 
+  // Check for ERC-8004 registration (service-role key required — RLS blocks anon on this table)
+  let hasErc8004 = false
+  try {
+    const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (svcKey) {
+      const svcDb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, svcKey)
+      const { data: erc8004Row } = await svcDb
+        .from('agent_erc8004_registrations')
+        .select('agent_id')
+        .eq('agent_id', agent.id)
+        .limit(1)
+        .maybeSingle()
+      hasErc8004 = !!erc8004Row
+    }
+  } catch {
+    // table not accessible — treat as no ERC-8004 registration
+  }
+
   const isAlive = agent.activity_status === 'active' ||
     (agent.last_event_at && new Date(agent.last_event_at) > new Date(Date.now() - 30 * 86400000))
 
@@ -75,6 +93,10 @@ export async function evaluateTrust({ handle, depth = 'standard' }) {
   if (agent.claim_status !== 'claimed') riskFlags.push({ flag: 'unclaimed', detail: 'Agent profile not claimed by owner' })
   if (!agent.verified) riskFlags.push({ flag: 'unverified', detail: 'Identity not independently verified' })
   if (agent.tier === 'indexed' && signalsPresent < 2) riskFlags.push({ flag: 'thin_evidence', detail: 'Fewer than 2 signals present — score may not reflect reality' })
+  // ERC-8004 registry counts (e.g. "325K agents registered") are self-reported by protocol
+  // operators — AgentCrush has not independently audited the on-chain registry size.
+  // The agent's own registration is verified; the ecosystem-wide count claim is not.
+  if (hasErc8004) riskFlags.push({ flag: 'erc8004_count_unverified', detail: 'This agent holds an ERC-8004 identity. Note: ERC-8004 registry population counts are self-reported by protocol operators and have not been independently on-chain verified by AgentCrush. See agentcrush.xyz/methodology for scope.' })
 
   const verdict =
     riskFlags.length === 0 && confidenceTier === 'high'   ? 'trusted'     :
