@@ -57,7 +57,7 @@ const TOOLS = [
   },
   {
     name: 'get_agent_details',
-    description: 'Full agent details including scores across ALL categories the agent qualifies for. Joins all 4 scoring views. Returns identity, raw signals, sub-scores, evidence-ready status.',
+    description: 'Full agent details including scores across ALL categories the agent qualifies for. Joins all scoring views. Returns identity, raw signals, sub-scores, evidence-ready status.',
     args: `{ "handle": "qwen" }`,
   },
   {
@@ -72,7 +72,7 @@ const TOOLS = [
   },
   {
     name: 'list_categories',
-    description: 'The 4 AgentCrush category rankings with tracked + evidence-ranked counts and methodology versions. Discover what kinds of agents AgentCrush tracks.',
+    description: 'The 5 AgentCrush category rankings with tracked + evidence-ranked counts and methodology versions. Discover what kinds of agents AgentCrush tracks.',
     args: `{}`,
   },
   {
@@ -85,9 +85,46 @@ const TOOLS = [
     description: 'Scoring methodology for a category — weights, signal sources, formulas, evidence-ready rule, AND known limitations. Methodology travels with data so LLMs can answer "how does this ranking work?" accurately.',
     args: `{ "category": "tokenized" }`,
   },
+  {
+    name: 'get_agent_trust',
+    description: 'Composite trust score (0–100) + classification (verified / provisional / unverified / low_trust) for a single agent. Combines confidence tier, evidence tier, ERC-8004 verified identity, and risk flags. Use for delegation decisions.',
+    args: `{ "handle": "crewai" }`,
+    highlight: true,
+  },
+  {
+    name: 'verify_counterparty',
+    description: 'Pre-transaction check in one free call: should my agent deal with this counterparty right now? Returns proceed / caution / reject with reasoning. Liveness-aware — an agent with no public activity in 30+ days never gets a clean proceed. Use before paying, delegating to, or integrating any agent.',
+    args: `{ "handle": "crewai" }`,
+    highlight: true,
+  },
+  {
+    name: 'get_top_movers',
+    description: 'Top weekly rank movers (up + down) from agents.weekly_delta. Filter by category and direction. Default 10 per direction.',
+    args: `{ "direction": "up", "limit": 10, "category": "developer" }`,
+  },
+  {
+    name: 'get_protocol_adoption',
+    description: 'How many indexed agents touch each major protocol/surface: ERC-8004 verified, Virtuals tokens, Agentverse, x402/Bazaar, GitHub. Ecosystem-state snapshot.',
+    args: `{}`,
+  },
+  {
+    name: 'get_agent_changes',
+    description: 'Pairwise delta scan over an agent\'s recent snapshots. Reports material changes in score, rank, github_stars, follower_count, identity_type, and more.',
+    args: `{ "handle": "crewai", "since": "2026-07-01", "limit": 30 }`,
+  },
+  {
+    name: 'get_ecosystem_summary',
+    description: 'One-call ecosystem-level summary: total counts, evidence-ranked count, category mix (model_family/tokenized/service/developer/mcp_server), category leaders, snapshot volume last 30 days.',
+    args: `{}`,
+  },
+  {
+    name: 'find_agents',
+    description: 'Counterparty discovery: "which agents can do X and are safe to pay?" Returns the top 3 ranked candidates with liveness, trust tier, verified payment rails (x402/MCP/ERC-8004), scores, and endpoints. Full list (up to 50) available at /api/agents/find/full via x402 ($0.05) or Pro key.',
+    args: `{ "q": "trading", "rails": "x402", "alive": true, "min_tier": "evidence_ranked" }`,
+  },
 ]
 
-const CATEGORIES = ['model_family', 'tokenized', 'service', 'developer']
+const CATEGORIES = ['model_family', 'tokenized', 'service', 'developer', 'mcp_server']
 
 export default function McpDocsPage() {
   return (
@@ -108,7 +145,7 @@ export default function McpDocsPage() {
           AgentCrush MCP Server
         </h1>
         <p className="text-base text-white/60 max-w-2xl leading-relaxed">
-          Connect AgentCrush as a live data layer in any MCP-compatible LLM client (Claude Desktop, Cursor, custom agents). 13 read-only tools spanning the 5 category rankings: model families, tokenized agents, service agents, developer agents.
+          Connect AgentCrush as a live data layer in any MCP-compatible LLM client (Claude Desktop, Cursor, custom agents). 14 read-only tools spanning the 5 category rankings: model families, tokenized agents, service agents, developer agents, MCP servers.
         </p>
       </div>
 
@@ -155,18 +192,19 @@ export default function McpDocsPage() {
 {CONFIG_EXAMPLE}
         </pre>
         <p className="text-xs text-white/45 mt-2">
-          Restart Claude Desktop. The 7 AgentCrush tools appear in the available tool list. Same config format works in Cursor and other MCP clients.
+          Restart Claude Desktop. The 14 AgentCrush tools appear in the available tool list. Same config format works in Cursor and other MCP clients.
         </p>
       </section>
 
       {/* Tools */}
       <section className="mb-10">
-        <h2 className="text-xl font-bold mb-4">Tools (7)</h2>
+        <h2 className="text-xl font-bold mb-4">Tools (14)</h2>
         <div className="space-y-3">
           {TOOLS.map((t) => (
-            <div key={t.name} className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-3">
+            <div key={t.name} className={`rounded-lg border px-4 py-3 ${t.highlight ? 'border-violet-400/30 bg-violet-400/[0.04]' : 'border-white/[0.08] bg-white/[0.02]'}`}>
               <div className="flex items-baseline gap-2 mb-1.5">
                 <code className="text-sm font-mono font-semibold text-violet-300">{t.name}</code>
+                {t.highlight && <span className="text-[10px] font-mono uppercase tracking-wider text-violet-400 border border-violet-400/30 rounded px-1.5 py-0.5">agents-as-customers</span>}
               </div>
               <p className="text-xs text-white/55 leading-relaxed mb-2">{t.description}</p>
               <p className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-1">Example arguments</p>
@@ -190,7 +228,7 @@ export default function McpDocsPage() {
           ))}
         </div>
         <p className="text-xs text-white/45">
-          Each category has its own methodology version (model_family v1.4-with-deployment, tokenized v1.1-tokenized-tvl, service v1.1-service-forks, developer v2.c-public). Call <code className="text-violet-300">get_methodology(category)</code> to retrieve weights, signals, evidence-ready rule, and limitations.
+          Each category has its own methodology version (model_family v1.4-with-deployment, tokenized v1.1-tokenized-tvl, service v1.1-service-forks, developer v2.c-public, mcp_server v1.0-mcp). Call <code className="text-violet-300">get_methodology(category)</code> to retrieve weights, signals, evidence-ready rule, and limitations.
         </p>
       </section>
 
@@ -237,7 +275,7 @@ export default function McpDocsPage() {
             <span className="text-white/80">Structured filters.</span> <code className="text-violet-300">search_agents</code> takes <code className="text-violet-300">filters: &#123;...&#125;</code> as an object — new filter keys (date ranges, score thresholds) can be added without breaking existing callers.
           </li>
           <li>
-            <span className="text-white/80">v0 still alive.</span> Legacy endpoint <code className="text-violet-300">/api/mcp</code> (4 tools, no category awareness) remains live for backward compatibility. Migrate to <code className="text-violet-300">/api/mcp/v1</code> for the full 7-tool surface.
+            <span className="text-white/80">v0 still alive.</span> Legacy endpoint <code className="text-violet-300">/api/mcp</code> (4 tools, no category awareness) remains live for backward compatibility. Migrate to <code className="text-violet-300">/api/mcp/v1</code> for the full 14-tool surface.
           </li>
         </ul>
       </section>
