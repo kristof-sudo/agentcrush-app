@@ -9,8 +9,10 @@
 --   review 2026-07-14 (SR-G3) as a gap: we track ERC-8004 on Base but were blind
 --   to the Solana implementation that launched the same week.
 --
--- Evidence tier: verified_onchain — HANKO is live on Solana mainnet per the
---   source tweet (@hanko_registry, 2026-07-10). tier=evidence_ranked reflects this.
+-- Evidence tier: claimed live on Solana mainnet per the source tweet
+--   (@hanko_registry, 2026-07-10) — NOT independently verified on-chain by us.
+--   tier=evidence_ranked reflects signal evidence; verified stays FALSE until
+--   the registry program is corroborated on-chain or via domain/GitHub match.
 --
 -- GitHub URL: NULL — needs verification from @hanko_registry X profile bio.
 --   Update with: UPDATE agents SET github_url='...' WHERE handle='hanko_registry';
@@ -47,7 +49,7 @@ INSERT INTO agents (
   48,
   0,
   'unclaimed',
-  true,
+  false,  -- verified: a launch tweet is not identity verification (2026-07-19 review). Flip to true only after on-chain corroboration (resolve the registry program on Solana mainnet) or domain/GitHub corroboration per the ERC-8004 match policy.
   NULL,
   NULL,
   'hanko_registry',
