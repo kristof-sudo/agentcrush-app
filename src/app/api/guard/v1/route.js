@@ -159,12 +159,13 @@ export async function GET(req) {
   }
 
   // D4: depth is offered ONLY at the caution/reject moment, never on proceed.
-  if (decision !== 'proceed') {
-    const handle = agentVerdict?.handle || ''
+  // Depth endpoints are handle-keyed, so they are only offered when the
+  // counterparty resolved to an indexed agent.
+  if (decision !== 'proceed' && agentVerdict) {
     body.deeper = Object.fromEntries(
       Object.entries(DEPTH_AT_RISK_MOMENT).map(([k, v]) => [
         k,
-        { ...v, url: v.url.replaceAll('{handle}', encodeURIComponent(handle)) },
+        { ...v, url: v.url.replaceAll('{handle}', encodeURIComponent(agentVerdict.handle)) },
       ])
     )
   }
