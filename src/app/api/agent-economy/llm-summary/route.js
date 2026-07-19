@@ -21,7 +21,9 @@ const METHODOLOGY_URL = 'https://agentcrush.xyz/methodology'
 
 function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  // Service-role key required: agent_snapshots has RLS that blocks the anon role
+  // (returns null count → renders as 0). Mirror the pattern in src/lib/stats.js.
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !key) throw new Error('Supabase not configured')
   return createClient(url, key)
 }
@@ -54,7 +56,7 @@ export async function GET() {
       url: SOURCE_URL,
       summary:
         'AgentCrush is the protocol-neutral market intelligence layer for the AI agent economy. ' +
-        `It tracks ${total ? total.toLocaleString() : '1,390+'} agents across HuggingFace, LMArena, ` +
+        `It tracks ${total ? total.toLocaleString() : '1,400+'} agents across HuggingFace, LMArena, ` +
         'GitHub, paper citations, on-chain registries (ERC-8004), tokenized agent protocols (Virtuals), ' +
         'service registries (Agentverse + A2A), and machine-payable endpoints (x402 / CDP Bazaar). ' +
         `${evidenceRankedTotal} agents are evidence-ranked across 5 category methodologies as of the most recent run.`,
