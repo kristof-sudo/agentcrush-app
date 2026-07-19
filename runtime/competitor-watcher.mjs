@@ -43,6 +43,48 @@ async function readIfExists(p) {
   try { return await fs.readFile(p, 'utf-8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
 }
 
+async function fetchWebSources(webSources) {
+  const results = [];
+  for (const src of webSources) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12_000);
+      const res = await fetch(src.url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'AgentCrush-competitor-watcher/1.0' },
+        redirect: 'follow',
+      });
+      clearTimeout(timer);
+      const html = await res.text();
+      const text = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 3000);
+      const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+      const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{0,300})["']/i);
+      results.push({
+        id: src.id,
+        label: src.label,
+        url: src.url,
+        notes: src.notes || null,
+        status: res.status,
+        title: titleMatch ? titleMatch[1].trim().slice(0, 200) : null,
+        meta_description: descMatch ? descMatch[1].trim() : null,
+        text_snippet: text,
+        fetched_at: new Date().toISOString(),
+      });
+      console.log(`[competitor-watcher] web: ${src.label} → ${res.status} (${text.length} chars)`);
+    } catch (err) {
+      console.warn(`[competitor-watcher] web fetch failed for ${src.label}: ${err.message}`);
+      results.push({ id: src.id, label: src.label, url: src.url, error: err.message, fetched_at: new Date().toISOString() });
+    }
+  }
+  return results;
+}
+
 async function gatherInputs() {
   const eventsPath = path.join(BRAIN_PATH, 'Fetchers', 'github-events', 'output', `github-${RUN_DATE}.json`);
   const eventsRaw = await readIfExists(eventsPath);
@@ -59,10 +101,24 @@ async function gatherInputs() {
     return null;
   }
 
+  let webSnapshots = [];
+  try {
+    const configPath = path.join(BRAIN_PATH, 'Fetchers', 'github-events', 'config.json');
+    const config = JSON.parse(await fs.readFile(configPath, 'utf-8'));
+    const webSources = Array.isArray(config.web_sources) ? config.web_sources : [];
+    if (webSources.length > 0) {
+      console.log(`[competitor-watcher] fetching ${webSources.length} web source(s)`);
+      webSnapshots = await fetchWebSources(webSources);
+    }
+  } catch (e) {
+    console.warn(`[competitor-watcher] could not read web_sources config: ${e.message}`);
+  }
+
   return {
     githubEvents: eventsRaw,
     memoryMd,
     watcherPlaybook: watcherPlaybook || '(empty — no prior learnings yet)',
+    webSnapshots,
   };
 }
 
@@ -96,7 +152,7 @@ Output exactly:
 <one of: info | warn | crit — see severity rules below>
 
 ## Notable moves
-<bullets, one per competitor with activity. Cite specific repos/commits/releases. Skip competitors with no notable activity.>
+<bullets, one per competitor with activity. For GitHub repos: cite specific repos/commits/releases. For web sources: cite headline claims, agent counts, feature changes visible in the page text. Skip competitors with no notable activity.>
 
 ## Strategic read
 <2-4 sentences: what these moves mean for AgentCrush positioning, if anything>
@@ -121,11 +177,15 @@ Today's date: ${RUN_DATE}.`;
 }
 
 function buildUserPrompt(inputs) {
+  const webSection = inputs.webSnapshots && inputs.webSnapshots.length > 0
+    ? `\n\nToday's competitor web snapshots (direct-competitor sites without a public GitHub repo):\n\n\`\`\`json\n${JSON.stringify(inputs.webSnapshots, null, 2)}\n\`\`\``
+    : '';
+
   return `Today's GitHub events from configured competitor repos / users:
 
 \`\`\`json
 ${inputs.githubEvents}
-\`\`\`
+\`\`\`${webSection}
 
 Produce the competitor watch report for ${RUN_DATE}. Begin with the literal delimiter "---FULL REPORT START---".`;
 }
