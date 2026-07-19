@@ -104,6 +104,7 @@ const METHODOLOGY = [
       'Sources today: A2A protocol crawl (28 agents). Agentverse ingestion is wired and awaiting fresh crawl data.',
       'Roadmap v1.2: ERC-8004 registry (29K agents) and Bazaar x402 endpoints (46K) join as additional service surfaces.',
       'Cross-protocol presence is tracked but unweighted in the v1.1 composite.',
+      'ERC-8004 registry population counts (e.g. "325K agents registered") are self-reported by protocol operators. AgentCrush indexes individual agents against ERC-8004 via 8004scan, but has not independently audited the on-chain registry size. The /api/trust/evaluate endpoint flags this via erc8004_count_unverified for agents with a confirmed ERC-8004 registration.',
     ],
     changelog: [
       { version: 'v1.1-service-forks', date: 'May 2026', summary: 'Added Forks signal (15%). Measures active engagement vs passive starring. Adoption signal recalibrated.' },
