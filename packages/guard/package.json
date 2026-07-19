@@ -1,0 +1,22 @@
+{
+  "name": "@agentcrush/guard",
+  "version": "0.1.0",
+  "description": "Deterministic pre-settlement guard for x402 payments — verify the counterparty before funds move",
+  "type": "module",
+  "exports": {
+    ".": "./lib/guard.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "x402",
+    "ai-agents",
+    "payments",
+    "trust",
+    "counterparty",
+    "agentcrush"
+  ],
+  "license": "MIT",
+  "homepage": "https://agentcrush.xyz/developers"
+}

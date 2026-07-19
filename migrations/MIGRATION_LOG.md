@@ -9,6 +9,9 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+## 2026-07-19 — Guard v1 wallet-binding + payTo lookup index (SR-H2)
+- `20260719_1200_guard_v1_wallet_binding.sql` — GIN index `bazaar_resources_accepts_gin` (jsonb_path_ops) so `/api/guard/v1` resolves payTo addresses against 46K+ Bazaar listings via containment instead of seq scans, + `wallet_binding_check_v1` view (ERC-8004 registered owner vs Bazaar-advertised payTo per matched agent; match/mismatch/no_endpoint_data). Consumed by `src/lib/verifyCounterparty.js` (proceed→caution downgrade on mismatch, reason_code `wallet_address_mismatch`) and `/api/guard/v1`. Both consumers degrade gracefully until applied (route works un-indexed, binding check try/catches to null). Data reality at ship: 1 matched registration — view is the growth path, Bazaar lookup carries day one. x402_payers deliberately not referenced (B23 migration still unapplied). **STATUS: PENDING APPLY by Kris.**
+
 ## 2026-07-04 — snapshot archive refs for data availability (K13)
 - `20260704_1000_proof_archive_refs.sql` — adds nullable `arweave_tx` + `archive_sha256` to `snapshot_anchors`. Each night `runtime/snapshot-anchor-worker.mjs` now serializes the day's canonical rows (`agent_id|rank|score|is_alive`, sorted by agent_id) to a deterministic JSON file, records its sha256, writes a local fallback copy to `/var/log/agentcrush/snapshot-archive/<date>.json`, and — once `ARWEAVE_JWK` is set on the VPS — uploads it to Arweave so the Merkle anchor is independently checkable forever. Exposed by `/api/verify` when present. Worker probes for the columns and degrades gracefully until applied; the anchor path never depends on them. **STATUS: PENDING APPLY by Kris.**
 
