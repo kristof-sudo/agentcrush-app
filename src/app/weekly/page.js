@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: '2026-W29',
+    label: 'W29 · July 13–19, 2026',
+    summary: 'The verdict moves into the payment path. The ERC-8004 pattern crossed chains (HANKO on Solana), the agent-verification layer got visibly crowded, compliance showed up as a machine-payable x402 vertical — and we shipped Guard, a free deterministic pre-settlement check on any x402 payment address, wired wallet-binding integrity into counterparty verdicts, and fixed our own machine-facing endpoint that had been under-reporting a 72,756-snapshot archive as zero.',
+    href: '/weekly/2026-W29',
+  },
+  {
     week: '2026-W28',
     label: 'W28 · July 6–12, 2026',
     summary: 'Identity is table stakes; the contested layer is proof. The agent economy spent the week building it — ERC-8004 reputation leaderboards, github-signed execution receipts, on-chain tool registries, A2A spec-hardening — while we published a lesson in reading proof honestly (why our MCP category reads 100% and tokenized reads 0%, both instrument artifacts, not verdicts), hardened Virtuals coverage to 57,606 agents, and corrected our evidence-ranked count to 145.',
