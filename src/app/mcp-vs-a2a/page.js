@@ -48,7 +48,7 @@ export default function Page() {
               ['Discovery',         '/.well-known/mcp.json',                            'Agent Card (varies by deployment)'],
               ['Granularity',       'Function-level — list tools, call one',           'Task-level — submit a task, get streaming updates'],
               ['Maturity (2026)',   'Wide adoption: Claude Desktop, Cursor, OpenAI',   'Earlier-stage; growing alongside Google AP'],
-              ['AgentCrush role',   '7 MCP tools live; listed in 3 MCP registries',    'Endpoint in queue (Phase R-4.17)'],
+              ['AgentCrush role',   '14 MCP tools live; listed in 3 MCP registries',    'Endpoint in queue (Phase R-4.17)'],
             ].map(([dim, mcp, a2a], i) => (
               <div key={i} className="grid grid-cols-12 gap-3 px-4 py-3 items-baseline">
                 <p className="col-span-3 text-[13px] text-white/55 font-mono">{dim}</p>
@@ -86,7 +86,7 @@ export default function Page() {
 
           <h2 className="text-lg font-bold text-white pt-4">AgentCrush as MCP server</h2>
           <p>
-            AgentCrush exposes 7 MCP tools at{' '}
+            AgentCrush exposes 14 MCP tools at{' '}
             <Link href="/api/mcp/v1" className="text-[#00d4ff]/80 hover:text-[#00d4ff] underline underline-offset-2 font-mono">/api/mcp/v1</Link>:{' '}
             <span className="font-mono text-white/75">search_agents</span>,{' '}
             <span className="font-mono text-white/75">get_agent_details</span>,{' '}
@@ -94,7 +94,11 @@ export default function Page() {
             <span className="font-mono text-white/75">compare_agents</span>,{' '}
             <span className="font-mono text-white/75">list_categories</span>,{' '}
             <span className="font-mono text-white/75">get_category_ranking</span>,{' '}
-            <span className="font-mono text-white/75">get_methodology</span>. Discovery file at{' '}
+            <span className="font-mono text-white/75">get_methodology</span>,{' '}
+            <span className="font-mono text-white/75">get_agent_trust</span>,{' '}
+            <span className="font-mono text-white/75">verify_counterparty</span>,{' '}
+            and 5 more — see <Link href="/developers/mcp" className="text-[#00d4ff]/80 hover:text-[#00d4ff] underline underline-offset-2">/developers/mcp</Link> for the full manifest.
+            Discovery file at{' '}
             <Link href="/.well-known/mcp.json" className="text-[#00d4ff]/80 hover:text-[#00d4ff] underline underline-offset-2 font-mono">/.well-known/mcp.json</Link>.
             Listed on Smithery, mcp.so, and the Official MCP Registry.
           </p>
