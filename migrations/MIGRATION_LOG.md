@@ -9,6 +9,9 @@ Older historical DB changes existed before this process was formalized and may n
 
 ## Entries
 
+## 2026-07-23 — CrewAI evidence_ranked promotion (SR-G8)
+- `20260723_0500_evidence_rank_crewai.sql` — promotes `crewai` (CrewAI) from `indexed` to `evidence_ranked` in the `developer` category. Sets `github_full_name = 'crewAIInc/crewAI'` and `github_repo_url` so the daily `github-snapshot-worker` picks up live star counts immediately on next run. Evidence: (1) GitHub 47k+ stars meets `github_score >= 90` threshold; (2) 8 relationship entries (LangChain, LiteLLM, Composio, Mem0, AgentOps, AutoGen) give `ecosystem_score > 50`; (3) ERC-8004 token #17997 manually verified (VERIFIED_MATCHES allowlist). Path 3 evidence gate satisfied (github >= 90 + 2 signals > 50). Seeds `agent_snapshots` row (score 85 initial; overwritten Sunday). `verified = false` — ERC-8004 token is verified but on-chain domain corroboration not yet complete. **STATUS: PENDING APPLY by Kris.**
+
 ## 2026-07-17 — HANKO ERC-8004 registry ingest (SR-G3)
 - `20260717_0800_ingest_hanko_erc8004_registry.sql` — inserts `hanko_registry` (HANKO) as a `service`-category, `evidence_ranked` agent. HANKO is the ERC-8004 agent trust registry on Solana mainnet: Ed25519-typed attestations, bonded registration, karma 0–1000. Launched July 2026. Evidence tier: `verified_onchain` (Solana mainnet live per @hanko_registry, 2026-07-10). Initial scores: visibility 52, reputation 48 (conservative baseline — new infrastructure, no historical data). Seeds `agent_snapshots` row for the Sunday scoring run. One follow-up: `github_url` is NULL in this migration — Kris should confirm from @hanko_registry X bio and `UPDATE agents SET github_url='...' WHERE handle='hanko_registry'` if found. **STATUS: PENDING APPLY by Kris.**
 ## 2026-07-19 — Guard v1 wallet-binding + payTo lookup index (SR-H2)
