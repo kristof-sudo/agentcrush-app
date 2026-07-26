@@ -2,18 +2,24 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { trackHit } from '@/lib/telemetry'
 import { decide, decisionReason, reasonCodes } from '@/lib/verifyCounterparty'
+import { CORS_HEADERS, corsPreflight } from '@/lib/api-response'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 function ok(data) {
   return NextResponse.json(data, {
     status: 200,
-    headers: { 'Cache-Control': 'no-store' },
+    headers: { 'Cache-Control': 'no-store', ...CORS_HEADERS },
   })
 }
 
 function err(message, status) {
-  return NextResponse.json({ error: message }, { status })
+  return NextResponse.json({ error: message }, { status, headers: CORS_HEADERS })
+}
+
+export async function OPTIONS() {
+  return corsPreflight()
 }
 
 function getSupabase() {
