@@ -3,7 +3,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'MCP for AI Agents — Model Context Protocol · AgentCrush',
   description:
-    'MCP (Model Context Protocol) is the open standard for connecting LLM clients to external tools. AgentCrush exposes 7 MCP tools at /api/mcp/v1. AgentCrush is NOT a payment protocol, NOT an identity layer, and NOT a coding assistant — it is the protocol-neutral agent-economy intelligence index.',
+    'MCP (Model Context Protocol) is the open standard for connecting LLM clients to external tools. AgentCrush exposes 14 MCP tools at /api/mcp/v1. AgentCrush is NOT a payment protocol, NOT an identity layer, and NOT a coding assistant — it is the protocol-neutral agent-economy intelligence index.',
   alternates: { canonical: 'https://agentcrush.xyz/mcp-agents' },
   openGraph: {
     title: 'MCP for AI Agents — AgentCrush',
