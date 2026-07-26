@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: '2026-W30',
+    label: 'W30 · July 20–26, 2026',
+    summary: 'The settlement layer got measured. x402register spent eight days probing every public x402 endpoint independently — 95% of volume in one routing pair, ~$37K/mo total. Base cemented 85–92% share of agent settlement. The identity-to-reputation gap hardened into product builds. 1,413 indexed, 56.6% alive.',
+    href: '/weekly/2026-W30',
+  },
+  {
     week: '2026-W29',
     label: 'W29 · July 13–19, 2026',
     summary: 'The verdict moves into the payment path. The ERC-8004 pattern crossed chains (HANKO on Solana), the agent-verification layer got visibly crowded, compliance showed up as a machine-payable x402 vertical — and we shipped Guard, a free deterministic pre-settlement check on any x402 payment address, wired wallet-binding integrity into counterparty verdicts, and fixed our own machine-facing endpoint that had been under-reporting a 72,756-snapshot archive as zero.',
