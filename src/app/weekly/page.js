@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: 'state-2026-07',
+    label: 'State of the Index — July 2026',
+    summary: 'Ghost Index closed at 55.7%, down 2.8 points across July (58.5% → 55.7%). Evidence-ranked tier grew from 145 to 162. CrewAI moved to #1 on the Developer board. 91,114 daily snapshots archived. All four boards at month close.',
+    href: '/weekly/state-2026-07',
+  },
+  {
     week: '2026-W30',
     label: 'W30 · July 20–26, 2026',
     summary: 'The settlement layer got measured. x402register spent eight days probing every public x402 endpoint independently — 95% of volume in one routing pair, ~$37K/mo total. Base cemented 85–92% share of agent settlement. The identity-to-reputation gap hardened into product builds. 1,413 indexed, 56.6% alive.',
