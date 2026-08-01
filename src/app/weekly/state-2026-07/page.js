@@ -2,14 +2,14 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'State of the Index — July 2026 · AgentCrush',
-  description: 'Monthly state of the AgentCrush index for July 2026. Ghost Index declined 3 points across the month (58.7% → 55.7%) as the archive crossed 91,000 daily snapshots. Evidence-ranked tier grew from 145 to 162. Developer board leadership changed: CrewAI moved to #1.',
+  description: 'Monthly state of the AgentCrush index for July 2026. Ghost Index declined 2.8 points across the month (58.5% → 55.7%) as the archive crossed 91,000 daily snapshots. Evidence-ranked tier grew from 145 to 162. Developer board leadership changed: CrewAI moved to #1.',
   alternates: {
     canonical: 'https://agentcrush.xyz/weekly/state-2026-07',
     types: { 'application/rss+xml': 'https://agentcrush.xyz/weekly.xml' },
   },
   openGraph: {
     title: 'State of the Index — July 2026 · AgentCrush',
-    description: 'Ghost Index: 55.7% at month close, down 3.0 points over July. Evidence-ranked tier: 162 agents (+17 in July). 91,114 daily snapshots archived. Developer board: CrewAI moved to #1.',
+    description: 'Ghost Index: 55.7% at month close, down 2.8 points over July. Evidence-ranked tier: 162 agents (+17 in July). 91,114 daily snapshots archived. Developer board: CrewAI moved to #1.',
     url: 'https://agentcrush.xyz/weekly/state-2026-07',
     siteName: 'AgentCrush',
     images: [{ url: 'https://agentcrush.xyz/og-default.png', width: 1200, height: 630, alt: 'AgentCrush — State of the Index, July 2026' }],
@@ -129,8 +129,8 @@ export default function StateJuly2026() {
         {/* Summary */}
         <div className="space-y-5 text-[15px] text-white/65 leading-[1.75] mb-10">
           <p>
-            The Ghost Index closed July at <span className="text-white/85">55.7%</span> — down 3.0 percentage
-            points from 58.7% on July 2, on a base that grew by roughly five net new agents across the month.
+            The Ghost Index closed July at <span className="text-white/85">55.7%</span> — down 2.8 percentage
+            points from 58.5% on July 2, on a base that grew by 16 net new agents across the month.
             The pattern is consistent with prior months: the index gets more agents before it gets more evidence.
             New entrants arrive without corroborated activity signals; they sit as ghosts on the record until
             they produce evidence or the window expires. That is the number working correctly, not a system
@@ -198,10 +198,10 @@ export default function StateJuly2026() {
             <div className="flex items-end gap-4 mb-4">
               <div>
                 <p className="text-4xl font-black text-white leading-none tracking-tight">55.7%</p>
-                <p className="text-[11px] text-white/40 mt-1 font-mono">787 alive · 626 ghosts · 1,413 indexed · July 2 open: 58.7%</p>
+                <p className="text-[11px] text-white/40 mt-1 font-mono">787 alive · 626 ghosts · 1,413 indexed · July 2 open: 58.5%</p>
               </div>
               <p className="text-[13px] text-white/55 leading-relaxed flex-1">
-                −3.0 points across July. The index grew; the alive share declined. The archive is nightly; every
+                −2.8 points across July. The index grew by 16 agents; the alive share declined. The archive is nightly; every
                 number here is independently recomputable via <Link href="/oracle" className="text-[#00d4ff]/70 hover:text-[#00d4ff]">/oracle</Link>.
               </p>
             </div>

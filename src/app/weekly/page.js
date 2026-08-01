@@ -19,7 +19,7 @@ const CURATED = [
   {
     week: 'state-2026-07',
     label: 'State of the Index — July 2026',
-    summary: 'Ghost Index closed at 55.7%, down 3.0 points across July. Evidence-ranked tier grew from 145 to 162 (+17 promotions). CrewAI moved to #1 on the Developer board. 91,114 daily snapshots archived. All four boards at month close.',
+    summary: 'Ghost Index closed at 55.7%, down 2.8 points across July (58.5% → 55.7%). Evidence-ranked tier grew from 145 to 162. CrewAI moved to #1 on the Developer board. 91,114 daily snapshots archived. All four boards at month close.',
     href: '/weekly/state-2026-07',
   },
   {
