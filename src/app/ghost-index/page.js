@@ -139,11 +139,11 @@ export default async function GhostIndexPage() {
     return `${x},${y}`
   }).join(' ')
 
-  const totalAgents    = current?.total_agents    ?? 1408
-  const aliveAgents    = current?.alive_agents    ?? 812
+  const totalAgents    = current?.total_agents    ?? 1413
+  const aliveAgents    = current?.alive_agents    ?? 787
   const ghostAgents    = current?.ghost_agents    ?? (totalAgents - aliveAgents)
-  const evidenceRanked = current?.evidence_ranked ?? 154
-  const indexedOnly    = current?.indexed_only    ?? 1254
+  const evidenceRanked = current?.evidence_ranked ?? 165
+  const indexedOnly    = current?.indexed_only    ?? 1248
 
   return (
     <>

@@ -538,6 +538,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description: description.slice(0, 160),
+    alternates: { canonical: agentUrl },
     openGraph: {
       title,
       description: description.slice(0, 160),

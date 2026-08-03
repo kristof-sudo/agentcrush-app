@@ -13,6 +13,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `${uc.seoTitle} | AgentCrush`,
     description: uc.description,
+    alternates: { canonical: `https://agentcrush.xyz/use-cases/${slug}` },
   }
 }
 
