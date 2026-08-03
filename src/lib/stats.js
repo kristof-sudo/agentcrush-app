@@ -17,17 +17,17 @@ import { createClient } from '@supabase/supabase-js'
 
 export const FLOOR = {
   indexed: '1,400',
-  evidenceRanked: '150',
+  evidenceRanked: '160',
 }
 
 // Used when Supabase is unreachable (build without env, outage).
-// Updated 2026-07-22: live-verified 2026-07-19 — 1,408 indexed / 154 evidence-ranked / 57.7% Ghost Index.
+// Updated 2026-08-03: live-verified 2026-08-02 — 1,413 indexed / 165 evidence-ranked / 55.7% Ghost Index.
 const FALLBACK = {
-  indexed: 1408,
-  evidenceRanked: 154,
-  baseTier: 1254,
-  ghostPct: 57.7,
-  aliveAgents: 812,
+  indexed: 1413,
+  evidenceRanked: 165,
+  baseTier: 1248,
+  ghostPct: 55.7,
+  aliveAgents: 787,
 }
 
 function supabase() {

@@ -27,15 +27,17 @@ export async function generateMetadata({ params }) {
   const title = `${name} — AI Agent Profile | AgentCrush`
   const image = 'https://agentcrush.xyz/apple-icon.png'
 
+  const catUrl = `https://agentcrush.xyz/categories/${encodeURIComponent(category.slug || slug)}`
   return {
     title,
     description,
+    alternates: { canonical: catUrl },
     openGraph: {
       title,
       description,
       type: 'website',
       siteName: 'AgentCrush',
-      url: `https://agentcrush.xyz/categories/${encodeURIComponent(category.slug || slug)}`,
+      url: catUrl,
       images: [{ url: image, width: 512, height: 512, alt: `${name} on AgentCrush` }],
     },
     twitter: {
