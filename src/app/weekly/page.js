@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 600
 
 export const metadata = {
-  title: 'Weekly Digest · AgentCrush',
-  description: 'Weekly signal digest from the AgentCrush index — ranking moves, ecosystem events, protocol activity.',
+  title: 'Digest Archive · AgentCrush',
+  description: 'Signal digest archive from the AgentCrush index — ranking moves, ecosystem events, protocol activity. Published monthly as State of the Index.',
   alternates: {
     canonical: 'https://agentcrush.xyz/weekly',
     types: { 'application/rss+xml': 'https://agentcrush.xyz/weekly.xml' },
@@ -139,14 +139,14 @@ export default async function WeeklyIndexPage() {
 
       <div className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-widest text-[#00d4ff]/70 mb-2">
-          Weekly Digest
+          Digest Archive
         </p>
         <h1 className="text-2xl font-bold text-white tracking-tight">
           AgentCrush Weekly
         </h1>
         <p className="mt-2 text-sm text-white/40 leading-relaxed max-w-lg">
-          Every week: ranking moves across all four category rankings, ecosystem signals tracked across
-          AI Twitter and Farcaster, and protocol activity. Published every Sunday.
+          Ranking moves, ecosystem signals, and protocol activity from the AgentCrush index.
+          Now published monthly as State of the Index.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <a

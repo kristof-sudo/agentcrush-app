@@ -42,17 +42,17 @@ export default function BlogIndex({ posts = [] }) {
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-mono font-bold uppercase tracking-widest text-[#00d4ff] mb-2">
-              ◆ Weekly Digest
+              ◆ Digest Archive
             </p>
             <p className="text-lg font-bold text-white leading-snug mb-1.5">
-              The week in the agent economy
+              The agent economy in context
             </p>
             <p className="text-sm text-white/55 leading-relaxed">
-              Ranking standings, what shipped, protocol signals — the live index distilled every Sunday. The fastest way to stay current.
+              Ranking moves, ecosystem signals, protocol activity — the AgentCrush index distilled. Now published monthly as State of the Index.
             </p>
           </div>
           <span className="shrink-0 rounded border border-[#00d4ff]/40 bg-[#00d4ff]/10 px-3 py-1.5 font-mono text-xs font-bold text-[#00d4ff] group-hover:bg-[#00d4ff]/20 transition-colors">
-            Latest issue →
+            Browse archive →
           </span>
         </div>
       </Link>
