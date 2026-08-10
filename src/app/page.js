@@ -71,7 +71,7 @@ const VERBS = [
   {
     n: '06', verb: 'PUBLISH', color: '#60a5fa',
     tagline: 'Ship findings in public. Let anyone cite them.',
-    chips: ['open methodology', 'versioned diffs', 'citable blog posts', 'weekly digest', 'RSS'],
+    chips: ['open methodology', 'versioned diffs', 'citable blog posts', 'digest archive', 'RSS'],
     note: 'Every methodology change is logged. Every post has a citation block.',
   },
 ]
@@ -702,7 +702,7 @@ export default async function Home() {
                   <div className="font-mono text-sm font-bold" style={{ color: '#e91e80' }}>I'm researching the ecosystem →</div>
                   <span className="font-mono text-[9px] font-bold text-white/30 border border-white/[0.12] rounded px-1.5 py-0.5 shrink-0">FOR ANALYSTS</span>
                 </div>
-                <div className="font-mono text-[11px] text-white/40">Case studies, methodology findings, weekly digest. Every post has citation blocks + data downloads.</div>
+                <div className="font-mono text-[11px] text-white/40">Case studies, methodology findings, digest archive. Every post has citation blocks + data downloads.</div>
               </Link>
             </div>
             {/* Bottom 2 smaller cards */}
@@ -945,7 +945,7 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Weekly digest anchor */}
+            {/* Digest archive anchor */}
             <div className="relative rounded-lg border border-[rgba(233,30,128,0.2)] bg-[rgba(233,30,128,0.03)] p-4 mb-4 overflow-hidden">
               <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t border-l border-[rgba(233,30,128,0.35)]" />
               <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t border-r border-[rgba(233,30,128,0.35)]" />
@@ -954,17 +954,16 @@ export default async function Home() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#e91e80]">◆ WEEKLY DIGEST</span>
-                    <span className="font-mono text-[9px] text-white/30">W23 · 2026-06-07</span>
+                    <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#e91e80]">◆ DIGEST ARCHIVE</span>
                   </div>
                   <div className="font-mono text-sm font-bold text-white/90 mb-2">Promotions · Top movers · New to index · Protocol activity · Editorial</div>
                   <div className="font-mono text-[10px] text-white/40 leading-relaxed">
-                    Weekly intelligence roundup. Evidence-ranked moves, new entries, protocol signals, and editorial context — every Friday.
+                    Intelligence digest from the AgentCrush index — evidence-ranked moves, new entries, protocol signals, and editorial context. Now published monthly as State of the Index.
                   </div>
                 </div>
-                <Link href="/weekly/2026-W23"
+                <Link href="/weekly"
                   className="shrink-0 rounded border border-[rgba(233,30,128,0.35)] bg-[rgba(233,30,128,0.08)] px-3 py-1.5 font-mono text-[11px] font-bold text-[#e91e80] hover:bg-[rgba(233,30,128,0.15)] transition-colors">
-                  Read →
+                  Archive →
                 </Link>
               </div>
             </div>

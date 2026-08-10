@@ -84,7 +84,7 @@ const buildTerms = (s) => [
   {
     term: 'Agent of the Week',
     anchor: 'agent-of-the-week',
-    definition: 'A weekly AgentCrush feature: the highest-visibility ghost in the index — the agent with the largest discrepancy between social footprint and observable activity. Published on X every Sunday. Data-driven, not curated.',
+    definition: 'A retired AgentCrush feature: the highest-visibility ghost in the index — the agent with the largest discrepancy between social footprint and observable activity. Previously published on X weekly. Data-driven, not curated.',
     seeAlso: [{ label: 'Ghost Index', href: '/ghost-index' }],
   },
   {
