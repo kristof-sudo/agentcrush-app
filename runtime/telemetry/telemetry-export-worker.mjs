@@ -8,7 +8,9 @@
  * 2. Writes a daily JSON to the VPS brain clone:
  *      /opt/agentcrush-brain/Fetchers/telemetry/output/telemetry-YYYY-MM-DD.json
  *    (auto-sync picks it up like the other Fetchers outputs)
- * 3. Sends a one-line Telegram summary to Kris
+ *
+ * Telegram summary removed 2026-08-18 (Lighthouse Mode: the 07:00 health check is
+ * the single daily message; these numbers feed the monthly brief via the JSON files).
  *
  * The headline numbers — THE distribution KPI per the 2026-06-10 decision:
  *   - total machine (agent-UA) calls
@@ -23,18 +25,7 @@ import path from 'path';
 
 const SB_URL  = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SB_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-const TOKEN   = process.env.TELEGRAM_BOT_TOKEN;
-const CHAT_ID = String(process.env.TELEGRAM_CHAT_ID || '');
 const BRAIN_DIR = process.env.BRAIN_DIR || '/opt/agentcrush-brain';
-
-async function tg(text) {
-  if (!TOKEN || !CHAT_ID) return;
-  await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ chat_id: CHAT_ID, text, disable_web_page_preview: true }),
-  }).catch(() => {});
-}
 
 const day = process.argv[2] || new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 
@@ -140,17 +131,5 @@ mkdirSync(outDir, { recursive: true });
 const outPath = path.join(outDir, `telemetry-${day}.json`);
 writeFileSync(outPath, JSON.stringify(payload, null, 2));
 console.log(`[telemetry-export] wrote ${outPath} (${rows.length} rows)`);
-
-const keyLine = keyUsage.length
-  ? ` · keys: ${keyUsage.slice(0, 3).map((k) => `${k.key_prefix}…×${k.total}`).join(', ')}${keyUsage.length > 3 ? ` +${keyUsage.length - 3} more` : ''}`
-  : '';
-await tg(
-  `📡 Machine traffic ${day}: ${totals.machine_calls} agent calls / ${totals.all_calls} total\n` +
-  `402s quoted: ${totals.gated_402} (flagship ${totals.gated_402_flagship} · per-handle probe ${totals.gated_402_per_handle})\n` +
-  `paid: ${totals.paid_pass} · pro: ${totals.pro_pass}` +
-  (totals.flagship_conversion_pct != null ? ` · flagship conv ${totals.flagship_conversion_pct}%` : '') +
-  (totals.top_gated_share_pct != null ? `\ntop endpoint ${totals.top_gated_endpoint} = ${totals.top_gated_share_pct}% of all 402s` : '') +
-  keyLine
-);
 
 console.log('[telemetry-export] done.');
