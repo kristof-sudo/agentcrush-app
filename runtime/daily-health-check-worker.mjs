@@ -2,22 +2,23 @@
 /**
  * daily-health-check-worker.mjs — catch silent pipeline rot before it festers for days.
  *
- * Born from 2026-06-25: the brain repo sat in a stuck merge-conflict for 4 days, so Ajsa
- * briefs never reached GitHub; and a stale 16.2% Ghost Index figure got republished. Both
- * went unnoticed. This runs daily and Telegrams Kris a ✅/⚠️ report covering the failure
- * modes we've actually hit:
+ * Born from 2026-06-25: the brain repo sat in a stuck merge-conflict for 4 days and a
+ * stale 16.2% Ghost Index figure got republished — both unnoticed. Since 2026-08-18
+ * (Lighthouse Mode) this is THE single daily Telegram message: a one-liner when all is
+ * well, details only when Kris needs to act. Checks, all failure modes we've actually hit:
  *   1. Failed systemd units (agentcrush-*)
  *   2. Brain repo health — clean tree, not behind origin (the stuck-conflict signature)
- *   3. Ajsa brief freshness — today's/yesterday's brief committed to the brain
+ *   3. Daily snapshot landed — the archive is the moat; a silent gap is unrecoverable
  *   4. Ghost Index sanity — liveness in a sane band + snapshot fresh (catches 16% regressions)
  *   5. x402 paywall alive — flagship gated endpoint answers 402 with a quote (born 2026-07-02:
  *      the CDP key rotation left Vercel without facilitator credentials and every paid
  *      endpoint 500'd for 2+ days; telemetry showed it only as gated_402 dropping to 0)
+ *   6. Paid conversion (wake-up trigger T1) — the one signal worth a same-day ping
  *
  * Daily VPS timer ~07:00 UTC. Sends only via runtime/telegram-sender.mjs (private to Kris).
  */
 import { createClient } from '@supabase/supabase-js'
-import { readFileSync, existsSync, readdirSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { execSync, spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -47,21 +48,29 @@ if (existsSync(BRAIN)) {
   const dirty = sh(`cd ${BRAIN} && git status --porcelain 2>/dev/null | grep -E '^(UU|AA|DD|U |.U)' | head -3`)
   if (dirty) issues.push(`Brain repo has merge-conflict entries (the stuck-sync signature):\n${dirty}`)
   else if (Number(behind) > 20) issues.push(`Brain clone is ${behind} commits behind origin — sync may be stalled.`)
-  else ok.push('brain repo clean + synced')
-
-  // 3. Ajsa brief freshness
-  const briefDir = `${BRAIN}/Agents/ajsa/output`
-  const briefs = existsSync(briefDir) ? readdirSync(briefDir).filter(f => f.startsWith('social-brief-')).sort() : []
-  const latestBrief = briefs[briefs.length - 1] || '(none)'
-  if (!latestBrief.includes(today) && !latestBrief.includes(yday)) issues.push(`Ajsa brief stale — latest is ${latestBrief} (expected ${today}). The morning-brief worker may be failing or not pushing.`)
-  else ok.push(`Ajsa brief fresh (${latestBrief})`)
+  else ok.push('brain repo synced')
 } else {
   ok.push('brain path not on this host (skipped repo checks)')
 }
+// (Ajsa brief freshness check removed 2026-08-18 — brief producers retired at the
+// 2026-07-27 Lighthouse conversion; the stale-brief warning had become a daily false alarm.)
+
+let db = null
+try { db = createClient(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY) }
+catch (e) { issues.push(`Supabase client init failed: ${e.message}`) }
+
+// 3. daily snapshot landed — the 02:00 UTC crontab job (NOT systemd) writes today's rows
+try {
+  if (!db) throw new Error('no db client')
+  const { count, error } = await db.from('agent_snapshots').select('agent_id', { count: 'exact', head: true }).eq('snapshot_date', today)
+  if (error) throw new Error(error.message)
+  if (!count) issues.push(`Daily snapshot MISSING for ${today} — the 02:00 root-crontab job (tools/record-daily-snapshot.mjs) may have failed. The archive is the moat; diagnose today, a silent gap cannot be backfilled.`)
+  else ok.unshift(`snapshots +${count} last night`)
+} catch (e) { issues.push(`Snapshot check failed: ${e.message}`) }
 
 // 4. Ghost Index sanity
 try {
-  const db = createClient(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  if (!db) throw new Error('no db client')
   const { data } = await db.from('ghost_index_daily').select('snapshot_date, liveness_score, alive_agents, total_agents').order('snapshot_date', { ascending: false }).limit(1)
   const g = data?.[0]
   if (!g) issues.push('Ghost Index: no rows found.')
@@ -89,8 +98,17 @@ try {
   }
 } catch (e) { issues.push(`x402 paywall check failed: ${e.message}`) }
 
-const header = issues.length ? `⚠️ AgentCrush health — ${issues.length} issue(s)` : `✅ AgentCrush health — all clear`
-const message = (issues.length ? issues.join('\n\n') + '\n\n— — —\n' : '') + 'OK: ' + ok.join(' · ')
+// 6. paid conversion — wake-up trigger T1: the monthly brief checks this, but the first
+// real conversion ever is worth a same-day ping.
+try {
+  if (!db) throw new Error('no db client')
+  const { data: paid } = await db.from('api_telemetry_daily').select('outcome, count').gte('day', yday).in('outcome', ['paid_pass', 'pro_pass'])
+  const paidTotal = (paid || []).reduce((s, r) => s + (r.count || 0), 0)
+  if (paidTotal > 0) issues.push(`🚨 PAID CONVERSION — ${paidTotal} paid/pro pass(es) since ${yday}. Wake-up trigger T1 fired: start a Claude strategy session ("AgentCrush T1 fired").`)
+} catch { /* telemetry table absent = nothing to report */ }
+
+const header = issues.length ? `⚠️ AgentCrush lighthouse — ACTION NEEDED (${issues.length})` : `🗼 Lighthouse ON — all OK`
+const message = (issues.length ? issues.join('\n\n') + '\n\n— — —\n' : '') + ok.join(' · ')
 
 if (DRY) { console.log(header + '\n' + message); process.exit(0) }
 await new Promise((resolve, reject) => {

@@ -46,8 +46,6 @@ function loadEnv() {
 }
 loadEnv()
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN
-const CHAT_ID = String(process.env.TELEGRAM_CHAT_ID || '')
 const MAX = process.env.PROMOTER_MAX || '200' // runaway backstop per source
 
 const PROMOTERS = [
@@ -55,15 +53,6 @@ const PROMOTERS = [
   { key: 'agentverse', script: 'scripts/promote-agentverse-to-agents.mjs' },
   { key: 'a2a',        script: 'scripts/promote-a2a-to-agents.mjs' },
 ]
-
-async function tg(text) {
-  if (!TOKEN || !CHAT_ID) return
-  await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ chat_id: CHAT_ID, text, disable_web_page_preview: true }),
-  }).catch(() => {})
-}
 
 // Pull the "promoted N" / "wrote N" count out of a promoter's stdout, best-effort.
 function parsePromoted(out) {
@@ -96,8 +85,9 @@ for (const { key, script } of PROMOTERS) {
   }
 }
 
+// Telegram summary removed 2026-08-18 (Lighthouse Mode: the 07:00 health check is the
+// single daily message; a failed run surfaces there via the failed-units check).
 const summary = `🌱 Agent promoter ${new Date().toISOString().slice(0, 10)}: ${results.join(' · ')}`
 console.log(`[promoter] ${summary}`)
-await tg(summary)
 
 process.exit(anyOk ? 0 : 1)

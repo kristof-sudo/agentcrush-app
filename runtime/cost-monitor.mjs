@@ -221,15 +221,13 @@ async function main() {
     ),
   });
 
-  // Push policy:
-  //  - always push if severity != ok
-  //  - always push on Monday (weekly summary)
-  //  - always push if COST_FORCE_REPORT=1 (smoke test)
-  const isMonday = new Date(now).getUTCDay() === 1;
-  if (report.severity !== 'ok' || isMonday || FORCE_REPORT) {
+  // Push policy (Lighthouse Mode, 2026-08-18): alerts only — no Monday summary.
+  //  - push if severity != ok (warn ≥50% / crit ≥80% of cap)
+  //  - push if COST_FORCE_REPORT=1 (smoke test)
+  if (report.severity !== 'ok' || FORCE_REPORT) {
     await pushTelegram(report.body);
   } else {
-    console.log('[cost-monitor] severity=ok and not Monday — skipping Telegram push');
+    console.log('[cost-monitor] severity=ok — skipping Telegram push');
   }
 }
 
