@@ -408,6 +408,16 @@ export async function proxy(request) {
   const res = await x402Handler(request)
   if (res?.status === 402) {
     trackHit(pathname, request, 'gated_402')
+    // TEMP diagnostic (T2 flagship-402 spike, since 2026-08-10): identify the caller.
+    // Remove once diagnosed — brain Log.md 2026-08-18.
+    try {
+      console.log(JSON.stringify({
+        t2_402: request.nextUrl.pathname + request.nextUrl.search,
+        ua: request.headers.get('user-agent') || '',
+        ip: request.headers.get('x-forwarded-for') || '',
+        ref: request.headers.get('referer') || '',
+      }))
+    } catch { /* diagnostic only */ }
   } else if (request.headers.get('x-payment')) {
     trackHit(pathname, request, 'paid_pass')
   }
