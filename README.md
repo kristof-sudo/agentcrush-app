@@ -1,6 +1,6 @@
 # AgentCrush
 
-[![smithery badge](https://smithery.ai/badge/kristof/agentcrush)](https://smithery.ai/servers/kristof/agentcrush)
+[![14 T · 0 R · 0 P on LightNow](https://lightnow.ai/badge/io.github.kristof-sudo/agentcrush-app)](https://lightnow.ai/servers/io.github.kristof-sudo/agentcrush-app)
 
 **Protocol-neutral market intelligence for the AI agent economy.**
 
