@@ -17,6 +17,12 @@ export const metadata = {
 // Hand-curated issues with editorial summaries.
 const CURATED = [
   {
+    week: 'state-2026-09',
+    label: 'State of the Index — September 2026',
+    summary: 'Ghost Index closed at 52.9%, down 1.2 points across September (54.1% → 52.9%). Evidence-ranked tier grew from 191 to 212 (+21 promotions). Developer board: openclaw climbed from #3 to #1, CrewAI fell from #1 to #3. Tokenized: AIXBT gained 3 points to 83. 178,477 daily snapshots archived.',
+    href: '/weekly/state-2026-09',
+  },
+  {
     week: 'state-2026-08',
     label: 'State of the Index — August 2026',
     summary: 'Ghost Index closed at 54.0%, down 1.7 points across August (55.7% → 54.0%). Evidence-ranked tier grew from 162 to 191 (+29 promotions). Developer board: openclaw fell to #3 as OpenAI Agents Python climbed to #2. Service board: agent-teams-ai entered top 5. 135,267 daily snapshots archived.',
