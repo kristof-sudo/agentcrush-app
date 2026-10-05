@@ -21,13 +21,13 @@ export const FLOOR = {
 }
 
 // Used when Supabase is unreachable (build without env, outage).
-// Updated 2026-09-07: live-verified 2026-09-06 — 1,438 indexed / 194 evidence-ranked / 52.9% Ghost Index.
+// Updated 2026-10-05: live-verified 2026-10-04 — 1,447 indexed / 221 evidence-ranked / 52.9% Ghost Index.
 const FALLBACK = {
-  indexed: 1438,
-  evidenceRanked: 194,
-  baseTier: 1244,
+  indexed: 1447,
+  evidenceRanked: 221,
+  baseTier: 1226,
   ghostPct: 52.9,
-  aliveAgents: 760,
+  aliveAgents: 766,
 }
 
 function supabase() {

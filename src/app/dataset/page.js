@@ -149,7 +149,7 @@ export default async function DatasetPage() {
             },
             {
               label: 'Daily snapshots',
-              value: '140,000+ rows total',
+              value: '180,000+ rows total',
               note: 'Daily scoring run since April 2026. Liveness, tier, signal breakdown per agent per day.',
             },
             {
