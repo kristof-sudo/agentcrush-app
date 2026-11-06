@@ -251,6 +251,16 @@ export default function DevelopersPage() {
             /.well-known/x402
           </a>
           <span className="text-xs text-white/20 ml-3">Full endpoint manifest with pricing</span>
+          <p className="text-xs text-white/30 mt-3 mb-1">Also listed on</p>
+          <a
+            href="https://payapi.market/api/agentcrush-agent-verification-status"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-xs text-violet-400/60 hover:text-violet-300 transition-colors"
+          >
+            PayAPI Market
+          </a>
+          <span className="text-xs text-white/20 ml-3">Verification status route, settled-payment verified</span>
         </div>
       </section>
 

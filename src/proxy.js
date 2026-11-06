@@ -383,6 +383,16 @@ const x402Handler = paymentProxy(
   resourceServer,
 )
 
+// x402 v2 clients send the payment in `PAYMENT-SIGNATURE`; v1 clients use
+// `X-PAYMENT`. Checking only the v1 header hid 6 of 7 real settlements in
+// Oct 2026 from telemetry (brain Log.md 2026-11-05). Header lookup is
+// case-insensitive.
+function carriesX402Payment(request) {
+  return Boolean(
+    request.headers.get('payment-signature') || request.headers.get('x-payment'),
+  )
+}
+
 // ── Combined proxy ────────────────────────────────────────────────────────────
 
 export async function proxy(request) {
@@ -418,7 +428,7 @@ export async function proxy(request) {
         ref: request.headers.get('referer') || '',
       }))
     } catch { /* diagnostic only */ }
-  } else if (request.headers.get('x-payment')) {
+  } else if (carriesX402Payment(request) && !(res?.status >= 400)) {
     trackHit(pathname, request, 'paid_pass')
   }
   return res
