@@ -63,6 +63,22 @@ export function chainsOf(resource) {
   return [...new Set(nets.map(chainLabel))]
 }
 
+/** Minimal projection of a Bazaar resource — everything ranking needs, nothing else. */
+function slim(r) {
+  const q = r.quality || {}
+  return {
+    resource: r.resource,
+    serviceName: r.serviceName || null,
+    tags: Array.isArray(r.tags) ? r.tags.slice(0, 12) : [],
+    accepts: (r.accepts || []).map((a) => ({ network: a.network })),
+    quality: {
+      l30DaysUniquePayers: q.l30DaysUniquePayers,
+      l30DaysTotalCalls: q.l30DaysTotalCalls,
+      lastCalledAt: q.lastCalledAt,
+    },
+  }
+}
+
 /** Fetch the full live Bazaar index (paginated). */
 export async function fetchBazaarIndex({ maxPages = 40 } = {}) {
   let offset = 0
@@ -76,7 +92,10 @@ export async function fetchBazaarIndex({ maxPages = 40 } = {}) {
     if (!res.ok) throw new Error(`CDP Bazaar HTTP ${res.status}`)
     const body = await res.json()
     const items = body.items || []
-    all.push(...items)
+    // Keep only the fields rankOperators/chainsOf read. Full Bazaar records carry
+    // input/output schemas (~KBs each); holding 40k of them blew the Node heap
+    // (build OOM on /x402-demand + repeated runtime OOM restarts on the 1GB VPS).
+    for (const r of items) all.push(slim(r))
     total = body.pagination?.total ?? total
     offset += items.length
     pages += 1
